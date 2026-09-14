@@ -10,14 +10,15 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { LOOP_NAMES, SFX_NAMES, STYLE_NAMES, SURFACES, bodySfx, measureLoop, paramsFor, sfxSamples, sfxStyle } from "../src/index.ts";
 import type { SfxBody, SfxParams, SfxPlayer, SfxSampleKey, Surface } from "../src/index.ts";
-import { poc } from "./helpers.ts";
+import { POC, hasPoc, poc } from "./helpers.ts";
 
 interface Character extends SfxBody {
   readonly pos: readonly number[];
   readonly events: readonly { readonly type: string; readonly speed?: number }[];
   step(dt: number, input: { move: [number, number]; jump?: boolean; hold?: boolean }): void;
 }
-const { createCharacter } = await poc<{ createCharacter(o: object): Character }>("src/physics/character.js");
+// (The proof of concept's character is only for the real-body test, which skips without it.)
+const { createCharacter } = hasPoc ? await poc<{ createCharacter(o: object): Character }>("src/physics/character.js") : { createCharacter: null };
 
 const RATE = 22050;
 const fp = (x: Float32Array) => { let h = 2166136261; for (let i = 0; i < x.length; i += 13) h = Math.imul(h ^ Math.round(x[i]! * 32767), 16777619); return h >>> 0; };
@@ -103,11 +104,11 @@ function recorder() {
   return { log, loops, player };
 }
 
-test("bodySfx: a real body (the proof of concept's character) runs, jumps, lands, wall-runs, skims and sinks", () => {
+test("bodySfx: a real body (the proof of concept's character) runs, jumps, lands, wall-runs, skims and sinks", { skip: !hasPoc && `the proof of concept isn't at ${POC}` }, () => {
   // A floor over water, a wall to run on, a rail over the water.
   const boxes = [{ c: [0, -1.5, -14], h: [3, 1.5, 26], mat: 1 }, { c: [2.2, 2, 6], h: [0.25, 4, 8], mat: 0 }];
   const rails = [[[0, 1.4, 14], [0, 1.2, 30]]];
-  const body = createCharacter({ boxes, rails, waterY: -0.4, spawn: [0, 0.2, -38] });
+  const body = createCharacter!({ boxes, rails, waterY: -0.4, spawn: [0, 0.2, -38] });
   const rec = recorder();
   const feet = bodySfx(rec.player, { surfaceOf: (b) => ((b as Character).pos[2]! > 0 ? "metal" : "stone") });
   const seen = new Set<string>();

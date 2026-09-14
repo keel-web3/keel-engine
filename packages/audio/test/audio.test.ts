@@ -8,9 +8,10 @@ import assert from "node:assert/strict";
 import { BANDS, CHOICES, WEATHER_KINDS, encodeWav, intensityMix, makeSampleData, measureLoop, moodFor, moodOfNocturnes, scoreOf, voice } from "../src/index.ts";
 import type { IntensityMix, MoodSpec, NocturnesGenome, Plan } from "../src/index.ts";
 import { manifest } from "../src/module.ts";
-import { nocturnes } from "./helpers.ts";
+import { NOCTURNES, hasNocturnes, nocturnes } from "./helpers.ts";
 
-const [nGenome, nRng] = await Promise.all([nocturnes("genome.js"), nocturnes("rng.js")]);
+// (NOCTURNES is only for the diversity test, which skips without it.)
+const [nGenome, nRng] = hasNocturnes ? await Promise.all([nocturnes("genome.js"), nocturnes("rng.js")]) : [null, null];
 
 /** Every number in a plan is finite. */
 function finite(x: unknown, path = "plan"): void {
@@ -58,7 +59,7 @@ test("plans are whole: finite numbers, a loop of 32-40 bars, every bar a chord, 
   }
 });
 
-test("diversity: NOCTURNES tokens 1..200 through the engine, and games from their seeds", () => {
+test("diversity: NOCTURNES tokens 1..200 through the engine, and games from their seeds", { skip: !hasNocturnes && `NOCTURNES isn't at ${NOCTURNES}` }, () => {
   const report: string[] = [];
   const plans = Array.from({ length: 200 }, (_, i) => { const m = moodOfNocturnes(nGenome.makeGenome(nRng.seedFromToken(i + 1)) as NocturnesGenome); return scoreOf(m, m.seed); });
   const tally = (ps: Plan[]) => ({ combos: new Set(ps.map(combo)).size, distinct: new Set(ps.map((p) => JSON.stringify(p))).size, keys: new Set(ps.map((p) => `${p.tonic}${p.mode}`)).size, tempi: new Set(ps.map((p) => Math.round(p.bpm))).size });

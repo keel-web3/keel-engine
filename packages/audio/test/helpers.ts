@@ -4,12 +4,16 @@
 // plain AudioBuffer for Node; and a recording stand-in for Tone and Web Audio,
 // so the player, the sfx and the sound can be compared call for call.
 
+import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const POC = resolve(process.env.POC ?? resolve(here, "../../../../keel-pixel-engine"));
 export const NOCTURNES = resolve(process.env.NOCTURNES ?? resolve(here, "../../../../keel-nocturnes"));
+/** Whether each reference is on this machine: a test that needs one it hasn't got is skipped, not failed. */
+export const hasPoc = existsSync(`${POC}/src/core/rng.js`);
+export const hasNocturnes = existsSync(`${NOCTURNES}/src/rng.js`);
 
 /** A module of the proof of concept, typed as its port (they share an API). */
 export const poc = async <T>(path: string): Promise<T> => (await import(pathToFileURL(`${POC}/${path}`).href)) as T;
