@@ -19,7 +19,7 @@
 // an optional group (a part's name for front detection and animation: "door",
 // "canopy") and flags (collide, render, and which styles draw it).
 
-import { sdBox, sdCapsule, sdEllipsoid } from "@keel-engine/core";
+import { datan2, dcos, dhypot, dlen, dsin, sdBox, sdCapsule, sdEllipsoid } from "@keel-engine/core";
 import type { Vec3, Vec3Like } from "@keel-engine/core";
 import { wedgeDistance } from "@keel-engine/physics";
 import type { Bounds, FrontSpec } from "@keel-engine/scene";
@@ -107,7 +107,7 @@ export const drawnIn = (s: DesignSolid, style: string): boolean => !s.styles || 
 export function solidBounds(s: DesignSolid): Bounds {
   switch (s.kind) {
     case "box": case "wedge": {
-      const co = Math.abs(Math.cos(s.yaw ?? 0)), si = Math.abs(Math.sin(s.yaw ?? 0));
+      const co = Math.abs(dcos(s.yaw ?? 0)), si = Math.abs(dsin(s.yaw ?? 0));
       const ex = s.h[0] * co + s.h[2] * si, ez = s.h[0] * si + s.h[2] * co;
       return [s.c[0] - ex, s.c[1] - s.h[1], s.c[2] - ez, s.c[0] + ex, s.c[1] + s.h[1], s.c[2] + ez];
     }
@@ -132,7 +132,7 @@ export function designBounds(solids: readonly DesignSolid[]): Bounds {
 export function solidSdf(s: DesignSolid): (x: number, y: number, z: number) => number {
   switch (s.kind) {
     case "box": {
-      const co = Math.cos(s.yaw ?? 0), si = Math.sin(s.yaw ?? 0);
+      const co = dcos(s.yaw ?? 0), si = dsin(s.yaw ?? 0);
       return (x, y, z) => { const dx = x - s.c[0], dz = z - s.c[2]; return sdBox(dx * co - dz * si, y - s.c[1], dx * si + dz * co, s.h[0], s.h[1], s.h[2], 0); };
     }
     case "wedge": {
@@ -150,16 +150,16 @@ export function solidSdf(s: DesignSolid): (x: number, y: number, z: number) => n
       return (x, y, z) => {
         const t = y - s.c[1];
         // (A square cone is a stepped pyramid in the pixel style: the same square here, its corners on the circle.)
-        const rad = s.sides === 4 ? Math.max(Math.abs(x - s.c[0]), Math.abs(z - s.c[2])) * Math.SQRT2 : Math.hypot(x - s.c[0], z - s.c[2]);
+        const rad = s.sides === 4 ? Math.max(Math.abs(x - s.c[0]), Math.abs(z - s.c[2])) * Math.SQRT2 : dhypot(x - s.c[0], z - s.c[2]);
         const rAt = s.r + (top - s.r) * Math.max(0, Math.min(1, t / s.h));
         return Math.max((rad - rAt) * k, -t, t - s.h);
       };
     }
     case "cylinder": return (x, y, z) => {
       const t = y - s.c[1];
-      const d0 = (s.sides === 4 ? Math.max(Math.abs(x - s.c[0]), Math.abs(z - s.c[2])) * Math.SQRT2 : Math.hypot(x - s.c[0], z - s.c[2])) - s.r;
+      const d0 = (s.sides === 4 ? Math.max(Math.abs(x - s.c[0]), Math.abs(z - s.c[2])) * Math.SQRT2 : dhypot(x - s.c[0], z - s.c[2])) - s.r;
       const d1 = Math.abs(t - s.h / 2) - s.h / 2;
-      return Math.min(Math.max(d0, d1), 0) + Math.hypot(Math.max(d0, 0), Math.max(d1, 0));
+      return Math.min(Math.max(d0, d1), 0) + dhypot(Math.max(d0, 0), Math.max(d1, 0));
     };
   }
 }
@@ -197,10 +197,10 @@ export function collidersOfDesign(design: Pick<Design, "solids" | "colliders">):
       case "wedge": out.push({ c: v(s.c), h: v(s.h), yaw: s.yaw ?? 0, mat: s.role, part, kind: "wedge", lo: s.lo ?? 0 }); break;
       case "capsule": {
         const d: Vec3 = [s.b[0] - s.a[0], s.b[1] - s.a[1], s.b[2] - s.a[2]];
-        const L = Math.hypot(...d), flat = Math.hypot(d[0], d[2]);
+        const L = dlen(d), flat = dhypot(d[0], d[2]);
         const c: Vec3 = [(s.a[0] + s.b[0]) / 2, (s.a[1] + s.b[1]) / 2, (s.a[2] + s.b[2]) / 2];
         if (L < 1e-9 || flat / (L || 1) < 0.02) out.push({ c, h: [s.r, Math.abs(d[1]) / 2 + s.r, s.r], yaw: 0, mat: s.role, part, capsule: true });
-        else if (Math.abs(d[1]) / L < 0.02) out.push({ c, h: [s.r, s.r, flat / 2 + s.r], yaw: Math.atan2(d[0], d[2]), mat: s.role, part, capsule: true });
+        else if (Math.abs(d[1]) / L < 0.02) out.push({ c, h: [s.r, s.r, flat / 2 + s.r], yaw: datan2(d[0], d[2]), mat: s.role, part, capsule: true });
         else { const b = solidBounds(s); out.push({ c: [(b[0] + b[3]) / 2, (b[1] + b[4]) / 2, (b[2] + b[5]) / 2], h: [(b[3] - b[0]) / 2, (b[4] - b[1]) / 2, (b[5] - b[2]) / 2], yaw: 0, mat: s.role, part, approx: true, capsule: true }); }
         break;
       }

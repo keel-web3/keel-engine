@@ -27,6 +27,7 @@ import { capsuleOfBox, labelNames } from "./convert.ts";
 import { materialOf } from "./look.ts";
 import type { Look } from "./look.ts";
 import type { V3, VoxelModel } from "./voxels.ts";
+import { datan2, dcbrt, dcos, dsin } from "@keel-engine/core";
 
 export type Axis = "x" | "y" | "z";
 export type Motion =
@@ -58,7 +59,7 @@ export interface ObjectAnimation {
 interface Xf { m: number[]; t: V3 }
 const IDENT = (): Xf => ({ m: [1, 0, 0, 0, 1, 0, 0, 0, 1], t: [0, 0, 0] });
 const rotAbout = (axis: Axis, a: number): number[] => {
-  const c = Math.cos(a), s = Math.sin(a);
+  const c = dcos(a), s = dsin(a);
   // (Right-handed: about y, +a turns +z toward +x -- the frame's yaw.)
   return axis === "x" ? [1, 0, 0, 0, c, -s, 0, s, c] : axis === "y" ? [c, 0, s, 0, 1, 0, -s, 0, c] : [c, -s, 0, s, c, 0, 0, 0, 1];
 };
@@ -148,11 +149,11 @@ export function objectRig(model: VoxelModel, animation: ObjectAnimation): Object
       if (mo.group !== g) continue;
       const ph = "phase" in mo ? mo.phase ?? 0 : 0;
       switch (mo.kind) {
-        case "hinge": { const k = 0.5 - 0.5 * Math.cos(2 * Math.PI * ((mo.hz ?? 1 / clip.period) * t + ph)); xf = compose(turnAbout(mo.axis ?? "y", (mo.from ?? 0) + (mo.to - (mo.from ?? 0)) * k, [...(mo.pivot ?? defaultPivot(g))] as V3), xf); break; }
+        case "hinge": { const k = 0.5 - 0.5 * dcos(2 * Math.PI * ((mo.hz ?? 1 / clip.period) * t + ph)); xf = compose(turnAbout(mo.axis ?? "y", (mo.from ?? 0) + (mo.to - (mo.from ?? 0)) * k, [...(mo.pivot ?? defaultPivot(g))] as V3), xf); break; }
         case "pivot": { const k = u01 * u01 * (3 - 2 * u01); xf = compose(turnAbout(mo.axis ?? "y", mo.angle * k, [...(mo.pivot ?? defaultPivot(g))] as V3), xf); break; }
         case "spin": xf = compose(turnAbout(mo.axis ?? "y", 2 * Math.PI * (mo.hz * t + ph), [...(mo.pivot ?? defaultPivot(g))] as V3), xf); break;
-        case "sway": xf = compose(turnAbout(mo.axis ?? "z", mo.amp * Math.sin(2 * Math.PI * (mo.hz * t + ph)), [...(mo.pivot ?? defaultPivot(g))] as V3), xf); break;
-        case "bob": { const d = mo.amp * Math.sin(2 * Math.PI * (mo.hz * t + ph)); const tt: V3 = [0, 0, 0]; tt[AX[mo.axis ?? "y"]] = d; xf = compose({ m: IDENT().m, t: tt }, xf); break; }
+        case "sway": xf = compose(turnAbout(mo.axis ?? "z", mo.amp * dsin(2 * Math.PI * (mo.hz * t + ph)), [...(mo.pivot ?? defaultPivot(g))] as V3), xf); break;
+        case "bob": { const d = mo.amp * dsin(2 * Math.PI * (mo.hz * t + ph)); const tt: V3 = [0, 0, 0]; tt[AX[mo.axis ?? "y"]] = d; xf = compose({ m: IDENT().m, t: tt }, xf); break; }
         case "wave": wave = mo; break;
         case "flicker": { const rate = mo.rate ?? 8; lit = hash(Math.floor(t * rate), mo.seed ?? 7) < (mo.duty ?? 0.8); break; }
       }
@@ -216,16 +217,16 @@ export function objectRig(model: VoxelModel, animation: ObjectAnimation): Object
           sh[al] = 0.5;
           const d = (w.pin ?? "min") === "min" ? sc[al] - gb.lo[al] : gb.hi[al] - sc[al];
           const reach = Math.min(1, d / Math.max(1, (gb.hi[al] - gb.lo[al]) * 0.35));
-          const off = w.amp * reach * Math.sin(2 * Math.PI * (w.hz * t - d / L));
+          const off = w.amp * reach * dsin(2 * Math.PI * (w.hz * t - d / L));
           sc[di] += off;
           const p = applyXf(xf, sc);
-          out.boxes.push({ c: toM(p), h: [sh[0] * u, sh[1] * u, sh[2] * u], yaw: yawOnly ? Math.atan2(m[2]!, m[8]!) : 0, mat });
+          out.boxes.push({ c: toM(p), h: [sh[0] * u, sh[1] * u, sh[2] * u], yaw: yawOnly ? datan2(m[2]!, m[8]!) : 0, mat });
         }
         continue;
       }
       if (yawOnly) {
         // (Turned about y, or tilted a little: the box moves, turned by its heading.)
-        out.boxes.push({ c: toM(applyXf(xf, c)), h: [half[0] * u, half[1] * u, half[2] * u], yaw: Math.atan2(m[2]!, m[8]!) + 0, mat });
+        out.boxes.push({ c: toM(applyXf(xf, c)), h: [half[0] * u, half[1] * u, half[2] * u], yaw: datan2(m[2]!, m[8]!) + 0, mat });
         continue;
       }
       // Turned about x or z: a long box as a capsule, the rest as cells whose centres turn.
@@ -235,7 +236,7 @@ export function objectRig(model: VoxelModel, animation: ObjectAnimation): Object
         out.capsules.push({ a: toM(applyXf(xf, cap.a)), b: toM(applyXf(xf, cap.b)), r: cap.r * u, mat });
         continue;
       }
-      const cell = Math.max(1, Math.ceil(Math.cbrt((b.size[0] * b.size[1] * b.size[2]) / 27)));
+      const cell = Math.max(1, Math.ceil(dcbrt((b.size[0] * b.size[1] * b.size[2]) / 27)));
       for (let z = 0; z < b.size[2]; z += cell) for (let y = 0; y < b.size[1]; y += cell) for (let x = 0; x < b.size[0]; x += cell) {
         const e: V3 = [Math.min(cell, b.size[0] - x), Math.min(cell, b.size[1] - y), Math.min(cell, b.size[2] - z)];
         const cc: V3 = [b.min[0] + x + e[0] / 2, b.min[1] + y + e[1] / 2, b.min[2] + z + e[2] / 2];

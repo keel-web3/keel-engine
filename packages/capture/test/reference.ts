@@ -6,14 +6,33 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { DMATH } from "@keel-engine/core";
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const POC = resolve(process.env["KEEL_POC"] ?? resolve(here, "../../../../keel-pixel-engine"));
 export const hasPoc = existsSync(`${POC}/src/core/rng.js`);
 export const skip = hasPoc ? false : `the proof of concept not found at ${POC}`;
 
+// The proof of concept calls Math.sin, cos, atan2...; the engine's simulation
+// and generators call core's dmath instead (docs/CONVENTIONS.md: bit-identical
+// on every CPU and engine, where this machine's Math is not -- an arm64 Mac's
+// V8 fuses multiply-adds inside fdlibm). So that these tests compare the PORTS,
+// operation for operation and still to the bit, rather than this machine's
+// libm against fdlibm, the reference runs with Math's transcendental functions
+// swapped for dmath's: installed before its first module loads, for the whole
+// test process (node --test runs each test file in its own). Math.hypot stays:
+// dhypot is V8's own algorithm, the same bits.
+const PORTABLE = ["sin", "cos", "tan", "asin", "acos", "atan", "atan2", "exp", "log", "log10", "log2", "pow"] as const;
+let portable = false;
+function usePortableMath(): void {
+  if (portable) return;
+  portable = true;
+  const m = Math as unknown as Record<string, unknown>;
+  for (const k of PORTABLE) m[k] = DMATH[k];
+}
+
 /** A module of the proof of concept ("src/fx/fx.js"), typed as its TypeScript port. */
-export const poc = async <T>(path: string): Promise<T> => (await import(pathToFileURL(`${POC}/${path}`).href)) as T;
+export const poc = async <T>(path: string): Promise<T> => (usePortableMath(), (await import(pathToFileURL(`${POC}/${path}`).href)) as T);
 
 /** A local generator for test inputs (not under test): mulberry32. */
 export function rand(seed: number): () => number {

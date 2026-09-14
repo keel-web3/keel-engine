@@ -5,6 +5,7 @@
 import type { AttributeCapsule, AttributeShape } from "@keel-engine/entity";
 import { defineAttribute } from "@keel-engine/runtime";
 import { amount, axisOf, choose, ring } from "../kit.ts";
+import { dlen } from "@keel-engine/core";
 
 export default defineAttribute<AttributeShape>({
   id: "collar",
@@ -27,7 +28,7 @@ export default defineAttribute<AttributeShape>({
     const out = (k: number): [number, number, number] => [f[0] * k, f[1] * k, f[2] * k];
     if (charm === "bell") { const c = out(1 + 0.42 / snug); capsules.push({ a: c, b: c, r: n * 0.22, role: "metal", part: "collar.bell" }); }
     // (A spike ring takes the studs' place: three spikes round the front and sides.)
-    if (charm === "spikes") for (let k = 0; k < 6; k += 2) { const p = ringOf.capsules[k]!.a as [number, number, number]; const l = Math.hypot(...p) || 1; capsules.push({ a: p, b: [p[0] * (1 + 0.35 / l * n), p[1] * (1 + 0.35 / l * n), p[2] * (1 + 0.35 / l * n)], r: n * 0.06, role: "metal", part: "collar.spike" }); }
+    if (charm === "spikes") for (let k = 0; k < 6; k += 2) { const p = ringOf.capsules[k]!.a as [number, number, number]; const l = dlen(p) || 1; capsules.push({ a: p, b: [p[0] * (1 + 0.35 / l * n), p[1] * (1 + 0.35 / l * n), p[2] * (1 + 0.35 / l * n)], r: n * 0.06, role: "metal", part: "collar.spike" }); }
     if (studs && charm !== "spikes") for (const x of [-0.7, 0.7]) { const c: [number, number, number] = [x * n * snug, f[1] * 0.7, f[2] * 0.7]; capsules.push({ a: c, b: c, r: n * 0.1, role: "detail", part: "collar.stud" }); }
     const boxes = charm === "tag" ? [{ c: out(1 + 0.3 / snug), h: [n * 0.14, n * 0.18, n * 0.04] as [number, number, number], role: "metal" as const, part: "collar.tag" }] : [];
     return { capsules, boxes };

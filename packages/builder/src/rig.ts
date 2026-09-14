@@ -38,6 +38,7 @@ import { contractOf, entityOf, humanoidRig, missingSockets, quadrupedRig, restJo
 import type {
   Bone, Chain, EntitySocket, EntitySpec, HumanoidBody, HumanoidSpec, Plan, QuadrupedBody, QuadrupedSpec, Rig, Skeleton,
 } from "@keel-engine/entity";
+import { datan2, dhypot, dlen } from "@keel-engine/core";
 import { materialOf } from "./look.ts";
 import type { Look } from "./look.ts";
 import { greedyGrid } from "./mesh.ts";
@@ -237,7 +238,7 @@ function findLegs(g: Grid): { y: number; tracks: Track[] } {
     for (let z = 0; z < g.sz; z += 1) for (let x = 0; x < g.sx; x += 1) {
       if (!g.occ(x, y, z) || !grounded[g.at(x, y, z)]) continue;
       let bt: Track | null = null, bd = Infinity;
-      for (const t of tracks) { const d = Math.hypot(x + 0.5 - t.bottomComp.cx, z + 0.5 - t.bottomComp.cz); if (d < bd) { bd = d; bt = t; } }
+      for (const t of tracks) { const d = dhypot(x + 0.5 - t.bottomComp.cx, z + 0.5 - t.bottomComp.cz); if (d < bd) { bd = d; bt = t; } }
       bt!.cells.add(g.at(x, y, z));
     }
   }
@@ -489,13 +490,13 @@ function readHumanoid(g: Grid, legs: { y: number; tracks: Track[] }, unit: numbe
   if (tailCells.length >= 2) {
     // (Base: the tail cells nearest the hips; tip: the farthest.)
     const pts = tailCells.map((i): V3 => [i % sx + 0.5, Math.floor(i / sx) % sy + 0.5, Math.floor(i / (sx * sy)) + 0.5]);
-    const dist = (p: V3): number => Math.hypot(p[0] - cx, p[1] - hipY, p[2] - cz);
+    const dist = (p: V3): number => dhypot(p[0] - cx, p[1] - hipY, p[2] - cz);
     pts.sort((a, b) => dist(a) - dist(b));
     const base = pts[0]!, tip = pts[pts.length - 1]!;
     joints["tail0"] = base;
     joints["tail1"] = [(base[0] + tip[0]) / 2, (base[1] + tip[1]) / 2, (base[2] + tip[2]) / 2];
     joints["tail.tip"] = tip;
-    tail = Math.hypot(tip[0] - base[0], tip[1] - base[1], tip[2] - base[2]) + 0.5;
+    tail = dhypot(tip[0] - base[0], tip[1] - base[1], tip[2] - base[2]) + 0.5;
     why.push(`a tail of ${tailCells.length} cells behind the hips`);
   }
   const headR = (sy - headBottom) / 2;
@@ -519,7 +520,7 @@ function readHumanoid(g: Grid, legs: { y: number; tracks: Track[] }, unit: numbe
   return { region, body, kind, tail: tail * u, joints, legCols, origin, armBottom, fallback: tr.length !== 2 };
 }
 
-const dist3 = (a: V3, b: V3): number => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+const dist3 = (a: V3, b: V3): number => dhypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 
 function readQuadruped(g: Grid, legs: { y: number; tracks: Track[] }, unit: number, why: string[]): Omit<Read, "analysis"> & { joints: Record<string, V3>; legCols: LegColumn[]; origin: V3 } {
   const region = new Map<number, string>();
@@ -660,7 +661,7 @@ function readQuadruped(g: Grid, legs: { y: number; tracks: Track[] }, unit: numb
     pts.sort((a, b) => dist3(a, pelvis) - dist3(b, pelvis));
     const base = pts[0]!, tip = pts[pts.length - 1]!;
     tailLen = dist3(base, tip) + 0.5;
-    tailRise = Math.atan2(tip[1] - base[1], -(tip[2] - base[2]) || 1e-6);
+    tailRise = datan2(tip[1] - base[1], -(tip[2] - base[2]) || 1e-6);
     joints["tail0"] = base;
     joints["tail1"] = lerp3(base, tip, 1 / 3);
     joints["tail2"] = lerp3(base, tip, 2 / 3);
@@ -685,7 +686,7 @@ function readQuadruped(g: Grid, legs: { y: number; tracks: Track[] }, unit: numb
   const legR = (legW / 2) * u;
   const body: QuadrupedBody = {
     shoulderH: shoulderY * u, hipH: hipY * u, ankleH: ankleY * u, bodyR: bodyR * u, legR,
-    H: sy * u, bodyLen: (zF - zH) * u, neckLen: Math.hypot(nv[1], nv[2]) * u || 0.01, neckRise: Math.atan2(nv[1], nv[2]),
+    H: sy * u, bodyLen: (zF - zH) * u, neckLen: dhypot(nv[1], nv[2]) * u || 0.01, neckRise: datan2(nv[1], nv[2]),
     headR: headR * u, w: mean(legCols.map((l) => Math.abs(l.x - cx))) * u,
     upperF: ((shoulderY - ankleY) / 2) * u, lowerF: ((shoulderY - ankleY) / 2) * u,
     upperH: ((hipY - ankleY) / 2) * u, lowerH: ((hipY - ankleY) / 2) * u,
@@ -695,7 +696,7 @@ function readQuadruped(g: Grid, legs: { y: number; tracks: Track[] }, unit: numb
   return { region, body, kind: "animal", tail: tailLen * u, joints, legCols, origin };
 }
 
-const norm3 = (v: V3): V3 => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+const norm3 = (v: V3): V3 => { const l = dhypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
 const lerp3 = (a: V3, b: V3, t: number): V3 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 
 /** Read a model's shape: which body, where its joints are, which cells are what (see the top). */
@@ -743,7 +744,7 @@ function withJoints<B, P extends Plan>(base: Rig<B, P>, abs: Readonly<Record<str
   const chains: Record<string, Chain> = {};
   for (const [k, c] of Object.entries(base.chains)) {
     const l1 = bones[index[c.bones[1]]!]!.off, l2 = bones[index[c.bones[2]]!]!.off;
-    chains[k] = { bones: c.bones, pole: c.pole, poleIn: c.poleIn, lengths: [Math.hypot(...l1), Math.hypot(...l2)] };
+    chains[k] = { bones: c.bones, pole: c.pole, poleIn: c.poleIn, lengths: [dlen(l1), dlen(l2)] };
   }
   return { plan: base.plan, bones, index, children: base.children, chains, body: base.body, top: base.top };
 }
@@ -774,7 +775,7 @@ const segDist = (p: V3, [a, b]: [V3, V3]): number => {
   const ab: V3 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
   const L2 = ab[0] * ab[0] + ab[1] * ab[1] + ab[2] * ab[2];
   const t = L2 > 1e-12 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * ab[0] + (p[1] - a[1]) * ab[1] + (p[2] - a[2]) * ab[2]) / L2)) : 0;
-  return Math.hypot(p[0] - a[0] - ab[0] * t, p[1] - a[1] - ab[1] * t, p[2] - a[2] - ab[2] * t);
+  return dhypot(p[0] - a[0] - ab[0] * t, p[1] - a[1] - ab[1] * t, p[2] - a[2] - ab[2] * t);
 };
 
 /**
@@ -904,7 +905,7 @@ function skinFrom(model: VoxelModel, g: Grid, cellBone: Int16Array, rig: Rig, to
     for (const b of [...limbSet]) {
       const n = count.get(b) ?? 0;
       const [a, e] = segs[b]!;
-      const L = Math.hypot(e[0] - a[0], e[1] - a[1], e[2] - a[2]) / model.unit;
+      const L = dhypot(e[0] - a[0], e[1] - a[1], e[2] - a[2]) / model.unit;
       const r = Math.sqrt(n / Math.max(1, L) / Math.PI);
       if (!n || L < 3.2 * r) limbSet.delete(b);
     }
@@ -933,7 +934,7 @@ function skinFrom(model: VoxelModel, g: Grid, cellBone: Int16Array, rig: Rig, to
   for (const [bone, list] of capsuleCells) {
     const [a, e] = segs[bone]!;
     let dir: V3 = [e[0] - a[0], e[1] - a[1], e[2] - a[2]];
-    if (Math.hypot(...dir) < 1e-9) dir = [0, -1, 0];
+    if (dlen(dir) < 1e-9) dir = [0, -1, 0];
     dir = norm3(dir);
     const pts = list.map((i) => toRig([(i % g.sx) + g.d.min[0] + 0.5, (Math.floor(i / g.sx) % g.sy) + g.d.min[1] + 0.5, Math.floor(i / (g.sx * g.sy)) + g.d.min[2] + 0.5]));
     const cen: V3 = [mean(pts.map((p) => p[0])), mean(pts.map((p) => p[1])), mean(pts.map((p) => p[2]))];
@@ -976,7 +977,7 @@ export function poseVoxels(rig: { readonly skin: VoxelSkin } | { readonly voxel:
     const m = b.m;
     // (The renderer turns boxes about y only: the bone's heading, from its front -- or its right, when its front points up or down.)
     const fx = m[2], fz = m[8];
-    const yaw = Math.hypot(fx, fz) > 0.3 ? Math.atan2(fx, fz) : Math.atan2(m[0], m[6]) - Math.PI / 2;
+    const yaw = dhypot(fx, fz) > 0.3 ? datan2(fx, fz) : datan2(m[0], m[6]) - Math.PI / 2;
     out.boxes.push({ c: W(bx.bone, bx.c), h: [...bx.h], yaw, mat: materialOf(table, bx.role) });
   }
   for (const c of skin.capsules) {
@@ -1009,7 +1010,7 @@ export function jointError(rig: VoxelRig, truth: Readonly<Record<string, readonl
   for (const [k, t] of Object.entries(truth)) {
     const j = rest[k];
     if (!j) continue;
-    each[k] = Math.hypot(j[0] / u + O[0] - t[0], j[1] / u + O[1] - t[1], j[2] / u + O[2] - t[2]);
+    each[k] = dhypot(j[0] / u + O[0] - t[0], j[1] / u + O[1] - t[1], j[2] / u + O[2] - t[2]);
   }
   const vals = Object.values(each);
   const worst = Object.entries(each).sort((a, b) => b[1] - a[1])[0];

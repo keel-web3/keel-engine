@@ -8,7 +8,7 @@ export const manifest = defineManifest({
   id: "packs/animals",
   version: "1.0.0",
   kind: "pack",
-  needs: ["keel/runtime@^0.1", "keel/entity@^0.1"],
+  needs: ["keel/runtime@^0.1", "keel/core@^0.1", "keel/entity@^0.1"],
   provides: ["body/quadruped@1.0.0", "attributes/wearable@1.0.0"],
   compatible: ["packs/cloth@^1"],
   contents: contentsOf(pack),

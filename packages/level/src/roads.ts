@@ -8,6 +8,7 @@
 import { DX4, DZ4, FLAG, cornerLevels, edgeLevels, opposite4 } from "@keel-engine/terrain";
 import type { Terrain } from "@keel-engine/terrain";
 import type { Tile } from "./document.ts";
+import { dhypot } from "@keel-engine/core";
 
 export interface RoadOptions {
   /** Longest water crossing (default 8). */
@@ -126,7 +127,7 @@ export function roadPath(t: Terrain, from: Tile, to: Tile, { maxSpan = 8, avoid 
 export function roadNetwork(points: readonly Tile[], extra = 0): Array<[number, number]> {
   const n = points.length;
   const edges: Array<[number, number, number]> = [];
-  for (let a = 0; a < n; a += 1) for (let b = a + 1; b < n; b += 1) edges.push([Math.hypot(points[a]![0] - points[b]![0], points[a]![1] - points[b]![1]), a, b]);
+  for (let a = 0; a < n; a += 1) for (let b = a + 1; b < n; b += 1) edges.push([dhypot(points[a]![0] - points[b]![0], points[a]![1] - points[b]![1]), a, b]);
   edges.sort((x, y) => x[0] - y[0] || x[1] - y[1] || x[2] - y[2]);
   const parent = Array.from({ length: n }, (_, i) => i);
   const find = (x: number): number => { while (parent[x] !== x) { parent[x] = parent[parent[x]!]!; x = parent[x]!; } return x; };

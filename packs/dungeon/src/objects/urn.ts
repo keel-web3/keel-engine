@@ -3,6 +3,7 @@
 import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import { ACTS, bool, num, roles, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "urn",
@@ -22,7 +23,7 @@ export default defineStyledObject({
     if (form === "broken") {
       solids.push(solid.ball("stone", [0, H * 0.22, 0], [r, H * 0.22, r], { name: "belly" }));
       solids.push(solid.cylinder("dark", [0, H * 0.4, 0], r * 0.7, 0.02, { name: "inside", collide: false, sides: 8 }));
-      for (let i = 0; i < 4; i += 1) { const a = J.between(0, 6.28); solids.push(solid.box("stone", [Math.sin(a) * r * 1.6, 0.03, Math.cos(a) * r * 1.6], [r * 0.3, 0.03, r * 0.22], a, { name: "shard", collide: false })); }
+      for (let i = 0; i < 4; i += 1) { const a = J.between(0, 6.28); solids.push(solid.box("stone", [dsin(a) * r * 1.6, 0.03, dcos(a) * r * 1.6], [r * 0.3, 0.03, r * 0.22], a, { name: "shard", collide: false })); }
       return { solids, front: null };
     }
     solids.push(solid.cylinder("stone", [0, 0, 0], r * 0.5, H * 0.08, { name: "foot", sides: 8 }));

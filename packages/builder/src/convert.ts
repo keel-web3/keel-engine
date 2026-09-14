@@ -23,6 +23,7 @@ import type { VoxelBox } from "./mesh.ts";
 import { applyVariation, variationChoices } from "./variation.ts";
 import type { VariationRules } from "./variation.ts";
 import type { V3, VoxelModel } from "./voxels.ts";
+import { datan2, dcos, dsin } from "@keel-engine/core";
 
 /** A box in metres (own frame), with what it plays and where it came from. */
 export interface MetreBox {
@@ -122,7 +123,7 @@ export function partsFromVoxels(model: VoxelModel, { smooth = {}, pivot }: PartO
 /** The model's solids for the pixel renderer (setWorld), placed at `pos` turned by `yaw`, materials from a look. */
 export function renderSolids(model: VoxelModel, look: Pick<Look, "table">, { pos = [0, 0, 0], yaw = 0, smooth = {} }: { pos?: readonly number[]; yaw?: number; smooth?: SmoothOptions } = {}): { boxes: { c: V3; h: V3; yaw: number; mat: number }[]; capsules: { a: V3; b: V3; r: number; mat: number }[] } {
   const s = smoothed(metreBoxes(model), smooth);
-  const co = Math.cos(yaw), si = Math.sin(yaw);
+  const co = dcos(yaw), si = dsin(yaw);
   // (Own frame -> world: turned about y by yaw, then moved; core frame, x' = c x + s z, z' = -s x + c z.)
   const W = (p: V3): V3 => [pos[0]! + co * p[0] + si * p[2], pos[1]! + p[1], pos[2]! - si * p[0] + co * p[2]];
   return {
@@ -166,7 +167,7 @@ export interface ObjectOptions {
 }
 
 // (+ 0: no -0 fronts.)
-const snapQuarter = (yaw: number): number => { const q = Math.round(yaw / (Math.PI / 2)) * (Math.PI / 2); return (Math.abs(q - yaw) < 0.35 ? Math.atan2(Math.sin(q), Math.cos(q)) : yaw) + 0; };
+const snapQuarter = (yaw: number): number => { const q = Math.round(yaw / (Math.PI / 2)) * (Math.PI / 2); return (Math.abs(q - yaw) < 0.35 ? datan2(dsin(q), dcos(q)) : yaw) + 0; };
 
 /** An object definition from a voxel model (see ObjectOptions). */
 export function objectFromVoxels(model: VoxelModel, opts: ObjectOptions = {}): ObjectDef<VoxelObjectMeta> {

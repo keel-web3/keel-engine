@@ -17,6 +17,7 @@ import type { QuadrupedSpec, Skeleton, Species } from "@keel-engine/entity";
 import { add, bones, clamp, lerp, mix } from "../kit.ts";
 import type { Pen, V3 } from "../kit.ts";
 import type { PlanDef } from "./common.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 // The mount's parts, renamed into this plan's groups: its head is body, its eyes and nose dark (foot), its ears tail.
 const MOUNT_PART: Readonly<Record<string, string>> = { body: "body", chest: "body.chest", neck: "neck", head: "body.head", snout: "body.snout", nose: "foot.nose", eye: "foot.eye", ear: "tail.ear", innerEar: "tail.inner", antler: "paw.antler", collar: "hips.collar", upper: "upper", lower: "lower", paw: "paw", tail: "tail" };
@@ -129,7 +130,7 @@ export const rider: PlanDef = {
       const F = (x: number, y: number, z: number): V3 => add(handR, B.D("chest", [x, y, z]));
       if (held === "lance") {
         const tilt = mix(0.5, 0.12, clamp(thrust, 0, 1));
-        const dir: V3 = [0, Math.sin(tilt), Math.cos(tilt)];
+        const dir: V3 = [0, dsin(tilt), dcos(tilt)];
         P.cap("accessory", F(-dir[0] * 0.25 * rk, -dir[1] * 0.25 * rk, -dir[2] * 0.25 * rk), F(0, dir[1] * 0.85 * rk, dir[2] * 0.85 * rk), 0.017 * rk);
         P.cap("collar.pennant", F(0, dir[1] * 0.55 * rk + 0.02 * rk, dir[2] * 0.55 * rk), F(0.0, dir[1] * 0.72 * rk + 0.05 * rk, dir[2] * 0.72 * rk - 0.08 * rk), 0.04 * rk);
       } else if (held === "banner") {

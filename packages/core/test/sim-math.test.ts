@@ -1,0 +1,168 @@
+// The rule, enforced: simulation and generation use core's dmath; presentation
+// may use Math (docs/CONVENTIONS.md, "Deterministic math").
+//
+// Math's transcendental functions give different last bits on different CPUs
+// and engines (an arm64 Mac's V8 against x64's, Firefox's against Chrome's),
+// and `**` with anything but a 2 is pow. On a path whose results are stored,
+// compared, replayed or hashed -- a body's step, a unit's recipe, a level's
+// layout, a codec's numbers -- one bit is a desync. So in the files below, no
+// Math.sin/cos/tan/asin/acos/atan/atan2/sinh/cosh/tanh/exp/expm1/log/log1p/
+// log2/log10/pow/cbrt/hypot, no Math.random (runs are replayed: draw from a
+// seeded stream), and no `**` except `2 ** n` and `x ** 2` (exact everywhere).
+//
+// A new file under a SIM directory is covered the moment it exists. A file that
+// really is presentation goes in PRESENTATION with the reason; anything else
+// that fails here wants the d-function (dsin, dcos, datan2, dhypot, dlen, dpow...).
+
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = resolve(fileURLToPath(new URL(".", import.meta.url)), "../../..");
+
+/** Simulation and generation: every .ts under these (recursively). */
+const SIM = [
+  "packages/physics/src", // the character body, solids
+  "packages/world/src", // the world step: entities, bodies, streams, rules
+  "packages/entity/src", // rigs, bodies, clips, the animator (state from a body), fronts, species
+  "packages/level/src", // generation, scatter, roads, fairness, ops
+  "packages/object/src", // designs, styles, the catalogue (what shape a thing is), colliders
+  "packages/scene/src", // the kit, front detection, bounds
+  "packages/builder/src", // generated voxel things, rigs, conversions
+  "packages/codec/src", // the canonical bytes: fixed-point and decimal numbers
+  "packs", // every pack's generators (src/ only: see below)
+  "ai", // brains and steering
+  "systems",
+];
+/** Single files that are simulation or generation in an otherwise mixed package. */
+const SIM_FILES = [
+  "packages/core/src/frame.ts", // the frame convention: yaws, local <-> world
+  "packages/core/src/rng.ts", // seeded streams
+  "packages/core/src/look.ts", // looks: which look a unit wears (pools decide by distance)
+  "packages/core/src/dmath.ts",
+  "packages/audio/src/score.ts", // a music plan is data
+  "packages/audio/src/nocturnes.ts",
+  "packages/audio/src/store.ts",
+];
+/** In a SIM directory, but allowed Math -- with the reason. */
+const PRESENTATION: Record<string, string> = {
+  "packages/object/src/sway.ts": "wind: a sprite's per-frame bend, drawn and never stored",
+  // (Generation, really: rotations and placement. But NOCTURNES builds its still lifes with this kit
+  // (src/kit.js, src/parts.js) and its published output must not move -- dmath here moved genome #13 in
+  // the guard. The kit's rotations stay on Math until the owner re-captures NOCTURNES or it keeps a copy.)
+  "packages/scene/src/kit.ts": "NOCTURNES renders with it: guard-pinned published art",
+};
+/**
+ * Simulation and generation that another session was editing when the rule
+ * landed (terrain flow fields and generation, worldgen noise/climate/placement,
+ * bake population and hybrid derivation): reported below, not yet enforced.
+ * Move each into SIM once it is converted.
+ */
+const PENDING = ["packages/terrain/src", "packages/worldgen/src", "packages/bake/src"];
+// (Everything else is presentation or tooling and may use Math: camera, view,
+// render, particles, ui, input, capture, import, keel, runtime; audio's
+// synthesis; and core's math, palette, dither, sdf, quantize and gif, which
+// NOCTURNES renders with and whose published bytes must not move.)
+
+const FORBIDDEN = /\bMath\.(sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh|asinh|acosh|atanh|exp|expm1|log|log1p|log2|log10|pow|cbrt|hypot|random)\b/g;
+
+function tsFiles(dir: string): string[] {
+  const abs = join(root, dir);
+  if (!existsSync(abs)) return [];
+  const out: string[] = [];
+  const walk = (d: string): void => {
+    for (const name of readdirSync(d)) {
+      if (name === "node_modules" || name === "dist" || name === "test" || name === "tools" || name === "keel") continue;
+      const p = join(d, name);
+      if (statSync(p).isDirectory()) walk(p);
+      else if (name.endsWith(".ts") && !name.endsWith(".d.ts")) out.push(relative(root, p));
+    }
+  };
+  walk(abs);
+  // (packs/ai/systems: only their src/ -- tools and tests are neither.)
+  return out.filter((f) => !/^(packs|ai|systems)\//.test(f) || /^(packs|ai|systems)\/[^/]+\/src\//.test(f));
+}
+
+/** Code only: comments and string contents blanked (template literals' ${...} kept). */
+function codeOf(src: string): string {
+  let out = "";
+  let i = 0;
+  const depth: number[] = []; // template nesting: brace depth at each ${
+  let braces = 0;
+  while (i < src.length) {
+    const c = src[i]!;
+    const n = src[i + 1];
+    if (c === "/" && n === "/") { while (i < src.length && src[i] !== "\n") i += 1; continue; }
+    if (c === "/" && n === "*") { const e = src.indexOf("*/", i + 2); i = e < 0 ? src.length : e + 2; out += " "; continue; }
+    if (c === "\"" || c === "'") {
+      i += 1;
+      while (i < src.length && src[i] !== c) { if (src[i] === "\\") i += 1; i += 1; }
+      i += 1;
+      out += "\"\"";
+      continue;
+    }
+    if (c === "`" || (c === "}" && depth.length && depth[depth.length - 1] === braces)) {
+      if (c === "}") depth.pop();
+      i += 1;
+      while (i < src.length && src[i] !== "`") {
+        if (src[i] === "\\") { i += 2; continue; }
+        if (src[i] === "$" && src[i + 1] === "{") { depth.push(braces); i += 2; break; }
+        i += 1;
+      }
+      if (src[i] === "`") i += 1;
+      out += " ";
+      continue;
+    }
+    if (c === "{") braces += 1;
+    if (c === "}") braces -= 1;
+    out += c;
+    i += 1;
+  }
+  return out;
+}
+
+/** The forbidden uses in a file's code: `line: text`. */
+function offences(file: string): string[] {
+  const src = readFileSync(join(root, file), "utf8");
+  const code = codeOf(src);
+  const lineOf = (at: number): number => code.slice(0, at).split("\n").length;
+  const found: string[] = [];
+  for (const m of code.matchAll(FORBIDDEN)) found.push(`${lineOf(m.index)}: Math.${m[1]}`);
+  for (const m of code.matchAll(/\*\*(?!=)/g)) {
+    const before = code.slice(Math.max(0, m.index - 12), m.index);
+    const after = code.slice(m.index + 2, m.index + 14);
+    const base2 = /(^|[^\w.])2\s*$/.test(before);
+    const square = /^\s*2(?![\w.])/.test(after);
+    if (!base2 && !square) found.push(`${lineOf(m.index)}: ** (pow)`);
+  }
+  return found;
+}
+
+const sim = [...new Set([...SIM.flatMap(tsFiles), ...SIM_FILES])].filter((f) => !(f in PRESENTATION)).sort();
+
+test("sim-math: the rule's own scanner sees what it must and nothing in comments or strings", () => {
+  assert.deepEqual(offences("packages/core/test/sim-math.test.ts").length > 0, true); // (this file names them all, in code, below)
+  const probe = codeOf("a = Math.sin(t) // Math.cos(t)\n/* Math.exp(1) */ s = \"Math.log(2)\"; u = `x ${Math.hypot(1, 2)} y`; v = x ** 2 + 2 ** k + y ** 3;");
+  assert.ok(probe.includes("Math.sin(t)") && probe.includes("Math.hypot(1, 2)") && probe.includes("y ** 3"));
+  assert.ok(!probe.includes("Math.cos") && !probe.includes("Math.exp") && !probe.includes("Math.log"));
+  void [Math.sin, Math.cos, Math.tan, Math.atan2, Math.hypot, Math.exp, Math.log, Math.pow];
+});
+
+test("sim-math: simulation and generation files call no platform-dependent Math", () => {
+  assert.ok(sim.length > 150, `${sim.length} files in scope`);
+  const bad: string[] = [];
+  for (const f of sim) for (const o of offences(f)) bad.push(`${f}:${o}`);
+  assert.deepEqual(bad, [], `platform-dependent math on a sim/generation path (use core's dmath):\n  ${bad.join("\n  ")}`);
+});
+
+test("sim-math: pending conversions (reported, not enforced yet)", (t) => {
+  const files = [...new Set(PENDING.flatMap(tsFiles))].sort();
+  let total = 0;
+  for (const f of files) {
+    const o = offences(f);
+    if (o.length) { total += o.length; t.diagnostic(`${f}: ${o.length} (${[...new Set(o.map((x) => x.split(": ")[1]))].join(", ")})`); }
+  }
+  t.diagnostic(`${total} platform-dependent call(s) left in ${PENDING.join(", ")}`);
+});

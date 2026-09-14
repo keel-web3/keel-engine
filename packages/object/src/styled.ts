@@ -25,7 +25,7 @@
 // reuses a handful of shapes (bake cache hits), and every instance still
 // wears its own look.
 
-import { createRoll, deriveSeed, stream } from "@keel-engine/core";
+import { createRoll, deriveSeed, dhypot, stream } from "@keel-engine/core";
 import type { Look, LookRoles, Stream, Vec3 } from "@keel-engine/core";
 import type { Choice, ContentEntry, Pins } from "@keel-engine/runtime";
 import { canonical, collidersOfDesign, drawnIn, hashText } from "./design.ts";
@@ -394,7 +394,7 @@ export function bakeDesignOf(built: BuiltObject, { swayFrames = 0 }: { swayFrame
   const parts = built.def.parts.filter((p) => p.render !== false);
   const b = built.def.bounds;
   const height = Math.max(0.01, b[4]);
-  const radius = Math.max(0.01, Math.hypot(Math.max(Math.abs(b[0]), Math.abs(b[3])), Math.max(Math.abs(b[2]), Math.abs(b[5]))));
+  const radius = Math.max(0.01, dhypot(Math.max(Math.abs(b[0]), Math.abs(b[3])), Math.max(Math.abs(b[2]), Math.abs(b[5]))));
   const slot = (p: ObjectPart): number => slotOf(built.roles, (p as { role?: string }).role ?? String(p.mat));
   const poseOf = (frame: number | null): ReturnType<StyledBakeDesign["pose"]> => {
     const out: ReturnType<StyledBakeDesign["pose"]> = { boxes: [], wedges: [], capsules: [] };

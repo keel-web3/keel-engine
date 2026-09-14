@@ -207,7 +207,8 @@ export function gridOf(n: FixedNode): Grid {
   const lo = near(n.min / n.step) ?? Math.ceil(n.min / n.step);
   const hi = near(n.max / n.step) ?? Math.floor(n.max / n.step);
   let places = -1;
-  if (den) for (let p = 0; p <= 15; p += 1) if (10 ** p % den === 0) { places = p; break; }
+  // (Powers of ten by exact integer products, not `**`: pow's last bit is the engine's to choose.)
+  if (den) for (let p = 0, ten = 1; p <= 15; p += 1, ten *= 10) if (ten % den === 0) { places = p; break; }
   const g: Grid = { lo, hi, bits: bitsFor(hi - lo + 1), den, step: n.step, places, value, units };
   GRIDS.set(n, g);
   return g;

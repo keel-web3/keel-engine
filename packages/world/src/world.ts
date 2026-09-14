@@ -42,7 +42,7 @@ import { baseRecipes, createParticles } from "@keel-engine/particles";
 import type { ParticleState, ParticleView, Particles, Recipes } from "@keel-engine/particles";
 import { buildPieceFrom, PIECE_KEYS, placeObject, settle, worldAabb, worldColliders, worldRails } from "@keel-engine/object";
 import type { ObjectDef, ObjectInstance, PieceContexts, PieceDef, PieceKey, Support, WorldBox } from "@keel-engine/object";
-import { rampForTarget } from "@keel-engine/core";
+import { datan2, dcos, dhypot, dsin, rampForTarget } from "@keel-engine/core";
 import { WORLD_SNAPSHOT, decode, encode } from "@keel-engine/codec";
 import { createSettings, parseLocks } from "./settings.ts";
 import type { Settings, SettingsJSON, Thing } from "./settings.ts";
@@ -740,7 +740,7 @@ export function createWorld({
     let r = 0;
     for (const c of caps) {
       y1 = Math.max(y1, c.a[1] + c.r, c.b[1] + c.r);
-      r = Math.max(r, Math.hypot(c.a[0], c.a[2]) + c.r, Math.hypot(c.b[0], c.b[2]) + c.r);
+      r = Math.max(r, dhypot(c.a[0], c.a[2]) + c.r, dhypot(c.b[0], c.b[2]) + c.r);
     }
     return { height: y1, radius: Math.min(r, y1 * 0.6) };
   }
@@ -851,7 +851,7 @@ export function createWorld({
           const sp = ent.tuning.runSpeed ?? 3;
           body.vel = [ent.intent.move[0] * sp, 0, ent.intent.move[1] * sp];
           body.pos = [body.pos[0] + body.vel[0] * dt, body.pos[1], body.pos[2] + body.vel[2] * dt];
-          if (Math.hypot(body.vel[0], body.vel[2]) > 0.05) body.facing = Math.atan2(body.vel[0], body.vel[2]);
+          if (dhypot(body.vel[0], body.vel[2]) > 0.05) body.facing = datan2(body.vel[0], body.vel[2]);
           continue;
         }
         body.step(dt, ent.intent);
@@ -927,7 +927,7 @@ export function createWorld({
     const b = s.bounds as readonly number[];
     const mid: Vec3 = [(b[0]! + b[3]!) / 2, (b[1]! + b[4]!) / 2, (b[2]! + b[5]!) / 2];
     const marks: Vec3[] = [mid, [mid[0], b[4]!, mid[2]], [b[0]!, mid[1], mid[2]], [b[3]!, mid[1], mid[2]], [mid[0], mid[1], b[2]!], [mid[0], mid[1], b[5]!]];
-    const seen = (from: Vec3, to: Vec3): boolean => { const d = Math.hypot(to[0] - from[0], to[1] - from[1], to[2] - from[2]) || 1; return sphereCast(cw, from, to, 0.02) / d >= 0.97; };
+    const seen = (from: Vec3, to: Vec3): boolean => { const d = dhypot(to[0] - from[0], to[1] - from[1], to[2] - from[2]) || 1; return sphereCast(cw, from, to, 0.02) / d >= 0.97; };
     let best: { t: number; score: number } | null = null;
     for (const t of [rig.turn, base, -base, base * 1.8, -base * 1.8, 0]) {
       const v = frameView(s, { turn: t, elevation: rig.opt.elevation, fov: cam.baseFov, aspect: cam.aspect, fill });
@@ -1112,8 +1112,8 @@ export function createWorld({
       if (settings.get("show", thing) === false) continue;
       const primary = inst.def.parts[0]?.mat;
       const { pos, yaw, scale } = inst.transform;
-      const c = Math.cos(yaw);
-      const s = Math.sin(yaw);
+      const c = dcos(yaw);
+      const s = dsin(yaw);
       const W = (p: Vec3Like): Vec3 => [pos[0] + (p[0] * c + p[2] * s) * scale, pos[1] + p[1] * scale, pos[2] + (-p[0] * s + p[2] * c) * scale];
       const id = String(inst.id);
       for (const p of inst.def.parts) {
@@ -1171,7 +1171,7 @@ export function createWorld({
     // (The camera in the subject's face hides it -- first person, an arm pulled right in -- but a frame shot is there to show it.)
     const hide = cam.hidesSubject && cam.mode !== "frame";
     const list = [...entities.values()].filter((e) => settings.get("show", e) !== false && !(hide && e.id === focusId));
-    const far = (e: WorldEntity): number => (e.id === focusId ? -1 : Math.hypot(e.body.pos[0] - view.eye[0], e.body.pos[1] - view.eye[1], e.body.pos[2] - view.eye[2]));
+    const far = (e: WorldEntity): number => (e.id === focusId ? -1 : dhypot(e.body.pos[0] - view.eye[0], e.body.pos[1] - view.eye[1], e.body.pos[2] - view.eye[2]));
     list.sort((a, b) => far(a) - far(b) || (a.id < b.id ? -1 : 1));
     for (let i = 0; i < list.length; i += 1) {
       const ent = list[i]!;

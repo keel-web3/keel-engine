@@ -3,6 +3,7 @@
 import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import { WIND, canopy, num, roles, scatter, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 const FORM = { round: [1, 0.85, 1], wide: [1.35, 0.7, 1.1], tall: [0.8, 1.3, 0.8] } as const;
 
@@ -25,7 +26,7 @@ export default defineStyledObject({
     // (The middle collides as a low box: you walk round a bush, not through it.)
     solids[0] = { ...solids[0]!, collide: true };
     // (Stems at its foot, under the leaves.)
-    for (let i = 0; i < 3; i += 1) { const a = (i / 3) * Math.PI * 2 + 0.4; solids.push(solid.capsule("bark", [Math.sin(a) * s * 0.06, s * 0.04, Math.cos(a) * s * 0.06], [Math.sin(a) * R[0] * 0.5, R[1] * 0.7, Math.cos(a) * R[2] * 0.5], s * 0.035, { name: "stem", collide: false })); }
+    for (let i = 0; i < 3; i += 1) { const a = (i / 3) * Math.PI * 2 + 0.4; solids.push(solid.capsule("bark", [dsin(a) * s * 0.06, s * 0.04, dcos(a) * s * 0.06], [dsin(a) * R[0] * 0.5, R[1] * 0.7, dcos(a) * R[2] * 0.5], s * 0.035, { name: "stem", collide: false })); }
     const bloom = str(v["bloom"]);
     if (bloom === "berries") solids.push(...scatter("fruit", J, c, R, 7, s * 0.06, { group: "bush" }));
     if (bloom === "blossom") solids.push(...scatter("blossom", J, c, R, 9, s * 0.075, { below: 0.1, group: "bush" }));

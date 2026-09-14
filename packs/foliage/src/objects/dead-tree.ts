@@ -5,6 +5,7 @@ import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
 import { bool, dirOf, num, roles, trunk } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "dead-tree",
@@ -40,8 +41,8 @@ export default defineStyledObject({
     // (A hollow knot facing out on the lean side, and a scrap of moss at the foot.)
     const knot = t.at(0.3);
     const kr = t.radiusAt(0.3);
-    solids.push(solid.ball("dark", [knot[0] + Math.sin(leanYaw) * kr * 0.75, knot[1], knot[2] + Math.cos(leanYaw) * kr * 0.75], kr * 0.45, { name: "hollow", collide: false }));
-    solids.push(solid.ball("moss", [Math.sin(leanYaw + 2) * r0 * 0.9, r0 * 0.36, Math.cos(leanYaw + 2) * r0 * 0.9], [r0 * 0.9, r0 * 0.35, r0 * 0.9], { name: "moss", collide: false }));
+    solids.push(solid.ball("dark", [knot[0] + dsin(leanYaw) * kr * 0.75, knot[1], knot[2] + dcos(leanYaw) * kr * 0.75], kr * 0.45, { name: "hollow", collide: false }));
+    solids.push(solid.ball("moss", [dsin(leanYaw + 2) * r0 * 0.9, r0 * 0.36, dcos(leanYaw + 2) * r0 * 0.9], [r0 * 0.9, r0 * 0.35, r0 * 0.9], { name: "moss", collide: false }));
     return { solids, front: null, sockets: { base: { kind: "anchor", pos: [0, 0, 0] }, perch: { kind: "anchor", pos: t.top } } };
   },
 });

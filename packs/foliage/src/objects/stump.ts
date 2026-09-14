@@ -3,6 +3,7 @@
 import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import { bool, num, roles } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "stump",
@@ -21,11 +22,11 @@ export default defineStyledObject({
     const n = num(v["roots"]);
     for (let i = 0; i < n; i += 1) {
       const a = (i / n) * Math.PI * 2 + J.between(-0.3, 0.3);
-      solids.push(solid.capsule("bark", [Math.sin(a) * r * 0.7, H * 0.35, Math.cos(a) * r * 0.7], [Math.sin(a) * r * 1.6, r * 0.2, Math.cos(a) * r * 1.6], r * 0.2, { name: "root", collide: false }));
+      solids.push(solid.capsule("bark", [dsin(a) * r * 0.7, H * 0.35, dcos(a) * r * 0.7], [dsin(a) * r * 1.6, r * 0.2, dcos(a) * r * 1.6], r * 0.2, { name: "root", collide: false }));
     }
     if (bool(v["mushrooms"])) for (let i = 0; i < 3; i += 1) {
       const a = J.between(0, Math.PI * 2);
-      const p: [number, number, number] = [Math.sin(a) * r * 1.2, 0, Math.cos(a) * r * 1.2];
+      const p: [number, number, number] = [dsin(a) * r * 1.2, 0, dcos(a) * r * 1.2];
       const h = r * J.between(0.3, 0.55);
       solids.push(solid.capsule("stem", [p[0], r * 0.05, p[2]], [p[0], h, p[2]], r * 0.05, { name: "mushroom", collide: false }));
       solids.push(solid.ball("cap", [p[0], h, p[2]], [r * 0.16, r * 0.1, r * 0.16], { name: "mushroom", collide: false }));

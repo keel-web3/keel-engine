@@ -37,7 +37,7 @@ test(`${ID} bundles to a module that reaches only what it needs, and starts on a
   const map = (await linkRecord(me, workspace)).imports;
   const needs = new Set(me.manifest.needs.filter((n) => !n.startsWith("contract:")).map((n) => splitRef(n).name));
   for (const id of Object.values(map)) assert.ok(needs.has(id), `${ID} reaches ${id} without needing it`);
-  assert.deepEqual(Object.values(map).sort(), ["keel/entity", "keel/runtime"]);
+  assert.deepEqual(Object.values(map).sort(), ["keel/core", "keel/entity", "keel/runtime"]);
   const closure = closureOf(ID, workspace);
   const r = resolveModules(closure.map((c) => c.manifest));
   assert.ok(r.ok, r.problems.map((p) => `${p.module}: ${p.detail}`).join("\n"));

@@ -20,7 +20,7 @@
 //   sign                 +z: the display side (the posts behind)
 //   lamp post            +z: where its head reaches out over
 
-import { createRoll, stream } from "@keel-engine/core";
+import { createRoll, datan2, dsin, stream } from "@keel-engine/core";
 import type { Stream, Vec3, Vec3Like } from "@keel-engine/core";
 import { createRegistry, defaultRegistry } from "@keel-engine/scene";
 import type { Builder, PartLike, Realm, Registry } from "@keel-engine/scene";
@@ -185,14 +185,14 @@ function rail(S: Stream, ctx: PieceContexts["rail"] = {}): PieceDef<"rail"> {
   const line: Vec3[] = [];
   for (let k = 0; k <= n; k += 1) {
     const t = k / n;
-    const k2 = ease ? Math.sin(Math.PI * t) ** 2 : Math.sin(Math.PI * t);
+    const k2 = ease ? dsin(Math.PI * t) ** 2 : dsin(Math.PI * t);
     line.push([bend * k2, y0 + rise * k2, length * t]);
   }
   const parts: PartLike[] = [];
   for (let i = 0; i < n; i += 1) parts.push(cap(`bar${i}`, line[i]!, line[i + 1]!, r, { mat: "rail", collide: false }));
   const posts = ctx.posts ?? true;
   if (posts) for (let i = 0; i <= n; i += 3) parts.push(cap(`post${i}`, [line[i]![0], 0.03, line[i]![2]], [line[i]![0], line[i]![1] - r, line[i]![2]], r * 0.6, { mat: "metal", collide: false }));
-  const tan = (i: number, j: number): number => Math.atan2(line[j]![0] - line[i]![0], line[j]![2] - line[i]![2]);
+  const tan = (i: number, j: number): number => datan2(line[j]![0] - line[i]![0], line[j]![2] - line[i]![2]);
   return defineObject({
     key: "rail", tags: ["level", "rail", "wallrun"], front: "+z", parts, rails: [line],
     sockets: {

@@ -13,6 +13,7 @@
   "build": {
     "format": "iife",
     "external": [
+      "@keel-engine/core",
       "@keel-engine/object",
       "@keel-engine/runtime"
     ]

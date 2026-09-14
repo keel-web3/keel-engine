@@ -4,6 +4,7 @@
 import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import { num, roles, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "hive",
@@ -24,8 +25,8 @@ export default defineStyledObject({
       const a = (i / n) * Math.PI * 2 + J.between(-0.25, 0.25);
       const r = S * J.between(0.17, 0.24);
       const d = S * 0.34;
-      solids.push(solid.ball("roof", [Math.sin(a) * d, r * 0.95, Math.cos(a) * d], [r, r * 0.95, r], { name: "chamber" }));
-      solids.push(solid.ball("dark", [Math.sin(a) * (d + r * 0.72), r * 0.45, Math.cos(a) * (d + r * 0.72)], [r * 0.38, r * 0.34, r * 0.38], { name: "opening", collide: false }));
+      solids.push(solid.ball("roof", [dsin(a) * d, r * 0.95, dcos(a) * d], [r, r * 0.95, r], { name: "chamber" }));
+      solids.push(solid.ball("dark", [dsin(a) * (d + r * 0.72), r * 0.45, dcos(a) * (d + r * 0.72)], [r * 0.38, r * 0.34, r * 0.38], { name: "opening", collide: false }));
     }
     // The way in: the biggest opening, on the front.
     solids.push(solid.ball("organic", [0, S * 0.18, S * 0.36], [S * 0.2, S * 0.18, S * 0.14], { name: "lip" }));
@@ -33,12 +34,12 @@ export default defineStyledObject({
     const pods = num(v["pods"]);
     for (let i = 0; i < pods; i += 1) {
       const a = (i / pods) * Math.PI * 2 + 0.4;
-      solids.push(solid.ball("glow", [Math.sin(a) * S * 0.3, S * J.between(0.5, 0.7), Math.cos(a) * S * 0.3], S * 0.06, { name: "pod", collide: false }));
+      solids.push(solid.ball("glow", [dsin(a) * S * 0.3, S * J.between(0.5, 0.7), dcos(a) * S * 0.3], S * 0.06, { name: "pod", collide: false }));
     }
     const top = S * 0.74;
     if (str(v["crown"]) === "spines") for (let i = 0; i < 5; i += 1) {
       const a = (i / 5) * Math.PI * 2;
-      solids.push(solid.capsule("stone", [Math.sin(a) * S * 0.1, top - S * 0.08, Math.cos(a) * S * 0.1], [Math.sin(a) * S * 0.2, top + S * 0.22, Math.cos(a) * S * 0.2], S * 0.03, { name: "spine", group: "crown", collide: false }));
+      solids.push(solid.capsule("stone", [dsin(a) * S * 0.1, top - S * 0.08, dcos(a) * S * 0.1], [dsin(a) * S * 0.2, top + S * 0.22, dcos(a) * S * 0.2], S * 0.03, { name: "spine", group: "crown", collide: false }));
     }
     else {
       solids.push(solid.capsule("organic", [0, top - S * 0.05, 0], [0, top + S * 0.12, 0], S * 0.05, { name: "stalk", group: "crown", collide: false }));

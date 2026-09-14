@@ -6,6 +6,7 @@ import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
 import { WIND, bool, num, roles, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "grass",
@@ -28,9 +29,9 @@ export default defineStyledObject({
       const yaw = (i / n) * Math.PI * 2 + J.between(-0.4, 0.4);
       const h = H * J.between(0.6, 1);
       const out = h * fan * J.between(0.5, 1);
-      const foot: Vec3 = [Math.sin(yaw) * r * 1.5, r, Math.cos(yaw) * r * 1.5];
-      const mid: Vec3 = [Math.sin(yaw) * out * 0.35, h * 0.55, Math.cos(yaw) * out * 0.35];
-      const tip: Vec3 = [Math.sin(yaw) * out, h, Math.cos(yaw) * out];
+      const foot: Vec3 = [dsin(yaw) * r * 1.5, r, dcos(yaw) * r * 1.5];
+      const mid: Vec3 = [dsin(yaw) * out * 0.35, h * 0.55, dcos(yaw) * out * 0.35];
+      const tip: Vec3 = [dsin(yaw) * out, h, dcos(yaw) * out];
       solids.push(solid.capsule("leaf", foot, mid, r, { name: "blade", collide: false }));
       solids.push(solid.capsule("leaf", mid, tip, r * 0.7, { name: "blade", collide: false }));
       if (bool(v["seeds"]) && i % 2 === 0) solids.push(solid.capsule("blossom", tip, [tip[0] * 1.05, tip[1] + H * 0.12, tip[2] * 1.05], r * 1.3, { name: "seed", collide: false }));

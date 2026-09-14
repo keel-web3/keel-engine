@@ -12,7 +12,7 @@
 //
 // Kinds: critter (four legs or two), crate, banner, tree, lamp, windmill.
 
-import { createRoll, deriveSeed, stream } from "@keel-engine/core";
+import { createRoll, dcos, deriveSeed, dhypot, dsin, stream } from "@keel-engine/core";
 import type { Plan } from "@keel-engine/entity";
 import type { Stream } from "@keel-engine/runtime";
 import type { ObjectAnimation } from "./animate.ts";
@@ -213,7 +213,7 @@ function banner(S: Stream, m: VoxelModel): ObjectAnimation {
   else {
     // (A flat disc in the cloth's plane: the emblem waves with it.)
     const r = Math.min(ch, cw) / 3.2, cx = cw / 2 + 1, cy = top - ch / 2 + 1;
-    for (let y = top - ch + 1; y <= top; y += 1) for (let x = 1; x <= cw; x += 1) if (Math.hypot(x + 0.5 - cx, y + 0.5 - cy) <= r) ed.set([x, y, 0], "accent");
+    for (let y = top - ch + 1; y <= top; y += 1) for (let x = 1; x <= cw; x += 1) if (dhypot(x + 0.5 - cx, y + 0.5 - cy) <= r) ed.set([x, y, 0], "accent");
   }
   group(m, "cloth", [1, top - ch + 1, 0], [cw, top, 0]);
   const hz = S.pick([0.5, 0.5, 0.75]);
@@ -231,7 +231,7 @@ function tree(S: Stream, m: VoxelModel): ObjectAnimation {
   const blobs = S.int(2, 4);
   for (let i = 0; i < blobs; i += 1) {
     const a = S.between(0, Math.PI * 2);
-    ed.sphere([c[0] + Math.cos(a) * r * 0.7, c[1] + S.between(-1, 1.5), c[2] + Math.sin(a) * r * 0.7], r * S.between(0.5, 0.75), "secondary");
+    ed.sphere([c[0] + dcos(a) * r * 0.7, c[1] + S.between(-1, 1.5), c[2] + dsin(a) * r * 0.7], r * S.between(0.5, 0.75), "secondary");
   }
   if (S.chance(0.5)) for (let i = 0; i < 5; i += 1) ed.set([Math.round(c[0] + S.between(-r, r) * 0.8), Math.round(c[1] + S.between(-r, r) * 0.6), Math.round(c[2] + r * 0.9)], "accent");
   group(m, "canopy", [-12, th + 1, -12], [12, th + 16, 12]);

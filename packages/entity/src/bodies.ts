@@ -30,7 +30,7 @@
 // A minor version (1.1.0) may ADD sockets, bones or clips; removing or moving
 // one is a major version (2.0.0). Attributes target a range ("body/humanoid@^1").
 
-import { add } from "@keel-engine/core";
+import { add, dcos, dhypot, dsin } from "@keel-engine/core";
 import type { Vec3, Vec3Like } from "@keel-engine/core";
 import type { Socket } from "@keel-engine/runtime";
 import { restJoints } from "./rig.ts";
@@ -161,7 +161,7 @@ export const contractOf = (spec: { readonly plan: Plan }): BodyContract => BODY_
 // ---------------------------------------------------------------- sockets from a spec
 
 interface Site { bone: string; at: Vec3; size: Vec3; out: Vec3; part: string; sits: SocketSits }
-const unit = (v: Vec3Like): Vec3 => { const l = Math.hypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; };
+const unit = (v: Vec3Like): Vec3 => { const l = dhypot(v[0], v[1], v[2]); return [v[0] / l, v[1] / l, v[2] / l]; };
 
 function humanoidSites(spec: HumanoidSpec): Record<string, Site> {
   const B = spec.body;
@@ -203,7 +203,7 @@ function quadrupedSites(spec: QuadrupedSpec): Record<string, Site> {
   // (The head ball: skin.ts's C(0, 0, 0) = [0, 0.25 headR, 0.5 headR] in the head bone's frame.)
   const eyeY = 0.3;
   const nr = Math.min(B.bodyR * 0.55, hr * 0.75);
-  const neckOff: Vec3 = [0, B.neckLen * Math.sin(B.neckRise), B.neckLen * Math.cos(B.neckRise)];
+  const neckOff: Vec3 = [0, B.neckLen * dsin(B.neckRise), B.neckLen * dcos(B.neckRise)];
   const sole = -(B.ankleH - B.pawR);
   const rise = (B.shoulderH - B.hipH) * 0.5;
   const out: Record<string, Site> = {
@@ -238,7 +238,7 @@ function tailSite(spec: EntitySpec, legR: number, bodyR: number): Site | null {
   // (The radius where the two capsules meet: the larger of the two, as the renderer's union draws it.)
   const k = quad ? (T.shape === "bushy" ? 1.25 : 1) : (T.shape === "bushy" ? 1.3 : 1);
   const next = quad ? spec.rig.bones[spec.rig.index["tail2"]!]!.off : spec.rig.bones[spec.rig.index["tail1"]!]!.tip!;
-  const seg = Math.hypot(next[0], next[1], next[2]);
+  const seg = dhypot(next[0], next[1], next[2]);
   return { bone: "tail1", at: [0, 0, 0], size: [2 * r * k, 2 * r * k, seg], out: unit(next), part: quad ? "tail.mid" : "tail", sits: "around" };
 }
 

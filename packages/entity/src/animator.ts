@@ -10,7 +10,7 @@
 //   const saved = anim.save();                 // plain data (JSON-safe)
 //   animator(spec).load(saved);                // carries on exactly where it was
 
-import { rightOf } from "@keel-engine/core";
+import { datan2, dcos, dhypot, dsin, rightOf } from "@keel-engine/core";
 import type { Vec3, Vec3Like } from "@keel-engine/core";
 import { FADES, LAND_TIME, QUAD_GAIT_AT, RUN_FROM, blankPose, blendPoses, clipsFor } from "./clips.ts";
 import type { ClipParams, ClipPose } from "./clips.ts";
@@ -185,15 +185,15 @@ export function animator(spec: EntitySpec, { fade = 0.14 }: AnimatorOptions = {}
       else {
         const prev = st.prevPos ?? body.pos;
         const dy = body.mode === "wall" ? body.pos[1] - prev[1] : 0;
-        dd = Math.hypot(body.pos[0] - prev[0], dy, body.pos[2] - prev[2]);
+        dd = dhypot(body.pos[0] - prev[0], dy, body.pos[2] - prev[2]);
         st.prevPos = [...body.pos];
       }
       // (A teleport -- a respawn -- is not a step.)
       if (dd > reach * 20) dd = 0;
       st.dist += dd;
-      const speed = Math.hypot(body.vel?.[0] ?? 0, body.vel?.[2] ?? 0);
+      const speed = dhypot(body.vel?.[0] ?? 0, body.vel?.[2] ?? 0);
       if (st.facing !== null && dt > 0) {
-        const d = Math.atan2(Math.sin(body.facing - st.facing), Math.cos(body.facing - st.facing));
+        const d = datan2(dsin(body.facing - st.facing), dcos(body.facing - st.facing));
         st.turn += (d / dt - st.turn) * Math.min(1, dt * 10);
       }
       st.facing = body.facing ?? 0;

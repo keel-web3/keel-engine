@@ -22,6 +22,7 @@ import { autoRig } from "./rig.ts";
 import type { RigEdits, VoxelSpec } from "./rig.ts";
 import { loadVoxels, storeVoxels } from "./store.ts";
 import type { VoxelModel } from "./voxels.ts";
+import { datan2, dhypot } from "@keel-engine/core";
 
 type V3 = [number, number, number];
 /** A voxel body's skin on a posed skeleton: pieces by bone (part) and entity role. */
@@ -58,7 +59,7 @@ export function voxelBody(model: VoxelModel | Uint8Array, { rig: edits = {} }: {
         if (!b) continue;
         const q = b.m;
         // (Boxes turn about y only, as poseVoxels turns them: the bone's heading, from its front -- or its right, when its front points up or down.)
-        const yaw = Math.hypot(q[2], q[8]) > 0.3 ? Math.atan2(q[2], q[8]) : Math.atan2(q[0], q[6]) - Math.PI / 2;
+        const yaw = dhypot(q[2], q[8]) > 0.3 ? datan2(q[2], q[8]) : datan2(q[0], q[6]) - Math.PI / 2;
         out.boxes.push({ c: W(bx.bone, bx.c), h: [bx.h[0], bx.h[1], bx.h[2]], yaw, part: bx.bone, role: entityRoleOf(bx.role) });
       }
       for (const c of skin.capsules) {

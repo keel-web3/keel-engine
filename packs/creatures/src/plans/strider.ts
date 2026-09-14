@@ -14,6 +14,7 @@ import { add, bones, clamp, lerp, scale, sub, unit } from "../kit.ts";
 import type { Pen, V3 } from "../kit.ts";
 import type { PlanDef } from "./common.ts";
 import { humanBody, humanSpec } from "./common.ts";
+import { datan2, dcos, dlen, dsin } from "@keel-engine/core";
 
 export const strider: PlanDef = {
   rig: "humanoid",
@@ -81,9 +82,9 @@ export const strider: PlanDef = {
       for (const [s, x] of [["L", -1], ["R", 1]] as const) {
         // The arm's swing forward (radians, in the chest's frame), damped.
         const d = B.into("chest", sub(B.P(`forearm.${s}`), B.P(`upperArm.${s}`)));
-        const swing = clamp(Math.atan2(d[2], -d[1]) * 0.33, -0.35, 0.6);
+        const swing = clamp(datan2(d[2], -d[1]) * 0.33, -0.35, 0.6);
         const sh = add(hc, [x * (hw + 0.03 * S), 0, hd * 0.1]);
-        const fwd: V3 = [0, Math.sin(swing), Math.cos(swing)];
+        const fwd: V3 = [0, dsin(swing), dcos(swing)];
         P.ball(`upperArm.${s}`, sh, 0.05 * S);
         if (weapon === "guns") {
           const pod = add(sh, [x * 0.1 * S, -0.01 * S, 0]);
@@ -109,7 +110,7 @@ export const strider: PlanDef = {
       // so the bend deepens as the rig's step shortens the leg); a long foot forward from the high ankle.
       for (const s of ["L", "R"] as const) {
         const hip = B.P(`thigh.${s}`), ankle = B.P(`foot.${s}`);
-        const d = sub(ankle, hip), dl = Math.hypot(...d);
+        const d = sub(ankle, hip), dl = dlen(d);
         const bend = Math.sqrt(Math.max(0, bone * bone - (dl / 2) ** 2));
         const backDir = unit(sub(B.D("hips", [0, 0, -1]), scale(unit(d), (B.D("hips", [0, 0, -1])[0] * d[0] + B.D("hips", [0, 0, -1])[1] * d[1] + B.D("hips", [0, 0, -1])[2] * d[2]) / Math.max(1e-9, dl))));
         const knee = add(lerp(hip, ankle, 0.5), backDir, bend);

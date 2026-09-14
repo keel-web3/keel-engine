@@ -6,6 +6,7 @@ import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
 import { bool, num, roles, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "mushroom",
@@ -25,9 +26,9 @@ export default defineStyledObject({
       const H = H0 * (i === 0 ? 1 : J.between(0.45, 0.7));
       const yaw = base + (i / n) * Math.PI * 2;
       const off = i === 0 ? 0 : H0 * 0.28;
-      const foot: Vec3 = [Math.sin(yaw) * off, 0, Math.cos(yaw) * off];
+      const foot: Vec3 = [dsin(yaw) * off, 0, dcos(yaw) * off];
       const lean = J.between(0.02, 0.1) * H;
-      const top: Vec3 = [foot[0] + Math.sin(yaw) * lean, H * 0.8, foot[2] + Math.cos(yaw) * lean];
+      const top: Vec3 = [foot[0] + dsin(yaw) * lean, H * 0.8, foot[2] + dcos(yaw) * lean];
       const r = 0.06 + H * 0.06;
       solids.push(solid.cylinder("stem", foot, r * 1.35, r * 1.2, { name: "foot", collide: false }));
       solids.push(solid.capsule("stem", [foot[0], r, foot[2]], top, r, { name: "stem", collide: i === 0 }));
@@ -48,7 +49,7 @@ export default defineStyledObject({
           const a = (s / k) * Math.PI * 2 + J.between(-0.3, 0.3);
           const up = c === "flat" ? R * 0.2 : c === "cone" ? R * 0.5 : R * 0.45;
           const out = c === "flat" ? R * 0.6 : c === "cone" ? R * 0.55 : R * 0.62;
-          solids.push(solid.ball("spot", [top[0] + Math.sin(a) * out, top[1] + up, top[2] + Math.cos(a) * out], R * 0.14, { name: "spot", group: g, collide: false }));
+          solids.push(solid.ball("spot", [top[0] + dsin(a) * out, top[1] + up, top[2] + dcos(a) * out], R * 0.14, { name: "spot", group: g, collide: false }));
         }
       }
     }

@@ -8,7 +8,7 @@
 // its first dot): "head", "eye.L", "upper.M2L" (a leg's upper segment: the
 // legUpper slot), "collar.band3" (a collar-slot band), "tail.tip" (tailTip).
 
-import { createRoll, deriveSeed, stream } from "@keel-engine/core";
+import { createRoll, deriveSeed, dhypot, stream } from "@keel-engine/core";
 import type { Stream, Vec3, Vec3Like } from "@keel-engine/core";
 import { apply, boneToWorld, restJoints, transpose } from "@keel-engine/entity";
 import type { EntitySocket, Rig, Role, Skeleton, SocketSits } from "@keel-engine/entity";
@@ -22,7 +22,7 @@ export const add = (a: Vec3Like, b: Vec3Like, s = 1): V3 => [a[0] + b[0] * s, a[
 export const sub = (a: Vec3Like, b: Vec3Like): V3 => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 export const scale = (a: Vec3Like, s: number): V3 => [a[0] * s, a[1] * s, a[2] * s];
 export const lerp = (a: Vec3Like, b: Vec3Like, t: number): V3 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
-export const len = (a: Vec3Like): number => Math.hypot(a[0], a[1], a[2]);
+export const len = (a: Vec3Like): number => dhypot(a[0], a[1], a[2]);
 export const unit = (a: Vec3Like): V3 => { const l = len(a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
 export const clamp = (x: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, x));
 export const mix = (a: number, b: number, t: number): number => a + (b - a) * t;

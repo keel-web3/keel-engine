@@ -8,7 +8,7 @@ export const manifest = defineManifest({
   id: PACK_ID,
   version: PACK_VERSION,
   kind: "pack",
-  needs: ["keel/runtime@^0.1", "keel/object@^0.1"],
+  needs: ["keel/runtime@^0.1", "keel/core@^0.1", "keel/object@^0.1"],
   provides: ["objects/dungeon@1.0.0", "attributes/dungeon-gear@1.0.0"],
   // (And a hero's gear: a sword and a shield, attributes for two-legged characters' hands.)
   contents: { ...pack.contents(), attributes: contentsOf(gear).attributes },

@@ -20,6 +20,7 @@
 import type { Vec3, Vec3Like } from "@keel-engine/core";
 import { boxDistance, nearestOnRail, wedgeDistance } from "./solids.ts";
 import type { Box, Hit, Rail, Solid, Wedge } from "./solids.ts";
+import { datan2, dcos, dhypot, dsin } from "@keel-engine/core";
 
 /** The body's feel: every number a rule reads. */
 export interface Tuning {
@@ -165,7 +166,7 @@ export interface Character {
 }
 
 const dot = (a: Vec3Like, b: Vec3Like): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-const len = (a: Vec3Like): number => Math.hypot(a[0], a[1], a[2]);
+const len = (a: Vec3Like): number => dhypot(a[0], a[1], a[2]);
 
 interface Beside { d: number; n: Vec3; b: Box }
 
@@ -178,7 +179,7 @@ export function createCharacter({ boxes: boxesIn = [], wedges: wedgesIn = [], ra
     wedges = [...wedgesIn, ...boxesIn.filter((b): b is Wedge => b.kind === "wedge")];
     boxes = boxesIn.filter((b) => b.kind !== "wedge") as Box[];
   }
-  const walkable = Math.cos((K.slopeMax * Math.PI) / 180);
+  const walkable = dcos((K.slopeMax * Math.PI) / 180);
   const body: Character = {
     pos: [spawn[0], spawn[1], spawn[2]], vel: [0, 0, 0], mode: "air", facing: 0, time: 0,
     wall: null, wallFace: null, wallTime: 0, rail: null, railS: 0, railDir: 1, coyote: 0, buffer: 0, sinking: 0,
@@ -248,8 +249,8 @@ export function createCharacter({ boxes: boxesIn = [], wedges: wedgesIn = [], ra
   // A wall to run on: one that rises past the head (a floor's edge is a step), met on a face (not round an edge or an end).
   const runnable = (n: Vec3Like, b: Box): boolean => {
     if (b.c[1] + b.h[1] < body.pos[1] + 1.1) return false;
-    const c = Math.cos(b.yaw ?? 0);
-    const s = Math.sin(b.yaw ?? 0);
+    const c = dcos(b.yaw ?? 0);
+    const s = dsin(b.yaw ?? 0);
     return Math.abs(n[0] * c - n[2] * s) > 0.99 || Math.abs(n[0] * s + n[2] * c) > 0.99;
   };
   // A wall beside the body, within reach of its middle.
@@ -271,8 +272,8 @@ export function createCharacter({ boxes: boxesIn = [], wedges: wedgesIn = [], ra
     body.events.length = 0;
     body.time += dt;
     const move = input.move ?? [0, 0];
-    const mlen = Math.min(1, Math.hypot(move[0], move[1]));
-    const wish: Vec3 | null = mlen > 0.05 ? [move[0] / Math.hypot(move[0], move[1]), 0, move[1] / Math.hypot(move[0], move[1])] : null;
+    const mlen = Math.min(1, dhypot(move[0], move[1]));
+    const wish: Vec3 | null = mlen > 0.05 ? [move[0] / dhypot(move[0], move[1]), 0, move[1] / dhypot(move[0], move[1])] : null;
     if (input.jump) body.buffer = K.buffer; else body.buffer = Math.max(0, body.buffer - dt);
     const hv: Vec3 = [body.vel[0], 0, body.vel[2]];
     const hs = len(hv);
@@ -300,7 +301,7 @@ export function createCharacter({ boxes: boxesIn = [], wedges: wedgesIn = [], ra
       const end = (body.railDir > 0 && at.i === rail.length - 2 && at.t > 0.98) || (body.railDir < 0 && at.i === 0 && at.t < 0.02);
       if (body.buffer > 0) { body.vel[1] = K.jump; body.mode = "air"; body.buffer = 0; body.coyote = 0; emit("jumped"); }
       else if (end) { body.mode = "air"; body.vel[1] += 2; emit("railEnd"); }
-      body.facing = Math.atan2(body.vel[0], body.vel[2]);
+      body.facing = datan2(body.vel[0], body.vel[2]);
       return body;
     }
 
@@ -335,7 +336,7 @@ export function createCharacter({ boxes: boxesIn = [], wedges: wedgesIn = [], ra
         const target = [wish[0] * K.runSpeed * mlen, wish[2] * K.runSpeed * mlen] as const;
         const dx = target[0] - body.vel[0];
         const dz = target[1] - body.vel[2];
-        const dl = Math.hypot(dx, dz);
+        const dl = dhypot(dx, dz);
         const stepA = Math.min(dl, accel * dt);
         // (In the air, don't brake what the run carried: only add toward where it's steered.)
         if (onGround || dl > 0) { body.vel[0] += (dx / (dl || 1)) * stepA; body.vel[2] += (dz / (dl || 1)) * stepA; }
@@ -421,7 +422,7 @@ export function createCharacter({ boxes: boxesIn = [], wedges: wedgesIn = [], ra
       if (hs >= K.skimMin) { body.mode = "skim"; body.pos[1] = waterY; body.vel[1] = 0; emit("skimStart"); }
       else { body.mode = "sink"; body.sinking = 0; emit("splashIn"); }
     }
-    if (hs > 0.5) body.facing = Math.atan2(body.vel[0], body.vel[2]);
+    if (hs > 0.5) body.facing = datan2(body.vel[0], body.vel[2]);
     return body;
   }
   return body;

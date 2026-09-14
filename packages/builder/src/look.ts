@@ -11,7 +11,7 @@
 // are), so roles start at 6; "glow" is emissive and "glow-dim" is the same
 // ramp unlit (what a flickering lamp drops to).
 
-import { oklch } from "@keel-engine/core";
+import { dsin, oklch } from "@keel-engine/core";
 import type { Role as EntityRole } from "@keel-engine/entity";
 import { ROLES } from "./voxels.ts";
 
@@ -44,7 +44,7 @@ function rampAround([L, C, h]: Oklch, n: number): Array<[number, number, number]
   const L0 = Math.max(0.1, L - 0.42), L1 = Math.min(0.98, L + 0.16), c = Math.max(C, 0.015), turn = 12;
   return Array.from({ length: n }, (_, i) => {
     const k = n > 1 ? i / (n - 1) : 0.5;
-    const [r, g, b] = oklch(L0 + (L1 - L0) * k, c * Math.sin(Math.PI * (0.15 + 0.7 * k)), h + turn * (k - 0.5));
+    const [r, g, b] = oklch(L0 + (L1 - L0) * k, c * dsin(Math.PI * (0.15 + 0.7 * k)), h + turn * (k - 0.5));
     return [r, g, b];
   });
 }

@@ -5,6 +5,7 @@ import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
 import { num, post, rail, roles, str } from "../kit.ts";
+import { datan2 } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "ramp",
@@ -29,7 +30,7 @@ export default defineStyledObject({
       // (Voxels a sixth of its rise: a shallow ramp stays a ramp, not a slab.)
       solids, front: "+z", voxel: { unit: Math.max(0.05, Math.min(0.25, H / 6)) },
       sockets: { foot: { kind: "anchor", pos: [0, 0, L / 2], yaw: Math.PI, extent: [W / 2, 0] }, top: { kind: "anchor", pos: [0, H, -L / 2], yaw: Math.PI, extent: [W / 2, 0] } },
-      meta: { slope: { rise: H, run: L, degrees: (Math.atan2(H, L) * 180) / Math.PI } },
+      meta: { slope: { rise: H, run: L, degrees: (datan2(H, L) * 180) / Math.PI } },
     };
   },
 });

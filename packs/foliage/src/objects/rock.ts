@@ -5,6 +5,7 @@
 import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import { num, roles, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "rock",
@@ -34,8 +35,8 @@ export default defineStyledObject({
       for (let i = 0; i < n; i += 1) {
         const a = (i / n) * Math.PI * 2 + J.between(-0.4, 0.4);
         const h = s * J.between(0.25, 0.6);
-        solids.push(solid.box("stone", [Math.sin(a) * s * 0.22, h / 2, Math.cos(a) * s * 0.22], [s * J.between(0.18, 0.3), h / 2, s * J.between(0.14, 0.24)], J.between(0, Math.PI), { name: "shard" }));
-        solids.push(solid.cone("stone", [Math.sin(a) * s * 0.22, h, Math.cos(a) * s * 0.22], s * 0.16, s * 0.2, 0, { name: "shard", collide: false, sides: 4 }));
+        solids.push(solid.box("stone", [dsin(a) * s * 0.22, h / 2, dcos(a) * s * 0.22], [s * J.between(0.18, 0.3), h / 2, s * J.between(0.14, 0.24)], J.between(0, Math.PI), { name: "shard" }));
+        solids.push(solid.cone("stone", [dsin(a) * s * 0.22, h, dcos(a) * s * 0.22], s * 0.16, s * 0.2, 0, { name: "shard", collide: false, sides: 4 }));
       }
       solids.push(solid.ball("stone", [0, s * 0.22, 0], [s * 0.42, s * 0.22, s * 0.38], { name: "rock" }));
       topY = s * 0.5;
@@ -53,12 +54,12 @@ export default defineStyledObject({
     if (moss === "top") solids.push(solid.ball("moss", [0, topY * 0.92, 0], [s * 0.36, s * 0.07, s * 0.32], { name: "moss", collide: false }));
     if (moss === "patchy") for (let i = 0; i < 3; i += 1) {
       const a = J.between(0, Math.PI * 2);
-      solids.push(solid.ball("moss", [Math.sin(a) * s * 0.3, topY * J.between(0.4, 0.8), Math.cos(a) * s * 0.3], [s * 0.14, s * 0.06, s * 0.14], { name: "moss", collide: false }));
+      solids.push(solid.ball("moss", [dsin(a) * s * 0.3, topY * J.between(0.4, 0.8), dcos(a) * s * 0.3], [s * 0.14, s * 0.06, s * 0.14], { name: "moss", collide: false }));
     }
     // (A crystal vein breaking the surface: an advanced resource's tell.)
     if (v["vein"] === true) for (let i = 0; i < 3; i += 1) {
       const a = 0.6 + i * 0.5;
-      solids.push(solid.cone("crystal", [Math.sin(a) * s * 0.3, topY * 0.35, Math.cos(a) * s * 0.3], s * 0.07, s * (0.25 + i * 0.08), 0, { name: "vein", collide: false, sides: 4, steps: 3 }));
+      solids.push(solid.cone("crystal", [dsin(a) * s * 0.3, topY * 0.35, dcos(a) * s * 0.3], s * 0.07, s * (0.25 + i * 0.08), 0, { name: "vein", collide: false, sides: 4, steps: 3 }));
     }
     return { solids, front: null };
   },

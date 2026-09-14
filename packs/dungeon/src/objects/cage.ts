@@ -3,6 +3,7 @@
 import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import { ACTS, bone, chain, num, roles, skull, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "cage",
@@ -23,7 +24,7 @@ export default defineStyledObject({
     solids.push(solid.cylinder("metal", [0, y0 + H - 0.04, 0], R + 0.02, 0.05, { name: "ring", collide: false, sides: 8 }));
     solids.push(solid.cone("metal", [0, y0 + H, 0], R * 0.9, R * 0.7, 0.05, { name: "dome", collide: false, sides: 8 }));
     const bars = 10;
-    for (let i = 0; i < bars; i += 1) { const a = (i / bars) * Math.PI * 2; solids.push(solid.capsule("metal", [Math.sin(a) * R, y0 + 0.04, Math.cos(a) * R], [Math.sin(a) * R, y0 + H - 0.02, Math.cos(a) * R], 0.022, { name: "bar", collide: false })); }
+    for (let i = 0; i < bars; i += 1) { const a = (i / bars) * Math.PI * 2; solids.push(solid.capsule("metal", [dsin(a) * R, y0 + 0.04, dcos(a) * R], [dsin(a) * R, y0 + H - 0.02, dcos(a) * R], 0.022, { name: "bar", collide: false })); }
     if (hang) chain(solids, [0, y0 + H + R * 0.7, 0], [0, 3.3, 0], 10, 0.05);
     const inside = str(v["inside"]);
     if (inside !== "none") skull(solids, [J.between(-0.1, 0.1), y0 + 0.05, J.between(-0.1, 0.1)], 0.2, J.between(-0.8, 0.8));

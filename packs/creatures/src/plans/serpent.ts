@@ -17,6 +17,7 @@ import { add, bones, lerp, sub } from "../kit.ts";
 import type { Pen, V3 } from "../kit.ts";
 import type { PlanDef } from "./common.ts";
 import { quadBody, quadSpec } from "./common.ts";
+import { datan2, dcos, dsin } from "@keel-engine/core";
 
 export const serpent: PlanDef = {
   rig: "quadruped",
@@ -44,7 +45,7 @@ export const serpent: PlanDef = {
       const rot = skel.pose?.rot ?? {};
       // The rig's tail swing: its phase (moving: the gait's) and a small wave either way.
       const s0 = (rot["tail0"]?.[1] ?? 0) / 0.3, s1 = (rot["tail1"]?.[1] ?? 0) / 0.35;
-      const phase = Math.atan2(s0, (s0 * Math.cos(0.7) - s1) / Math.sin(0.7));
+      const phase = datan2(s0, (s0 * dcos(0.7) - s1) / dsin(0.7));
       const moving = (skel.pose?.cycle ?? 0) > 0;
       const nb = B.P("neck");
       const base: V3 = [nb[0], 0, neckRest[2] + (nb[2] - neckRest[2]) * 0.5];
@@ -52,11 +53,11 @@ export const serpent: PlanDef = {
       const pts: V3[] = rs.map((r, i) => {
         if (moving) {
           const z = base[2] - R * 0.4 - i * 0.16 * S;
-          return [base[0] + 0.11 * S * Math.sin(phase - i * 0.9) * Math.min(1, i / 2), r, z];
+          return [base[0] + 0.11 * S * dsin(phase - i * 0.9) * Math.min(1, i / 2), r, z];
         }
         const th = (i / (rs.length - 1)) * Math.PI * 1.8;
-        const rr = rho * (1 - 0.2 * (i / (rs.length - 1))) * (1 + 0.04 * Math.sin(phase + i));
-        return [base[0] + Math.sin(th) * rr, r, base[2] - rho + Math.cos(th) * rr];
+        const rr = rho * (1 - 0.2 * (i / (rs.length - 1))) * (1 + 0.04 * dsin(phase + i));
+        return [base[0] + dsin(th) * rr, r, base[2] - rho + dcos(th) * rr];
       });
       for (let i = 0; i < pts.length - 1; i += 1) P.cap(`body.${i}`, pts[i]!, pts[i + 1]!, Math.min(rs[i]!, rs[i + 1]!) + (rs[i]! - rs[i + 1]!) * 0.5);
       // Team bands round it.

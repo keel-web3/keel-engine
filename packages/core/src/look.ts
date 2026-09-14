@@ -29,6 +29,7 @@ import { cmax, oklch, wrap } from "./palette.ts";
 import type { RGB } from "./palette.ts";
 import { deriveSeed } from "./rng.ts";
 import type { Stream } from "./rng.ts";
+import { dcos, dsin } from "./dmath.ts";
 
 // ---------------------------------------------------------------- vocabulary
 
@@ -341,7 +342,7 @@ export const lookSignature = (look: Look): string => signatureOf(look);
 export function roleLab(r: Pick<RoleLook, "hue" | "chroma" | "light">): [number, number, number] {
   const C = Math.min(r.chroma, 0.97 * cmax(r.light, r.hue));
   const h = (r.hue * Math.PI) / 180;
-  return [r.light, C * Math.cos(h), C * Math.sin(h)];
+  return [r.light, C * dcos(h), C * dsin(h)];
 }
 
 // (The leading roles weigh most: a coat is what you see first, its trim last.)
@@ -494,7 +495,7 @@ export function rampColours(r: RoleLook, len: number): RGB[] {
   return Array.from({ length: n }, (_, i) => {
     const t = n === 1 ? 0.55 : i / (n - 1);
     const Lt = L0 + (L1 - L0) * t;
-    let Ct = C * Math.sin(Math.PI * (0.12 + 0.76 * t));
+    let Ct = C * dsin(Math.PI * (0.12 + 0.76 * t));
     if (finish === "metal") Ct = C * (1 - t * t * 0.8) + 0.004;
     if (finish === "glow") Ct = C * (t < 0.85 ? 1 : 1 - (t - 0.85) * 4);
     if (finish === "cloth") Ct *= 0.92;

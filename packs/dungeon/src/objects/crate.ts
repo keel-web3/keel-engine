@@ -4,11 +4,12 @@ import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import type { Stream, Vec3 } from "@keel-engine/core";
 import { ACTS, num, roles, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 function box(out: DesignSolid[], c: Vec3, s: number, yaw: number, framed: boolean, J: Stream): void {
   const h = s / 2;
   out.push(solid.box("wood", [c[0], c[1] + h, c[2]], [h * 0.94, h * 0.94, h * 0.94], yaw, { name: "crate" }));
-  const co = Math.cos(yaw), si = Math.sin(yaw);
+  const co = dcos(yaw), si = dsin(yaw);
   const at = (x: number, y: number, z: number): Vec3 => [c[0] + x * co + z * si, c[1] + y, c[2] - x * si + z * co];
   if (framed) {
     // (The frame: posts at the corners and rims top and bottom.)

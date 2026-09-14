@@ -20,6 +20,7 @@ import type { Vec3, Vec3Like } from "@keel-engine/core";
 import { boneToWorld } from "./rig.ts";
 import type { Skeleton } from "./rig.ts";
 import type { EntitySpec, HumanoidSpec, QuadrupedSpec } from "./species.ts";
+import { dlen } from "@keel-engine/core";
 
 /**
  * What a capsule's material plays. The first eight are the skin's; the rest are what wearables and props
@@ -183,7 +184,7 @@ function ears(spec: EntitySpec, cap: Pen["cap"], ball: Pen["ball"], C: Head, hr:
     else if (E.shape === "flop") dir = [x * 0.45, -0.88, 0.1];
     else if (E.shape === "side") dir = [x * 0.95, 0.3, -0.15];
     else dir = [x * 0.28, 1, -0.08 - back * 0.9];
-    const l = Math.hypot(...dir);
+    const l = dlen(dir);
     const tip: Vec3 = [base[0] + (dir[0] / l) * E.len, base[1] + (dir[1] / l) * E.len, base[2] + (dir[2] / l) * E.len];
     if (E.shape === "round" || E.shape === "big") { ball(`ear.${s}`, "fur", C(base[0] * 1.05, base[1] * 1.05, 0), E.w * hr); continue; }
     cap(`ear.${s}`, "fur", C(...base), C(...tip), E.w * hr);

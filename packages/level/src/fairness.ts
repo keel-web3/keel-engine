@@ -9,6 +9,7 @@
 import { buildPathGrid, clearance, flowField, followField, UNREACHED } from "@keel-engine/terrain";
 import type { MoveClass, PathGrid } from "@keel-engine/terrain";
 import type { Level, Tile } from "./document.ts";
+import { datan2, dcos, dhypot, dsin } from "@keel-engine/core";
 
 export type Symmetry = "none" | "mirror" | "rot2" | "rot4" | "wedges";
 export const SYMMETRIES: readonly Symmetry[] = ["none", "mirror", "rot2", "rot4", "wedges"];
@@ -32,11 +33,11 @@ export function canonical(x: number, z: number, cx: number, cz: number, sym: Sym
     }
     case "wedges": {
       if (n < 2) return [x, z];
-      const r = Math.hypot(dx, dz);
+      const r = dhypot(dx, dz);
       const w = (Math.PI * 2) / n;
-      let th = Math.atan2(dx, dz);
+      let th = datan2(dx, dz);
       th = ((th % w) + w) % w;
-      return [cx + Math.sin(th) * r, cz + Math.cos(th) * r];
+      return [cx + dsin(th) * r, cz + dcos(th) * r];
     }
     default: return [x, z];
   }
@@ -46,7 +47,7 @@ export function canonical(x: number, z: number, cx: number, cz: number, sym: Sym
 export function symmetricPositions(n: number, sym: Symmetry, width: number, depth: number, { radius = 0.72, turn = 0 }: { readonly radius?: number; readonly turn?: number } = {}): Array<[number, number]> {
   const cx = width / 2, cz = depth / 2;
   const R = radius * Math.min(cx, cz);
-  const at = (th: number): [number, number] => [cx + Math.sin(th) * R, cz + Math.cos(th) * R];
+  const at = (th: number): [number, number] => [cx + dsin(th) * R, cz + dcos(th) * R];
   if (sym === "mirror") {
     // (Pairs across the middle line: player 2k on the left, 2k+1 mirrored on the right.)
     const out: Array<[number, number]> = [];

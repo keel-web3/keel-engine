@@ -9,7 +9,7 @@
 // The region (a few rules and a seed) is what a level stores; the thousands
 // of placements are made at load.
 
-import { fbm2 } from "@keel-engine/core";
+import { dcos, dsin, fbm2 } from "@keel-engine/core";
 import { namedStream } from "@keel-engine/world";
 import type { NamedStream } from "@keel-engine/world";
 import { FLAG } from "@keel-engine/terrain";
@@ -70,7 +70,7 @@ export function poissonDisk(rect: readonly [number, number, number, number], rad
     let found = false;
     for (let n = 0; n < k; n += 1) {
       const ang = f() * Math.PI * 2, rr = radius * (1 + f());
-      const x = px + Math.cos(ang) * rr, z = pz + Math.sin(ang) * rr;
+      const x = px + dcos(ang) * rr, z = pz + dsin(ang) * rr;
       if (x < x0 || z < z0 || x >= x1 || z >= z1) continue;
       const gx = Math.floor((x - x0) / cell), gz = Math.floor((z - z0) / cell);
       let ok = true;

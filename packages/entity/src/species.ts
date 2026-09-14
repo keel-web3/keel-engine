@@ -17,7 +17,7 @@
 // pinning the species keeps a tall seed tall. The world size comes from the
 // kind and species (and `size`, when the caller needs an exact height).
 
-import { createRoll, deriveSeed, stream } from "@keel-engine/core";
+import { createRoll, deriveSeed, dsin, stream } from "@keel-engine/core";
 import type { Stream, Vec3, Weighted } from "@keel-engine/core";
 import { humanoidRig, quadrupedRig } from "./rig.ts";
 import type { HumanoidBody, HumanoidRig, QuadrupedBody, QuadrupedRig } from "./rig.ts";
@@ -379,7 +379,7 @@ function quadrupedBody(c: ChoiceValues, size: number | undefined): QuadrupedBody
   const tail = LOOK[c.species].tail;
   return {
     shoulderH: sh, hipH, ankleH, bodyR, legR,
-    H: sh + bodyR + sh * q.neck * Math.sin(q.rise) + sh * q.head * c.head * 2,
+    H: sh + bodyR + sh * q.neck * dsin(q.rise) + sh * q.head * c.head * 2,
     bodyLen: sh * q.len / c.legs,
     neckLen: sh * q.neck,
     neckRise: q.rise,

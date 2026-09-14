@@ -8,7 +8,7 @@
 //   const flag = objectDesign(model, { animation });
 //   planBake([fox, flag], { pixelsPerMetre: 24 }); bakeSprites(px, plan.sprites, new Map([[fox.key, fox], [flag.key, flag]]));
 
-import { createRoll, deriveSeed, stream } from "@keel-engine/core";
+import { createRoll, deriveSeed, dhypot, stream } from "@keel-engine/core";
 import { LOCOMOTION, clipsFor, placeAttribute, poseSkeleton, wear } from "@keel-engine/entity";
 import type { AttributeShape, MaterialTable, Worn } from "@keel-engine/entity";
 import type { AttributeDef, Pins } from "@keel-engine/runtime";
@@ -85,8 +85,8 @@ function measure(clips: readonly DesignClip[], pose: (c: string, f: number) => O
   let height = 0, radius = 0;
   for (const c of clips) for (let f = 0; f < c.frames; f += 1) {
     const s = pose(c.name, f);
-    for (const k of s.capsules) for (const p of [k.a, k.b]) { height = Math.max(height, p[1] + k.r); radius = Math.max(radius, Math.hypot(p[0], p[2]) + k.r); }
-    for (const b of s.boxes) { const e = Math.hypot(b.h[0], b.h[1], b.h[2]); height = Math.max(height, b.c[1] + b.h[1]); radius = Math.max(radius, Math.hypot(b.c[0], b.c[2]) + e); }
+    for (const k of s.capsules) for (const p of [k.a, k.b]) { height = Math.max(height, p[1] + k.r); radius = Math.max(radius, dhypot(p[0], p[2]) + k.r); }
+    for (const b of s.boxes) { const e = dhypot(b.h[0], b.h[1], b.h[2]); height = Math.max(height, b.c[1] + b.h[1]); radius = Math.max(radius, dhypot(b.c[0], b.c[2]) + e); }
   }
   return { height, radius };
 }

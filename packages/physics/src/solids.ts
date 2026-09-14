@@ -12,6 +12,7 @@
 // frontOf(yaw).
 
 import type { Vec3, Vec3Like } from "@keel-engine/core";
+import { datan2, dcos, dhypot, dsin } from "@keel-engine/core";
 
 /** A box turned by yaw about y: centre, half extents, and (for the renderer) a material. */
 export interface Box {
@@ -61,15 +62,15 @@ export interface RailPoint {
 }
 
 const dot = (a: Vec3Like, b: Vec3Like): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-const len = (a: Vec3Like): number => Math.hypot(a[0], a[1], a[2]);
+const len = (a: Vec3Like): number => dhypot(a[0], a[1], a[2]);
 
 /** Is this solid a wedge? */
 export const isWedge = (s: Solid): s is Wedge => s.kind === "wedge";
 
 /** Distance from p to a box turned by yaw about y, and the outward normal there. */
 export function boxDistance(p: Vec3Like, b: Box | Wedge): Hit {
-  const c = Math.cos(b.yaw ?? 0);
-  const s = Math.sin(b.yaw ?? 0);
+  const c = dcos(b.yaw ?? 0);
+  const s = dsin(b.yaw ?? 0);
   const x = p[0] - b.c[0];
   const y = p[1] - b.c[1];
   const z = p[2] - b.c[2];
@@ -108,7 +109,7 @@ function polyDistance(u: number, v: number, P: ReadonlyArray<readonly [number, n
     const t = Math.max(0, Math.min(1, ((u - au) * eu + (v - av) * ev) / L2));
     const du = u - (au + eu * t);
     const dv = v - (av + ev * t);
-    const d = Math.hypot(du, dv);
+    const d = dhypot(du, dv);
     if (d < best) { best = d; gu = du; gv = dv; }
     // (Counter-clockwise: the outward normal of an edge is (ev, -eu).)
     const L = Math.sqrt(L2);
@@ -127,7 +128,7 @@ export function wedgeSection({ h, lo = 0 }: { readonly h: Vec3Like; readonly lo?
 }
 /** A wedge's slope in radians (0 flat, PI/2 a wall). */
 export const slopeOf = ({ h, lo = 0 }: { readonly h: Vec3Like; readonly lo?: number | undefined }): number =>
-  Math.atan2(2 * h[1] * (1 - Math.max(0, Math.min(0.98, lo))), 2 * h[2]);
+  datan2(2 * h[1] * (1 - Math.max(0, Math.min(0.98, lo))), 2 * h[2]);
 
 /**
  * Distance from p to a wedge -- a ramp: a box { c, h, yaw } whose top slopes,
@@ -136,8 +137,8 @@ export const slopeOf = ({ h, lo = 0 }: { readonly h: Vec3Like; readonly lo?: num
  * catalogue's ramps face -- and the outward normal there. Exact inside and out.
  */
 export function wedgeDistance(p: Vec3Like, w: Omit<Wedge, "kind"> & { readonly kind?: string | undefined }): Hit {
-  const c = Math.cos(w.yaw ?? 0);
-  const s = Math.sin(w.yaw ?? 0);
+  const c = dcos(w.yaw ?? 0);
+  const s = dsin(w.yaw ?? 0);
   const x = p[0] - w.c[0];
   const y = p[1] - w.c[1];
   const z = p[2] - w.c[2];
@@ -148,7 +149,7 @@ export function wedgeDistance(p: Vec3Like, w: Omit<Wedge, "kind"> & { readonly k
   const b = sec.d;
   let n: Vec3;
   let d: number;
-  if (a > 0 && b > 0) { d = Math.hypot(a, b); n = [(Math.sign(lx) * a) / d, (sec.gv * b) / d, (sec.gu * b) / d]; }
+  if (a > 0 && b > 0) { d = dhypot(a, b); n = [(Math.sign(lx) * a) / d, (sec.gv * b) / d, (sec.gu * b) / d]; }
   else if (a > b) { d = a; n = [Math.sign(lx) || 1, 0, 0]; }
   else { d = b; n = [0, sec.gv, sec.gu]; }
   return { d, n: [c * n[0] + s * n[2], n[1], -s * n[0] + c * n[2]] };
@@ -167,7 +168,7 @@ export function nearestOnRail(p: Vec3Like, rail: Rail): RailPoint | null {
     const L2 = dot(ab, ab);
     const t = Math.max(0, Math.min(1, dot([p[0] - a[0], p[1] - a[1], p[2] - a[2]], ab) / L2));
     const q: Vec3 = [a[0] + ab[0] * t, a[1] + ab[1] * t, a[2] + ab[2] * t];
-    const d = Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+    const d = dhypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
     if (!best || d < best.d) { const l = Math.sqrt(L2); best = { d, i, t, q, tan: [ab[0] / l, ab[1] / l, ab[2] / l], segLen: l }; }
   }
   return best;

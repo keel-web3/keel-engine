@@ -49,13 +49,13 @@ async function page(ids: readonly string[]) {
 
 type Pack = { objects: Array<{ id: string; build(o: object): { style: string; def: { parts: unknown[] } } }> };
 
-test(`${ID} bundles to a module that reaches only keel/object (and keel/runtime, for the gear), starts on a page and builds its things there`, async () => {
+test(`${ID} bundles to a module that reaches only keel/core (dmath), keel/object (and keel/runtime, for the gear), starts on a page and builds its things there`, async () => {
   assert.ok(me, `${ID} is in the workspace`);
   const b = await bundleModule(me, workspace);
   const map = (await linkRecord(me, workspace)).imports;
   const needs = new Set(me.manifest.needs.filter((n) => !n.startsWith("contract:")).map((n) => splitRef(n).name));
   for (const id of Object.values(map)) assert.ok(needs.has(id), `${ID} reaches ${id} without needing it`);
-  assert.deepEqual(Object.values(map).sort(), ["keel/object", "keel/runtime"]);
+  assert.deepEqual(Object.values(map).sort(), ["keel/core", "keel/object", "keel/runtime"]);
   const object = await bundleModule(workspace.find((w) => w.manifest.id === "keel/object")!, workspace);
   const readable = await bundleModule(me, workspace, { minify: false });
   const { engine, order, bytes } = await page([ID]);

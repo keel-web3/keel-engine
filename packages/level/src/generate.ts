@@ -26,7 +26,7 @@
 // the bases, towns and the middle (bridges where they cross water), houses
 // along the roads, foliage regions, trigger regions and markers.
 
-import { fbm2 } from "@keel-engine/core";
+import { datan2, dcos, dhypot, dsin, fbm2 } from "@keel-engine/core";
 import { createSettings, namedStream, parseLocks } from "@keel-engine/world";
 import type { NamedStream, SettingValue, Settings, Thing as SettingsThing } from "@keel-engine/world";
 import {
@@ -173,13 +173,13 @@ export function generateLevel(opts: GenerateOptions): { level: Level; report: Ge
   for (let j = 0; j < D; j += 1) for (let i = 0; i < W; i += 1) {
     const [x, z] = canonical(i + 0.5, j + 0.5, cx, cz, symmetry, nSym);
     canX[j * W + i] = x; canZ[j * W + i] = z;
-    const r = Math.hypot(x - cx, z - cz) / Math.min(cx, cz);
+    const r = dhypot(x - cx, z - cz) / Math.min(cx, cz);
     const n1 = fbm2(x * 0.045 + ox, z * 0.045 + oz, ns, 4);
     let e: number;
     switch (template) {
       case "island": e = n1 * 1.1 + 0.62 - r * r * 1.15; break;
       case "archipelago": e = fbm2(x * 0.075 + ox, z * 0.075 + oz, ns + 9, 4) * 1.35 + 0.1 - r * r * 0.55; break;
-      case "valley": { const line = cz + Math.sin(x * 0.045 + ph) * D * 0.1; e = 0.12 + (Math.abs(z - line) / (D * 0.5)) * 1.25 + (n1 - 0.5) * 0.8; break; }
+      case "valley": { const line = cz + dsin(x * 0.045 + ph) * D * 0.1; e = 0.12 + (Math.abs(z - line) / (D * 0.5)) * 1.25 + (n1 - 0.5) * 0.8; break; }
       default: e = n1 * 1.5 - 0.25;
     }
     lv[j * W + i] = clampI(Math.floor(e * relief), -1, relief + 1);
@@ -248,7 +248,7 @@ export function generateLevel(opts: GenerateOptions): { level: Level; report: Ge
     for (let dj = -r - 5; dj <= r + 5; dj += 1) for (let di = -r - 5; di <= r + 5; di += 1) {
       const i = ci + di, j = cj + dj;
       if (!t.inside(i, j)) continue;
-      const d = Math.max(0, Math.ceil(Math.hypot(i + 0.5 - fx, j + 0.5 - fz) - 0.5) - r);
+      const d = Math.max(0, Math.ceil(dhypot(i + 0.5 - fx, j + 0.5 - fz) - 0.5) - r);
       const k = t.index(i, j);
       const h = d === 0 ? level : clampI(t.height[k]!, level - d, level + d);
       t.setHeight(i, j, h);
@@ -267,7 +267,7 @@ export function generateLevel(opts: GenerateOptions): { level: Level; report: Ge
     if (symmetry === "mirror") return [W - 1 - i, j];
     if (symmetry === "rot2") return [W - 1 - i, D - 1 - j];
     if (symmetry === "rot4") { let a = i, b = j; for (let q = 0; q < p; q += 1) [a, b] = [b, W - 1 - a]; return [a, b]; }
-    const al = (Math.PI * 2 * p) / players, ca = Math.cos(al), sa = Math.sin(al);
+    const al = (Math.PI * 2 * p) / players, ca = dcos(al), sa = dsin(al);
     const dx = i + 0.5 - cx, dz = j + 0.5 - cz;
     return [clampI(Math.floor(cx + dx * ca + dz * sa), 0, W - 1), clampI(Math.floor(cz - dx * sa + dz * ca), 0, D - 1)];
   };
@@ -277,7 +277,7 @@ export function generateLevel(opts: GenerateOptions): { level: Level; report: Ge
     if (symmetry === "rot2") return (d + 2) & 3;
     if (symmetry === "rot4") return (d + p) & 3;
     const al = (Math.PI * 2 * p) / players, x = DX4[d]!, z = DZ4[d]!;
-    const rx = x * Math.cos(al) + z * Math.sin(al), rz = -x * Math.sin(al) + z * Math.cos(al);
+    const rx = x * dcos(al) + z * dsin(al), rz = -x * dsin(al) + z * dcos(al);
     return Math.abs(rx) > Math.abs(rz) ? (rx > 0 ? 1 : 3) : (rz > 0 ? 0 : 2);
   };
   let order = imaged ? players : 1;
@@ -287,7 +287,7 @@ export function generateLevel(opts: GenerateOptions): { level: Level; report: Ge
       // (The natural: a third of the way to the middle, turned a little -- the same for every player, by the symmetry.)
       const ax = x - cx, az = z - cz;
       const rot = symmetry === "mirror" ? (x < cx ? 0.45 : -0.45) : 0.45;
-      const nx = cx + (ax * Math.cos(rot) - az * Math.sin(rot)) * 0.62, nz = cz + (ax * Math.sin(rot) + az * Math.cos(rot)) * 0.62;
+      const nx = cx + (ax * dcos(rot) - az * dsin(rot)) * 0.62, nz = cz + (ax * dsin(rot) + az * dcos(rot)) * 0.62;
       const natural: Tile = [clampI(Math.round(nx), 5, W - 6), clampI(Math.round(nz), 5, D - 6)];
       // (Exact symmetries: every player's base is player 0's, turned or mirrored, to the tile.)
       const s0 = spawns[0];
@@ -302,7 +302,7 @@ export function generateLevel(opts: GenerateOptions): { level: Level; report: Ge
   lap("bases");
 
   // ------------------------------------------------ lakes
-  const nearBase = (i: number, j: number, r: number): boolean => spawns.some((s) => Math.hypot(s.at[0] - i, s.at[1] - j) < r || (s.natural && Math.hypot(s.natural[0] - i, s.natural[1] - j) < r - 2)) || (players > 1 && Math.hypot(middleT[0] - i, middleT[1] - j) < r - 2);
+  const nearBase = (i: number, j: number, r: number): boolean => spawns.some((s) => dhypot(s.at[0] - i, s.at[1] - j) < r || (s.natural && dhypot(s.natural[0] - i, s.natural[1] - j) < r - 2)) || (players > 1 && dhypot(middleT[0] - i, middleT[1] - j) < r - 2);
   for (let n = 0; n < lakes; n += 1) {
     const id = `lake-${n}`;
     const thing = { id, tags: ["lake"] };
@@ -310,11 +310,11 @@ export function generateLevel(opts: GenerateOptions): { level: Level; report: Ge
     const at = C.propose<SettingValue>("at", [C.int("x", radius + 2, W - radius - 3, thing), C.int("z", radius + 2, D - radius - 3, thing)], thing) as unknown as [number, number];
     if (nearBase(at[0], at[1], R0 + radius + 6)) { warnings.push(`${id}: too near a base, left out`); continue; }
     let rim = Infinity;
-    for (let dj = -radius - 1; dj <= radius + 1; dj += 1) for (let di = -radius - 1; di <= radius + 1; di += 1) if (Math.abs(Math.hypot(di, dj) - radius - 0.5) < 0.8 && t.inside(at[0] + di, at[1] + dj)) rim = Math.min(rim, t.height[t.index(at[0] + di, at[1] + dj)]!);
+    for (let dj = -radius - 1; dj <= radius + 1; dj += 1) for (let di = -radius - 1; di <= radius + 1; di += 1) if (Math.abs(dhypot(di, dj) - radius - 0.5) < 0.8 && t.inside(at[0] + di, at[1] + dj)) rim = Math.min(rim, t.height[t.index(at[0] + di, at[1] + dj)]!);
     const levelW = Math.max(sea, rim === Infinity ? baseLevel : rim);
     t.batch(() => {
       for (let dj = -radius; dj <= radius; dj += 1) for (let di = -radius; di <= radius; di += 1) {
-        const i = at[0] + di, j = at[1] + dj, d = Math.hypot(di, dj);
+        const i = at[0] + di, j = at[1] + dj, d = dhypot(di, dj);
         if (!t.inside(i, j) || d > radius) continue;
         t.setHeight(i, j, Math.min(t.height[t.index(i, j)]!, levelW - (d < radius * 0.55 ? 2 : 1)));
         t.setRamp(i, j, null);
@@ -337,7 +337,7 @@ export function generateLevel(opts: GenerateOptions): { level: Level; report: Ge
       path = Array.from({ length: D }, (_, j) => [Math.floor(cx) - 1, j] as Tile);
     } else {
       // From a high inland tile (or, in a valley, one end of it) down to the sea, a lake or the map's far side.
-      const src: Tile = template === "valley" ? [0, clampI(Math.round(cz + Math.sin(ph) * D * 0.1), 1, D - 2)] : (() => {
+      const src: Tile = template === "valley" ? [0, clampI(Math.round(cz + dsin(ph) * D * 0.1), 1, D - 2)] : (() => {
         let best: Tile = [Math.floor(cx), Math.floor(cz)], bh = -Infinity;
         for (let tries = 0; tries < 60; tries += 1) { const i = RS.int(4, W - 5), j = RS.int(4, D - 5); const h = t.height[t.index(i, j)]!; if (h > bh && !nearBase(i, j, R0 + 6)) { bh = h; best = [i, j]; } }
         return best;
@@ -370,7 +370,7 @@ export function generateLevel(opts: GenerateOptions): { level: Level; report: Ge
       if (a < 0 || top < 0) continue;
       const ra = find(a), rb = find(top);
       const joins = ra !== rb;
-      const spare = !joins && rampS.chance(0.06) && placed.every(([i, j]) => Math.hypot(i - site.i, j - site.j) > 14);
+      const spare = !joins && rampS.chance(0.06) && placed.every(([i, j]) => dhypot(i - site.i, j - site.j) > 14);
       if (!joins && !spare) continue;
       if (!canRamp(t, site.i, site.j, site.dir)) continue;
       // (On an exactly symmetric map a ramp goes in with its images, or not at all.)
@@ -407,15 +407,15 @@ export function generateLevel(opts: GenerateOptions): { level: Level; report: Ge
   const ADV: readonly ResourceKind[] = ["crystal", "flux", "fertile", "wreck"];
   const addBase = (owner: number, at: Tile, mass: number, adv: boolean, tag: string): void => {
     // (Laid out facing away from the middle: the same shape for every player, turned with it.)
-    const away = Math.atan2(at[0] - cx, at[1] - cz);
+    const away = datan2(at[0] - cx, at[1] - cz);
     for (let m = 0; m < mass; m += 1) {
       const a = away + ((m - (mass - 1) / 2) / mass) * 2.2;
-      const p = nudge(Math.round(at[0] + Math.sin(a) * 4.5), Math.round(at[1] + Math.cos(a) * 4.5));
+      const p = nudge(Math.round(at[0] + dsin(a) * 4.5), Math.round(at[1] + dcos(a) * 4.5));
       if (p) resources.push({ id: `${tag}-mass-${m}`, kind: "mass", at: p, amount: 1500, owner });
     }
     if (adv) ADV.forEach((kind, q) => {
       const a = away + Math.PI / 2 + ((q - 1.5) / 4) * 2.8 + (q >= 2 ? Math.PI * 0.35 : -Math.PI * 0.35);
-      const p = nudge(Math.round(at[0] + Math.sin(a) * 6.5), Math.round(at[1] + Math.cos(a) * 6.5));
+      const p = nudge(Math.round(at[0] + dsin(a) * 6.5), Math.round(at[1] + dcos(a) * 6.5));
       if (p) resources.push({ id: `${tag}-${kind}`, kind, at: p, amount: kind === "wreck" ? 1500 : 3000, owner });
     });
   };
@@ -449,7 +449,7 @@ export function generateLevel(opts: GenerateOptions): { level: Level; report: Ge
     let best: Tile | null = null;
     for (let tries = 0; tries < 80 && !best; tries += 1) {
       const i = TS.int(8, W - 9), j = TS.int(8, D - 9);
-      if (nearBase(i, j, R0 + 10) || townAt.some(([a, b]) => Math.hypot(a - i, b - j) < 18)) continue;
+      if (nearBase(i, j, R0 + 10) || townAt.some(([a, b]) => dhypot(a - i, b - j) < 18)) continue;
       let ok = true;
       const h0 = t.height[t.index(i, j)]!;
       for (let dj = -3; dj <= 3 && ok; dj += 1) for (let di = -3; di <= 3; di += 1) { const k = t.index(i + di, j + dj); if (t.height[k] !== h0 || t.waterDepth(i + di, j + dj) > 0 || !t.types.get(t.type[k]!).buildable) { ok = false; break; } }

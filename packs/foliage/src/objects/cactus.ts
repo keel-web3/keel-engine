@@ -5,6 +5,7 @@ import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
 import { bool, num, roles, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "cactus",
@@ -30,7 +31,7 @@ export default defineStyledObject({
         const yaw = yaw0 + (i / Math.max(1, n)) * Math.PI * 2 * (n === 2 ? 0.5 : 1) + J.between(-0.3, 0.3);
         const y = H * J.between(0.35, 0.6);
         const out = r * 2.6;
-        const elbow: Vec3 = [Math.sin(yaw) * out, y, Math.cos(yaw) * out];
+        const elbow: Vec3 = [dsin(yaw) * out, y, dcos(yaw) * out];
         solids.push(solid.capsule("leaf", [0, y, 0], elbow, r * 0.7, { name: "arm", collide: false }));
         solids.push(solid.capsule("leaf", elbow, [elbow[0], y + H * J.between(0.2, 0.35), elbow[2]], r * 0.7, { name: "arm", collide: false }));
       }
@@ -42,7 +43,7 @@ export default defineStyledObject({
       // (Ribs: vertical ridges round it.)
       for (let k = 0; k < 8; k += 1) {
         const a = (k / 8) * Math.PI * 2;
-        solids.push(solid.capsule("leaf", [Math.sin(a) * R * 0.82, h * 0.45, Math.cos(a) * R * 0.82], [Math.sin(a) * R * 0.72, h * 1.45, Math.cos(a) * R * 0.72], R * 0.22, { name: "rib", collide: false, styles: ["pixel"] }));
+        solids.push(solid.capsule("leaf", [dsin(a) * R * 0.82, h * 0.45, dcos(a) * R * 0.82], [dsin(a) * R * 0.72, h * 1.45, dcos(a) * R * 0.72], R * 0.22, { name: "rib", collide: false, styles: ["pixel"] }));
       }
       top = [0, h * 2, 0];
     } else {
@@ -52,9 +53,9 @@ export default defineStyledObject({
       let yaw = J.between(0, Math.PI * 2);
       const n = 3 + Math.round(H);
       for (let i = 0; i < n; i += 1) {
-        solids.push({ ...solid.ball("leaf", p, [Math.abs(Math.sin(yaw)) * pad * 0.8 + pad * 0.2, pad, Math.abs(Math.cos(yaw)) * pad * 0.8 + pad * 0.2], { name: "pad", collide: i === 0 }) });
+        solids.push({ ...solid.ball("leaf", p, [Math.abs(dsin(yaw)) * pad * 0.8 + pad * 0.2, pad, Math.abs(dcos(yaw)) * pad * 0.8 + pad * 0.2], { name: "pad", collide: i === 0 }) });
         const side = i % 2 ? 1 : -1;
-        p = [p[0] + Math.cos(yaw) * pad * 0.7 * side, p[1] + pad * 1.35, p[2] - Math.sin(yaw) * pad * 0.7 * side];
+        p = [p[0] + dcos(yaw) * pad * 0.7 * side, p[1] + pad * 1.35, p[2] - dsin(yaw) * pad * 0.7 * side];
         yaw += J.between(0.4, 1.2);
         if (p[1] > H) break;
       }

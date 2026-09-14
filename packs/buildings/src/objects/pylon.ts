@@ -4,6 +4,7 @@
 import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import { num, roles, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "pylon",
@@ -33,7 +34,7 @@ export default defineStyledObject({
     const fins = num(v["fins"]);
     for (let i = 0; i < fins; i += 1) {
       const a = (i / fins) * Math.PI * 2;
-      solids.push(solid.wedge("trim", [Math.sin(a) * B * 0.55, H * 0.2, Math.cos(a) * B * 0.55], [0.08, H * 0.2 - 0.02, B * 0.3], a, 0.1, { name: "fin", collide: false }));
+      solids.push(solid.wedge("trim", [dsin(a) * B * 0.55, H * 0.2, dcos(a) * B * 0.55], [0.08, H * 0.2 - 0.02, B * 0.3], a, 0.1, { name: "fin", collide: false }));
     }
     const coreY = y + H * 0.1;
     if (str(v["core"]) === "crystal") {
@@ -49,7 +50,7 @@ export default defineStyledObject({
       const n = 10;
       for (let i = 0; i < n; i += 1) {
         const a0 = (i / n) * Math.PI * 2, a1 = ((i + 1) / n) * Math.PI * 2;
-        solids.push(solid.capsule("metal", [Math.sin(a0) * R, ry, Math.cos(a0) * R], [Math.sin(a1) * R, ry, Math.cos(a1) * R], 0.07 + B * 0.02, { name: "ring", group: `ring${k}`, collide: false }));
+        solids.push(solid.capsule("metal", [dsin(a0) * R, ry, dcos(a0) * R], [dsin(a1) * R, ry, dcos(a1) * R], 0.07 + B * 0.02, { name: "ring", group: `ring${k}`, collide: false }));
       }
     }
     return {

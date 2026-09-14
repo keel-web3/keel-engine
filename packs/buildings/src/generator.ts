@@ -31,6 +31,7 @@ import { solid } from "@keel-engine/object";
 import type { DesignSolid, SocketSpec } from "@keel-engine/object";
 import type { Stream, Vec3 } from "@keel-engine/core";
 import { post } from "./kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export type Footprint = "rect" | "L" | "T" | "round";
 export type Roof = "gable" | "hip" | "flat" | "dome" | "spire" | "vault" | "saucer" | "shell";
@@ -142,7 +143,7 @@ export function buildingDesign(J: Stream, p: BuildingParams): { solids: DesignSo
   const windowSolids = (cx: number, cy: number, cz: number, yaw: number, ww: number, wh: number): DesignSolid[] => {
     // (A pane on the face -- yaw turns a box's +z to face out -- and a sill under it.)
     const out: DesignSolid[] = [];
-    const nx = Math.sin(yaw), nz = Math.cos(yaw);
+    const nx = dsin(yaw), nz = dcos(yaw);
     if (p.windows === "porthole") {
       // (A porthole: a glass bead set in the wall, a metal one a little bigger behind it for its rim -- a capsule each.)
       out.push(solid.ball("glass", [cx - nx * ww * 0.3, cy, cz - nz * ww * 0.3], ww * 0.4, { name: "window", collide: false }));
@@ -152,7 +153,7 @@ export function buildingDesign(J: Stream, p: BuildingParams): { solids: DesignSo
     out.push(solid.box("glass", [cx + nx * OUT, cy, cz + nz * OUT], [ww / 2, wh / 2, 0.05], yaw, { name: "window", collide: false }));
     out.push(solid.box("trim", [cx + nx * OUT * 2, cy - wh / 2 - 0.05, cz + nz * OUT * 2], [ww / 2 + 0.08, 0.05, 0.07], yaw, { name: "sill", collide: false }));
     if (p.shutters) for (const s of [-1, 1]) {
-      const rx = Math.cos(yaw), rz = -Math.sin(yaw);
+      const rx = dcos(yaw), rz = -dsin(yaw);
       out.push(solid.box("wood", [cx + nx * OUT + rx * s * (ww / 2 + 0.2), cy, cz + nz * OUT + rz * s * (ww / 2 + 0.2)], [0.18, wh / 2, 0.04], yaw, { name: "shutter", collide: false }));
     }
     return out;
@@ -173,9 +174,9 @@ export function buildingDesign(J: Stream, p: BuildingParams): { solids: DesignSo
           const n = Math.max(3, Math.min(10, Math.round((Math.PI * 2 * r) / spacing)));
           for (let i = 0; i < n; i += 1) {
             const a = ((i + 0.5) / n) * Math.PI * 2;
-            if (f === 0 && Math.abs(Math.sin(a / 2 - 0)) < 0.35) continue; // (not over the door, at +z)
+            if (f === 0 && Math.abs(dsin(a / 2 - 0)) < 0.35) continue; // (not over the door, at +z)
             if (p.windows === "band") continue;
-            pane(Math.sin(a) * r, cy, Math.cos(a) * r, a, ww || 0.8, wh);
+            pane(dsin(a) * r, cy, dcos(a) * r, a, ww || 0.8, wh);
           }
           if (p.windows === "band") solids.push(solid.cylinder("glass", [0, cy - 0.3, 0], r + OUT, 0.6, { name: "window", collide: false }));
           continue;

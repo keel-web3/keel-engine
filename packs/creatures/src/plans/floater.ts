@@ -15,6 +15,7 @@ import { add, bones, clamp, sub, v } from "../kit.ts";
 import type { Pen, V3 } from "../kit.ts";
 import type { PlanDef } from "./common.ts";
 import { humanBody, humanSpec } from "./common.ts";
+import { dcos, dlen, dsin } from "@keel-engine/core";
 
 /** How far a floater hovers: a share of its own height. */
 export const FLOATER_LIFT = 0.25;
@@ -55,13 +56,13 @@ export const floater: PlanDef = {
       if (kind === "bell") {
         P.ball("head", D(0, 0, 0), dr);
         rimY = domeY - dr * 0.5; rimR = dr * 1.08;
-        for (let i = 0; i < 10; i += 1) { const a = (i / 10) * Math.PI * 2; P.ball(`chest.${i}`, [base[0] + Math.cos(a) * rimR, rimY, base[2] + Math.sin(a) * rimR], dr * 0.28); }
+        for (let i = 0; i < 10; i += 1) { const a = (i / 10) * Math.PI * 2; P.ball(`chest.${i}`, [base[0] + dcos(a) * rimR, rimY, base[2] + dsin(a) * rimR], dr * 0.28); }
       } else if (kind === "robe") {
         P.ball("head", D(0, 0, 0), dr);
         P.cap("hood", D(0, 0.2, -0.25), D(0, -0.8, -0.55), dr * 1.08);
         P.cap("chest", D(0, -0.9, 0), D(0, -1.8, -0.1), dr * 1.1);
         // (The robe flares to a wide hem: five lobes round it.)
-        for (let i = 0; i < 5; i += 1) { const a = (i / 5) * Math.PI * 2 + Math.PI / 2; P.ball(`chest.hem${i}`, D(Math.cos(a) * 1.25, -2.15, -0.1 + Math.sin(a) * 1.25), dr * 0.72); }
+        for (let i = 0; i < 5; i += 1) { const a = (i / 5) * Math.PI * 2 + Math.PI / 2; P.ball(`chest.hem${i}`, D(dcos(a) * 1.25, -2.15, -0.1 + dsin(a) * 1.25), dr * 0.72); }
         P.cap("collar.stripe", D(0, -0.95, 1.12), D(0, -1.95, 1.12), dr * 0.22);
         P.cap("collar.stripe2", D(0, -2.05, 1.95), D(0, -2.4, 2.05), dr * 0.26);
         rimY = domeY - dr * 2.4; rimR = dr * 2.0;
@@ -74,7 +75,7 @@ export const floater: PlanDef = {
         rimY = domeY - dr * 1.8; rimR = dr * 1.55;
       }
       // The team band round the rim.
-      for (let i = 0; i < 12; i += 1) { const a = (i / 12) * Math.PI * 2; P.ball(`collar.${i}`, [base[0] + Math.cos(a) * rimR * 1.02, rimY + dr * 0.05, base[2] + Math.sin(a) * rimR * 1.02], dr * (kind === "lantern" ? 0.16 : 0.2)); }
+      for (let i = 0; i < 12; i += 1) { const a = (i / 12) * Math.PI * 2; P.ball(`collar.${i}`, [base[0] + dcos(a) * rimR * 1.02, rimY + dr * 0.05, base[2] + dsin(a) * rimR * 1.02], dr * (kind === "lantern" ? 0.16 : 0.2)); }
 
       // The eyes on the dome's front.
       const ey = kind === "lantern" ? 0.3 : 0.05;
@@ -87,9 +88,9 @@ export const floater: PlanDef = {
 
       // The crown.
       const topY = kind === "lantern" ? 1.1 : 1.0;
-      if (crown === "ring") for (let i = 0; i < 8; i += 1) { const a0 = (i / 8) * Math.PI * 2, a1 = ((i + 1) / 8) * Math.PI * 2; P.cap(`hair.${i}`, D(Math.cos(a0) * 0.62, topY + 0.28, Math.sin(a0) * 0.62), D(Math.cos(a1) * 0.62, topY + 0.28, Math.sin(a1) * 0.62), dr * 0.08); }
-      if (crown === "spikes") for (let i = 0; i < 5; i += 1) { const a = (i / 5) * Math.PI * 2 + Math.PI / 2; P.cap(`hair.${i}`, D(Math.cos(a) * 0.45, topY - 0.15, Math.sin(a) * 0.45), D(Math.cos(a) * 0.62, topY + 0.55, Math.sin(a) * 0.62), dr * 0.09); }
-      if (crown === "orbs") for (let i = 0; i < 3; i += 1) { const a = (i / 3) * Math.PI * 2 + Math.PI / 2; P.ball(`hair.${i}`, D(Math.cos(a) * 0.55, topY + 0.45 + 0.08 * Math.sin(bob * 40 + i), Math.sin(a) * 0.55), dr * 0.14); }
+      if (crown === "ring") for (let i = 0; i < 8; i += 1) { const a0 = (i / 8) * Math.PI * 2, a1 = ((i + 1) / 8) * Math.PI * 2; P.cap(`hair.${i}`, D(dcos(a0) * 0.62, topY + 0.28, dsin(a0) * 0.62), D(dcos(a1) * 0.62, topY + 0.28, dsin(a1) * 0.62), dr * 0.08); }
+      if (crown === "spikes") for (let i = 0; i < 5; i += 1) { const a = (i / 5) * Math.PI * 2 + Math.PI / 2; P.cap(`hair.${i}`, D(dcos(a) * 0.45, topY - 0.15, dsin(a) * 0.45), D(dcos(a) * 0.62, topY + 0.55, dsin(a) * 0.62), dr * 0.09); }
+      if (crown === "orbs") for (let i = 0; i < 3; i += 1) { const a = (i / 3) * Math.PI * 2 + Math.PI / 2; P.ball(`hair.${i}`, D(dcos(a) * 0.55, topY + 0.45 + 0.08 * dsin(bob * 40 + i), dsin(a) * 0.55), dr * 0.14); }
 
       // Tentacles: from under the rim, three segments each, swaying with one of the rig's limbs.
       const limbs = [["thigh.L", "shin.L"], ["thigh.R", "shin.R"], ["upperArm.L", "forearm.L"], ["upperArm.R", "forearm.R"]] as const;
@@ -101,16 +102,16 @@ export const floater: PlanDef = {
         const [b0, b1] = limbs[i % 4]!;
         const rest0 = sub(rest[b1]!, rest[b0]!);
         const now = sub(B.P(b1), B.P(b0));
-        const l = Math.hypot(...rest0) || 1;
+        const l = dlen(rest0) || 1;
         // (How far the limb has swung from its rest, as a sideways and a forward lean.)
         const sx = clamp((now[0] - rest0[0]) / l, -0.8, 0.8), sz = clamp((now[2] - rest0[2]) / l, -0.9, 0.9);
         const r0 = rimR * 0.78;
-        let p: V3 = [base[0] + Math.cos(a) * r0, rimY - dr * 0.1, base[2] + Math.sin(a) * r0];
+        let p: V3 = [base[0] + dcos(a) * r0, rimY - dr * 0.1, base[2] + dsin(a) * r0];
         const seg = reach / 3;
         const rad = [0.075, 0.06, 0.045];
         for (let j = 0; j < 3; j += 1) {
           const k = (j + 1) / 3;
-          const q = add(p, v(Math.cos(a) * seg * 0.8 + sx * seg * 0.9 * k, -seg * (1 - 0.25 * k), Math.sin(a) * seg * 0.8 + sz * seg * 1.1 * k - moving * seg * 0.35 * k));
+          const q = add(p, v(dcos(a) * seg * 0.8 + sx * seg * 0.9 * k, -seg * (1 - 0.25 * k), dsin(a) * seg * 0.8 + sz * seg * 1.1 * k - moving * seg * 0.35 * k));
           P.cap(j < 2 ? `${j === 0 ? "thigh" : "shin"}.${i}` : `foot.${i}`, p, q, rad[j]! * S * (kind === "robe" ? 0.8 : 1));
           p = q;
         }

@@ -7,10 +7,10 @@
   "exports": { ".": "./src/index.ts", "./module": "./src/module.ts" },
   "dependencies": {
     "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/core": "workspace:*",
     "@keel-engine/entity": "workspace:*"
   },
   "devDependencies": {
-    "@keel-engine/core": "workspace:*",
     "@keel-engine/keel": "workspace:*"
   }
 }

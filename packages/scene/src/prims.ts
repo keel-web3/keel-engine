@@ -12,7 +12,7 @@
 // A box's yaw is the frame's yaw: its own +z face looks along frontOf(yaw) --
 // the same box the physics' boxDistance and the GPU shader draw.
 
-import { sdBox, sdCapsule, worldToLocal } from "@keel-engine/core";
+import { dcos, dsin, sdBox, sdCapsule, worldToLocal } from "@keel-engine/core";
 import type { Vec3, Vec3Like } from "@keel-engine/core";
 import { part, unionBounds } from "./kit.ts";
 import type { Bounds, PartFields, PartOf, Sdf, SdfPart, Shape } from "./kit.ts";
@@ -64,8 +64,8 @@ const num3 = (v: unknown, what: string): Vec3 => {
 
 /** The AABB of a box turned by yaw about y: its four corners, boxed again. */
 export function boxBounds({ c, h, yaw = 0 }: BoxSpec): Bounds {
-  const co = Math.abs(Math.cos(yaw));
-  const si = Math.abs(Math.sin(yaw));
+  const co = Math.abs(dcos(yaw));
+  const si = Math.abs(dsin(yaw));
   const ex = h[0] * co + h[2] * si;
   const ez = h[0] * si + h[2] * co;
   return [c[0] - ex, c[1] - h[1], c[2] - ez, c[0] + ex, c[1] + h[1], c[2] + ez];
@@ -79,8 +79,8 @@ export const capsuleBounds = ({ a, b, r }: CapsuleSpec): Bounds => unionBounds([
 
 /** Signed distance to a turned box (no allocation: the hot path). */
 export function boxSdf({ c, h, yaw = 0, round = 0 }: BoxSpec): Sdf {
-  const co = Math.cos(yaw);
-  const si = Math.sin(yaw);
+  const co = dcos(yaw);
+  const si = dsin(yaw);
   const [cx, cy, cz] = c;
   const [hx, hy, hz] = h;
   return (x, y, z) => {

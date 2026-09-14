@@ -7,10 +7,10 @@
   "exports": { ".": "./src/index.ts", "./module": "./src/module.ts", "./codec": "./src/codec.ts" },
   "dependencies": {
     "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/core": "workspace:*",
     "@keel-engine/object": "workspace:*"
   },
   "devDependencies": {
-    "@keel-engine/core": "workspace:*",
     "@keel-engine/scene": "workspace:*",
     "@keel-engine/physics": "workspace:*",
     "@keel-engine/builder": "workspace:*",

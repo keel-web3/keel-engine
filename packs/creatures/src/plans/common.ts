@@ -4,6 +4,7 @@
 import { entityOf, humanoidRig, quadrupedRig } from "@keel-engine/entity";
 import type { EntitySpec, HumanoidBody, HumanoidSpec, QuadrupedBody, QuadrupedSpec, Skeleton, Species } from "@keel-engine/entity";
 import type { ChoiceSpec, Pen, SlotRoles, SocketSite } from "../kit.ts";
+import { dsin } from "@keel-engine/core";
 
 export interface PlanBuild {
   readonly spec: EntitySpec;
@@ -38,7 +39,7 @@ export function humanSpec(seed: string, body: HumanoidBody): HumanoidSpec {
 export function quadBody(o: { sh: number; hip: number; ankle: number; bodyR: number; legR: number; len: number; w: number; neck: number; rise: number; headR: number; pawR: number; pawLen: number; tail: number; tailRise: number }): QuadrupedBody {
   return {
     shoulderH: o.sh, hipH: o.hip, ankleH: o.ankle, bodyR: o.bodyR, legR: o.legR,
-    H: o.sh + o.bodyR + o.neck * Math.sin(o.rise) + o.headR * 2,
+    H: o.sh + o.bodyR + o.neck * dsin(o.rise) + o.headR * 2,
     bodyLen: o.len, neckLen: o.neck, neckRise: o.rise, headR: o.headR, w: o.w,
     upperF: (o.sh - o.ankle) * 0.5, lowerF: (o.sh - o.ankle) * 0.5, upperH: (o.hip - o.ankle) * 0.5, lowerH: (o.hip - o.ankle) * 0.5,
     pawR: o.pawR, pawLen: o.pawLen, snoutLen: 0, tailLen: o.tail, tailRise: o.tailRise, stride: 1,

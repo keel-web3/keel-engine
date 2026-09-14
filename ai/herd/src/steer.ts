@@ -5,7 +5,7 @@
 //
 // (The same file is in ai/wander and ai/herd -- see the README.)
 
-import { createRoll, deriveSeed } from "@keel-engine/core";
+import { createRoll, datan2, dcos, deriveSeed, dhypot, dsin } from "@keel-engine/core";
 import type { Agent, AnimalMode, Obstacle, Vec3, WorldQuery } from "./contract.ts";
 
 export type V2 = [number, number];
@@ -14,13 +14,13 @@ export const flat = (p: Vec3): V2 => [p[0], p[2]];
 export const add = (a: V2, b: V2): V2 => [a[0] + b[0], a[1] + b[1]];
 export const sub = (a: V2, b: V2): V2 => [a[0] - b[0], a[1] - b[1]];
 export const mul = (a: V2, k: number): V2 => [a[0] * k, a[1] * k];
-export const len = (a: V2): number => Math.hypot(a[0], a[1]);
+export const len = (a: V2): number => dhypot(a[0], a[1]);
 export const unit = (a: V2): V2 => { const l = len(a); return l > 1e-12 ? [a[0] / l, a[1] / l] : [0, 0]; };
 export const limit = (a: V2, max: number): V2 => { const l = len(a); return l > max ? mul(a, max / l) : a; };
 /** The ground direction a yaw faces (core frame: yaw 0 faces +z). */
-export const along = (yaw: number): V2 => [Math.sin(yaw), Math.cos(yaw)];
-export const yawOf = (v: V2): number => Math.atan2(v[0], v[1]);
-export const wrap = (a: number): number => Math.atan2(Math.sin(a), Math.cos(a));
+export const along = (yaw: number): V2 => [dsin(yaw), dcos(yaw)];
+export const yawOf = (v: V2): number => datan2(v[0], v[1]);
+export const wrap = (a: number): number => datan2(dsin(a), dcos(a));
 /** Turn from `from` toward `to` by at most `max` radians. */
 export const turn = (from: number, to: number, max: number): number => { const d = wrap(to - from); return wrap(from + Math.max(-max, Math.min(max, d))); };
 

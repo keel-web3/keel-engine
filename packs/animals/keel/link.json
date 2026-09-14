@@ -7,6 +7,7 @@
     "kind": "pack",
     "needs": [
       "keel/runtime@^0.1",
+      "keel/core@^0.1",
       "keel/entity@^0.1"
     ],
     "provides": [
@@ -110,6 +111,7 @@
     "weight": -500
   },
   "imports": {
+    "@keel-engine/core": "keel/core",
     "@keel-engine/entity": "keel/entity",
     "@keel-engine/runtime": "keel/runtime"
   },

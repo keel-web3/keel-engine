@@ -81,7 +81,16 @@ test("settings, locks, streams and target rules beside the proof of concept's", 
     for (let k = 0; k < 20; k += 1) c.exact("streams", a.f(), b.f());
     c.same("weighted", a.weighted([["a", 1], ["b", 3], ["c", 2]]), b.weighted([["a", 1], ["b", 3], ["c", 2]]));
   }
-  for (let w = 8; w <= 300; w += 7) for (const h of [w, 40, 256]) c.same("targetRules", targetRules(w, h), pocRules!.targetRules(w, h));
+  // (arm and particleSize are (min/128) ** 0.45 and ** -0.35: dpow here, `**` there -- V8's pow, which the
+  // reference's portable Math can't swap, and which parts from fdlibm's by an ulp now and then. Those two nearly.)
+  const near = (a: number, b: number): boolean => Math.abs(a - b) <= 1e-12 * Math.max(1, Math.abs(a));
+  for (let w = 8; w <= 300; w += 7) {
+    for (const h of [w, 40, 256]) {
+      const a = targetRules(w, h), b = pocRules!.targetRules(w, h);
+      c.same("targetRules", { ...a, arm: 0, particleSize: 0 }, { ...b, arm: 0, particleSize: 0 });
+      c.same("targetRules (pow, nearly)", near(a.arm, b.arm) && near(a.particleSize, b.particleSize), true);
+    }
+  }
   console.log(c.summary("settings/streams/rules equality"));
 });
 

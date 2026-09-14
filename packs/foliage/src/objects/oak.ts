@@ -7,6 +7,7 @@ import type { DesignSolid } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
 import { solid } from "@keel-engine/object";
 import { WIND, bool, branch, canopy, dirOf, num, roles, scatter, str, trunk } from "../kit.ts";
+import { dcos, dlen, dsin } from "@keel-engine/core";
 
 const CROWN = { round: [1, 0.85, 1], wide: [1.3, 0.7, 1.25], tall: [0.8, 1.15, 0.8] } as const;
 
@@ -32,9 +33,9 @@ export default defineStyledObject({
     const n = num(v["limbs"]);
     for (let i = 0; i < n; i += 1) {
       const yaw = leanYaw + (i / n) * Math.PI * 2 + J.between(-0.3, 0.3);
-      const target: Vec3 = [crownC[0] + Math.sin(yaw) * R[0] * 0.45, crownC[1] - R[1] * 0.1, crownC[2] + Math.cos(yaw) * R[2] * 0.45];
+      const target: Vec3 = [crownC[0] + dsin(yaw) * R[0] * 0.45, crownC[1] - R[1] * 0.1, crownC[2] + dcos(yaw) * R[2] * 0.45];
       const d: Vec3 = [target[0] - t.top[0], target[1] - t.top[1], target[2] - t.top[2]];
-      const L = Math.hypot(...d);
+      const L = dlen(d);
       solids.push(branch("bark", t.top, [d[0] / L, d[1] / L, d[2] / L], L, r0 * 0.5, "limb").solid);
     }
     // (A low twig or two below the crown: the silhouette's broken edge.)
@@ -43,14 +44,14 @@ export default defineStyledObject({
     solids.push(...canopy("leaf", J, crownC, R, 5 + n));
     if (bool(v["acorns"])) solids.push(...scatter("fruit", J, crownC, R, 8, H * 0.018, { below: -0.6 }));
     // (Moss on the trunk's shaded side, at its foot.)
-    if (bool(v["moss"])) solids.push(solid.ball("moss", [-Math.sin(leanYaw) * r0 * 0.8, r0 * 1.2, -Math.cos(leanYaw) * r0 * 0.8], [r0 * 0.75, r0 * 1.1, r0 * 0.75], { name: "moss", collide: false }));
+    if (bool(v["moss"])) solids.push(solid.ball("moss", [-dsin(leanYaw) * r0 * 0.8, r0 * 1.2, -dcos(leanYaw) * r0 * 0.8], [r0 * 0.75, r0 * 1.1, r0 * 0.75], { name: "moss", collide: false }));
     return {
       solids,
       front: null,
       sockets: {
         base: { kind: "anchor", pos: [0, 0, 0] },
         // (Where a lantern, a swing or a bird's nest hangs: under the crown on the lean side.)
-        bough: { kind: "hang", pos: [crownC[0] + Math.sin(leanYaw) * R[0] * 0.5, crownC[1] - R[1] * 0.7, crownC[2] + Math.cos(leanYaw) * R[2] * 0.5] },
+        bough: { kind: "hang", pos: [crownC[0] + dsin(leanYaw) * R[0] * 0.5, crownC[1] - R[1] * 0.7, crownC[2] + dcos(leanYaw) * R[2] * 0.5] },
       },
       sway: WIND.tree,
     };

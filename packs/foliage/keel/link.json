@@ -6,6 +6,7 @@
     "version": "1.0.0",
     "kind": "pack",
     "needs": [
+      "keel/core@^0.1",
       "keel/object@^0.1"
     ],
     "provides": [
@@ -174,6 +175,7 @@
     "weight": -500
   },
   "imports": {
+    "@keel-engine/core": "keel/core",
     "@keel-engine/object": "keel/object"
   },
   "manifests": {}

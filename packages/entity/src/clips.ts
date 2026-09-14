@@ -14,7 +14,7 @@
 // Arms swing against the legs. Every pose also says how far one cycle carries
 // the body (`cycle`), which is how the animator turns distance into phase.
 
-import { TAU, clamp, fract } from "@keel-engine/core";
+import { clamp, dcos, dsin, fract, TAU } from "@keel-engine/core";
 import type { Vec3, Vec3Like } from "@keel-engine/core";
 import { poseSkeleton } from "./rig.ts";
 import type { IkGoal, Plan, Pose, Skeleton } from "./rig.ts";
@@ -71,7 +71,7 @@ export type ClipName = HumanoidClipName | QuadrupedClipName;
 export function footCycle(q: number, duty: number, s: number, lift: number): { z: number; y: number; stance: boolean; u: number } {
   if (q < duty) { const u = q / duty; return { z: s / 2 - s * u, y: 0, stance: true, u }; }
   const u = (q - duty) / (1 - duty);
-  return { z: -s / 2 + s * smooth(u), y: lift * Math.sin(Math.PI * u), stance: false, u };
+  return { z: -s / 2 + s * smooth(u), y: lift * dsin(Math.PI * u), stance: false, u };
 }
 
 /** A pose with nothing in it (every clip starts from one). */
@@ -103,19 +103,19 @@ function bipedGait(spec: HumanoidSpec, _t: number, ph: ClipPhase, _params: ClipP
   for (const [side, x] of SIDES) {
     const c = footCycle(fract(ph.phase + (x > 0 ? 0.5 : 0)), duty, s, cfg.lift * reach);
     zs[side] = c.z / (s / 2 || 1);
-    p.ik[`leg.${side}`] = { at: [x * w * 1.05, b.ankleH + c.y, c.z], w: 1, pitch: c.stance ? 0 : 0.35 * Math.sin(Math.PI * c.u), yaw: x * 0.06 };
+    p.ik[`leg.${side}`] = { at: [x * w * 1.05, b.ankleH + c.y, c.z], w: 1, pitch: c.stance ? 0 : 0.35 * dsin(Math.PI * c.u), yaw: x * 0.06 };
   }
   // Up and down twice a cycle (a walk vaults over the stance leg, a run sinks into it), side to side once.
   const mid = ph.phase - duty / 2;
-  const sway = -cfg.sway * reach * Math.cos(TAU * mid);
-  let lift = -cfg.crouch * reach + cfg.bob * reach * Math.cos(TAU * 2 * mid);
+  const sway = -cfg.sway * reach * dcos(TAU * mid);
+  let lift = -cfg.crouch * reach + cfg.bob * reach * dcos(TAU * 2 * mid);
   // (Never so high a planted foot can't reach the ground: the hips drop into a long step.)
   const twist = cfg.twist * zs["L"]!;
   for (const [side, x] of SIDES) {
     const g = p.ik[`leg.${side}`]!;
     if (g.at[1] > b.ankleH + 1e-12) continue;
-    const hx = sway + x * w * Math.cos(twist);
-    const hz = -x * w * Math.sin(twist);
+    const hx = sway + x * w * dcos(twist);
+    const hz = -x * w * dsin(twist);
     const flat2 = (g.at[0] - hx) ** 2 + (g.at[2] - hz) ** 2;
     const high = b.ankleH + Math.sqrt(Math.max(0, (reach * 0.985) ** 2 - flat2)) - b.hipH;
     if (lift > high) lift = high;
@@ -133,8 +133,8 @@ function bipedGait(spec: HumanoidSpec, _t: number, ph: ClipPhase, _params: ClipP
     p.rot[`upperArm.${side}`] = [arm + cfg.armAmp * k, 0, x * cfg.armOut];
     p.rot[`forearm.${side}`] = [-cfg.elbow - 0.35 * cfg.armAmp * Math.max(0, -k), 0, 0];
   }
-  p.rot["tail0"] = [0.15 + cfg.lean * 0.4, 0.3 * Math.sin(TAU * ph.phase), 0];
-  p.rot["tail1"] = [0.1, 0.35 * Math.sin(TAU * ph.phase - 0.8), 0];
+  p.rot["tail0"] = [0.15 + cfg.lean * 0.4, 0.3 * dsin(TAU * ph.phase), 0];
+  p.rot["tail1"] = [0.1, 0.35 * dsin(TAU * ph.phase - 0.8), 0];
   p.ears = cfg.ears;
   p.cycle = s / duty;
   return p;
@@ -162,18 +162,18 @@ const mixCfg = (a: Readonly<BipedGait>, b: Readonly<BipedGait>, k: number): Bipe
 const idle: Clip<HumanoidSpec> = (spec, t) => {
   const { b, reach, w } = legsAt(spec);
   const p = blank();
-  const br = Math.sin((TAU * t) / 3.4);
+  const br = dsin((TAU * t) / 3.4);
   p.root.off = [0, -reach * 0.035 + br * b.H * 0.004, 0];
   p.rot["spine"] = [0.03 + br * 0.012, 0, 0];
   p.rot["chest"] = [br * 0.02, 0, 0];
-  p.rot["head"] = [-0.04 + 0.03 * Math.sin((TAU * t) / 5.1), 0.28 * Math.sin((TAU * t) / 7.3) * Math.sin((TAU * t) / 11.1), 0];
+  p.rot["head"] = [-0.04 + 0.03 * dsin((TAU * t) / 5.1), 0.28 * dsin((TAU * t) / 7.3) * dsin((TAU * t) / 11.1), 0];
   for (const [side, x] of SIDES) {
     p.rot[`upperArm.${side}`] = [0.04, 0, x * (0.1 + br * 0.02)];
     p.rot[`forearm.${side}`] = [-0.25, 0, 0];
     p.ik[`leg.${side}`] = { at: [x * w * 1.15, b.ankleH, 0.01 * b.H], w: 1, yaw: x * 0.12 };
   }
-  p.rot["tail0"] = [0.1, 0.3 * Math.sin((TAU * t) / 2.3), 0];
-  p.rot["tail1"] = [0.2, 0.3 * Math.sin((TAU * t) / 2.3 - 0.9), 0];
+  p.rot["tail0"] = [0.1, 0.3 * dsin((TAU * t) / 2.3), 0];
+  p.rot["tail1"] = [0.2, 0.3 * dsin((TAU * t) / 2.3 - 0.9), 0];
   return p;
 };
 
@@ -227,7 +227,7 @@ export const HUMANOID_CLIPS: Readonly<Record<HumanoidClipName, Clip<HumanoidSpec
     p.ik["leg.L"] = { at: [-w * 1.4, b.ankleH + reach * 0.2, reach * 0.18], w: 1, pitch: 0.3 };
     p.ik["leg.R"] = { at: [w * 1.4, b.ankleH + reach * 0.14, -reach * 0.08], w: 1, pitch: 0.35 };
     p.rot["spine"] = [-0.04, 0, 0];
-    const flap = 0.12 * Math.sin(TAU * t * 2.2);
+    const flap = 0.12 * dsin(TAU * t * 2.2);
     for (const [side, x] of SIDES) { p.rot[`upperArm.${side}`] = [-0.3, 0, x * (2 + flap)]; p.rot[`forearm.${side}`] = [-0.45, 0, 0]; }
     p.rot["tail0"] = [-0.3, 0, 0];
     p.ears = 1;
@@ -259,7 +259,7 @@ export const HUMANOID_CLIPS: Readonly<Record<HumanoidClipName, Clip<HumanoidSpec
   grind(spec, t) {
     const { b, reach, w } = legsAt(spec);
     const p = blank();
-    const bal = Math.sin(TAU * t * 0.9);
+    const bal = dsin(TAU * t * 0.9);
     // (Balancing sways the body over planted feet: at the hips, not the root, so the feet stay on the rail.)
     p.root.off = [0.06 * reach * bal, -reach * 0.28, 0];
     p.rot["hips"] = [0, 0.3, 0.06 * bal];
@@ -281,7 +281,7 @@ export const HUMANOID_CLIPS: Readonly<Record<HumanoidClipName, Clip<HumanoidSpec
   sit(spec, t, _ph, params = {}) {
     const { b, reach, w } = legsAt(spec);
     const p = blank();
-    const br = Math.sin((TAU * t) / 3.8);
+    const br = dsin((TAU * t) / 3.8);
     if (params.seat === 0) {
       const hy = b.torsoR * 0.95;
       const z = Math.sqrt(Math.max(0, (reach * 0.97) ** 2 - (hy - b.ankleH) ** 2));
@@ -301,7 +301,7 @@ export const HUMANOID_CLIPS: Readonly<Record<HumanoidClipName, Clip<HumanoidSpec
       }
     }
     p.rot["spine"] = [-0.04 + br * 0.01, 0, 0];
-    p.rot["head"] = [0.05, 0.2 * Math.sin((TAU * t) / 9), 0];
+    p.rot["head"] = [0.05, 0.2 * dsin((TAU * t) / 9), 0];
     p.rot["tail0"] = [-0.45, 0.5, 0];
     p.rot["tail1"] = [-0.2, 0.6, 0];
     return p;
@@ -313,7 +313,7 @@ export const HUMANOID_CLIPS: Readonly<Record<HumanoidClipName, Clip<HumanoidSpec
     const q = fract(t * 1.8);
     for (const [side, x] of SIDES) {
       const u = x < 0 ? q * 2 : q * 2 - 1;
-      const lift = u > 0 && u < 1 ? Math.sin(Math.PI * u) * reach * 0.12 : 0;
+      const lift = u > 0 && u < 1 ? dsin(Math.PI * u) * reach * 0.12 : 0;
       p.ik[`leg.${side}`] = { at: [x * w * 1.15, b.ankleH + lift, 0.01 * b.H], w: 1, yaw: x * 0.12 - Math.sign(params.turn ?? 0) * 0.2 * (lift > 0 ? 1 : 0) };
     }
     p.rot["chest"] = [0, Math.sign(params.turn ?? 0) * 0.15, 0];
@@ -375,17 +375,17 @@ function quadGait(spec: QuadrupedSpec, _t: number, ph: ClipPhase, g: Readonly<Qu
   for (const k of FEET) {
     const x = k[1] === "L" ? -1 : 1;
     const c = footCycle(fract(ph.phase - g.at[k]), g.duty, s, g.lift * (k[0] === "F" ? rF : rH));
-    p.ik[`leg.${k}`] = { at: [x * b.w, b.ankleH + c.y, (k[0] === "F" ? zF : zH) + c.z], w: 1, pitch: c.stance ? 0 : -0.4 * Math.sin(Math.PI * c.u) };
+    p.ik[`leg.${k}`] = { at: [x * b.w, b.ankleH + c.y, (k[0] === "F" ? zF : zH) + c.z], w: 1, pitch: c.stance ? 0 : -0.4 * dsin(Math.PI * c.u) };
   }
-  const flex = g.flex * Math.sin(TAU * ph.phase);
-  p.root.off = [0, -reach * 0.04 + g.bob * reach * Math.cos(TAU * 2 * ph.phase), 0];
+  const flex = g.flex * dsin(TAU * ph.phase);
+  p.root.off = [0, -reach * 0.04 + g.bob * reach * dcos(TAU * 2 * ph.phase), 0];
   p.rot["pelvis"] = [flex * 0.5, 0, 0];
   p.rot["spine"] = [-flex, 0, 0];
   p.rot["chest"] = [flex * 0.5, 0, 0];
-  p.rot["neck"] = [g.nod * Math.sin(TAU * 2 * ph.phase + 0.6), 0, 0];
-  p.rot["tail0"] = [-(b.tailRise ?? 0.4) * g.flex * 2.5 + 0.1, 0.3 * Math.sin(TAU * ph.phase), 0];
-  p.rot["tail1"] = [0.1, 0.35 * Math.sin(TAU * ph.phase - 0.7), 0];
-  p.rot["tail2"] = [0.05, 0.35 * Math.sin(TAU * ph.phase - 1.4), 0];
+  p.rot["neck"] = [g.nod * dsin(TAU * 2 * ph.phase + 0.6), 0, 0];
+  p.rot["tail0"] = [-(b.tailRise ?? 0.4) * g.flex * 2.5 + 0.1, 0.3 * dsin(TAU * ph.phase), 0];
+  p.rot["tail1"] = [0.1, 0.35 * dsin(TAU * ph.phase - 0.7), 0];
+  p.rot["tail2"] = [0.05, 0.35 * dsin(TAU * ph.phase - 1.4), 0];
   p.ears = g.flex;
   p.cycle = s / g.duty;
   return p;
@@ -395,7 +395,7 @@ function quadGait(spec: QuadrupedSpec, _t: number, ph: ClipPhase, g: Readonly<Qu
 function pitchFor(spec: QuadrupedSpec, pelvisY: number, want: number): number {
   const b = spec.body;
   const rise = b.shoulderH - b.hipH;
-  const h = (a: number): number => pelvisY + rise * Math.cos(a) + b.bodyLen * Math.sin(-a);
+  const h = (a: number): number => pelvisY + rise * dcos(a) + b.bodyLen * dsin(-a);
   let lo = -1.35;
   let hi = 0;
   for (let i = 0; i < 24; i += 1) { const m = (lo + hi) / 2; if (h(m) > want) lo = m; else hi = m; }
@@ -406,15 +406,15 @@ export const QUADRUPED_CLIPS: Readonly<Record<QuadrupedClipName, Clip<QuadrupedS
   idle(spec, t) {
     const { b, zF, zH, rF } = quadAt(spec);
     const p = blank();
-    const br = Math.sin((TAU * t) / 3);
+    const br = dsin((TAU * t) / 3);
     p.root.off = [0, -rF * 0.03 + br * b.bodyR * 0.02, 0];
     p.rot["spine"] = [br * 0.01, 0, 0];
-    p.rot["neck"] = [-0.05, 0.3 * Math.sin((TAU * t) / 6.7) * Math.sin((TAU * t) / 9.9), 0];
-    p.rot["head"] = [0.05 * Math.sin((TAU * t) / 4.3), 0, 0];
+    p.rot["neck"] = [-0.05, 0.3 * dsin((TAU * t) / 6.7) * dsin((TAU * t) / 9.9), 0];
+    p.rot["head"] = [0.05 * dsin((TAU * t) / 4.3), 0, 0];
     for (const k of FEET) p.ik[`leg.${k}`] = { at: [(k[1] === "L" ? -1 : 1) * b.w, b.ankleH, k[0] === "F" ? zF : zH], w: 1 };
-    p.rot["tail0"] = [0.15, 0.4 * Math.sin((TAU * t) / 2.6), 0];
-    p.rot["tail1"] = [0.1, 0.4 * Math.sin((TAU * t) / 2.6 - 0.8), 0];
-    p.rot["tail2"] = [0.05, 0.4 * Math.sin((TAU * t) / 2.6 - 1.6), 0];
+    p.rot["tail0"] = [0.15, 0.4 * dsin((TAU * t) / 2.6), 0];
+    p.rot["tail1"] = [0.1, 0.4 * dsin((TAU * t) / 2.6 - 0.8), 0];
+    p.rot["tail2"] = [0.05, 0.4 * dsin((TAU * t) / 2.6 - 1.6), 0];
     return p;
   },
   /** Walk into trot into gallop as one gait, by params.speed (what the animator plays). */
@@ -431,11 +431,11 @@ export const QUADRUPED_CLIPS: Readonly<Record<QuadrupedClipName, Clip<QuadrupedS
     const a = pitchFor(spec, py, b.ankleH + rF * 0.96);
     p.root.off = [0, py - b.hipH, 0];
     p.rot["pelvis"] = [a, 0, 0];
-    p.rot["neck"] = [-a * 0.75, 0.25 * Math.sin((TAU * t) / 7), 0];
+    p.rot["neck"] = [-a * 0.75, 0.25 * dsin((TAU * t) / 7), 0];
     p.rot["head"] = [-a * 0.2, 0, 0];
     // Where the shoulders went: up and back, round the pelvis.
     const rise = b.shoulderH - b.hipH;
-    const zc = zH + rise * Math.sin(a) + b.bodyLen * Math.cos(a);
+    const zc = zH + rise * dsin(a) + b.bodyLen * dcos(a);
     for (const [side, x] of SIDES) {
       p.ik[`leg.F${side}`] = { at: [x * b.w, b.ankleH, zc + b.pawLen * 0.2], w: 1 };
       // (The hind knee comes up by the flank, the hock goes down behind it.)
@@ -451,12 +451,12 @@ export const QUADRUPED_CLIPS: Readonly<Record<QuadrupedClipName, Clip<QuadrupedS
   lie(spec, t) {
     const { b, zF, zH } = quadAt(spec);
     const p = blank();
-    const br = Math.sin((TAU * t) / 3.6);
+    const br = dsin((TAU * t) / 3.6);
     const a = pitchFor(spec, b.bodyR * 1.1, b.bodyR * 1.25 + Math.max(0, b.shoulderH - b.hipH) * 0.3);
     p.root.off = [0, b.bodyR * 1.1 - b.hipH, 0];
     p.rot["pelvis"] = [a, 0, 0];
     p.rot["spine"] = [br * 0.015, 0, 0];
-    p.rot["neck"] = [-0.25, 0.3 * Math.sin((TAU * t) / 8), 0];
+    p.rot["neck"] = [-0.25, 0.3 * dsin((TAU * t) / 8), 0];
     for (const [side, x] of SIDES) {
       p.ik[`leg.F${side}`] = { at: [x * b.w * 1.1, b.ankleH, zF + b.upperF * 1.25], w: 1 };
       p.ik[`leg.H${side}`] = { at: [x * b.w * 1.9, b.ankleH, zH + b.upperH * 0.9], w: 1, yaw: x * 0.5, pole: [x * 0.8, 0.6, 0.5] };

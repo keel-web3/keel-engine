@@ -9,6 +9,7 @@
 import { solid } from "@keel-engine/object";
 import type { DesignSolid, WorldRoleSpec } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
+import { datan2, dhypot } from "@keel-engine/core";
 
 /** Every world role buildings and their kin use, and the slot each paints (all distinct). */
 export const ROLES = {
@@ -63,9 +64,9 @@ export function sagLine(a: Vec3, b: Vec3, n: number, sag: number): Vec3[] {
  */
 export function spanBetween(a: readonly [number, number, number], b: readonly [number, number, number], along: "z" | "x" = "z"): { length: number; rise: number; pos: Vec3; yaw: number } {
   const dx = b[0] - a[0], dz = b[2] - a[2];
-  const length = Math.hypot(dx, dz);
+  const length = dhypot(dx, dz);
   const pos: Vec3 = [(a[0] + b[0]) / 2, a[1], (a[2] + b[2]) / 2];
   // (z: the local +z end at a -- its front faces from b toward a. x: the local +x end at b -- right = (b - a) = (cos yaw, -sin yaw).)
-  const yaw = along === "z" ? Math.atan2(-dx, -dz) : Math.atan2(-dz, dx);
+  const yaw = along === "z" ? datan2(-dx, -dz) : datan2(-dz, dx);
   return { length, rise: b[1] - a[1], pos, yaw };
 }

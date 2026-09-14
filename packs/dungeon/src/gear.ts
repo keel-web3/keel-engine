@@ -7,6 +7,7 @@
 import type { AttributeBox, AttributeCapsule, AttributeShape } from "@keel-engine/entity";
 import { definePack, defineAttribute } from "@keel-engine/runtime";
 import type { Pins, Stream } from "@keel-engine/runtime";
+import { datan2, dcos, dsin } from "@keel-engine/core";
 
 // (Two-legged bodies; no pack named, so any character with hands may carry them.)
 const HANDED = { body: "body/humanoid@^1" } as const;
@@ -46,7 +47,7 @@ export const sword = defineAttribute<AttributeShape>({
       { a: at(g * 1.6 + L * 0.72), b: at(g * 1.6 + L), r: w * 0.55, role: "secondary", part: "sword.point" },
     ];
     const boxes: AttributeBox[] = [];
-    const gc = at(g * 1.3), yaw = Math.atan2(d[0], d[2]);
+    const gc = at(g * 1.3), yaw = datan2(d[0], d[2]);
     if (guard === "cross") boxes.push({ c: gc, h: [0.15, 0.022, 0.028], yaw, role: "trim", part: "sword.guard" });
     else {
       capsules.push({ a: [gc[0] - 0.12, gc[1] + 0.05, gc[2]], b: gc, r: 0.022, role: "trim", part: "sword.guard" });
@@ -70,7 +71,7 @@ export const shield = defineAttribute<AttributeShape>({
     const boss = choose(S, pins, "boss", [true, false]);
     // (Carried on the forearm, its face turned out and ahead: the plate's thin axis along `n`, a hand's breadth off.)
     const yaw = -0.8;
-    const n = [Math.cos(yaw) * -1, 0, Math.sin(-yaw)] as const;
+    const n = [dcos(yaw) * -1, 0, dsin(-yaw)] as const;
     const off = 0.08;
     const at = (y: number): [number, number, number] => [n[0] * off, y, n[2] * off];
     const boxes: AttributeBox[] = [];

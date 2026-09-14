@@ -13,7 +13,7 @@
 //
 //   const pose = clipOf(spec, "attack")(spec, t, { phase: 0.4, landT: 0 });
 
-import { clamp } from "@keel-engine/core";
+import { clamp, dsin } from "@keel-engine/core";
 import { HUMANOID_CLIPS, QUADRUPED_CLIPS, clipsFor } from "./clips.ts";
 import type { AnyClip, Clip, ClipPose } from "./clips.ts";
 import type { EntitySpec, HumanoidSpec, QuadrupedSpec } from "./species.ts";
@@ -64,7 +64,7 @@ const humanAttack: Clip<HumanoidSpec> = (spec, t, ph, params) => {
 
 const humanUse: Clip<HumanoidSpec> = (spec, t, ph, params) => {
   const p = HUMANOID_CLIPS.idle(spec, t, ph, params);
-  const k = Math.sin(Math.PI * clamp(ph.phase, 0, 1));
+  const k = dsin(Math.PI * clamp(ph.phase, 0, 1));
   const reach = spec.body.hipH - spec.body.ankleH;
   p.rot["upperArm.R"] = [mix(0.04, -1.2, k), 0, 0.1];
   p.rot["forearm.R"] = [mix(-0.25, -0.1, k), 0, 0];
@@ -91,9 +91,9 @@ const quadAttack: Clip<QuadrupedSpec> = (spec, t, ph, params) => {
 
 const quadUse: Clip<QuadrupedSpec> = (spec, t, ph, params) => {
   const p = QUADRUPED_CLIPS.idle(spec, t, ph, params);
-  const k = Math.sin(Math.PI * clamp(ph.phase, 0, 1));
+  const k = dsin(Math.PI * clamp(ph.phase, 0, 1));
   p.rot["neck"] = [0.6 * k, 0, 0];
-  p.rot["head"] = [0.3 * k, 0.15 * Math.sin(ph.phase * 25), 0];
+  p.rot["head"] = [0.3 * k, 0.15 * dsin(ph.phase * 25), 0];
   return p;
 };
 

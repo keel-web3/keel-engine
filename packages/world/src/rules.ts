@@ -20,7 +20,7 @@
 // value other than "auto" wins -- see RULE_KEYS), or replaced wholesale by
 // createWorld({ rules: myRules }). Ported from the proof of concept's src/world/rules.js.
 
-import { bandOf, rampBudget, screenForTarget } from "@keel-engine/core";
+import { bandOf, dpow, rampBudget, screenForTarget } from "@keel-engine/core";
 import type { Band, ScreenId } from "@keel-engine/core";
 import { fovForTarget } from "@keel-engine/camera";
 import type { SettingValue } from "./config.ts";
@@ -65,8 +65,8 @@ export function targetRules(width: number, height = width): TargetRules {
     dither: 0.9,
     pattern: 0.35 + 0.65 * smooth(28, 96, min),
     fov: fovForTarget(width, height),
-    arm: clamp((min / 128) ** 0.45, 0.55, 1),
-    particleSize: clamp((min / 128) ** -0.35, 1, 1.8),
+    arm: clamp(dpow(min / 128, 0.45), 0.55, 1),
+    particleSize: clamp(dpow(min / 128, -0.35), 1, 1.8),
     outline: 1,
     rampLength: rampBudget(min),
   };

@@ -3,6 +3,7 @@
 import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import { bool, num, roles } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "log",
@@ -20,12 +21,12 @@ export default defineStyledObject({
     const solids: DesignSolid[] = [];
     const yaw = J.between(-0.2, 0.2);
     const half = L / 2 - r;
-    const a: [number, number, number] = [-Math.cos(yaw) * half, r * 1.06, Math.sin(yaw) * half];
-    const b: [number, number, number] = [Math.cos(yaw) * half, r, -Math.sin(yaw) * half];
+    const a: [number, number, number] = [-dcos(yaw) * half, r * 1.06, dsin(yaw) * half];
+    const b: [number, number, number] = [dcos(yaw) * half, r, -dsin(yaw) * half];
     solids.push(solid.capsule("bark", a, b, r, { name: "log" }));
     // (The cut end: pale wood; hollow, a dark mouth in it.)
-    solids.push(solid.ball("wood", [b[0] + Math.cos(yaw) * r * 0.55, b[1], b[2] - Math.sin(yaw) * r * 0.55], [r * 0.5, r * 0.86, r * 0.86], { name: "end", collide: false }));
-    if (bool(v["hollow"])) solids.push(solid.ball("dark", [b[0] + Math.cos(yaw) * r * 0.8, b[1], b[2] - Math.sin(yaw) * r * 0.8], [r * 0.4, r * 0.55, r * 0.55], { name: "hollow", collide: false }));
+    solids.push(solid.ball("wood", [b[0] + dcos(yaw) * r * 0.55, b[1], b[2] - dsin(yaw) * r * 0.55], [r * 0.5, r * 0.86, r * 0.86], { name: "end", collide: false }));
+    if (bool(v["hollow"])) solids.push(solid.ball("dark", [b[0] + dcos(yaw) * r * 0.8, b[1], b[2] - dsin(yaw) * r * 0.8], [r * 0.4, r * 0.55, r * 0.55], { name: "hollow", collide: false }));
     for (let i = 0; i < 2; i += 1) {
       const t = J.between(-0.6, 0.6);
       const p: [number, number, number] = [a[0] + (b[0] - a[0]) * (t + 1) / 2, r * 1.2, a[2] + (b[2] - a[2]) * (t + 1) / 2];

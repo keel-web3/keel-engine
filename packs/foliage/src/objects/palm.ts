@@ -4,6 +4,7 @@ import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
 import { WIND, bool, num, roles } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "palm",
@@ -20,7 +21,7 @@ export default defineStyledObject({
     const yaw = J.between(0, Math.PI * 2);
     const solids: DesignSolid[] = [];
     const segs = 7;
-    const at = (t: number): Vec3 => { const off = curve * H * t * t; return [Math.sin(yaw) * off, t * H, Math.cos(yaw) * off]; };
+    const at = (t: number): Vec3 => { const off = curve * H * t * t; return [dsin(yaw) * off, t * H, dcos(yaw) * off]; };
     const r0 = 0.14 + H * 0.012;
     solids.push(solid.cylinder("bark", [0, 0, 0], r0 * 1.5, r0 * 1.2, { name: "roots", collide: false }));
     for (let i = 0; i < segs; i += 1) {
@@ -40,7 +41,7 @@ export default defineStyledObject({
       const pitches = [0.45, -0.1, -0.75];
       pitches.forEach((pitch, k) => {
         const len = (L / 3) * (k === 0 ? 1.1 : 1);
-        const d: Vec3 = [Math.sin(fy) * Math.cos(pitch), Math.sin(pitch), Math.cos(fy) * Math.cos(pitch)];
+        const d: Vec3 = [dsin(fy) * dcos(pitch), dsin(pitch), dcos(fy) * dcos(pitch)];
         const q: Vec3 = [p[0] + d[0] * len, p[1] + d[1] * len, p[2] + d[2] * len];
         solids.push(solid.capsule("leaf", p, q, H * (0.034 - k * 0.007), { name: "frond", group: "head", collide: false }));
         p = q;
@@ -49,7 +50,7 @@ export default defineStyledObject({
     solids.push(solid.ball("leaf", top, H * 0.05, { name: "heart", group: "head", collide: false }));
     if (bool(v["coconuts"])) for (let i = 0; i < 3; i += 1) {
       const a = (i / 3) * Math.PI * 2 + yaw;
-      solids.push(solid.ball("fruit", [top[0] + Math.sin(a) * r0 * 0.9, top[1] - r0 * 0.9, top[2] + Math.cos(a) * r0 * 0.9], r0 * 0.7, { name: "coconut", group: "head", collide: false }));
+      solids.push(solid.ball("fruit", [top[0] + dsin(a) * r0 * 0.9, top[1] - r0 * 0.9, top[2] + dcos(a) * r0 * 0.9], r0 * 0.7, { name: "coconut", group: "head", collide: false }));
     }
     return { solids, front: null, sockets: { base: { kind: "anchor", pos: [0, 0, 0] } } };
   },

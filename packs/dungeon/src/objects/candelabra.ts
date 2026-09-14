@@ -5,6 +5,7 @@ import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
 import { ACTS, candle, num, roles, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "candelabra",
@@ -35,7 +36,7 @@ export default defineStyledObject({
       solids.push(solid.ball("wax", [0, 0.012, 0], [0.26, 0.012, 0.2], { name: "drips", collide: false }));
       for (let i = 0; i < n + 2; i += 1) {
         const a = J.between(0, 6.28), d = J.between(0, 0.2);
-        flames.push(candle(solids, [Math.sin(a) * d, 0, Math.cos(a) * d], J.between(0.08, 0.3), J.between(0.03, 0.045)));
+        flames.push(candle(solids, [dsin(a) * d, 0, dcos(a) * d], J.between(0.08, 0.3), J.between(0.03, 0.045)));
       }
       solids.push(solid.box("dark", [0.1, 0.005, 0.12], [0.05, 0.005, 0.04], 0, { name: "soot", collide: false }));
     }

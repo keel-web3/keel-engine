@@ -4,6 +4,7 @@ import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
 import { WIND, bool, num, roles } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "reeds",
@@ -25,8 +26,8 @@ export default defineStyledObject({
       const yaw = (i / n) * Math.PI * 2 + J.between(-0.5, 0.5);
       const h = H * J.between(0.65, 1);
       const out = h * J.between(0.05, 0.22);
-      const foot: Vec3 = [Math.sin(yaw) * H * 0.05, r, Math.cos(yaw) * H * 0.05];
-      const tip: Vec3 = [Math.sin(yaw) * out, h, Math.cos(yaw) * out];
+      const foot: Vec3 = [dsin(yaw) * H * 0.05, r, dcos(yaw) * H * 0.05];
+      const tip: Vec3 = [dsin(yaw) * out, h, dcos(yaw) * out];
       solids.push(solid.capsule("leaf", foot, tip, r, { name: "stalk", collide: false }));
       if (bool(v["cattails"]) && i % 2 === 0) {
         const t = 0.78;
@@ -34,7 +35,7 @@ export default defineStyledObject({
         solids.push(solid.capsule("fruit", c, [c[0] + (tip[0] - foot[0]) * 0.12, c[1] + (tip[1] - foot[1]) * 0.12, c[2] + (tip[2] - foot[2]) * 0.12], r * 2.6, { name: "cattail", collide: false }));
       } else if (i % 3 === 1) solids.push(solid.ball("blossom", tip, [r * 3, H * 0.06, r * 3], { name: "plume", collide: false }));
       // (A blade leaf curling off low.)
-      if (i % 2 === 1) solids.push(solid.capsule("leaf", foot, [Math.sin(yaw + 0.8) * h * 0.25, h * 0.45, Math.cos(yaw + 0.8) * h * 0.25], r, { name: "blade", collide: false }));
+      if (i % 2 === 1) solids.push(solid.capsule("leaf", foot, [dsin(yaw + 0.8) * h * 0.25, h * 0.45, dcos(yaw + 0.8) * h * 0.25], r, { name: "blade", collide: false }));
     }
     return { solids, front: null, colliders: [] };
   },

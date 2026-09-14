@@ -10,11 +10,11 @@
   },
   "dependencies": {
     "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/core": "workspace:*",
     "@keel-engine/object": "workspace:*",
     "@keel-engine/entity": "workspace:*"
   },
   "devDependencies": {
-    "@keel-engine/core": "workspace:*",
     "@keel-engine/builder": "workspace:*",
     "@keel-engine/keel": "workspace:*",
     "@keel-engine/codec": "workspace:*",

@@ -5,6 +5,7 @@ import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
 import { ACTS, num, roles, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "cobweb",
@@ -24,7 +25,7 @@ export default defineStyledObject({
     const a1 = form === "corner" ? Math.PI * 0.38 : form === "sheet" ? Math.PI * 0.7 : Math.PI;
     const spokes = 7;
     // (Spokes: in the plane facing the room, hanging down from the apex.)
-    const tip = (a: number, r: number): Vec3 => [apex[0] + Math.sin(a) * r, apex[1] - Math.cos(a) * r * 0.9, apex[2] + 0.02];
+    const tip = (a: number, r: number): Vec3 => [apex[0] + dsin(a) * r, apex[1] - dcos(a) * r * 0.9, apex[2] + 0.02];
     const ends: number[] = [];
     for (let i = 0; i < spokes; i += 1) { const a = a0 + ((a1 - a0) * i) / (spokes - 1) + J.between(-0.08, 0.08); ends.push(a); solids.push(solid.capsule("web", apex, tip(a, R * J.between(0.85, 1)), 0.012, { name: "spoke", collide: false })); }
     for (const k of [0.35, 0.6, 0.85]) for (let i = 0; i + 1 < ends.length; i += 1) solids.push(solid.capsule("web", tip(ends[i]!, R * k), tip(ends[i + 1]!, R * k * J.between(0.95, 1.05)), 0.011, { name: "ring", collide: false }));

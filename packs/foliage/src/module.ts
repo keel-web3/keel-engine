@@ -7,7 +7,7 @@ export const manifest = defineManifest({
   id: PACK_ID,
   version: PACK_VERSION,
   kind: "pack",
-  needs: ["keel/object@^0.1"],
+  needs: ["keel/core@^0.1", "keel/object@^0.1"],
   provides: ["objects/foliage@1.0.0"],
   contents: pack.contents(),
   title: "Foliage",

@@ -14,7 +14,7 @@
 
 import { buildPiece, defineObject } from "@keel-engine/object";
 import type { ObjectDef, PieceKey } from "@keel-engine/object";
-import { deriveSeed } from "@keel-engine/core";
+import { dcos, deriveSeed, dhypot, dsin } from "@keel-engine/core";
 import type { GroundExtra } from "@keel-engine/terrain";
 import type { ContentRef, Style } from "./document.ts";
 
@@ -83,7 +83,7 @@ function tree(kind: string, style: Style, f: () => number): ObjectDef<Record<str
   if (kind === "palm") {
     const lean = (f() - 0.5) * 0.6;
     const parts: Part[] = [cap("trunk", [0, 0, 0], [lean, 2.4 * s, 0], 0.13, "wood")];
-    for (let n = 0; n < 5; n += 1) { const a = (n / 5) * Math.PI * 2 + f(); parts.push(cap(`frond${n}`, [lean, 2.45 * s, 0], [lean + Math.sin(a) * 1.1, 2.1 * s, Math.cos(a) * 1.1], 0.12, "leaf")); }
+    for (let n = 0; n < 5; n += 1) { const a = (n / 5) * Math.PI * 2 + f(); parts.push(cap(`frond${n}`, [lean, 2.45 * s, 0], [lean + dsin(a) * 1.1, 2.1 * s, dcos(a) * 1.1], 0.12, "leaf")); }
     return defineObject({ key: `placeholder/palm/${f().toFixed(3)}`, parts, front: "+z", tags: ["foliage", "tree"], meta: { height: 2.8 * s, radius: 1.2 } });
   }
   if (kind === "dead-tree") {
@@ -102,7 +102,7 @@ function plant(kind: string, style: Style, f: () => number): ObjectDef<Record<st
     case "flowers": return defineObject({ key: `placeholder/flowers/${style}/${f().toFixed(3)}`, parts: [cap("stem", [0, 0, 0], [0.03, 0.3, 0], 0.03, "leaf"), v ? box("bloom", [0.03, 0.36, 0], [0.08, 0.08, 0.08], "petal") : cap("bloom", [0.03, 0.36, 0], [0.03, 0.36, 0], 0.08, "petal"), cap("stem2", [0.15, 0, 0.1], [0.18, 0.22, 0.1], 0.025, "leaf"), cap("bloom2", [0.18, 0.26, 0.1], [0.18, 0.26, 0.1], 0.06, "petal")], tags: ["foliage"], meta: { height: 0.45, radius: 0.25 } });
     case "reeds": return defineObject({ key: `placeholder/reeds/${f().toFixed(3)}`, parts: Array.from({ length: 5 }, (_, n) => cap(`r${n}`, [(n - 2) * 0.08, 0, (n % 2) * 0.08], [(n - 2) * 0.12, 0.7 + f() * 0.3, (n % 2) * 0.1], 0.03, "leaf")), tags: ["foliage"], meta: { height: 1, radius: 0.3 } });
     case "cactus": return defineObject({ key: `placeholder/cactus/${style}/${f().toFixed(3)}`, parts: v ? [box("c", [0, 0.7, 0], [0.18, 0.7, 0.18], "leaf"), box("arm", [0.3, 0.9, 0], [0.12, 0.25, 0.12], "leaf")] : [cap("c", [0, 0, 0], [0, 1.3, 0], 0.18, "leaf"), cap("arm", [0.1, 0.7, 0], [0.4, 1.0, 0], 0.1, "leaf")], tags: ["foliage"], meta: { height: 1.5, radius: 0.5 } });
-    default: return defineObject({ key: `placeholder/tuft/${f().toFixed(3)}`, parts: Array.from({ length: 4 }, (_, n) => { const a = (n / 4) * 6.28 + f(); return cap(`blade${n}`, [0, 0, 0], [Math.sin(a) * 0.12, 0.3 + f() * 0.15, Math.cos(a) * 0.12], 0.035, "leaf"); }), tags: ["foliage"], meta: { height: 0.45, radius: 0.2 } });
+    default: return defineObject({ key: `placeholder/tuft/${f().toFixed(3)}`, parts: Array.from({ length: 4 }, (_, n) => { const a = (n / 4) * 6.28 + f(); return cap(`blade${n}`, [0, 0, 0], [dsin(a) * 0.12, 0.3 + f() * 0.15, dcos(a) * 0.12], 0.035, "leaf"); }), tags: ["foliage"], meta: { height: 0.45, radius: 0.2 } });
   }
 }
 
@@ -136,7 +136,7 @@ function house(kind: string, style: Style, f: () => number): ObjectDef<Record<st
   else ground.push(...roof(w, d, h, d * 0.42 * (0.9 + f() * 0.2), "roof"));
   if (kind === "house" || kind === "cottage") ground.push({ c: [w * 0.3, h + d * 0.3, -d * 0.12], h: [0.25, d * 0.35, 0.25], mat: "stone" }); // (a chimney)
   const parts = ground.filter((g) => g.kind !== "wedge").map((g, n) => box(`part${n}`, [g.c[0], g.c[1], g.c[2]], [g.h[0], g.h[1], g.h[2]], g.mat, g.yaw ?? 0));
-  return defineObject({ key: `placeholder/${kind}/${style}`, parts, front: "+z", tags: ["building"], meta: { height: h + d * 0.45, radius: Math.hypot(w, d) / 2, footprint: [w, d], ground } });
+  return defineObject({ key: `placeholder/${kind}/${style}`, parts, front: "+z", tags: ["building"], meta: { height: h + d * 0.45, radius: dhypot(w, d) / 2, footprint: [w, d], ground } });
 }
 
 /** A bridge over `length` metres (along its +z), `width` wide: deck, rails, posts -- baked into the ground. */
@@ -194,7 +194,7 @@ export function placeholderContent(): ContentResolver {
  * (capsules as the boxes round them), each with its part's material name.
  */
 export function groundSolids(def: ObjectDef<Record<string, unknown>>, pos: readonly [number, number, number], yaw: number, scale = 1): GroundExtra[] {
-  const c = Math.cos(yaw), s = Math.sin(yaw);
+  const c = dcos(yaw), s = dsin(yaw);
   // (Own frame -> world: the inverse of physics' world -> local.)
   const place = (g: GroundExtra): GroundExtra => {
     const lx = g.c[0] * scale, lz = g.c[2] * scale;

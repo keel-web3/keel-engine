@@ -6,6 +6,7 @@
 
 import type { AttributeCapsule, Role } from "@keel-engine/entity";
 import type { Pins, Socket, Stream } from "@keel-engine/runtime";
+import { dcos, dhypot, dsin } from "@keel-engine/core";
 
 export type V3 = [number, number, number];
 
@@ -27,7 +28,7 @@ export function amount(S: Stream, pins: Pins, name: string, [lo, hi]: readonly [
   return pin;
 }
 
-const norm = (v: readonly number[]): V3 => { const l = Math.hypot(v[0] ?? 0, v[1] ?? 0, v[2] ?? 0) || 1; return [(v[0] ?? 0) / l, (v[1] ?? 0) / l, (v[2] ?? 0) / l]; };
+const norm = (v: readonly number[]): V3 => { const l = dhypot(v[0] ?? 0, v[1] ?? 0, v[2] ?? 0) || 1; return [(v[0] ?? 0) / l, (v[1] ?? 0) / l, (v[2] ?? 0) / l]; };
 
 /**
  * An "around" socket's axis, in its frame. keel/entity's neck socket sits
@@ -37,7 +38,7 @@ const norm = (v: readonly number[]): V3 => { const l = Math.hypot(v[0] ?? 0, v[1
  */
 export function axisOf(fit: Socket): V3 {
   const at = (fit as { at?: readonly number[] }).at;
-  return at && Math.hypot(at[0] ?? 0, at[1] ?? 0, at[2] ?? 0) > 1e-9 ? norm(at) : [0, 1, 0];
+  return at && dhypot(at[0] ?? 0, at[1] ?? 0, at[2] ?? 0) > 1e-9 ? norm(at) : [0, 1, 0];
 }
 
 /** Which way things grow off a surface socket (keel/entity's `out`); up without one. */
@@ -56,8 +57,8 @@ export function ring(axis: V3, R: number, t: number, n: number, role: Role, part
   const e2: V3 = norm([0, -axis[2], axis[1]]);
   const at = (k: number): V3 => {
     const th = (k / n) * Math.PI * 2;
-    const c = Math.cos(th) * R;
-    const s = Math.sin(th) * R;
+    const c = dcos(th) * R;
+    const s = dsin(th) * R;
     return [e1[0] * c + e2[0] * s, e1[1] * c + e2[1] * s, e1[2] * c + e2[2] * s];
   };
   const capsules: AttributeCapsule[] = [];
@@ -88,7 +89,7 @@ export function halves(fit: Socket, x: number, u: number, o: number): V3 {
 
 /** A turn about y: where a point [x, y, z] goes when its heading turns by `yaw` (the frame convention: yaw 0 is +z). */
 export function turnY([x, y, z]: V3, yaw: number): V3 {
-  const c = Math.cos(yaw), s = Math.sin(yaw);
+  const c = dcos(yaw), s = dsin(yaw);
   return [x * c + z * s, y, -x * s + z * c];
 }
 

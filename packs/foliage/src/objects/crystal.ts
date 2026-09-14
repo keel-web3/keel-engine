@@ -5,6 +5,7 @@ import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
 import { bool, num, roles, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 /** A prism: stepped segments along its lean (boxes turn about y only: a stair of them leans), a pointed tip. */
 function prism(out: DesignSolid[], foot: Vec3, yaw: number, lean: number, h: number, r: number, group: string, glow: boolean): void {
@@ -12,12 +13,12 @@ function prism(out: DesignSolid[], foot: Vec3, yaw: number, lean: number, h: num
   const dy = h / steps;
   for (let i = 0; i < steps; i += 1) {
     const off = lean * dy * i;
-    const c: Vec3 = [foot[0] + Math.sin(yaw) * off, foot[1] + dy * (i + 0.5), foot[2] + Math.cos(yaw) * off];
+    const c: Vec3 = [foot[0] + dsin(yaw) * off, foot[1] + dy * (i + 0.5), foot[2] + dcos(yaw) * off];
     out.push(solid.box("crystal", c, [r, dy / 2, r * 0.8], yaw + Math.PI / 4, { name: "crystal", group }));
     if (glow && i === Math.floor(steps / 2)) out.push(solid.box("glow", c, [r * 0.55, dy / 2 * 0.8, r * 0.95], yaw + Math.PI / 4, { name: "core", group, collide: false }));
   }
   const offTop = lean * dy * steps;
-  out.push(solid.cone("crystal", [foot[0] + Math.sin(yaw) * offTop, foot[1] + h, foot[2] + Math.cos(yaw) * offTop], r * 1.1, r * 2.2, 0, { name: "tip", group, collide: false, sides: 4 }));
+  out.push(solid.cone("crystal", [foot[0] + dsin(yaw) * offTop, foot[1] + h, foot[2] + dcos(yaw) * offTop], r * 1.1, r * 2.2, 0, { name: "tip", group, collide: false, sides: 4 }));
 }
 
 export default defineStyledObject({
@@ -45,7 +46,7 @@ export default defineStyledObject({
         const yaw = (i / n) * Math.PI * 2 + J.between(-0.3, 0.3);
         const main = i === 0;
         const h = H * (main ? 1 : J.between(0.35, 0.7));
-        const foot: Vec3 = main ? [0, H * 0.05, 0] : [Math.sin(yaw) * H * 0.18, H * 0.05, Math.cos(yaw) * H * 0.18];
+        const foot: Vec3 = main ? [0, H * 0.05, 0] : [dsin(yaw) * H * 0.18, H * 0.05, dcos(yaw) * H * 0.18];
         prism(solids, foot, yaw, main ? 0.05 : J.between(0.25, 0.55), h, (0.05 + H * 0.06) * (main ? 1.2 : 0.8), `c${i}`, glow && (main || i % 2 === 0));
       }
     } else {

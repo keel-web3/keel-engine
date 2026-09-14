@@ -20,6 +20,7 @@ import { add, bones, lerp, sub, v } from "../kit.ts";
 import type { Pen, V3 } from "../kit.ts";
 import type { PlanDef } from "./common.ts";
 import { quadBody, quadSpec } from "./common.ts";
+import { dcos, dhypot, dlen, dsin } from "@keel-engine/core";
 
 export const crawler: PlanDef = {
   rig: "quadruped",
@@ -87,7 +88,7 @@ export const crawler: PlanDef = {
       const chain = [B.W("pelvis", [0, 0.02 * S, -0.02 * S]), calm(B.P("tail1"), rest["tail1"]!), calm(B.P("tail2"), rest["tail2"]!), calm(B.W("tail2", spec.rig.bones[spec.rig.index["tail2"]!]!.tip!), restTip)];
       const along = (d: number): V3 => {
         for (let i = 0; i < chain.length - 1; i += 1) {
-          const l = Math.hypot(...sub(chain[i + 1]!, chain[i]!));
+          const l = dlen(sub(chain[i + 1]!, chain[i]!));
           if (d <= l || i === chain.length - 2) return lerp(chain[i]!, chain[i + 1]!, d / Math.max(1e-9, l));
           d -= l;
         }
@@ -110,7 +111,7 @@ export const crawler: PlanDef = {
       const ex = 0.8 * hw + 0.82 * R, ez = 0.45 * (th1[2] - th0[2]) + 0.8 * R;
       for (let i = 0; i < 14; i += 1) {
         const a = (i / 14) * Math.PI * 2;
-        P.ball(`collar.rim${i}`, add(mid, [Math.sin(a) * ex * 0.96, cy, Math.cos(a) * ez * 0.96]), R * 0.27);
+        P.ball(`collar.rim${i}`, add(mid, [dsin(a) * ex * 0.96, cy, dcos(a) * ez * 0.96]), R * 0.27);
       }
       if (carapace === "ridged") for (let i = 0; i < 3; i += 1) P.cap(`accessory.ridge${i}`, cap(-0.75, -0.55 + i * 0.55, 0.62), cap(0.75, -0.55 + i * 0.55, 0.62), R * 0.24);
       else if (carapace === "spiked") for (let i = 0; i < 3; i += 1) for (const x of [-1, 1]) { const b = cap(x * 0.55, -0.6 + i * 0.6, 0.55); P.cap(`hips.spike${i}${x}`, b, add(b, [x * R * 0.45, R * 0.95, -R * 0.2]), R * 0.14); }
@@ -156,7 +157,7 @@ export const crawler: PlanDef = {
         face: { bone: "head", at: [0, hr * 0.2, hr * 1.5], size: [1.8 * hr, 0.9 * hr, 0.6 * hr], out: [0, 0, 1], part: "head", sits: "surface" },
         back: { bone: "spine", at: [0, R * 1.5, body.bodyLen * 0.25], size: [2 * (hw + R), R, body.bodyLen], out: [0, 1, 0], part: "hips", sits: "surface" },
         mount: { bone: "spine", at: [0, R * 1.9, body.bodyLen * 0.25], size: [1.2 * R, 0.8 * R, 1.2 * R], out: [0, 1, 0], part: "pack", sits: "surface" },
-        tail: { bone: "tail1", at: [0, 0, 0], size: [2.2 * R, 2.2 * R, Math.hypot(tailSeg[0], tailSeg[1], tailSeg[2])], out: [0, 0, -1], part: "body", sits: "around" },
+        tail: { bone: "tail1", at: [0, 0, 0], size: [2.2 * R, 2.2 * R, dhypot(tailSeg[0], tailSeg[1], tailSeg[2])], out: [0, 0, -1], part: "body", sits: "around" },
       },
     };
   },

@@ -16,6 +16,7 @@ import { add, bones, clamp, lerp, sub } from "../kit.ts";
 import type { Pen, V3 } from "../kit.ts";
 import type { PlanDef } from "./common.ts";
 import { quadBody, quadSpec } from "./common.ts";
+import { datan2, dcos, dlen, dsin } from "@keel-engine/core";
 
 export const flyer: PlanDef = {
   rig: "quadruped",
@@ -41,7 +42,7 @@ export const flyer: PlanDef = {
       const B = bones(skel);
       // The flap: the fore leg's swing in the chest's frame (walk: its stride; attack: the lunge); idle: a slow glide.
       const d = B.into("chest", sub(B.P("lower.FL"), B.P("upper.FL")));
-      const swing = Math.atan2(d[2], -d[1]);
+      const swing = datan2(d[2], -d[1]);
       const breath = (B.P("pelvis")[1] - rest["pelvis"]![1]) / Math.max(1e-6, body.bodyR * 0.02);
       const moving = Math.abs(swing) > 0.02;
       // (The downstroke stops a little under level: the body sits at its origin, so its wings never dip below it.)
@@ -71,7 +72,7 @@ export const flyer: PlanDef = {
       const tipBack = craft ? 0.28 : 0.1;
       for (const [s, x] of [["L", -1], ["R", 1]] as const) {
         const root = B.W("chest", [x * R * 0.7, R * 0.35, -0.02 * S]);
-        const e: V3 = [x * Math.cos(el), Math.sin(el), 0];
+        const e: V3 = [x * dcos(el), dsin(el), 0];
         // A point on the wing: u along the span (0 root .. 1 tip), w along the chord (metres back), swept back toward the tip.
         const at = (u: number, w: number): V3 => add(add(root, e, u * L), [0, 0, -w - u * u * tipBack * S]);
         if (wings === "bat") {
@@ -84,13 +85,13 @@ export const flyer: PlanDef = {
         } else if (wings === "bird") {
           P.cap(`upperArm.${s}`, at(0, 0), at(0.5, 0), 0.045 * S);
           P.cap(`forearm.${s}`, at(0.5, 0), at(0.92, 0.02 * S), 0.03 * S);
-          for (let i = 0; i < 7; i += 1) { const u = 0.12 + i * 0.13; const len = (0.16 + 0.1 * Math.sin((i / 6) * Math.PI)) * S; P.cap(i % 3 === 2 ? `collar.${s}f${i}` : `chest.${s}f${i}`, at(u, 0.02 * S), at(Math.min(1.05, u + 0.07), len), 0.034 * S); }
+          for (let i = 0; i < 7; i += 1) { const u = 0.12 + i * 0.13; const len = (0.16 + 0.1 * dsin((i / 6) * Math.PI)) * S; P.cap(i % 3 === 2 ? `collar.${s}f${i}` : `chest.${s}f${i}`, at(u, 0.02 * S), at(Math.min(1.05, u + 0.07), len), 0.034 * S); }
         } else if (wings === "insect") {
           for (const [k, w0, lenK] of [[0, 0, 1], [1, 0.09, 0.8]] as const) {
             const wl = lenK * L;
             const a = add(root, [0, 0.01 * S, -w0 * S]);
-            const e2: V3 = [x * Math.cos(el * (k ? 0.7 : 1)), Math.sin(el * (k ? 0.7 : 1)), -0.35 - k * 0.45];
-            const n2 = Math.hypot(...e2);
+            const e2: V3 = [x * dcos(el * (k ? 0.7 : 1)), dsin(el * (k ? 0.7 : 1)), -0.35 - k * 0.45];
+            const n2 = dlen(e2);
             const pt = (t: number): V3 => add(a, [e2[0] / n2 * wl * t, e2[1] / n2 * wl * t, e2[2] / n2 * wl * t]);
             P.cap(`chest.${s}w${k}`, pt(0.08), pt(0.95), 0.065 * S);
             P.cap(`chest.${s}w${k}b`, pt(0.3), pt(0.8), 0.085 * S);
@@ -110,7 +111,7 @@ export const flyer: PlanDef = {
           if (x > 0) {
             const rc = B.W("spine", [0, R * 0.2, -0.02 * S]), rr = 0.36 * S * span;
             const pts: V3[] = [];
-            for (let i = 0; i <= 14; i += 1) { const a = (i / 14) * Math.PI * 2; pts.push(add(rc, [Math.cos(a) * rr * 1.25, Math.sin(a) * rr * 0.55 + (Math.cos(a) * el * 0.3) * rr, 0])); }
+            for (let i = 0; i <= 14; i += 1) { const a = (i / 14) * Math.PI * 2; pts.push(add(rc, [dcos(a) * rr * 1.25, dsin(a) * rr * 0.55 + (dcos(a) * el * 0.3) * rr, 0])); }
             for (let i = 0; i < 14; i += 1) P.cap(i % 3 === 1 ? `collar.r${i}` : `chest.r${i}`, pts[i]!, pts[i + 1]!, 0.045 * S);
             for (const xx of [-1, 1]) {
               const pod: V3 = add(rc, [xx * rr * 1.25, -0.01 * S, 0]);

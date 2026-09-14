@@ -14,6 +14,7 @@ import { rotateBounds, unionBounds } from "./kit.ts";
 import type { Bounds, BoundsLike, SdfPart } from "./kit.ts";
 import { entitySdf, rotationOf, worldSdf } from "./entity.ts";
 import type { Body, Transform } from "./entity.ts";
+import { dhypot } from "@keel-engine/core";
 
 /** A bounding sphere. */
 export interface Sphere {
@@ -77,7 +78,7 @@ export function sphereOf(entity: Body): Sphere {
   const b = aabbOf(entity);
   if (!Number.isFinite(b[0])) return { center: [0, 0, 0], radius: 0 };
   const center: Vec3 = [(b[0] + b[3]) / 2, (b[1] + b[4]) / 2, (b[2] + b[5]) / 2];
-  return { center, radius: Math.hypot(b[3] - b[0], b[4] - b[1], b[5] - b[2]) / 2 };
+  return { center, radius: dhypot(b[3] - b[0], b[4] - b[1], b[5] - b[2]) / 2 };
 }
 
 /** A box, or an entity (whose world AABB stands for it). */
@@ -129,7 +130,7 @@ export function normalAt(entity: Body, point: Vec3Like, t = 0, h = 0.0012): Vec3
   const nx = f(x + h, y, z, t) - f(x - h, y, z, t);
   const ny = f(x, y + h, z, t) - f(x, y - h, z, t);
   const nz = f(x, y, z + h, t) - f(x, y, z - h, t);
-  const l = Math.hypot(nx, ny, nz) || 1;
+  const l = dhypot(nx, ny, nz) || 1;
   return [nx / l, ny / l, nz / l];
 }
 

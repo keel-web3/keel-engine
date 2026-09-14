@@ -9,6 +9,7 @@
 import { solid } from "@keel-engine/object";
 import type { DesignSolid, SwaySpec, WorldRoleSpec } from "@keel-engine/object";
 import type { Stream, Vec3 } from "@keel-engine/core";
+import { dcos, dpow, dsin } from "@keel-engine/core";
 
 /** Every world role foliage uses, and the slot it paints (distinct: one look paints them all). */
 export const ROLES = {
@@ -55,7 +56,7 @@ export const bool = (v: unknown): boolean => v as boolean;
 const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 
 /** A direction from a yaw (0: +z) and a pitch up from level. */
-export const dirOf = (yaw: number, pitch: number): Vec3 => [Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch)];
+export const dirOf = (yaw: number, pitch: number): Vec3 => [dsin(yaw) * dcos(pitch), dsin(pitch), dcos(yaw) * dcos(pitch)];
 
 export interface Trunk {
   readonly solids: DesignSolid[];
@@ -72,8 +73,8 @@ export interface Trunk {
  */
 export function trunk(role: string, height: number, r0: number, r1: number, { lean = 0, leanYaw = 0, segments = 4, flare = true, bendPow = 1.6, from = [0, 0, 0] as Vec3 }: { lean?: number; leanYaw?: number; segments?: number; flare?: boolean; bendPow?: number; from?: Vec3 } = {}): Trunk {
   const at = (t: number): Vec3 => {
-    const off = lean * height * t ** bendPow;
-    return [from[0] + Math.sin(leanYaw) * off, from[1] + r0 + (height - r0) * t, from[2] + Math.cos(leanYaw) * off];
+    const off = lean * height * dpow(t, bendPow);
+    return [from[0] + dsin(leanYaw) * off, from[1] + r0 + (height - r0) * t, from[2] + dcos(leanYaw) * off];
   };
   const radiusAt = (t: number): number => r0 + (r1 - r0) * t;
   const solids: DesignSolid[] = [];
@@ -102,7 +103,7 @@ export function canopy(role: string, J: Stream, centre: Vec3, R: Vec3, count: nu
     const th = (i / count) * Math.PI * 2 + J.between(-0.4, 0.4);
     const up = J.between(-0.35, 0.55);
     const reach = J.between(0.45, 0.62);
-    const c: Vec3 = [centre[0] + Math.sin(th) * R[0] * reach, centre[1] + up * R[1] * 0.6, centre[2] + Math.cos(th) * R[2] * reach];
+    const c: Vec3 = [centre[0] + dsin(th) * R[0] * reach, centre[1] + up * R[1] * 0.6, centre[2] + dcos(th) * R[2] * reach];
     const s = J.between(0.42, 0.58);
     out.push(solid.ball(role, c, [R[0] * s, R[1] * s * flat + R[1] * 0.12, R[2] * s], { name: "canopy", group, collide: false }));
   }
@@ -116,7 +117,7 @@ export function scatter(role: string, J: Stream, centre: Vec3, R: Vec3, count: n
     const th = (i / count) * Math.PI * 2 + J.between(-0.5, 0.5);
     const y = J.between(below, 0.8);
     const k = Math.sqrt(Math.max(0, 1 - y * y));
-    out.push(solid.ball(role, [centre[0] + Math.sin(th) * R[0] * k * 0.98, centre[1] + y * R[1] * 0.98, centre[2] + Math.cos(th) * R[2] * k * 0.98], r, { name, group, collide: false }));
+    out.push(solid.ball(role, [centre[0] + dsin(th) * R[0] * k * 0.98, centre[1] + y * R[1] * 0.98, centre[2] + dcos(th) * R[2] * k * 0.98], r, { name, group, collide: false }));
   }
   return out;
 }

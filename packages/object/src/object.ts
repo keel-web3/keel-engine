@@ -27,7 +27,7 @@
 // instance from its definition's tags alone and dropped the ones given to
 // placeObject. An instance with no tags of its own moves exactly as before.
 
-import { localToWorld, worldToLocal, wrapAngle } from "@keel-engine/core";
+import { datan2, dcos, dhypot, dlen, dsin, localToWorld, worldToLocal, wrapAngle } from "@keel-engine/core";
 import type { Vec3, Vec3Like } from "@keel-engine/core";
 import { aabbOf, createEntity, detectFront, dirToWorld, localAabbOf, lowest, overTop, parseFront, toPart, toWorld } from "@keel-engine/scene";
 import type { Bounds, Entity, EntityId, FrontOptions, FrontResult, FrontSpec, FrontThing, PartLike, Prim, SdfPart } from "@keel-engine/scene";
@@ -193,11 +193,11 @@ export interface Placement {
 // something physics has).
 function capsuleCollider({ a, b, r }: { readonly a: Vec3Like; readonly b: Vec3Like; readonly r: number }, mat: Mat): Collider {
   const d: Vec3 = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
-  const L = Math.hypot(...d);
+  const L = dlen(d);
   const c: Vec3 = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
-  const flat = Math.hypot(d[0], d[2]);
+  const flat = dhypot(d[0], d[2]);
   if (L < 1e-9 || flat / (L || 1) < 0.02) return { c, h: [r, Math.abs(d[1]) / 2 + r, r], yaw: 0, mat };
-  if (Math.abs(d[1]) / L < 0.02) return { c, h: [r, r, flat / 2 + r], yaw: Math.atan2(d[0], d[2]), mat };
+  if (Math.abs(d[1]) / L < 0.02) return { c, h: [r, r, flat / 2 + r], yaw: datan2(d[0], d[2]), mat };
   const bb = [Math.min(a[0], b[0]) - r, Math.min(a[1], b[1]) - r, Math.min(a[2], b[2]) - r, Math.max(a[0], b[0]) + r, Math.max(a[1], b[1]) + r, Math.max(a[2], b[2]) + r] as const;
   return { c: [(bb[0] + bb[3]) / 2, (bb[1] + bb[4]) / 2, (bb[2] + bb[5]) / 2], h: [(bb[3] - bb[0]) / 2, (bb[4] - bb[1]) / 2, (bb[5] - bb[2]) / 2], yaw: 0, mat, approx: true };
 }
@@ -303,7 +303,7 @@ export function defineObject<M extends object = Record<string, unknown>>(spec: O
     const size = Math.max(local[3] - local[0], local[4] - local[1], local[5] - local[2]);
     const reach = Math.max(Math.abs(local[0]), Math.abs(local[3]), Math.abs(local[2]), Math.abs(local[5]));
     const dist = reach + Math.max(1, size * 1.2);
-    const f = [Math.sin(showYaw), Math.cos(showYaw)] as const;
+    const f = [dsin(showYaw), dcos(showYaw)] as const;
     sock["view"] = { name: "view", kind: "view", pos: [f[0] * dist, (local[1] + local[4]) / 2, f[1] * dist], yaw: wrapAngle(showYaw + Math.PI), auto: true };
   }
   return {
@@ -411,7 +411,7 @@ export function socketOf(inst: ObjectInstance<object>, name: string): WorldSocke
   const out: WorldSocket = { ...s, pos: toWorld(inst, s.pos) };
   if (s.yaw !== null && s.yaw !== undefined) {
     out.yaw = wrapAngle(s.yaw + yaw);
-    out.dir = [Math.sin(out.yaw), 0, Math.cos(out.yaw)];
+    out.dir = [dsin(out.yaw), 0, dcos(out.yaw)];
   }
   if (s.extent) out.extent = [s.extent[0] * scale, s.extent[1] * scale];
   if (s.normal) out.normal = dirToWorld(inst, s.normal);
@@ -444,7 +444,7 @@ export const frontOfObject = (thing: ObjectInstance<object> | ObjectDef<object> 
 /** The yaw that turns an instance's show side (its front, unless it declares another) toward a point: placeObject(def, { yaw: yawToShow(def, pos, eye) }). */
 export function yawToShow(def: Pick<ObjectDef<object>, "show" | "front">, pos: Vec3Like, target: Vec3Like): number {
   const side = def.show ?? def.front ?? 0;
-  return wrapAngle(Math.atan2(target[0] - pos[0], target[2] - pos[2]) - side);
+  return wrapAngle(datan2(target[0] - pos[0], target[2] - pos[2]) - side);
 }
 
 // ---------------------------------------------------------------- resting

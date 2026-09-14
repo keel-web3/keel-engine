@@ -1,5 +1,5 @@
-// @keel-engine/core: seeded streams, the frame convention, math, SDF
-// primitives, OKLCH palettes, looks (per-role ramps, patterns, finishes),
+// @keel-engine/core: seeded streams, the frame convention, math (and the
+// deterministic dmath), SDF primitives, OKLCH palettes, looks (per-role ramps, patterns, finishes),
 // dither screens, the quantizer, and (optional) the GIF encoder. Names as in the proof of concept's src/core.
 
 export { createRoll, deriveSeed, normalizeSeed, seedFromToken, stream } from "./rng.ts";
@@ -9,6 +9,9 @@ export {
   FRONT, RIGHT, UP, cameraBasis, fromNocturnesYaw, frontOf, localToWorld, moveFromView, rightOf, toNocturnesYaw, worldToLocal, wrapAngle, yawOf, yawTo,
 } from "./frame.ts";
 export type { CameraBasis } from "./frame.ts";
+
+// Deterministic math: simulation and generation call these, never Math's transcendentals (docs/CONVENTIONS.md).
+export { DMATH, dacos, dasin, datan, datan2, dcbrt, dcos, dexp, dhypot, dlen, dlog, dlog10, dlog2, dpow, dscalbn, dsin, dtan } from "./dmath.ts";
 
 export {
   TAU, add, clamp, cross, dot, fbm2, fract, hash2, hash3, len, loopFbm2, mix, norm, sat, scale, smooth, sub, tri, v3, vnoise2, wrapNoise2,

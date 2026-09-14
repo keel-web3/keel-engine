@@ -15,6 +15,24 @@ import { POC, counter, hasPoc, poc, rand } from "./reference.ts";
 const skip = hasPoc ? false : `the proof of concept not found at ${POC}`;
 const J = hasPoc ? await poc<typeof T>("src/entity/index.js") : (null as unknown as typeof T);
 const { same, exact, summary } = counter();
+
+// Deep-equal, but numbers within 1e-12 (relative): for what the engine derives from `x ** 3` (as x*x*x, exact
+// everywhere) where the proof of concept has V8's pow -- an operator the reference's portable Math can't swap.
+function nearly(a: unknown, b: unknown, at = ""): void {
+  if (typeof a === "number" && typeof b === "number") {
+    if (Object.is(a, b) || Math.abs(a - b) <= 1e-12 * Math.max(1, Math.abs(a), Math.abs(b))) return;
+    // (A front's `error` is acos of a dot product: at a dot of 1, one ulp of the dot is ~2e-8 of angle.)
+    if (at.endsWith(".error") && Math.abs(a - b) <= 1e-7) return;
+    throw new Error(`${at}: ${a} vs ${b}`);
+  }
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    const ka = Object.keys(a).sort(), kb = Object.keys(b).sort();
+    if (ka.join() !== kb.join()) throw new Error(`${at}: keys ${ka.join()} vs ${kb.join()}`);
+    for (const k of ka) nearly((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k], `${at}.${k}`);
+    return;
+  }
+  if (!Object.is(a, b)) throw new Error(`${at}: ${String(a)} vs ${String(b)}`);
+}
 const KINDS: readonly Kind[] = ["humanoid", "anthro", "animal"];
 const r3 = (r: () => number, s = 1): Vec3 => [(r() * 2 - 1) * s, (r() * 2 - 1) * s, (r() * 2 - 1) * s];
 
@@ -99,7 +117,7 @@ test("rig maths: rotations, rotateOnto, two-bone IK, rest and measured lengths",
 });
 
 // Every clip at many phases, times, params, places: skeletons, capsules, feature points and fronts.
-test("every clip posed and skinned, at many phases (bit-identical)", { skip }, () => {
+test("every clip posed and skinned, at many phases (bit-identical; the r^3-weighted points and fronts nearly)", { skip }, () => {
   const r = rand(21);
   const tables = [{ fur: 20, cloth: 21, clothAlt: 22, accent: 23, dark: 24, blush: 25, furAlt: 26, hair: 27 }, { fur: 6 }, T.DEFAULT_MATERIALS];
   for (const kind of KINDS) {
@@ -118,9 +136,10 @@ test("every clip posed and skinned, at many phases (bit-identical)", { skip }, (
           const ca = T.skinOf(spec, a, table, k === 7 ? { max: 12 } : {});
           const cb = J.skinOf(jspec, b, table, k === 7 ? { max: 12 } : {});
           same("skins (capsules)", ca, cb);
-          same("feature points", T.featurePoints(ca), J.featurePoints(cb));
-          same("entity fronts", T.frontOfEntity(ca, { yaw: o.yaw }), J.frontOfEntity(cb, { yaw: o.yaw }));
-          if (k === 0) same("entity fronts", [T.frontOfEntity(a), T.frontOfEntity(spec), T.declaredFront(a), T.measuredLengths(spec.rig, a)], [J.frontOfEntity(b), J.frontOfEntity(jspec), J.declaredFront(b), J.measuredLengths(jspec.rig, b)]);
+          // (Feature points and fronts weigh the torso's balls by r^3: nearly, not to the bit -- see nearly().)
+          nearly(T.featurePoints(ca), J.featurePoints(cb), "feature points");
+          nearly(T.frontOfEntity(ca, { yaw: o.yaw }), J.frontOfEntity(cb, { yaw: o.yaw }), "entity fronts");
+          if (k === 0) nearly([T.frontOfEntity(a), T.frontOfEntity(spec), T.declaredFront(a), T.measuredLengths(spec.rig, a)], [J.frontOfEntity(b), J.frontOfEntity(jspec), J.declaredFront(b), J.measuredLengths(jspec.rig, b)], "entity fronts");
         }
       }
       // Raw clip poses, and blends of them (two and three at a time, odd weights).

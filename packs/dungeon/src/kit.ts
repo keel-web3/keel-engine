@@ -12,6 +12,7 @@
 import { solid } from "@keel-engine/object";
 import type { DesignSolid, WorldRoleSpec } from "@keel-engine/object";
 import type { Stream, Vec3 } from "@keel-engine/core";
+import { dcos, dsin } from "@keel-engine/core";
 
 /** Every world role the dungeon uses, and the slot it paints (all distinct: one look paints them all). */
 export const ROLES = {
@@ -53,7 +54,7 @@ export const band = (role: string, y: number, r: number, h = 0.05): DesignSolid 
 
 /** A skull: a cranium, a jaw, two dark sockets facing `yaw` (0: +z). */
 export function skull(out: DesignSolid[], at: Vec3, s = 0.12, yaw = 0, role = "bone"): void {
-  const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
+  const fx = dsin(yaw), fz = dcos(yaw), rx = dcos(yaw), rz = -dsin(yaw);
   out.push(solid.ball(role, [at[0], at[1] + s * 0.55, at[2]], [s * 0.5, s * 0.5, s * 0.55], { name: "skull", collide: false }));
   out.push(solid.ball(role, [at[0] + fx * s * 0.18, at[1] + s * 0.18, at[2] + fz * s * 0.18], [s * 0.34, s * 0.2, s * 0.34], { name: "jaw", collide: false }));
   for (const side of [-1, 1]) out.push(solid.ball("dark", [at[0] + fx * s * 0.42 + rx * side * s * 0.18, at[1] + s * 0.52, at[2] + fz * s * 0.42 + rz * side * s * 0.18], s * 0.12, { name: "socket", collide: false }));

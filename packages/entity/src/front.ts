@@ -16,7 +16,7 @@
 // (Scene's detectFront reads fronts off any assembly of parts; this one knows
 // an entity's anatomy, and is the one the entity tests hold every clip to.)
 
-import { cross, frontOf, sub, yawOf } from "@keel-engine/core";
+import { cross, dacos, dcos, dhypot, frontOf, sub, yawOf } from "@keel-engine/core";
 import type { Vec3, Vec3Like } from "@keel-engine/core";
 import { declaredFront } from "./rig.ts";
 import type { Skeleton } from "./rig.ts";
@@ -52,7 +52,7 @@ export interface EntityFront {
 const TORSO = new Set(["hips", "chest"]);
 const FACE = (p: string): boolean => p === "nose" || p === "snout" || p.startsWith("eye.");
 const UP: Vec3Like = [0, 1, 0];
-const flat = (v: Vec3Like): Vec3 | null => { const l = Math.hypot(v[0], v[2]); return l > 1e-12 ? [v[0] / l, 0, v[2] / l] : null; };
+const flat = (v: Vec3Like): Vec3 | null => { const l = dhypot(v[0], v[2]); return l > 1e-12 ? [v[0] / l, 0, v[2] / l] : null; };
 const mid = (c: PartCapsule): Vec3 => [(c.a[0] + c.b[0]) / 2, (c.a[1] + c.b[1]) / 2, (c.a[2] + c.b[2]) / 2];
 
 /** Where the named features are, from a skin: centres, plus toe.* (the b end of each foot.* / paw.*) and heel.* (its a end). */
@@ -68,7 +68,7 @@ export function featurePoints(caps: readonly PartCapsule[]): Record<string, Vec3
     const m = /^(foot|paw)\.(.+)$/.exec(c.part);
     if (m) { push(`toe.${m[2]!}`, c.b); push(`heel.${m[2]!}`, c.a); }
     if (FACE(c.part)) push("face", mid(c), c.r);
-    if (torso.has(c.part)) push("centre", mid(c), c.r ** 3);
+    if (torso.has(c.part)) push("centre", mid(c), c.r * c.r * c.r);
   }
   for (const [k, s] of Object.entries(sums)) out[k] = [s[0] / s[3], s[1] / s[3], s[2] / s[3]];
   return out;
@@ -92,8 +92,8 @@ export function frontOfEntity(thing: EntityFrontSource, { yaw: meant }: { readon
   if (meant !== undefined) {
     const f = frontOf(meant);
     const d = res.dir[0] * f[0] + res.dir[2] * f[2];
-    res.error = Math.acos(Math.max(-1, Math.min(1, d)));
-    res.agrees = d > Math.cos(Math.PI / 4);
+    res.error = dacos(Math.max(-1, Math.min(1, d)));
+    res.agrees = d > dcos(Math.PI / 4);
   }
   return res;
 }
@@ -123,7 +123,7 @@ function seenFront(caps: readonly PartCapsule[]): EntityFront {
   let z = 0;
   let wsum = 0;
   for (const c of cues) { x += c.dir[0] * c.weight; z += c.dir[2] * c.weight; wsum += c.weight; }
-  const l = Math.hypot(x, z);
+  const l = dhypot(x, z);
   const dir: Vec3 = l > 1e-12 ? [x / l, 0, z / l] : [0, 0, 1];
   const against = cues.filter((c) => c.dir[0] * dir[0] + c.dir[2] * dir[2] < 0).map((c) => c.name);
   const why = `seen: ${cues.map((c) => c.name).join(", ")}${against.length ? `; DISAGREEING: ${against.join(", ")}` : "; all agree"}`;

@@ -36,7 +36,7 @@
 // capsules (no transform) are measured where they are: the ring of views is
 // laid along the thing's own principal axis, so that turns with it too.
 
-import { wrapAngle } from "@keel-engine/core";
+import { datan2, dcos, dhypot, dlen, dpow, dsin, wrapAngle } from "@keel-engine/core";
 import type { Vec3, Vec3Like } from "@keel-engine/core";
 import { dirToWorld } from "./entity.ts";
 import type { Turned } from "./entity.ts";
@@ -247,8 +247,8 @@ export function parseFront(front: FrontSpec): number | null {
   }
   if (Array.isArray(front)) {
     const v = front as unknown as Vec3Like;
-    if (Math.hypot(v[0], v[2]) < 1e-9) throw new RangeError("A front direction needs a horizontal part.");
-    return Math.atan2(v[0], v[2]);
+    if (dhypot(v[0], v[2]) < 1e-9) throw new RangeError("A front direction needs a horizontal part.");
+    return datan2(v[0], v[2]);
   }
   if (typeof front === "object") {
     const o = front as { readonly yaw?: FrontSpec; readonly dir?: Vec3Like };
@@ -258,8 +258,8 @@ export function parseFront(front: FrontSpec): number | null {
   throw new TypeError("A front is a yaw, a direction, a '+z'-style name, or { yaw } / { dir }.");
 }
 
-const dirOfYaw = (y: number): Vec3 => [Math.sin(y), 0, Math.cos(y)];
-const yawOfV = (v: V2): number => Math.atan2(v[0], v[1]); // (v is horizontal [x, z])
+const dirOfYaw = (y: number): Vec3 => [dsin(y), 0, dcos(y)];
+const yawOfV = (v: V2): number => datan2(v[0], v[1]); // (v is horizontal [x, z])
 /** The unsigned angle between two yaws, 0..PI. */
 export const angleBetween = (a: number, b: number): number => Math.abs(wrapAngle(a - b));
 
@@ -313,7 +313,7 @@ function fieldOf3(parts: readonly SdfPart[], pad: number): Field {
       const ox = Math.max(b[0] - x, 0, x - b[3]);
       const oy = Math.max(b[1] - y, 0, y - b[4]);
       const oz = Math.max(b[2] - z, 0, z - b[5]);
-      const lb = Math.hypot(ox, oy, oz);
+      const lb = dhypot(ox, oy, oz);
       if (lb >= d) continue;
       const v = parts[i]!.sdf(x, y, z, 0, null);
       if (v < d) d = v;
@@ -393,10 +393,10 @@ function massOf(field: Field, B: BoundsLike, n: number): Mass {
   const l2 = tr / 2 - disc;
   let ex = cxz;
   let ez = l1 - cxx;
-  if (Math.hypot(ex, ez) < 1e-12) { ex = cxx >= czz ? 1 : 0; ez = cxx >= czz ? 0 : 1; }
-  const axisYaw = Math.atan2(ex, ez);
+  if (dhypot(ex, ez) < 1e-12) { ex = cxx >= czz ? 1 : 0; ez = cxx >= czz ? 0 : 1; }
+  const axisYaw = datan2(ex, ez);
   // The middle of the footprint's extent along its own axes (not the world box's): turns with the thing.
-  const a1: V2 = [Math.sin(axisYaw), Math.cos(axisYaw)];
+  const a1: V2 = [dsin(axisYaw), dcos(axisYaw)];
   const a2: V2 = [a1[1], -a1[0]];
   let lo1 = Infinity; let hi1 = -Infinity; let lo2 = Infinity; let hi2 = -Infinity;
   for (let i = 0; i < pts.length; i += 2) {
@@ -422,7 +422,7 @@ function addNormal(nsum: Float64Array, parts: readonly SdfPart[], h: Hit, e: num
   const gx = f(x + e, y, z, 0, null) - f(x - e, y, z, 0, null);
   const gy = f(x, y + e, z, 0, null) - f(x, y - e, z, 0, null);
   const gz = f(x, y, z + e, 0, null) - f(x, y, z - e, 0, null);
-  const l = Math.hypot(gx, gy, gz);
+  const l = dhypot(gx, gy, gz);
   if (!(l > 0)) return;
   nsum[h.part * 4] = nsum[h.part * 4]! + (gx / l) * w;
   nsum[h.part * 4 + 1] = nsum[h.part * 4 + 1]! + (gy / l) * w;
@@ -457,8 +457,8 @@ interface RingSpec {
  */
 function ringOf(parts: readonly SdfPart[], field: Field, feats: ReadonlyArray<FeatureHit | null>, { dirs, grid, elevation, phase, center, radius, R, B, eps, steps, nsum }: RingSpec): View[] {
   const views: View[] = [];
-  const ce = Math.cos(elevation);
-  const se = Math.sin(elevation);
+  const ce = dcos(elevation);
+  const se = dsin(elevation);
   const diam = 2 * radius;
   // (The grid spans the footprint's circle, the same from every side: a ball
   // looks the same from everywhere, and a turned thing is sampled as it was.)
@@ -469,10 +469,10 @@ function ringOf(parts: readonly SdfPart[], field: Field, feats: ReadonlyArray<Fe
   const supp = R;
   for (let k = 0; k < dirs; k += 1) {
     const th = phase + (k * 2 * Math.PI) / dirs;
-    const uh: Vec3 = [Math.sin(th), 0, Math.cos(th)];
+    const uh: Vec3 = [dsin(th), 0, dcos(th)];
     const u: Vec3 = [uh[0] * ce, se, uh[2] * ce]; // (toward the viewer)
     const d: Vec3 = [-u[0], -u[1], -u[2]];
-    const r: Vec3 = [Math.cos(th), 0, -Math.sin(th)];
+    const r: Vec3 = [dcos(th), 0, -dsin(th)];
     const up: Vec3 = [-uh[0] * se, ce, -uh[2] * se];
     const back = radius * 2.2;
     const depth = new Float64Array(grid * grid).fill(NaN);
@@ -555,7 +555,7 @@ function contrast(views: readonly View[], key: ViewMeasure, floor: number): V2 {
   return [(2 * x) / n, (2 * z) / n];
 }
 
-const len2 = (v: V2): number => Math.hypot(v[0], v[1]);
+const len2 = (v: V2): number => dhypot(v[0], v[1]);
 const scale2 = (v: V2, k: number): V2 => [v[0] * k, v[1] * k];
 const clamp2 = (v: V2, m = 1): V2 => { const l = len2(v); return l > m ? scale2(v, m / l) : v; };
 const deg = (a: number): string => `${Math.round((a * 180) / Math.PI)}°`;
@@ -595,7 +595,7 @@ function centroidOf(list: readonly SdfPart[]): Vec3 | null {
   for (const p of list) {
     const c = solidCentroid(p);
     const b = p.bounds;
-    const v = Math.max(1e-9, (b[3] - b[0]) * (b[4] - b[1]) * (b[5] - b[2])) ** (1 / 3);
+    const v = dpow(Math.max(1e-9, (b[3] - b[0]) * (b[4] - b[1]) * (b[5] - b[2])), 1 / 3);
     w += v; x += c[0] * v; y += c[1] * v; z += c[2] * v;
   }
   return w ? [x / w, y / w, z / w] : null;
@@ -633,9 +633,9 @@ export function frontEvidence(partsIn: readonly PartLike[], opts: FrontOptions =
   const mass = massOf(field, B, opts.massGrid ?? 16);
   const center = mass.centroid;
   let radius = 0;
-  for (const x of [B[0], B[3]]) for (const y of [B[1], B[4]]) for (const z of [B[2], B[5]]) radius = Math.max(radius, Math.hypot(x - center[0], y - center[1], z - center[2]));
+  for (const x of [B[0], B[3]]) for (const y of [B[1], B[4]]) for (const z of [B[2], B[5]]) radius = Math.max(radius, dhypot(x - center[0], y - center[1], z - center[2]));
   const corners: ReadonlyArray<readonly [number, number]> = [[B[0], B[2]], [B[0], B[5]], [B[3], B[2]], [B[3], B[5]]];
-  const R = Math.max(1e-6, Math.max(...corners.map(([x, z]) => Math.hypot(x - center[0], z - center[2]))));
+  const R = Math.max(1e-6, Math.max(...corners.map(([x, z]) => dhypot(x - center[0], z - center[2]))));
   const feats = parts.map((p) => featureOf(p, table));
   const why: string[] = [];
 
@@ -662,7 +662,7 @@ export function frontEvidence(partsIn: readonly PartLike[], opts: FrontOptions =
       const a = nsum[i * 4 + 3]!;
       if (!(a > 0)) { upness.set(i, 0); continue; }
       const n: Vec3 = [nsum[i * 4]! / a, nsum[i * 4 + 1]! / a, nsum[i * 4 + 2]! / a];
-      const l = Math.hypot(...n) || 1;
+      const l = dlen(n) || 1;
       upness.set(i, Math.max(0, n[1]) / l);
       const sgn = f.side === "front" ? 1 : -1;
       const w = f.weight * Math.min(1, (4 * a) / amax);
@@ -689,7 +689,7 @@ export function frontEvidence(partsIn: readonly PartLike[], opts: FrontOptions =
       up += upness.get(i)! * f.weight; uw += f.weight;
       const n = declaredNormal(p);
       if (n) {
-        const l = Math.hypot(n[0], n[1], n[2]) || 1;
+        const l = dhypot(n[0], n[1], n[2]) || 1;
         nx += (s * f.weight * n[0]) / l; nz += (s * f.weight * n[2]) / l; nw += f.weight;
       }
     }
@@ -759,9 +759,9 @@ export function frontEvidence(partsIn: readonly PartLike[], opts: FrontOptions =
     sx += lv[0] * W; sz += lv[1] * W; sabs += len2(lv) * W;
     miss *= 1 - Math.min(1, len2(lv)) * q;
   }
-  const agreement = sabs > 0 ? Math.hypot(sx, sz) / sabs : 0;
+  const agreement = sabs > 0 ? dhypot(sx, sz) / sabs : 0;
   let confidence = agreement * (1 - miss);
-  const yaw = Math.hypot(sx, sz) > 1e-9 ? Math.atan2(sx, sz) : 0;
+  const yaw = dhypot(sx, sz) > 1e-9 ? datan2(sx, sz) : 0;
   const onlyGeometry = !features && !useCase;
   const symmetric = onlyGeometry && (round || gs < 0.12);
   if (symmetric) confidence = Math.min(confidence, 0.15);
@@ -811,8 +811,8 @@ export function detectFront(thing: FrontThing, opts: FrontOptions = {}): FrontRe
   const toWorld = (y: number): { yaw: number; dir: Vec3 } => {
     if (!T.transform) return { yaw: wrapAngle(y), dir: dirOfYaw(y) };
     const d = dirToWorld({ transform: T.transform }, dirOfYaw(y));
-    const h = Math.hypot(d[0], d[2]) || 1;
-    return { yaw: Math.atan2(d[0], d[2]), dir: [d[0] / h, 0, d[2] / h] };
+    const h = dhypot(d[0], d[2]) || 1;
+    return { yaw: datan2(d[0], d[2]), dir: [d[0] / h, 0, d[2] / h] };
   };
   const w = toWorld(local);
   const det = toWorld(E.yaw);
@@ -831,5 +831,5 @@ export function detectFront(thing: FrontThing, opts: FrontOptions = {}): FrontRe
 
 /** Does a thing at `pos` facing `yaw` show its front to a viewer at `eye`? The angle off, 0..PI. */
 export function frontOffFrom(pos: Vec3Like, yaw: number, eye: Vec3Like): number {
-  return angleBetween(yaw, Math.atan2(eye[0] - pos[0], eye[2] - pos[2]));
+  return angleBetween(yaw, datan2(eye[0] - pos[0], eye[2] - pos[2]));
 }

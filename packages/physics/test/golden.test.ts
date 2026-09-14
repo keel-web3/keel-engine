@@ -1,9 +1,11 @@
 // The port of the proof of concept's tests/physics-golden.test.mjs, pins and
 // all: recorded input sequences through fixed worlds of boxes, a rail and
 // water, fingerprinted step by step (position, velocity, mode and events, to
-// the last bit). The TypeScript body must make the proof of concept's own
-// hashes. If one of these moves, the body's feel moved -- WALLRUN's autopilot
-// and every project's tuning with it. (Re-pin only on purpose, with the reason.)
+// the last bit). The pins were the proof of concept's own hashes until the
+// body moved to core's dmath (fixtures.ts says why): now they are the same on
+// every CPU and engine, which is what a replay or a lockstep peer needs. If
+// one of these moves, the body's feel moved -- WALLRUN's autopilot and every
+// project's tuning with it. (Re-pin only on purpose, with the reason.)
 
 import { test } from "node:test";
 import assert from "node:assert/strict";

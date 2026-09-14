@@ -17,6 +17,7 @@ import { collidersOfDesign, defineStyledObject, solid } from "@keel-engine/objec
 import type { ColliderSpec, DesignSolid } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
 import { num, post, rail, roles, str } from "../kit.ts";
+import { dsin } from "@keel-engine/core";
 
 const THICK = 0.22;
 
@@ -97,7 +98,7 @@ export default defineStyledObject({
         const z = L / 2 - (L * (i + 0.5)) / m;
         const t = (i + 0.5) / m;
         const yTop = yAt(z) - 0.12;
-        const yUnder = -depth + (depth + Math.min(yAt(L / 2), yAt(-L / 2)) + hump * 0.55) * Math.sqrt(Math.sin(Math.PI * t));
+        const yUnder = -depth + (depth + Math.min(yAt(L / 2), yAt(-L / 2)) + hump * 0.55) * Math.sqrt(dsin(Math.PI * t));
         const bottom = Math.min(yUnder, yTop - 0.35);
         solids.push(solid.box("stone", [0, (yTop + bottom) / 2, z], [W / 2 + 0.12, (yTop - bottom) / 2, L / m / 2 + 0.01], 0, { name: "spandrel", collide: false }));
         for (const s of [-1, 1]) solids.push(solid.box("trim", [s * (W / 2 + 0.05), yAt(z) + 0.35, z], [0.17, 0.4, L / m / 2 + 0.01], 0, { name: "parapet" }));

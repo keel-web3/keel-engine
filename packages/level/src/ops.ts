@@ -22,6 +22,7 @@ import type { TilePatch } from "@keel-engine/terrain";
 import type { SettingValue, SettingsJSON } from "@keel-engine/world";
 import { STYLES } from "./document.ts";
 import type { Level, LevelChange, LoadTier, Marker, Region, Resource, ResourceKind, Road, ScatterRegion, Spawn, Thing } from "./document.ts";
+import { dhypot } from "@keel-engine/core";
 
 type FieldType = "tile" | "rect" | "int" | "num" | "pos" | "string" | "id" | "bool" | "tiles" | "any" | "object" | "strings" | readonly string[];
 interface Field { readonly type: FieldType; readonly required?: boolean; readonly doc: string }
@@ -229,7 +230,7 @@ function run(level: Level, op: LevelOp, _index: number, chunksOf: (r: readonly [
       const r = g<[number, number, number, number] | undefined>("rect");
       if (r) { all(r[0], r[1], r[2], r[3], (i, j) => t.setType(i, j, type)); return { kind: "terrain", chunks: chunksOf(r), ids: [] }; }
       const at = g<[number, number]>("at"), rad = g<number | undefined>("radius") ?? 1;
-      all(at[0] - Math.ceil(rad), at[1] - Math.ceil(rad), at[0] + Math.ceil(rad) + 1, at[1] + Math.ceil(rad) + 1, (i, j) => { if (Math.hypot(i - at[0], j - at[1]) <= rad) t.setType(i, j, type); });
+      all(at[0] - Math.ceil(rad), at[1] - Math.ceil(rad), at[0] + Math.ceil(rad) + 1, at[1] + Math.ceil(rad) + 1, (i, j) => { if (dhypot(i - at[0], j - at[1]) <= rad) t.setType(i, j, type); });
       return { kind: "terrain", chunks: chunksOf([at[0] - rad, at[1] - rad, at[0] + rad + 1, at[1] + rad + 1]), ids: [] };
     }
     case "ramp": {

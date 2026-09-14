@@ -12,9 +12,9 @@ import { ACTS, PROPS, ROOMS, pack } from "../src/index.ts";
 import { manifest } from "../src/module.ts";
 import { TEMPLATE_PROPS, defineRecipe, defineWorldPack, dressDungeon, generateDungeon, runPipeline } from "@keel-engine/worldgen";
 
-test("the manifest lists every object with its tier, and needs keel/object (and keel/runtime, for the hero's gear)", () => {
+test("the manifest lists every object with its tier, and needs keel/core (its dmath), keel/object (and keel/runtime, for the hero's gear)", () => {
   assert.equal(manifest.id, "packs/dungeon");
-  assert.deepEqual([...manifest.needs], ["keel/runtime@^0.1", "keel/object@^0.1"]);
+  assert.deepEqual([...manifest.needs], ["keel/runtime@^0.1", "keel/core@^0.1", "keel/object@^0.1"]);
   assert.equal(manifest.contents!.objects!.length, pack.objects.length);
   assert.ok(pack.objects.length >= 29);
   for (const o of manifest.contents!.objects!) assert.ok(o.tags!.some((t) => t.startsWith("tier:")), o.id);

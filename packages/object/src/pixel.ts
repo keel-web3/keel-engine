@@ -23,9 +23,10 @@ import type { Vec3 } from "@keel-engine/core";
 import type { BallSolid, ConeSolid, CylinderSolid, Design, DesignSolid } from "./design.ts";
 import { drawnIn } from "./design.ts";
 import type { ObjectStyle, StyledPart, StyleParams, StyledParts } from "./style.ts";
+import { dcbrt, dcos, dsin, dtan } from "@keel-engine/core";
 
-const OCT = Math.cos(Math.PI / 8); // (a star of two squares with its points at r: each square's half-side is r cos 22.5°)
-const BAR = Math.tan(Math.PI / 8); // (an octagon of apothem a is four bars a long, a tan 22.5° wide, 45° apart)
+const OCT = dcos(Math.PI / 8); // (a star of two squares with its points at r: each square's half-side is r cos 22.5°)
+const BAR = dtan(Math.PI / 8); // (an octagon of apothem a is four bars a long, a tan 22.5° wide, 45° apart)
 
 /** An octagonal slab of apothem a (four bars 45° apart), or a square one. */
 function slab(c: Vec3, a: number, hy: number, sides: 4 | 8): Array<{ c: Vec3; h: Vec3; yaw: number }> {
@@ -45,7 +46,7 @@ export function ballPrims(s: BallSolid, detail = 1): Array<{ a: Vec3; b: Vec3; r
   const order = [0, 1, 2].sort((i, j) => r[i]! - r[j]!);
   const lo = r[order[0]!]!, mid = r[order[1]!]!, hi = r[order[2]!]!;
   if (hi <= lo * 1.3) {
-    const R = Math.cbrt(r[0] * r[1] * r[2]);
+    const R = dcbrt(r[0] * r[1] * r[2]);
     return [{ a: [cx, cy, cz], b: [cx, cy, cz], r: R }];
   }
   if (mid <= lo * 1.3) {
@@ -68,8 +69,8 @@ export function ballPrims(s: BallSolid, detail = 1): Array<{ a: Vec3; b: Vec3; r
   for (let k = 0; k < n; k += 1) {
     const th = (k / n) * Math.PI * 2 + 0.3;
     const p: Vec3 = [cx, cy, cz];
-    p[u] = p[u]! + Math.cos(th) * (ru - sR);
-    p[w] = p[w]! + Math.sin(th) * (rw - sR);
+    p[u] = p[u]! + dcos(th) * (ru - sR);
+    p[w] = p[w]! + dsin(th) * (rw - sR);
     out.push({ a: p, b: [...p], r: sR });
   }
   // (The middle: as big as fills it, never past the thin radius -- a cloud stays inside its ball.)

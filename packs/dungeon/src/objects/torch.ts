@@ -5,6 +5,7 @@ import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
 import { ACTS, roles, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "torch",
@@ -32,7 +33,7 @@ export default defineStyledObject({
       solids.push(solid.cylinder("metal", [0, 1.86, 0.28], 0.05, 0.06, { name: "cup", collide: false, sides: 8 }));
       solids.push(solid.capsule("wood", [0, 1.8, 0.28], [0, 2.14, 0.31], 0.028, { name: "stick", collide: false }));
       solids.push(solid.ball("dark", [0, 2.16, 0.31], [0.05, 0.06, 0.05], { name: "pitch", collide: false }));
-      if (form === "cage") for (let i = 0; i < 4; i += 1) { const a = (i / 4) * Math.PI * 2 + 0.4; solids.push(solid.capsule("metal", [Math.sin(a) * 0.08, 2.1, 0.31 + Math.cos(a) * 0.08], [Math.sin(a) * 0.1, 2.34, 0.31 + Math.cos(a) * 0.1], 0.012, { name: "cage", collide: false })); }
+      if (form === "cage") for (let i = 0; i < 4; i += 1) { const a = (i / 4) * Math.PI * 2 + 0.4; solids.push(solid.capsule("metal", [dsin(a) * 0.08, 2.1, 0.31 + dcos(a) * 0.08], [dsin(a) * 0.1, 2.34, 0.31 + dcos(a) * 0.1], 0.012, { name: "cage", collide: false })); }
       flame = [0, 2.26, 0.31];
     }
     return { solids, front: "+z", meta: { flames: [flame], light: form === "sconce" ? "sconce" : "torch" } };

@@ -11,7 +11,7 @@
 //   const spec = characterSpec(d);                       // an EntitySpec: entityOf + the proportions, rig rebuilt
 //   characterSolids(d, posed(spec, "run", { phase: 0.3 }), look, registry)   // capsules, boxes, wedges to draw
 
-import { createRoll, deriveSeed, oklch, stream } from "@keel-engine/core";
+import { createRoll, datan2, dcos, deriveSeed, dsin, oklch, stream } from "@keel-engine/core";
 import { CHOICES, contractOf, entityOf, humanoidRig, placeAttribute, quadrupedRig, skinOf, socketFrame, socketToWorld, socketsOf, wear } from "@keel-engine/entity";
 import type { AttributeShape, EntitySocket, EntitySpec, HumanoidBody, Kind, MaterialTable, QuadrupedBody, Role as EntityRole, Skeleton, Species } from "@keel-engine/entity";
 import { defineEntity } from "@keel-engine/runtime";
@@ -95,7 +95,7 @@ export const CHARACTER_MATERIALS: MaterialTable = Object.freeze({ dark: 3, fur: 
 // (A ramp dark to light round a colour: the baker's rampAround.)
 function rampAround([L, C, h]: Oklch, n: number): Array<[number, number, number]> {
   const L0 = Math.max(0.12, L - 0.42), L1 = Math.min(0.98, L + 0.16), c = Math.max(C, 0.02), turn = 12;
-  return Array.from({ length: n }, (_, i) => { const k = n > 1 ? i / (n - 1) : 0.5; const [r, g, b] = oklch(L0 + (L1 - L0) * k, c * Math.sin(Math.PI * (0.15 + 0.7 * k)), h + turn * (k - 0.5)); return [r, g, b]; });
+  return Array.from({ length: n }, (_, i) => { const k = n > 1 ? i / (n - 1) : 0.5; const [r, g, b] = oklch(L0 + (L1 - L0) * k, c * dsin(Math.PI * (0.15 + 0.7 * k)), h + turn * (k - 0.5)); return [r, g, b]; });
 }
 
 /** A look for a character: ramps round its own colours per entity role (as the baker's entityPalette), a table for entity and builder roles. */
@@ -161,7 +161,7 @@ export function characterSolids(d: CharacterDesign, skel: Skeleton, look: Pick<L
       out.capsules.push({ a: socketToWorld(frame, S(p.a!)), b: socketToWorld(frame, S(p.b!)), r, mat });
     } else {
       const m = frame.m;
-      const yaw = Math.atan2(m[2] * Math.cos(p.yaw ?? 0) + m[0] * Math.sin(p.yaw ?? 0), m[8] * Math.cos(p.yaw ?? 0) + m[6] * Math.sin(p.yaw ?? 0));
+      const yaw = datan2(m[2] * dcos(p.yaw ?? 0) + m[0] * dsin(p.yaw ?? 0), m[8] * dcos(p.yaw ?? 0) + m[6] * dsin(p.yaw ?? 0));
       out.boxes.push({ c: socketToWorld(frame, S(p.c!)), h: S(p.h!), yaw, mat, ...(p.shape === "wedge" ? { kind: "wedge" as const, lo: p.lo ?? 0 } : {}) });
     }
   }

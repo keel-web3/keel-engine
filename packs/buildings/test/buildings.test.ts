@@ -27,9 +27,9 @@ function budget(b: BuiltObject): { boxes: number; wedges: number; capsules: numb
   return { boxes, wedges, capsules };
 }
 
-test("the manifest lists every object; needs only keel/object", () => {
+test("the manifest lists every object; needs only keel/core (its dmath) and keel/object", () => {
   assert.equal(manifest.id, "packs/buildings");
-  assert.deepEqual([...manifest.needs], ["keel/object@^0.1"]);
+  assert.deepEqual([...manifest.needs], ["keel/core@^0.1", "keel/object@^0.1"]);
   assert.equal(manifest.contents!.objects!.length, 20);
 });
 

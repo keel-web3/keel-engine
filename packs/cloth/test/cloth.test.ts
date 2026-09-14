@@ -36,7 +36,7 @@ function declared(a: AnyAttributeDef, e: { def: AnyEntityDef; pack: ModuleManife
 test("the manifest: attributes only, the wearable contract, and packs/humans and packs/animals named -- and naming cloth back", () => {
   assert.equal(manifest.id, "packs/cloth");
   assert.deepEqual(manifest.provides, ["attributes/wearable@1.0.0"]);
-  assert.deepEqual(manifest.needs, ["keel/runtime@^0.1"]);
+  assert.deepEqual(manifest.needs, ["keel/runtime@^0.1", "keel/core@^0.1"]);
   assert.deepEqual(manifest.contents?.entities, []);
   assert.deepEqual(manifest.contents?.attributes?.map((a) => `${a.id}:${a.slot}`), [
     "beanie:head", "cap:head", "top-hat:head", "hood:head", "horned-helmet:head", "backpack-round:back", "backpack-tall:back", "flag:back", "cape:back", "scarf:neck", "glasses:face", "boots-l:foot.L", "boots-r:foot.R",

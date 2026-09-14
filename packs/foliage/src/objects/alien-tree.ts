@@ -5,6 +5,7 @@ import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import type { Vec3 } from "@keel-engine/core";
 import { dirOf, num, roles, str, trunk } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "alien-tree",
@@ -43,8 +44,8 @@ export default defineStyledObject({
       if (form === "bulb") {
         const L = H * J.between(0.2, 0.34);
         const p = t.at(J.between(0.75, 1));
-        const mid: Vec3 = [p[0] + Math.sin(yaw) * L * 0.6, p[1] + L * 0.2, p[2] + Math.cos(yaw) * L * 0.6];
-        const tip: Vec3 = [p[0] + Math.sin(yaw) * L, p[1] + L * 0.75, p[2] + Math.cos(yaw) * L];
+        const mid: Vec3 = [p[0] + dsin(yaw) * L * 0.6, p[1] + L * 0.2, p[2] + dcos(yaw) * L * 0.6];
+        const tip: Vec3 = [p[0] + dsin(yaw) * L, p[1] + L * 0.75, p[2] + dcos(yaw) * L];
         solids.push(solid.capsule("bark", p, mid, r0 * 0.4, { name: "arm", collide: false, group: "arms" }));
         solids.push(solid.capsule("bark", mid, tip, r0 * 0.3, { name: "arm", collide: false, group: "arms" }));
         solids.push(solid.ball("glow", tip, [H * 0.07, H * 0.09, H * 0.07], { name: "bulb", collide: false, group: "arms" }));

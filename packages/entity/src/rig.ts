@@ -28,7 +28,7 @@
 //   ry > 0  turns the bone's front (+z) toward its right hand (+x) -- the same way a yaw turns
 //   rz > 0  tips a bone that points up toward -x (its left), swings a hanging one toward +x (its right)
 
-import { add, cross, dot, frontOf, len, scale, sub } from "@keel-engine/core";
+import { add, cross, dcos, dot, dsin, frontOf, len, scale, sub } from "@keel-engine/core";
 import type { Vec3, Vec3Like } from "@keel-engine/core";
 import type { Mat3, Mat3Like } from "@keel-engine/scene";
 
@@ -175,9 +175,9 @@ export interface Skeleton<P extends Plan = Plan> {
 // ---------------------------------------------------------------- 3x3 rotations (row-major, local -> world)
 
 export const IDENTITY: Mat3Like = Object.freeze([1, 0, 0, 0, 1, 0, 0, 0, 1] as Mat3);
-export const rotX = (a: number): Mat3 => { const c = Math.cos(a); const s = Math.sin(a); return [1, 0, 0, 0, c, -s, 0, s, c]; };
-export const rotY = (a: number): Mat3 => { const c = Math.cos(a); const s = Math.sin(a); return [c, 0, s, 0, 1, 0, -s, 0, c]; };
-export const rotZ = (a: number): Mat3 => { const c = Math.cos(a); const s = Math.sin(a); return [c, -s, 0, s, c, 0, 0, 0, 1]; };
+export const rotX = (a: number): Mat3 => { const c = dcos(a); const s = dsin(a); return [1, 0, 0, 0, c, -s, 0, s, c]; };
+export const rotY = (a: number): Mat3 => { const c = dcos(a); const s = dsin(a); return [c, 0, s, 0, 1, 0, -s, 0, c]; };
+export const rotZ = (a: number): Mat3 => { const c = dcos(a); const s = dsin(a); return [c, -s, 0, s, c, 0, 0, 0, 1]; };
 export function mul(a: Mat3Like, b: Mat3Like): Mat3 {
   const o = new Array<number>(9);
   for (let r = 0; r < 3; r += 1) {
@@ -291,13 +291,13 @@ export function quadrupedRig(b: QuadrupedBody): QuadrupedRig {
   const rise = (b.shoulderH - b.hipH) * 0.5;
   const seg = b.tailLen / 3;
   const tr = b.tailRise ?? 0.4;
-  const tailDir: Vec3 = [0, Math.sin(tr), -Math.cos(tr)];
+  const tailDir: Vec3 = [0, dsin(tr), -dcos(tr)];
   const bones: Bone[] = [
     { name: "pelvis", parent: null, off: [0, b.hipH, -b.bodyLen / 2] },
     { name: "spine", parent: "pelvis", off: [0, rise, b.bodyLen / 2] },
     { name: "chest", parent: "spine", off: [0, rise, b.bodyLen / 2] },
     { name: "neck", parent: "chest", off: [0, b.bodyR * 0.35, b.bodyR * 0.45] },
-    { name: "head", parent: "neck", off: [0, b.neckLen * Math.sin(b.neckRise), b.neckLen * Math.cos(b.neckRise)], tip: [0, 0, b.headR * 2] },
+    { name: "head", parent: "neck", off: [0, b.neckLen * dsin(b.neckRise), b.neckLen * dcos(b.neckRise)], tip: [0, 0, b.headR * 2] },
     { name: "tail0", parent: "pelvis", off: [0, b.bodyR * 0.3, -b.bodyR * 0.55] },
     { name: "tail1", parent: "tail0", off: scale(tailDir, seg) },
     { name: "tail2", parent: "tail1", off: scale(tailDir, seg), tip: scale(tailDir, seg) },

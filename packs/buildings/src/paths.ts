@@ -4,6 +4,7 @@
 // what a level stores and placeContent builds.
 import type { ContentRecord } from "@keel-engine/object";
 import { spanBetween } from "./kit.ts";
+import { dhypot } from "@keel-engine/core";
 
 type P3 = readonly [number, number, number];
 const PACK = "packs/buildings";
@@ -58,7 +59,7 @@ export function alongPath(points: readonly P3[], { id = "wall", maxSegment, gate
   let index = 0;
   for (let i = 0; i + 1 < points.length; i += 1) {
     const a = points[i]!, b = points[i + 1]!;
-    const legLen = Math.hypot(b[0] - a[0], b[2] - a[2]);
+    const legLen = dhypot(b[0] - a[0], b[2] - a[2]);
     const n = Math.max(1, Math.ceil(legLen / cap - 1e-9));
     for (let k = 0; k < n; k += 1) {
       const t0 = k / n, t1 = (k + 1) / n;

@@ -11,6 +11,9 @@
     "path": "packages/physics"
   },
   "build": {
-    "format": "iife"
+    "format": "iife",
+    "external": [
+      "@keel-engine/core"
+    ]
   }
 }

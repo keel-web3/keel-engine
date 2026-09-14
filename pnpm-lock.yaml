@@ -438,6 +438,9 @@ importers:
 
   packs/animals:
     dependencies:
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@keel-engine/entity':
         specifier: workspace:*
         version: link:../../packages/entity
@@ -445,15 +448,15 @@ importers:
         specifier: workspace:*
         version: link:../../packages/runtime
     devDependencies:
-      '@keel-engine/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       '@keel-engine/keel':
         specifier: workspace:*
         version: link:../../packages/keel
 
   packs/buildings:
     dependencies:
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@keel-engine/object':
         specifier: workspace:*
         version: link:../../packages/object
@@ -467,9 +470,6 @@ importers:
       '@keel-engine/codec':
         specifier: workspace:*
         version: link:../../packages/codec
-      '@keel-engine/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       '@keel-engine/foliage':
         specifier: workspace:*
         version: link:../foliage
@@ -488,6 +488,9 @@ importers:
 
   packs/cloth:
     dependencies:
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@keel-engine/entity':
         specifier: workspace:*
         version: link:../../packages/entity
@@ -498,9 +501,6 @@ importers:
       '@keel-engine/animals':
         specifier: workspace:*
         version: link:../animals
-      '@keel-engine/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       '@keel-engine/humans':
         specifier: workspace:*
         version: link:../humans
@@ -529,6 +529,9 @@ importers:
 
   packs/dungeon:
     dependencies:
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@keel-engine/entity':
         specifier: workspace:*
         version: link:../../packages/entity
@@ -545,9 +548,6 @@ importers:
       '@keel-engine/codec':
         specifier: workspace:*
         version: link:../../packages/codec
-      '@keel-engine/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       '@keel-engine/keel':
         specifier: workspace:*
         version: link:../../packages/keel
@@ -560,6 +560,9 @@ importers:
 
   packs/foliage:
     dependencies:
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@keel-engine/object':
         specifier: workspace:*
         version: link:../../packages/object
@@ -573,9 +576,6 @@ importers:
       '@keel-engine/codec':
         specifier: workspace:*
         version: link:../../packages/codec
-      '@keel-engine/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       '@keel-engine/keel':
         specifier: workspace:*
         version: link:../../packages/keel

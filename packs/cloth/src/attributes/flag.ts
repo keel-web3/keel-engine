@@ -9,6 +9,7 @@ import type { AttributeBox, AttributeCapsule, AttributeShape } from "@keel-engin
 import { defineAttribute } from "@keel-engine/runtime";
 import { ANIMALS, CLOTH, HUMANS, METAL, WOOD, amount, bigOf, choose, outOf } from "../kit.ts";
 import type { V3 } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 const POLE = { short: 2.8, tall: 3.6, towering: 4.4 } as const;
 // (Back and to the right: its heading, as a yaw -- the frame convention: 0 is +z, the carrier's front. Half-way
@@ -46,7 +47,7 @@ export default defineAttribute<AttributeShape>({
     if (finial === "ball") capsules.push({ a: [top[0], top[1] + 0.06 * u, top[2]], b: [top[0], top[1] + 0.06 * u, top[2]], r: 0.07 * u, role: "metal", part: "flag.finial" });
     if (finial === "spike") capsules.push({ a: top, b: [top[0], top[1] + 0.22 * u, top[2]], r: 0.03 * u, role: "metal", part: "flag.finial" });
     // The cloth: boxes along its heading d, hung from the pole's top.
-    const d: V3 = [Math.sin(STREAM), 0, Math.cos(STREAM)];
+    const d: V3 = [dsin(STREAM), 0, dcos(STREAM)];
     const fl = (cloth === "square" ? 0.9 : 1.2) * u * length;
     const fh = cloth === "square" ? fl : cloth === "banner" ? 0.62 * u : 0.8 * u;
     const thick = 0.02 * u;

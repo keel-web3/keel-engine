@@ -6,6 +6,7 @@
 import { defineStyledObject, solid } from "@keel-engine/object";
 import type { DesignSolid } from "@keel-engine/object";
 import { num, post, roles, str } from "../kit.ts";
+import { dcos, dsin } from "@keel-engine/core";
 
 export default defineStyledObject({
   id: "gate",
@@ -27,7 +28,7 @@ export default defineStyledObject({
         solids.push(post("wood", x, 0, 0, H, P / 2, { name: "post", collide: true }));
         // (A leaf: hinged on the post's inner edge, swung open into the yard by 1 radian.)
         const leafW = W / 2 - 0.05, th = 1;
-        const dir = [-s * Math.cos(th), -Math.sin(th)] as const;
+        const dir = [-s * dcos(th), -dsin(th)] as const;
         solids.push(solid.box("wood", [s * W / 2 + dir[0] * leafW / 2, H * 0.4, dir[1] * leafW / 2], [leafW / 2, H * 0.36, 0.05], s > 0 ? Math.PI - th : th, { name: "leaf", collide: false }));
       } else if (kind === "arch") {
         solids.push(solid.box("stone", [x, (H + 1.2) / 2, 0], [P / 2, (H + 1.2) / 2, P * 0.6], 0, { name: "tower" }));
