@@ -1,0 +1,17 @@
+{
+  "name": "@keel-engine/wander",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ai/wander: one animal on its own -- meander, idle, sit, flee. Provides ai/animal@1.0.0 for any body/quadruped.",
+  "exports": { ".": "./src/index.ts", "./module": "./src/module.ts" },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/entity": "workspace:*",
+    "@keel-engine/keel": "workspace:*",
+    "@keel-engine/animals": "workspace:*"
+  }
+}

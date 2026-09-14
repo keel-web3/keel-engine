@@ -1,0 +1,12 @@
+node_modules/
+.pnpm-store/
+# Built bytes: `keel module build` writes them, the catalog pins their digests, anyone rebuilds them.
+dist/
+# Screenshots, captures, documents and staged project modules: local output only.
+out/
+*.tsbuildinfo
+*.log
+.env
+.env.*
+.DS_Store
+packages/*/tools/dist/

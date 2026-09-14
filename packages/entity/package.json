@@ -1,0 +1,15 @@
+{
+  "name": "@keel-engine/entity",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Things that move: humanoid and quadruped rigs, species, skins, clips, the animator.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/scene": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

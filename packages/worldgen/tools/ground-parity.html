@@ -1,0 +1,19 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>GPU ground parity</title>
+<style>body{margin:8px;background:#0c0d10;color:#cfd3e6;font:12px ui-monospace,monospace}pre{margin:6px 0}</style>
+<canvas id="c" style="display:none"></canvas><pre id="out">building scenes…</pre><div id="show"></div>
+<script type="module">
+  import { run, probe } from "./dist/ground-parity.js";
+  const q = new URLSearchParams(location.search);
+  const scenes = q.get("scenes")?.split(",") ?? undefined, scales = q.get("scales")?.split(",").map(Number) ?? undefined;
+  const art = q.get("art")?.split(";").map((p) => p.split(",").map(Number)) ?? undefined;
+  globalThis.parity = { run: (o = {}) => run(document.getElementById("c"), o), probe };
+  if (!q.has("idle")) {
+    try {
+      const r = await run(document.getElementById("c"), { scenes, scales, art, show: document.getElementById("show") });
+      globalThis.parityResults = r;
+      document.getElementById("out").textContent = r.map((x) => `${x.scene.padEnd(10)} ${String(x.k).padStart(3)} px/m pitch ${x.pitch}  ${String(x.differ).padStart(6)} of ${String(x.covered).padStart(6)} differ (${(x.share * 100).toFixed(3)}%, ${x.nearOne} one entry off, ${x.border} on the picture's edge, ${x.holes} empty on one side)  cpu ${x.cpuMs} ms (${x.chunks} chunks)  gpu ${x.gpuMs} ms`).join("\n");
+    } catch (e) { document.getElementById("out").textContent = String(e && e.stack || e); globalThis.parityError = String(e && e.stack || e); }
+  }
+</script>

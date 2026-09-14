@@ -1,0 +1,22 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/audio",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/codec@^0.1"
+    ],
+    "title": "Audio",
+    "description": "Generative lo-fi records from a mood and a seed, live intensity, seeded game SFX, KEEL audio.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/codec": "keel/codec"
+  },
+  "manifests": {}
+}

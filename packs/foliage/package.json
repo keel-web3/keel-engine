@@ -1,0 +1,21 @@
+{
+  "name": "@keel-engine/foliage",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "packs/foliage: trees (oak, pine, birch, palm, dead, fungal, alien), bushes, grass, flowers, reeds, cacti, rocks, logs, stumps and crystals as styled objects -- one design each, drawn in pixel or voxel style, with wind and seasons.",
+  "exports": { ".": "./src/index.ts", "./module": "./src/module.ts", "./codec": "./src/codec.ts" },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/object": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/scene": "workspace:*",
+    "@keel-engine/physics": "workspace:*",
+    "@keel-engine/builder": "workspace:*",
+    "@keel-engine/keel": "workspace:*",
+    "@keel-engine/render": "workspace:*",
+    "@keel-engine/codec": "workspace:*"
+  }
+}

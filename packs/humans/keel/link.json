@@ -1,0 +1,98 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "packs/humans",
+    "version": "1.0.0",
+    "kind": "pack",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/entity@^0.1"
+    ],
+    "provides": [
+      "body/humanoid@1.0.0"
+    ],
+    "compatible": [
+      "packs/cloth@^1"
+    ],
+    "contents": {
+      "entities": [
+        {
+          "id": "human",
+          "body": "body/humanoid@1.0.0",
+          "tags": [
+            "humanoid",
+            "human",
+            "person"
+          ]
+        },
+        {
+          "id": "anthro-cat",
+          "body": "body/humanoid@1.0.0",
+          "tags": [
+            "anthro",
+            "cat"
+          ]
+        },
+        {
+          "id": "anthro-fox",
+          "body": "body/humanoid@1.0.0",
+          "tags": [
+            "anthro",
+            "fox"
+          ]
+        },
+        {
+          "id": "anthro-bunny",
+          "body": "body/humanoid@1.0.0",
+          "tags": [
+            "anthro",
+            "bunny"
+          ]
+        },
+        {
+          "id": "anthro-bear",
+          "body": "body/humanoid@1.0.0",
+          "tags": [
+            "anthro",
+            "bear"
+          ]
+        },
+        {
+          "id": "anthro-mouse",
+          "body": "body/humanoid@1.0.0",
+          "tags": [
+            "anthro",
+            "mouse"
+          ]
+        },
+        {
+          "id": "anthro-frog",
+          "body": "body/humanoid@1.0.0",
+          "tags": [
+            "anthro",
+            "frog"
+          ]
+        },
+        {
+          "id": "anthro-dog",
+          "body": "body/humanoid@1.0.0",
+          "tags": [
+            "anthro",
+            "dog"
+          ]
+        }
+      ],
+      "attributes": []
+    },
+    "title": "Humans",
+    "description": "A person and anthro cats, foxes, bunnies, bears, mice, frogs and dogs on two legs (body/humanoid@1.0.0), each with its own choices.",
+    "phase": "runtime",
+    "weight": -500
+  },
+  "imports": {
+    "@keel-engine/entity": "keel/entity",
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

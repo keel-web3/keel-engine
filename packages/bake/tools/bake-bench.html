@@ -1,0 +1,15 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Bake bench</title>
+<style>body{margin:0;background:#0c0d10;color:#cfd3e6;font:12px ui-monospace,monospace}canvas{display:block;image-rendering:pixelated;max-width:100%}pre{padding:8px}</style>
+<pre id="out">baking…</pre><canvas id="sheet"></canvas>
+<script type="module">
+  import "./dist/bake-bench.js";
+  const sheet = document.getElementById("sheet");
+  try {
+    const r = await globalThis.bakeBench(sheet);
+    globalThis.bakeResults = r;
+    sheet.toBlob((b) => fetch("/out/bake-sheet.png", { method: "PUT", body: b }));
+    document.getElementById("out").textContent = `shader compile + first sprite ${r.compileMs.toFixed(0)} ms\n` + r.rows.map((x) => `k ${String(x.k).padStart(3)} px/m  ${String(x.designs).padStart(2)} designs  ${String(x.sprites).padStart(5)} sprites  ~${x.spriteH} px tall  ${x.ms} ms  (${x.perSprite} ms/sprite, ${x.perDesign} ms/design; draw ${x.drawMs} read ${x.readMs} trim ${x.trimMs}; kept ${x.kept}; off-palette ${x.offPalette})`).join("\n");
+  } catch (e) { document.getElementById("out").textContent = String(e && e.stack || e); globalThis.bakeError = String(e && e.stack || e); }
+</script>

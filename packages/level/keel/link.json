@@ -1,0 +1,31 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/level",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/core@^0.1",
+      "keel/object@^0.1",
+      "keel/world@^0.1",
+      "keel/codec@^0.1",
+      "keel/terrain@^0.1"
+    ],
+    "title": "KEEL Engine levels",
+    "description": "A level document (terrain, placed objects by pack/id/pins/look/style, foliage scatter, buildings, roads, water, spawns, markers, trigger regions), versioned and codec-packed; seeded generation where every choice is a lockable setting; RTS fairness metrics; an edit op list that streams change events.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/codec": "keel/codec",
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/object": "keel/object",
+    "@keel-engine/terrain": "keel/terrain",
+    "@keel-engine/world": "keel/world"
+  },
+  "manifests": {}
+}

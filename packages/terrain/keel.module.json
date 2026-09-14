@@ -1,0 +1,20 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-terrain",
+  "version": "0.1.0",
+  "description": "Tile terrain: a chunked grid of integer heights, terrain types and flags; auto-tiling by a rules table; cliffs, ramps, water and bridge spans; merged colliders; walkability, flow fields and HPA* for thousands of units; the ground baked per chunk into palette-true, depth-carrying layers.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/terrain"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/bake",
+      "@keel-engine/core"
+    ]
+  }
+}

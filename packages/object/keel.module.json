@@ -1,0 +1,21 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-object",
+  "version": "0.1.0",
+  "description": "Things that don't move: definitions, placement, colliders, sockets, settling, baking for physics and the renderer; the seeded catalogue of pieces; wedge parts; the style contract (one design, drawn in pixel, voxel or any module's style) and styled objects, world looks, profiles and wind.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/object"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/core",
+      "@keel-engine/physics",
+      "@keel-engine/scene"
+    ]
+  }
+}

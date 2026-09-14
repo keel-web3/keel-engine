@@ -1,0 +1,16 @@
+{
+  "name": "@keel-engine/animals",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "packs/animals: the catalogue's four-legged species as entities (body/quadruped@1.0.0), and a collar and saddlebags.",
+  "exports": { ".": "./src/index.ts", "./module": "./src/module.ts" },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/entity": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/keel": "workspace:*"
+  }
+}

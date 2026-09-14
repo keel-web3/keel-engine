@@ -1,0 +1,19 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-packs-cloth",
+  "version": "1.0.0",
+  "description": "Hats (beanie, cap, top hat, hood, horned helmet), backpacks (round, tall), a flag and a cape, a scarf, glasses and boots -- each with shape variants and look roles -- built to the head, back, neck, face and foot sockets of packs/humans' characters and packs/animals' animals.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packs/cloth"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/runtime"
+    ]
+  }
+}

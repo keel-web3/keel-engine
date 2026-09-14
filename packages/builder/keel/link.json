@@ -1,0 +1,34 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/builder",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/core@^0.1",
+      "keel/runtime@^0.1",
+      "keel/scene@^0.1",
+      "keel/object@^0.1",
+      "keel/entity@^0.1",
+      "keel/codec@^0.1"
+    ],
+    "provides": [
+      "style/voxel@1.0.0"
+    ],
+    "title": "KEEL Engine builder",
+    "description": "Voxel models palette-indexed by role, edited by ops, converted to objects, attributes and rigged entities, animated, varied by seed and exported as pack code.",
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/codec": "keel/codec",
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/entity": "keel/entity",
+    "@keel-engine/object": "keel/object",
+    "@keel-engine/runtime": "keel/runtime",
+    "@keel-engine/scene": "keel/scene"
+  },
+  "manifests": {}
+}

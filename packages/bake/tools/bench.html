@@ -1,0 +1,11 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Sprite bench</title>
+<style>body{margin:0;background:#0c0d10;color:#cfd3e6;font:12px ui-monospace,monospace}canvas{width:960px;image-rendering:pixelated;display:block}pre{padding:8px}</style>
+<canvas id="c"></canvas><pre id="out">running…</pre>
+<script type="module">
+  import { bench } from "./dist/bench.js";
+  const c = document.getElementById("c"); const r = [...await bench(c, [4000, 20000], [[480, 270], [1920, 1080]], 30), ...await bench(c, [4000, 10000, 20000], [[480, 270], [960, 540], [1920, 1080]], 400)];
+  globalThis.benchResults = r;
+  document.getElementById("out").textContent = r.map((x) => `${String(x.units).padStart(6)} units  ${x.size.padEnd(16)} visible ${String(x.visible).padStart(6)}  cpu ${x.msCpu} ms  frame ${x.msFrame} ms  ~${x.fps} fps`).join("\n");
+</script>

@@ -1,0 +1,117 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "packs/animals",
+    "version": "1.0.0",
+    "kind": "pack",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/entity@^0.1"
+    ],
+    "provides": [
+      "body/quadruped@1.0.0",
+      "attributes/wearable@1.0.0"
+    ],
+    "compatible": [
+      "packs/cloth@^1"
+    ],
+    "contents": {
+      "entities": [
+        {
+          "id": "dog",
+          "body": "body/quadruped@1.0.0",
+          "tags": [
+            "animal",
+            "dog",
+            "pet",
+            "herd"
+          ]
+        },
+        {
+          "id": "cat",
+          "body": "body/quadruped@1.0.0",
+          "tags": [
+            "animal",
+            "cat",
+            "pet"
+          ]
+        },
+        {
+          "id": "fox",
+          "body": "body/quadruped@1.0.0",
+          "tags": [
+            "animal",
+            "fox",
+            "wild"
+          ]
+        },
+        {
+          "id": "bear",
+          "body": "body/quadruped@1.0.0",
+          "tags": [
+            "animal",
+            "bear",
+            "wild"
+          ]
+        },
+        {
+          "id": "rabbit",
+          "body": "body/quadruped@1.0.0",
+          "tags": [
+            "animal",
+            "rabbit",
+            "pet"
+          ]
+        },
+        {
+          "id": "mouse",
+          "body": "body/quadruped@1.0.0",
+          "tags": [
+            "animal",
+            "mouse",
+            "wild"
+          ]
+        },
+        {
+          "id": "deer",
+          "body": "body/quadruped@1.0.0",
+          "tags": [
+            "animal",
+            "deer",
+            "wild",
+            "herd"
+          ]
+        }
+      ],
+      "attributes": [
+        {
+          "id": "collar",
+          "slot": "neck",
+          "tags": [
+            "collar",
+            "pet"
+          ]
+        },
+        {
+          "id": "saddlebag",
+          "slot": "back",
+          "tags": [
+            "saddlebag",
+            "pack",
+            "working"
+          ]
+        }
+      ]
+    },
+    "title": "Animals",
+    "description": "Dogs, cats, foxes, bears, rabbits, mice and deer on four legs (body/quadruped@1.0.0), each with its own choices; a collar and saddlebags only they wear.",
+    "phase": "runtime",
+    "weight": -500
+  },
+  "imports": {
+    "@keel-engine/entity": "keel/entity",
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

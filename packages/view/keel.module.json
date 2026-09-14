@@ -1,0 +1,21 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-view",
+  "version": "0.1.0",
+  "description": "Deep zoom with pitch buckets, possession (chase and first person) through a command stream, terrain meshes for perspective views, LOD by on-screen size and dithered sprite/solid switching.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/view"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/camera",
+      "@keel-engine/core",
+      "@keel-engine/terrain"
+    ]
+  }
+}

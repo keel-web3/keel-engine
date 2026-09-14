@@ -1,0 +1,16 @@
+{
+  "name": "@keel-engine/object",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Things that don't move: pieces, colliders, sockets, settling, baking for physics and the renderer.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/scene": "workspace:*",
+    "@keel-engine/physics": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

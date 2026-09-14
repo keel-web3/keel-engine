@@ -1,0 +1,21 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-packs-creatures",
+  "version": "1.0.0",
+  "description": "Body plans a roster reads apart by -- crawler, walker, strider, floater, flyer, rider, serpent -- each its own geometry over a keel/entity rig, animated by the rig's clips.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packs/creatures"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/core",
+      "@keel-engine/entity",
+      "@keel-engine/runtime"
+    ]
+  }
+}

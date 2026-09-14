@@ -1,0 +1,13 @@
+{
+  "name": "@keel-engine/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Seeded streams, the frame convention, math, SDF primitives, OKLCH palettes, dither screens, the quantizer, the GIF encoder.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

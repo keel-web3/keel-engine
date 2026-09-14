@@ -1,0 +1,27 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/view",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/core@^0.1",
+      "keel/camera@^0.1",
+      "keel/terrain@^0.1",
+      "keel/render@^0.1"
+    ],
+    "title": "KEEL Engine view modes",
+    "description": "Deep zoom with pitch buckets, possession (chase and first person) through a command stream, terrain meshes for perspective views, LOD by on-screen size and dithered sprite/solid switching.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/camera": "keel/camera",
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/terrain": "keel/terrain"
+  },
+  "manifests": {}
+}

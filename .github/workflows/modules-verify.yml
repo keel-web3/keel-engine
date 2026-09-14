@@ -1,0 +1,68 @@
+name: modules-verify
+
+# The deep verification of the engine's modules, mirroring keel-sdk's
+# modules-verify for keel-modules:
+#
+#   - every module rebuilds from clean dist/ twice, to identical digests;
+#   - the committed catalog is what indexing produces, byte for byte;
+#   - a stranger's check: on main, every module in the catalog is rebuilt from
+#     the public archive of github.com/keel-web3/keel-engine at this commit
+#     (`keel module verify`'s own code path) and must land on its catalog
+#     digest.
+#
+# Daily as well as on push: a forge can change what it serves for a commit
+# without anybody touching this repository.
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: keel-engine
+      - uses: actions/checkout@v4
+        with:
+          repository: keel-web3/keel-sdk
+          path: keel-sdk
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: keel-engine/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: |
+            keel-sdk/pnpm-lock.yaml
+            keel-engine/pnpm-lock.yaml
+
+      - name: Build the KEEL SDK toolchain
+        working-directory: keel-sdk
+        run: |
+          pnpm install --frozen-lockfile
+          node scripts/build.mjs
+      - name: Install
+        working-directory: keel-engine
+        run: pnpm install --frozen-lockfile
+
+      - name: Every module reproduces, twice, from clean dist/
+        working-directory: keel-engine
+        run: npm run modules:reproduce
+
+      - name: Catalog is byte reproducible
+        working-directory: keel-engine
+        run: |
+          npm run modules:index
+          git diff --exit-code catalog/catalog.json
+
+      # Only a pushed commit has a public archive to fetch.
+      - name: A stranger rebuilds every module from the public archive
+        if: github.event_name != 'pull_request'
+        working-directory: keel-engine
+        run: node packages/keel/src/cli.ts verify-origin --commit "$GITHUB_SHA"

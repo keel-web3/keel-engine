@@ -1,0 +1,16 @@
+{
+  "name": "@keel-engine/level",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Levels: a versioned document of terrain and placed things (objects by pack/id/pins/look/style, foliage scatter, buildings, roads, water, spawns, markers, regions); seeded generation through lockable settings; RTS fairness; an edit op list.",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/object": "workspace:*",
+    "@keel-engine/world": "workspace:*",
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/terrain": "workspace:*"
+  }
+}

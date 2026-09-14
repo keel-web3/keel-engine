@@ -1,0 +1,66 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Render parity</title>
+<style>
+  body { margin: 0; background: #16161c; color: #cfd0d8; font: 12px/1.4 ui-monospace, Menlo, monospace; }
+  header { padding: 10px 14px; position: sticky; top: 0; background: #16161ce8; z-index: 1; }
+  #status { white-space: pre; color: #8a8b96; }
+  table { border-collapse: collapse; margin: 0 14px 20px; }
+  td, th { padding: 2px 8px; text-align: right; border-bottom: 1px solid #2c2c36; }
+  th { color: #fff; font-weight: normal; }
+  td:first-child, th:first-child { text-align: left; }
+  .bad { color: #ff7070; } .ok { color: #8ef0a0; }
+  #pairs { padding: 0 14px 20px; display: flex; flex-wrap: wrap; gap: 10px; }
+  #pairs figure { margin: 0; } #pairs canvas { width: 160px; height: 160px; image-rendering: pixelated; display: block; }
+</style>
+<header>
+  <b>Render parity</b>: the proof of concept's renderer and @keel-engine/render, the fx sheet's scene through every fx row at 32 / 64 / 128 / 256, pixel for pixel.
+  Build first: <code>node packages/render/tools/build.mjs</code>.
+  <div id="status">running...</div>
+</header>
+<table id="table"></table>
+<div id="pairs"></div>
+<script type="module">
+// The proof of concept through its own server if this page may import from it (it sends no CORS
+// headers, so from another origin it usually can't), else bundled read-only from its source.
+import { ROWS, SIZES, run } from "./dist/parity.js";
+const $ = (id) => document.getElementById(id);
+let poc;
+let from;
+try { poc = await import("http://localhost:4200/src/gpu/pixel-renderer.js"); from = "the proof of concept's server (localhost:4200)"; }
+catch { poc = await import("./dist/poc-renderer.js"); from = "tools/dist/poc-renderer.js (bundled from the proof of concept's source)"; }
+
+const t0 = performance.now();
+const cells = run(poc.createPixelRenderer);
+const ms = Math.round(performance.now() - t0);
+const differing = cells.reduce((n, c) => n + c.differing, 0);
+const off = cells.reduce((n, c) => n + c.offTs + c.offPoc, 0);
+const bySize = Object.fromEntries(SIZES.map((s) => [s, cells.filter((c) => c.size === s).reduce((n, c) => n + c.differing, 0)]));
+const summary = { from, frames: cells.length, pixels: cells.reduce((n, c) => n + c.size * c.size, 0), differing, bySize, offPalette: off, ms };
+$("status").innerHTML = `proof of concept from ${from}\n${cells.length} frame pairs, ${summary.pixels} pixels each side: <span class="${differing ? "bad" : "ok"}">${differing} differing</span>; off-palette ${off}; ${ms} ms`;
+
+// A row per fx row, a column per size (both times summed): differing pixels.
+const times = [...new Set(cells.map((c) => c.time))];
+let html = `<tr><th>fx row</th>${SIZES.map((s) => `<th>${s}</th>`).join("")}<th>no fx?</th></tr>`;
+for (const [row, fx] of ROWS) {
+  html += `<tr><td>${row}</td>${SIZES.map((s) => { const n = cells.filter((c) => c.row === row && c.size === s).reduce((k, c) => k + c.differing, 0); return `<td class="${n ? "bad" : "ok"}">${n}</td>`; }).join("")}<td>${fx.length ? "" : "yes"}</td></tr>`;
+}
+$("table").innerHTML = html;
+
+// Pairs that differ (or, when none do, a few for the eye): TS left, the proof of concept right.
+const show = (differing ? cells.filter((c) => c.differing) : cells.filter((c) => c.time === times[0] && ["base", "glow", "all fx"].includes(c.row))).slice(0, 24);
+for (const c of show) {
+  const fig = document.createElement("figure");
+  for (const px of [c.ts, c.poc]) {
+    const cv = document.createElement("canvas");
+    cv.width = c.size; cv.height = c.size;
+    const img = new ImageData(c.size, c.size);
+    for (let y = 0; y < c.size; y += 1) img.data.set(px.subarray((c.size - 1 - y) * c.size * 4, (c.size - y) * c.size * 4), y * c.size * 4);
+    cv.getContext("2d").putImageData(img, 0, 0);
+    fig.append(cv);
+  }
+  fig.insertAdjacentHTML("beforeend", `<figcaption>${c.row} ${c.size} t=${c.time}: ${c.differing} differ</figcaption>`);
+  $("pairs").append(fig);
+}
+globalThis.parity = { summary, cells: cells.map(({ ts, poc, ...rest }) => rest) };
+</script>

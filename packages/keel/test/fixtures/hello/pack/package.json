@@ -1,0 +1,13 @@
+{
+  "name": "@fixture/hello-pack",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

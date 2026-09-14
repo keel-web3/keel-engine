@@ -1,0 +1,22 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/input",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/core@^0.1"
+    ],
+    "title": "KEEL Engine input",
+    "description": "Keyboard, mouse under pointer lock, gamepad and touch to per-step intents; the autopilot arbiter.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/core": "keel/core"
+  },
+  "manifests": {}
+}

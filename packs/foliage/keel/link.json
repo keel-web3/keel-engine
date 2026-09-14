@@ -1,0 +1,180 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "packs/foliage",
+    "version": "1.0.0",
+    "kind": "pack",
+    "needs": [
+      "keel/object@^0.1"
+    ],
+    "provides": [
+      "objects/foliage@1.0.0"
+    ],
+    "contents": {
+      "objects": [
+        {
+          "id": "oak",
+          "tags": [
+            "tree",
+            "deciduous",
+            "temperate",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "pine",
+          "tags": [
+            "tree",
+            "conifer",
+            "temperate",
+            "cold",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "birch",
+          "tags": [
+            "tree",
+            "deciduous",
+            "temperate",
+            "cold",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "palm",
+          "tags": [
+            "tree",
+            "tropical",
+            "desert",
+            "coast",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "dead-tree",
+          "tags": [
+            "tree",
+            "dead",
+            "swamp",
+            "ash",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "mushroom",
+          "tags": [
+            "fungal",
+            "alien",
+            "tree",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "alien-tree",
+          "tags": [
+            "alien",
+            "tree",
+            "glow",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "bush",
+          "tags": [
+            "bush",
+            "shrub",
+            "temperate",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "grass",
+          "tags": [
+            "grass",
+            "ground-cover",
+            "massive",
+            "tier:background",
+            "massive"
+          ]
+        },
+        {
+          "id": "flowers",
+          "tags": [
+            "flower",
+            "ground-cover",
+            "massive",
+            "tier:background",
+            "massive"
+          ]
+        },
+        {
+          "id": "reeds",
+          "tags": [
+            "reeds",
+            "water",
+            "swamp",
+            "massive",
+            "tier:background",
+            "massive"
+          ]
+        },
+        {
+          "id": "cactus",
+          "tags": [
+            "cactus",
+            "desert",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "rock",
+          "tags": [
+            "rock",
+            "boulder",
+            "stone",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "log",
+          "tags": [
+            "log",
+            "wood",
+            "forest",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "stump",
+          "tags": [
+            "stump",
+            "wood",
+            "forest",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "crystal",
+          "tags": [
+            "crystal",
+            "resource",
+            "alien",
+            "glow",
+            "tier:background"
+          ]
+        }
+      ]
+    },
+    "title": "Foliage",
+    "description": "Trees (oak, pine, birch, palm, dead, giant mushroom, alien), bushes, grass tufts and flowers for massive instancing, reeds, cacti, rocks and boulders, logs, stumps and crystals -- styled objects drawn in pixel or voxel style, with wind, seasons and biomes as look profiles, background tier by default.",
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -500
+  },
+  "imports": {
+    "@keel-engine/object": "keel/object"
+  },
+  "manifests": {}
+}

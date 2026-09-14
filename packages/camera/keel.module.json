@@ -1,0 +1,20 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-camera",
+  "version": "0.1.0",
+  "description": "Camera rigs -- orbit, chase, first person, frame, rail, fixed -- with blends, shake, the landing nod, arm collision and saved state.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/camera"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/core",
+      "@keel-engine/physics"
+    ]
+  }
+}

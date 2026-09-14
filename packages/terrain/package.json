@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/terrain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tile terrain: a chunked grid of heights, types and flags; auto-tiling; cliffs, ramps, water and bridges; colliders; walkability, flow fields and HPA*; the ground baked into palette-true chunk layers.",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/physics": "workspace:*",
+    "@keel-engine/bake": "workspace:*"
+  }
+}

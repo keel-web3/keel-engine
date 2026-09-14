@@ -1,0 +1,36 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/world",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/core@^0.1",
+      "keel/physics@^0.1",
+      "keel/camera@^0.1",
+      "keel/input@^0.1",
+      "keel/particles@^0.1",
+      "keel/object@^0.1",
+      "keel/entity@^0.1",
+      "keel/codec@^0.1"
+    ],
+    "title": "KEEL Engine world",
+    "description": "The world runtime: systems on a fixed step, settings layers and locks, generation through settings, target rules, a headless frame, snapshots and replays.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/camera": "keel/camera",
+    "@keel-engine/codec": "keel/codec",
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/entity": "keel/entity",
+    "@keel-engine/input": "keel/input",
+    "@keel-engine/object": "keel/object",
+    "@keel-engine/particles": "keel/particles",
+    "@keel-engine/physics": "keel/physics"
+  },
+  "manifests": {}
+}

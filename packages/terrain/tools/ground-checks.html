@@ -1,0 +1,19 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Ground checks</title>
+<style>body{margin:8px;background:#0c0d10;color:#cfd3e6;font:12px ui-monospace,monospace}pre{margin:6px 0}canvas{width:960px;image-rendering:pixelated}</style>
+<canvas id="c"></canvas><pre id="out">running…</pre>
+<script type="module">
+  import { run } from "./dist/ground-checks.js";
+  globalThis.checks = { run: () => run(document.getElementById("c")) };
+  if (!new URLSearchParams(location.search).has("idle")) {
+    try {
+      const r = await run(document.getElementById("c"));
+      globalThis.checkResults = r;
+      const s = r.sweep;
+      document.getElementById("out").textContent = `ZOOM SWEEP (${s.frames} frames, 128 -> 2 -> 128 px/m, pitch bucket switching)\n  GPU ground: min coverage ${(s.gpuMin * 100).toFixed(2)}%, frames under 99%: ${s.gpuUnder99}, worst frame ${s.worstGpuFrameMs} ms, ${s.uploadsTotal} chunk uploads\n  CPU bakers (no floor, as games had them): min coverage ${(s.cpuMin * 100).toFixed(2)}%, frames under 99%: ${s.cpuUnder99}\n  CPU bakers with the floor (2 px/m, ${s.floorBakeMs} ms at load) + last layer kept: min ${(s.cpuFloorMin * 100).toFixed(2)}%, frames under 99%: ${s.cpuFloorUnder99}\n` +
+        s.list.map((f) => `    k ${String(f.k).padStart(6)} pitch ${f.pitch}  gpu ${(f.gpu * 100).toFixed(1)}%  cpu ${(f.cpu * 100).toFixed(1)}%  cpu+floor ${(f.cpuFloor * 100).toFixed(1)}%  uploads ${f.uploads}  ${f.ms} ms`).join("\n") +
+        `\n\nBUILDINGS on flat ground (pixels the ground hides, of the no-depth reference's)\n` + r.buildings.map((b) => `  k ${String(b.k).padStart(6)} pitch ${b.pitch}  ${String(b.pixels).padStart(6)} px   footprint depth: ${b.hiddenFootprint} hidden   middle depth (old): ${b.hiddenMiddle} hidden (${(b.hiddenMiddle / b.pixels * 100).toFixed(1)}%)   CPU exact: ${b.cpuExact}   CPU stand-in (2 px/m): ${b.cpuStandIn}`).join("\n");
+    } catch (e) { document.getElementById("out").textContent = String(e && e.stack || e); globalThis.checkError = String(e && e.stack || e); }
+  }
+</script>

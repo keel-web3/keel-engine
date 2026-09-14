@@ -1,0 +1,26 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-world",
+  "version": "0.1.0",
+  "description": "The world runtime: systems on a fixed step, settings layers and locks, generation through settings, target rules, a headless frame, snapshots and replays.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/world"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/camera",
+      "@keel-engine/codec",
+      "@keel-engine/core",
+      "@keel-engine/entity",
+      "@keel-engine/input",
+      "@keel-engine/object",
+      "@keel-engine/particles",
+      "@keel-engine/physics"
+    ]
+  }
+}

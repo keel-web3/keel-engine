@@ -1,0 +1,23 @@
+{
+  "name": "@keel-engine/bake",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Design once, draw fast: bake designs into sprite atlases at load, instanced sprites, spatial hashing and culling.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/entity": "workspace:*",
+    "@keel-engine/codec": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/render": "workspace:*",
+    "@keel-engine/builder": "workspace:*",
+    "@keel-engine/humans": "workspace:*",
+    "@keel-engine/animals": "workspace:*",
+    "@keel-engine/cloth": "workspace:*"
+  }
+}

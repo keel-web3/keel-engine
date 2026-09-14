@@ -1,0 +1,19 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-ai-herd",
+  "version": "1.0.0",
+  "description": "Animals that keep together: boids (separation, alignment, cohesion), a leader, flight from a threat that spreads through the herd. Deterministic, seeded, fixed-step.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "ai/herd"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/core"
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@keel-engine/creatures",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "packs/creatures: body plans a roster reads apart by -- crawler, walker, strider, floater, flyer, rider, serpent -- each its own geometry over a keel/entity rig (so it animates with the rig's clips).",
+  "exports": { ".": "./src/index.ts", "./module": "./src/module.ts" },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/entity": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/bake": "workspace:*",
+    "@keel-engine/keel": "workspace:*"
+  }
+}

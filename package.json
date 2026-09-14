@@ -1,0 +1,37 @@
+{
+  "name": "keel-engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "KEEL Engine: the pixel-art game engine for KEEL onchain games. Every part, pack and AI is a KEEL verified module: readable TypeScript here, reproducible on-chain bytes there.",
+  "license": "MIT",
+  "author": "Chad Koslovsky and contributors",
+  "homepage": "https://github.com/keel-web3/keel-engine#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/keel-web3/keel-engine.git"
+  },
+  "bugs": {
+    "url": "https://github.com/keel-web3/keel-engine/issues"
+  },
+  "type": "module",
+  "packageManager": "pnpm@10.15.0",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --test \"packages/*/test/*.test.ts\" \"packs/*/test/*.test.ts\" \"ai/*/test/*.test.ts\" \"systems/*/test/*.test.ts\"",
+    "build": "node packages/keel/src/cli.ts build",
+    "modules:prepare": "node packages/keel/src/cli.ts prepare",
+    "modules:check": "node packages/keel/src/cli.ts prepare --check && node packages/keel/src/cli.ts index --check",
+    "modules:test": "node packages/keel/src/cli.ts test",
+    "modules:index": "node packages/keel/src/cli.ts index",
+    "modules:reproduce": "node packages/keel/src/cli.ts reproduce",
+    "modules:plan": "node packages/keel/src/cli.ts plan"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "@types/node": "^22.18.0",
+    "esbuild": "^0.25.9"
+  }
+}

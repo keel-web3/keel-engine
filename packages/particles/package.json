@@ -1,0 +1,18 @@
+{
+  "name": "@keel-engine/particles",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pooled, seeded particle emitters: the proof of concept's pool, and the engine's smart pool -- budgets, LOD, recipes, sub-emitters, sockets, one instanced draw.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/codec": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/bake": "workspace:*"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "@keel-engine/worldgen",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "World generation: climate and biomes (data, packs add their own), biome swapping (re-skin, seasons, runtime spread), the infinite chunked overworld (rivers, lakes, structures, ores, caves), action-RPG dungeons (BSP, room grammar, cellular caves, drunkard walks, wave function collapse), foliage scatter, and composable generator pipelines stored as codec recipes.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/terrain": "workspace:*",
+    "@keel-engine/world": "workspace:*",
+    "@keel-engine/level": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/import": "workspace:*"
+  }
+}

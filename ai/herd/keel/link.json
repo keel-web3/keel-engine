@@ -1,0 +1,25 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "ai/herd",
+    "version": "1.0.0",
+    "kind": "ai",
+    "needs": [
+      "keel/core@^0.1",
+      "contract:body/quadruped@^1"
+    ],
+    "provides": [
+      "ai/animal@1.0.0"
+    ],
+    "title": "Herd",
+    "description": "Animals that keep together: boids (separation, alignment, cohesion), a leader, flight from a threat that spreads through the herd. Deterministic, seeded, fixed-step.",
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -300
+  },
+  "imports": {
+    "@keel-engine/core": "keel/core"
+  },
+  "manifests": {}
+}

@@ -1,0 +1,24 @@
+{
+  "name": "@keel-engine/world",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The world runtime: systems on a fixed step, settings layers and locks, target rules, snapshots.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/physics": "workspace:*",
+    "@keel-engine/camera": "workspace:*",
+    "@keel-engine/input": "workspace:*",
+    "@keel-engine/particles": "workspace:*",
+    "@keel-engine/object": "workspace:*",
+    "@keel-engine/entity": "workspace:*",
+    "@keel-engine/codec": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/render": "workspace:*"
+  }
+}

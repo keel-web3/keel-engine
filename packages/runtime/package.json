@@ -1,0 +1,8 @@
+{
+  "name": "@keel-engine/runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The KEEL_ENGINE registry: module manifests, dependency and compatibility resolution, packs, entities, attributes and their targeting.",
+  "exports": { ".": "./src/index.ts" }
+}

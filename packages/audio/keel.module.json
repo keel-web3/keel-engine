@@ -1,0 +1,19 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-audio",
+  "version": "0.1.0",
+  "description": "Generative lo-fi records from a mood and a seed, live intensity, seeded game SFX, KEEL audio.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/audio"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/codec"
+    ]
+  }
+}

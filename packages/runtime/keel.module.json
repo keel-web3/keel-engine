@@ -1,0 +1,16 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-runtime",
+  "version": "0.1.0",
+  "description": "The KEEL_ENGINE registry: module manifests, dependency and compatibility resolution, packs, entities, attributes and their targeting.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/runtime"
+  },
+  "build": {
+    "format": "iife"
+  }
+}

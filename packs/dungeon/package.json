@@ -1,0 +1,24 @@
+{
+  "name": "@keel-engine/dungeon",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "packs/dungeon: an action-RPG dungeon's dressing as styled objects -- barrels, crates, bones, skulls, chains, banners, altars, bookshelves, tables, rubble, cobwebs, stains, urns, sarcophagi, chests, weapon racks, cages, torches, braziers, candles, crystals, thrones, statues -- with look profiles per act (crypt, cave, forge, ruin), destructible and openable flags, and flame sockets for the lights.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./module": "./src/module.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/object": "workspace:*",
+    "@keel-engine/entity": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/builder": "workspace:*",
+    "@keel-engine/keel": "workspace:*",
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/worldgen": "workspace:*",
+    "@keel-engine/level": "workspace:*"
+  }
+}

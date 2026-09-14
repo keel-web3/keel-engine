@@ -1,0 +1,19 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-ai-wander",
+  "version": "1.0.0",
+  "description": "One animal on its own: meander, stand and look about, sit, bolt from a threat. Deterministic, seeded, fixed-step steering on the ground plane.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "ai/wander"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/core"
+    ]
+  }
+}

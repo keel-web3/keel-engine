@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/scene",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Transforms, bounds, the shape kit, asset registries, front detection.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

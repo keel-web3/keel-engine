@@ -1,0 +1,21 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>KEEL UI lab</title>
+<style>
+  body{margin:0;background:#0b0c10;color:#c9cde0;font:12px ui-monospace,Menlo,monospace}
+  nav{display:flex;gap:10px;padding:8px 10px;align-items:center;border-bottom:1px solid #22263a;flex-wrap:wrap}
+  nav a{color:#9fb4ff;text-decoration:none} nav a.on{color:#fff;text-decoration:underline}
+  main{padding:10px} canvas{image-rendering:pixelated;display:block} h2{font-size:12px;color:#8a90b0;margin:14px 0 6px;font-weight:normal}
+  .stack{position:relative;display:inline-block} .stack canvas{position:absolute;left:0;top:0} .stack canvas:first-child{position:relative}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap} pre{white-space:pre-wrap;margin:6px 0}
+  select,input,button{font:inherit;background:#161926;color:#dde;border:1px solid #333a55;padding:2px 6px}
+</style>
+<nav id="nav"></nav>
+<main id="main"></main>
+<pre id="out"></pre>
+<script type="module">
+  import { run } from "./dist/ui.js";
+  const out = document.getElementById("out");
+  try { await run(document.getElementById("main"), document.getElementById("nav"), (s) => { out.textContent += s + "\n"; }); globalThis.uiDone = true; }
+  catch (e) { out.textContent += String(e && e.stack || e); globalThis.uiError = String(e && e.stack || e); }
+</script>

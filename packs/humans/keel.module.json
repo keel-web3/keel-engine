@@ -1,0 +1,20 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-packs-humans",
+  "version": "1.0.0",
+  "description": "A person and anthro cats, foxes, bunnies, bears, mice, frogs and dogs on two legs (body/humanoid@1.0.0), each with its own choices.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packs/humans"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/entity",
+      "@keel-engine/runtime"
+    ]
+  }
+}

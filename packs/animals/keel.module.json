@@ -1,0 +1,20 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-packs-animals",
+  "version": "1.0.0",
+  "description": "Dogs, cats, foxes, bears, rabbits, mice and deer on four legs (body/quadruped@1.0.0), each with its own choices; a collar and saddlebags only they wear.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packs/animals"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/entity",
+      "@keel-engine/runtime"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+KEEL Engine
+Copyright (c) 2026 Chad Koslovsky and contributors
+Licensed under the MIT License (see LICENSE).
+
+This repository includes third-party code in vendor/. These files are not
+built by the engine's module pipeline. A game that uses keel/audio loads them
+as page scripts, and they keep their own licenses:
+
+vendor/tone-15.1.22-native.js
+  Tone.js 15.1.22, https://github.com/Tonejs/Tone.js
+  Copyright (c) 2014-2020 Yotam Mann. MIT License: vendor/tone-15.1.22-LICENSE.txt
+  This is the KEEL native classic build, byte-identical to KEEL's registered
+  "tone-native" object (sha256 2ac828bae11ef2c28c26ca7eae78a5394726775fe51eb3222dcf5c268bd15483).
+  keel-sdk scripts/build-tone-native.mjs builds it from npm tone@15.1.22.
+  It inlines helpers from tslib 2.8.1 (0BSD). standardized-audio-context is
+  not included; a native Web Audio shim replaces it.
+
+vendor/keel-audio-1.0.0.min.js
+  keel-audio 1.0.0, the KEEL shared audio runtime.
+  Copyright (c) 2026 Chad Koslovsky and contributors. MIT License.
+  The readable source is keel-sdk packages/sdk/resources/keel-audio.js, and
+  keel-sdk scripts/build-keel-audio.mjs rebuilds it. The file is
+  byte-identical to KEEL's registered "keel-audio" object
+  (sha256 75cbdc41afc1636c4c5fd1c8a0508e2dbef2ed0d0af4c66c14149bdc8983efd3).

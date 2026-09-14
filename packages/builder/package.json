@@ -1,0 +1,22 @@
+{
+  "name": "@keel-engine/builder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The builder: voxel models palette-indexed by role, edited by ops, converted to objects, attributes and rigged entities, animated, varied and exported as pack code.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/scene": "workspace:*",
+    "@keel-engine/object": "workspace:*",
+    "@keel-engine/entity": "workspace:*",
+    "@keel-engine/codec": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/render": "workspace:*",
+    "@keel-engine/keel": "workspace:*"
+  }
+}

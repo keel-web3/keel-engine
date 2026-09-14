@@ -1,0 +1,23 @@
+{
+  "name": "@keel-engine/keel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The engine as KEEL verified modules: each package through the SDK's module pipeline (keel module build/test), the engine catalog, the version resolver (chain, local checkout, GitHub source), and game documents from verified bytes.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./resolver": "./src/resolver.ts",
+    "./vectors": "./src/vectors.ts"
+  },
+  "dependencies": {
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/runtime": "workspace:*",
+    "@keel/builder": "link:../../../keel-sdk/packages/builder",
+    "@keel/protocol": "link:../../../keel-sdk/packages/protocol",
+    "@keel/sandbox-sdk": "link:../../../keel-sdk/packages/sandbox-sdk",
+    "@keel/sdk": "link:../../../keel-sdk/packages/sdk"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.9"
+  }
+}

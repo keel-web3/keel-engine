@@ -1,0 +1,17 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Particle bench</title>
+<style>body{margin:0;background:#0c0d10;color:#cfd3e6;font:12px ui-monospace,monospace}canvas{width:960px;image-rendering:pixelated;display:block}pre{padding:8px;white-space:pre-wrap}</style>
+<canvas id="c"></canvas><pre id="out">running… (?sheet for the preset sheet; ?damage for the RTS damage scene; ?frames=N)</pre>
+<script type="module">
+  import { bench, damageScene, sheet } from "./dist/bench.js";
+  const c = document.getElementById("c");
+  const out = document.getElementById("out");
+  const q = new URLSearchParams(location.search);
+  const log = (s) => { out.textContent += "\n" + s; };
+  try {
+    if (q.has("damage")) { await damageScene(c); log("damage scene saved to out/particles/"); globalThis.sheetDone = true; }
+    else if (q.has("sheet")) { await sheet(c); log("sheet saved to out/particles/"); globalThis.sheetDone = true; }
+    else { globalThis.benchResults = await bench(c, log, { frames: Number(q.get("frames") ?? 120), save: !q.has("nosave") }); log("done"); }
+  } catch (e) { log(String(e && e.stack || e)); globalThis.benchError = String(e && e.stack || e); }
+</script>

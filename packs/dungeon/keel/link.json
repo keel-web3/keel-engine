@@ -1,0 +1,351 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "packs/dungeon",
+    "version": "1.0.0",
+    "kind": "pack",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/object@^0.1"
+    ],
+    "provides": [
+      "objects/dungeon@1.0.0",
+      "attributes/dungeon-gear@1.0.0"
+    ],
+    "contents": {
+      "objects": [
+        {
+          "id": "torch",
+          "tags": [
+            "torch",
+            "light",
+            "wall",
+            "light:torch",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "brazier",
+          "tags": [
+            "brazier",
+            "fire",
+            "light",
+            "block",
+            "light:brazier",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "candelabra",
+          "tags": [
+            "candles",
+            "light",
+            "light:candle",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "crystals",
+          "tags": [
+            "crystal",
+            "light",
+            "cave",
+            "light:crystal",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "mushrooms",
+          "tags": [
+            "fungi",
+            "cave",
+            "light:fungus",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "barrel",
+          "tags": [
+            "barrel",
+            "storage",
+            "destructible",
+            "block",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "crate",
+          "tags": [
+            "crate",
+            "storage",
+            "destructible",
+            "block",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "urn",
+          "tags": [
+            "urn",
+            "pottery",
+            "destructible",
+            "block",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "chest",
+          "tags": [
+            "chest",
+            "treasure",
+            "openable",
+            "block",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "bones",
+          "tags": [
+            "bones",
+            "litter",
+            "decal",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "skull-pile",
+          "tags": [
+            "skulls",
+            "bones",
+            "litter",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "stain",
+          "tags": [
+            "stain",
+            "blood",
+            "decal",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "rubble",
+          "tags": [
+            "rubble",
+            "stone",
+            "litter",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "cobweb",
+          "tags": [
+            "cobweb",
+            "corner",
+            "decal",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "chains",
+          "tags": [
+            "chains",
+            "wall",
+            "prison",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "banner",
+          "tags": [
+            "banner",
+            "wall",
+            "cloth",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "roots",
+          "tags": [
+            "roots",
+            "vines",
+            "wall",
+            "ruin",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "bookshelf",
+          "tags": [
+            "bookshelf",
+            "library",
+            "wall",
+            "block",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "table",
+          "tags": [
+            "table",
+            "furniture",
+            "block",
+            "light:candle",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "weapon-rack",
+          "tags": [
+            "weapons",
+            "armoury",
+            "wall",
+            "block",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "cage",
+          "tags": [
+            "cage",
+            "prison",
+            "block",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "altar",
+          "tags": [
+            "altar",
+            "shrine",
+            "block",
+            "light:candle",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "sarcophagus",
+          "tags": [
+            "sarcophagus",
+            "tomb",
+            "crypt",
+            "block",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "tombstone",
+          "tags": [
+            "tombstone",
+            "grave",
+            "block",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "throne",
+          "tags": [
+            "throne",
+            "boss",
+            "block",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "statue",
+          "tags": [
+            "statue",
+            "hall",
+            "block",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "stalagmite",
+          "tags": [
+            "stalagmite",
+            "cave",
+            "rock",
+            "block",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "anvil",
+          "tags": [
+            "anvil",
+            "forge",
+            "block",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "furnace",
+          "tags": [
+            "furnace",
+            "forge",
+            "fire",
+            "wall",
+            "block",
+            "light:brazier",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "ore-cart",
+          "tags": [
+            "cart",
+            "mine",
+            "forge",
+            "block",
+            "destructible",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "key",
+          "tags": [
+            "key",
+            "quest",
+            "pickup",
+            "light:key",
+            "tier:main"
+          ]
+        }
+      ],
+      "attributes": [
+        {
+          "id": "sword",
+          "slot": "hand.R",
+          "tags": [
+            "weapon",
+            "sword",
+            "hero"
+          ]
+        },
+        {
+          "id": "shield",
+          "slot": "hand.L",
+          "tags": [
+            "armour",
+            "shield",
+            "hero"
+          ]
+        }
+      ]
+    },
+    "title": "Dungeon",
+    "description": "An action-RPG dungeon's dressing: torches, braziers, candles, glowing crystals and fungi (light sources with flame sockets), barrels, crates, urns and chests (destructible, openable), bones, skull piles, stains, rubble, cobwebs, chains, banners, roots, bookshelves, tables, weapon racks, cages, altars, sarcophagi, tombstones, a throne, statues, stalagmites, an anvil, a furnace, an ore cart and the great key -- styled objects in pixel style with look profiles per act (crypt, cave, forge, ruin); and a hero's sword and shield for the hand sockets.",
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -500
+  },
+  "imports": {
+    "@keel-engine/object": "keel/object",
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

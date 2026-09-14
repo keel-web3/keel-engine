@@ -1,0 +1,18 @@
+{
+  "name": "@keel-engine/view",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "View modes: a continuous deep zoom with pitch buckets, possessing a unit (a chase camera, first person) through a lockstep-ready command stream, the terrain as perspective meshes, and LOD by on-screen size with dithered sprite/solid switching.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./module": "./src/module.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/camera": "workspace:*",
+    "@keel-engine/terrain": "workspace:*",
+    "@keel-engine/render": "workspace:*"
+  }
+}

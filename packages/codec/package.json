@@ -1,0 +1,21 @@
+{
+  "name": "@keel-engine/codec",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The bit codec: typed schemas, canonical bit-packed encoding, self-describing documents, a JSON view and a bit inspector -- the engine's packed form for objects, looks, worlds, particles and scripts.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/object": "workspace:*",
+    "@keel-engine/world": "workspace:*",
+    "@keel-engine/entity": "workspace:*",
+    "@keel-engine/particles": "workspace:*",
+    "@keel-engine/audio": "workspace:*"
+  }
+}

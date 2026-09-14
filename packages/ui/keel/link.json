@@ -1,0 +1,48 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/ui",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/core@^0.1",
+      "keel/codec@^0.1"
+    ],
+    "title": "KEEL Engine UI",
+    "description": "The generative UI system: themes from a seed and a culture, generative and imported pixel fonts, generative icons, retained-mode widgets in one palette-true pixel layer, and one-call HUDs, menus and loading screens.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000,
+    "contents": {
+      "schemas": [
+        {
+          "id": "keel/ui/font@1",
+          "hash": "8fead43534c826933bb026421ab3841e1173737f8461b4dc6957f445b2882811",
+          "schema": "oQFwagaIiZSKKANnAHggAaiwB8cU4KCBwoIDBE5zUREFDIAAAIf__GBMoAakANbHADGOAGkAH4rAL-U1IgxQDFAOAHhrZWVsL3VpL2ZvbnRBIHBpeGVsIGZvbnQ6IG1ldHJpY3MsIDEtYml0IGdseXBocywga2VybmluZyBwYWlycy5uYW1lc2l6ZWFzY2VudGRlc2NlbnRsaW5lSGVpZ2h0c291cmNlZ2VuZXJhdGVkdHRmYm1mb250Z3JpZGJyb3dzZXJjb2RlY2dseXBoc2NvZGV3aG94b3lhZHZiaXRza2Vybg"
+        },
+        {
+          "id": "keel/ui/font-recipe@1",
+          "hash": "1ee5f9eee24fe532439294874675c89d393070b86fa9f30a53def7c6e22df512",
+          "schema": "7AFwKICkiSKJhDOiNhgyNLgKiAyNLgLCgyNLgLmACg4ZQLS4CkwpAoUKJKMADYkALCikDBAxTTgA8UUgQIHKeJACYGNAGggwa2VlbC91aS9mb250LXJlY2lwZUEgZ2VuZXJhdGVkIHBpeGVsIGZvbnQgYXMgaXRzIHJlY2lwZTogdGhlIGZhbWlseSdzIHBhcmFtZXRlcnMgYW5kIHRoZSBzaXplcyB1c2VkLmdlbmVyYXRvcm1vZHVsZXNwYXJhbXN3aWR0aHhIZWlnaHRkZXNjZW5kZXJyb3VuZHN0cm9rZXNlcmlmbm9uZXNsYWJmb290c2xhbnR0cmFja2luZ3plcm9wbGFpbmRvdHNsYXNoYXNjZW5kc29mdGFsbHRvcGJvdHRvbWNhcFdpZHRoc2l6ZXM"
+        },
+        {
+          "id": "keel/ui/screen@1",
+          "hash": "aff315d4a0836a43060b37997545a36dec51ce801304ad045e821a0dda617bdd",
+          "schema": "6ghwegIyJJyKMciXFEwQpScTxApwWCAYHDhgiQVEKyU4VhQxSiHBkAFopcBWKODIALRS4Cw5wZQLU4C05wogKGDAgOFDBE45wAfnOACgY4AKJThShg4JCiQJwo4OHDhwSCgwJDAgICAwISRzgAplOACoc4UgcOFElSnAC2KcFcpyI3BjgyNLgLIg4MjS4C0KODI0uAtmOAC4c4MoFpcBdMcKQKFCiTxjgAfiTgAoCnCkDBAxSE5wAMRThSBAgcpGJOACZCnCkDAgECSUpwAkxjgBZxJxoZABaKXAUM_QV1EGlJRQuFDhAgUMHDBQgUEAgEhQwYOHBAcMBBKmcTWRYc4UUMQxCEMQwiWo4cALkcOAF6OUY4AE4GYo5RjgATgyKcMAGZThgA0KcMAGpThgA2IcKUKECBRJuQ4YAOCHDAByY4UoYOEBAk6EHClDBwgIEnZThgA8KcMAHpjhgA-OcF-Y4USGDhgQGCBwoRIBTghJxMEwucKUMFDAgSQhRwpAocMUhlOCiCThgALHBEjgopTiKMY4iSHExzJAk4YAJJjmpRDmpYk4YAJhjmppziZxU8ScGRtAAPQnAVAxwwAURJwVI5wVMQcFUMcaRdUScOAFYpyRQyOOoAAAICDI46gAAAgIMjjqAAACAgyOOoAAAICrkOIrAo4Kyc4m0IWynBXBJxr3oRdEHBXinEV8pxFgMcKwwcphOcFiEnBY2c1ga2VlbC91aS9zY3JlZW5BIFVJIHNjcmVlbjogaXRzIGxheW91dCB0cmVlIChhbmQgdGhlIHRoZW1lIHJlY2lwZSBpdCB3YXMgbWFkZSB3aXRoKS5zY3JlZW50aGVtZWdlbmVyYXRvcm1vZHVsZXNzZWVkc3RyY3VsdHVyZWluZHVzdHJpYWxvcmdhbmljY3J5c3RhbGxpbmVhcmNhbmVicnV0YWxjbGVhbnBpbnN0b25lZGFya2xpZ2h0aHVlYWNjZW50SHVlY2hyb21hY29ybmVyZmxhdGJldmVsaW5zZXRub3RjaGVkcml2ZXRzZ2xvd3JvdW5kcmFkaXVzYm9yZGVyYmV2ZWxmaWxsc29saWRkaXRoZXJncmFkaWVudHNjYW5iYXllcjJiYXllcjRiYXllcjhjaHVua3loYWxmdG9uZWNvYXJzZURvdGxpbmVzZGlhZ29uYWxoYXRjaHN0aXBwbGVpZ25jaGVja2Vyd2VhdmVzaGFkb3dnbG93bW90aW9uc25hcHB5Ym91bmN5bm9uZWJvZHljYXBzZm9udHdpZHRoeEhlaWdodGRlc2NlbmRlcnJvdW5kc3Ryb2tlc2VyaWZub25lc2xhYmZvb3RzbGFudHRyYWNraW5nemVyb3BsYWluZG90c2xhc2hhc2NlbmRzb2Z0YWxsdG9wYm90dG9tY2FwV2lkdGhpY29uc29saWRvdXRsaW5lZHVvdG9uZXVuaXR0ZWFtc3RlYW1IdWVzcm9vdHR5cGVyb290Y2FudmFzcm93Y29sZ3JpZHBhbmVsYnV0dG9ubGFiZWxpY29uYmFybGlzdHRvb2x0aXBtaW5pbWFwcG9ydHJhaXR0YWJzdG9hc3Rtb2RhbHNsaWRlcnRvZ2dsZXNwaW5uZXJzcGFjZXJpbWFnZWlkaWRzYW5jaG9ydGx0dHJsY3JibGJicnh5d3NpemVzaG1pbldtYXhXbWluSG1heEhkaXJmcmVlcm93Y29sZ3JpZGdhcHBhZGFsaWduc3RhcnRjZW50ZXJlbmRzdHJldGNoanVzdGlmeXN0YXJ0Y2VudGVyZW5kYmV0d2Vlbmdyb3djb2xzY2VsbEhoaWRkZW5mcmFtZXBhbmVsYnV0dG9uaW5zZXR0b29sdGlwYmFkZ2V0YWJoZWFkZXJub25lbWVzaHRvbmVzc21hbGxib2R5dGl0bGVkaXNwbGF5dGV4dEFsaWdubGVmdGNlbnRlcnJpZ2h0d3JhcG1heExpbmVzdGV4dHRpdGxlaWNvbnNpY29uU2l6ZXZhbHVlbWF4c2VnbWVudHN0cmFpbGhvdGtleWtleXNjb29sZG93bmNvdW50ZGlzYWJsZWRhY3RpdmVwcmltYXJ5aXRlbXNzZWxlY3RlZHZpZXd0aXBmb2N1c2FibGVhY3Rpb25hY3Rpb25zaG9sZWNoaWxkcmVudGlwRG9ja3RyaW1lZGdlc2NyaW1zb2xpZGRpdGhlcnJlZmxvd2ljb25GaWxsaHA"
+        },
+        {
+          "id": "keel/ui/theme@1",
+          "hash": "a1a876f53d803e5865e418f97a50abca6c9b0c29804493797fa5f98cd4656b76",
+          "schema": "tARwcgJiJYomEMpMJogU4LBAMDhwwRMVEK8pwrChikEODIALRS4CkUcGQAWilwFRzgygWpwFZzhRAUMGBAcKGCJhzgA9OcAFxjgAvKcKUMHBIUSQOcKODhw4cEgoMCQwICAgMCEic4AKRTgApnOFIHDhRJQpwAtSnBWKciNuY4MjS4CwIODI0uAsijgyNLgLRjgAtnODKBaXAXDHCkChQok6Y4AHwk4AL5ThSBggYpAc4AGEpwpAgQOUiEnABMZThSBgQCBJIU4ASUxwAswk40MgAtFLgKGfa2VlbC91aS90aGVtZUEgVUkgdGhlbWUgYXMgaXRzIHJlY2lwZTogZ2VuZXJhdG9yQHZlcnNpb24sIHNlZWQsIGN1bHR1cmUgYW5kIHNwYXJzZSBwaW5zLmdlbmVyYXRvcm1vZHVsZXNzZWVkc3RyY3VsdHVyZWluZHVzdHJpYWxvcmdhbmljY3J5c3RhbGxpbmVhcmNhbmVicnV0YWxjbGVhbnBpbnN0b25lZGFya2xpZ2h0aHVlYWNjZW50SHVlY2hyb21hY29ybmVyZmxhdGJldmVsaW5zZXRub3RjaGVkcml2ZXRzZ2xvd3JvdW5kcmFkaXVzYm9yZGVyYmV2ZWxmaWxsc29saWRkaXRoZXJncmFkaWVudHNjYW5zY3JlZW5iYXllcjJiYXllcjRiYXllcjhjaHVua3loYWxmdG9uZWNvYXJzZURvdGxpbmVzZGlhZ29uYWxoYXRjaHN0aXBwbGVpZ25jaGVja2Vyd2VhdmVzaGFkb3dnbG93bW90aW9uc25hcHB5Ym91bmN5bm9uZWJvZHljYXBzZm9udHdpZHRoeEhlaWdodGRlc2NlbmRlcnJvdW5kc3Ryb2tlc2VyaWZub25lc2xhYmZvb3RzbGFudHRyYWNraW5nemVyb3BsYWluZG90c2xhc2hhc2NlbmRzb2Z0YWxsdG9wYm90dG9tY2FwV2lkdGhpY29uc29saWRvdXRsaW5lZHVvdG9uZXVuaXR0ZWFtc3RlYW1IdWVz"
+        }
+      ]
+    }
+  },
+  "imports": {
+    "@keel-engine/codec": "keel/codec",
+    "@keel-engine/core": "keel/core"
+  },
+  "manifests": {}
+}

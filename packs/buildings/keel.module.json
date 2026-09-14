@@ -1,0 +1,19 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-packs-buildings",
+  "version": "1.0.0",
+  "description": "A modular building generator (rect/L/T/round footprints, floors, gable/hip/flat/dome/spire/vault/saucer/shell roofs, doors, windows, chimneys, balconies, awnings) and its variants -- cottage, tower, hall, workshop, shop, hab, dome, pylon, hive, factory -- with bridges (beam, arch, rope, plank), wedge ramps, stairs and cliff steps, wall/fence/gate segments along paths, path stones and a dock; styled objects in pixel or voxel style with the design's colliders, sockets and fronts, cultures as look profiles.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packs/buildings"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/object"
+    ]
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "packs/creatures",
+    "version": "1.0.0",
+    "kind": "pack",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/core@^0.1",
+      "keel/entity@^0.1"
+    ],
+    "provides": [
+      "creatures/plans@1.0.0"
+    ],
+    "compatible": [],
+    "contents": {
+      "entities": [
+        {
+          "id": "crawler",
+          "body": "body/quadruped@1.0.0",
+          "tags": [
+            "creature",
+            "crawler"
+          ]
+        },
+        {
+          "id": "walker",
+          "body": "body/quadruped@1.0.0",
+          "tags": [
+            "creature",
+            "walker"
+          ]
+        },
+        {
+          "id": "strider",
+          "body": "body/humanoid@1.0.0",
+          "tags": [
+            "creature",
+            "strider"
+          ]
+        },
+        {
+          "id": "floater",
+          "body": "body/humanoid@1.0.0",
+          "tags": [
+            "creature",
+            "floater"
+          ]
+        },
+        {
+          "id": "flyer",
+          "body": "body/quadruped@1.0.0",
+          "tags": [
+            "creature",
+            "flyer"
+          ]
+        },
+        {
+          "id": "rider",
+          "body": "body/quadruped@1.0.0",
+          "tags": [
+            "creature",
+            "rider"
+          ]
+        },
+        {
+          "id": "serpent",
+          "body": "body/quadruped@1.0.0",
+          "tags": [
+            "creature",
+            "serpent"
+          ]
+        }
+      ],
+      "attributes": []
+    },
+    "title": "Creatures",
+    "description": "Body plans a roster reads apart by -- crawler, walker, strider, floater, flyer, rider, serpent -- each its own geometry over a keel/entity rig, animated by the rig's clips.",
+    "phase": "runtime",
+    "weight": -500
+  },
+  "imports": {
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/entity": "keel/entity",
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

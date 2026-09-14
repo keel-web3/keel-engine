@@ -1,0 +1,20 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-ui",
+  "version": "0.1.0",
+  "description": "The generative UI system: themes from a seed and a culture, generative and imported pixel fonts, generative icons, retained-mode widgets in one palette-true pixel layer, and one-call HUDs, menus and loading screens.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/ui"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/codec",
+      "@keel-engine/core"
+    ]
+  }
+}

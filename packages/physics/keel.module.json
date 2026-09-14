@@ -1,0 +1,16 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-physics",
+  "version": "0.1.0",
+  "description": "The kinematic character controller: run, jump, wall-run, grind, skim; turned boxes, wedges, rails, water.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/physics"
+  },
+  "build": {
+    "format": "iife"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/capture",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Optional stills, video and GIF export.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

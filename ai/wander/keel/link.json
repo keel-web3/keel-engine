@@ -1,0 +1,25 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "ai/wander",
+    "version": "1.0.0",
+    "kind": "ai",
+    "needs": [
+      "keel/core@^0.1",
+      "contract:body/quadruped@^1"
+    ],
+    "provides": [
+      "ai/animal@1.0.0"
+    ],
+    "title": "Wander",
+    "description": "One animal on its own: meander, stand and look about, sit, bolt from a threat. Deterministic, seeded, fixed-step steering on the ground plane.",
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -300
+  },
+  "imports": {
+    "@keel-engine/core": "keel/core"
+  },
+  "manifests": {}
+}

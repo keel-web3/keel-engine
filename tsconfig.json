@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "packages/*/src",
+    "packages/*/test",
+    "packs/*/src",
+    "packs/*/test",
+    "packages/*/tools/*.ts",
+    "packs/*/tools/*.ts",
+    "ai/*/src",
+    "ai/*/test",
+    "systems/*/src",
+    "systems/*/test"
+  ]
+}

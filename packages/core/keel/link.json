@@ -1,0 +1,18 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/core",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [],
+    "title": "KEEL Engine core",
+    "description": "Seeded streams, the frame convention, math, SDF primitives, OKLCH palettes, dither screens, the quantizer, the GIF encoder.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {},
+  "manifests": {}
+}

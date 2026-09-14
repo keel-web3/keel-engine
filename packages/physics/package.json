@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/physics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The kinematic character controller: run, jump, wall-run, grind, skim; boxes, wedges, rails, water.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

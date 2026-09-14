@@ -1,0 +1,18 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/codec",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "phase": "data",
+    "weight": -31000,
+    "title": "KEEL Engine bit codec",
+    "description": "Typed schemas, canonical bit-packed encoding, self-describing documents with a schema registry, a JSON view and a bit inspector; the engine's packed formats for objects, looks, worlds, particles, sounds and scripts.",
+    "needs": [],
+    "provides": [],
+    "compatible": []
+  },
+  "imports": {},
+  "manifests": {}
+}

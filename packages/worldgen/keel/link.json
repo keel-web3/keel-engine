@@ -1,0 +1,64 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/worldgen",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/core@^0.1",
+      "keel/codec@^0.1",
+      "keel/terrain@^0.1",
+      "keel/world@^0.1",
+      "keel/level@^0.1"
+    ],
+    "provides": [
+      "worldgen/stage/overworld@1.0.0",
+      "worldgen/stage/biome@1.0.0",
+      "worldgen/stage/dungeon@1.0.0",
+      "worldgen/stage/cave@1.0.0",
+      "worldgen/stage/town@1.0.0",
+      "worldgen/stage/level@1.0.0",
+      "worldgen/stage/foliage@1.0.0"
+    ],
+    "contents": {
+      "schemas": [
+        {
+          "id": "keel/worldgen/recipe@1",
+          "hash": "a961ae7d6fe7a2e143f04e92abf733083a3d8a9cbd4e7f9ca6e499b59f9f940e",
+          "schema": "_gJwKoBSojZxUDpCACMpHDAMUwDGMcATxJzUCzmpIceTRVnNRNjJ0jiE2M4i85ypLzKBTnU4lFSIjZlRc0igsAsAsAsUEHNNToks0mCwCxdNUOacGRJkrWhTQziJ2ZFcOaTxvTovxDgTPkOBMYCIpB6wkRURjXuxtFRGvdvIU41EyaRQWAWAWAWHTgUJSnEzGTmOPBQbOJcPQY4iwGtlZWwvd29ybGRnZW4vcmVjaXBlQSB3b3JsZCBvciBsZXZlbCBhcyBhIHBpcGVsaW5lIG9mIGdlbmVyYXRvciBzdGFnZXM6IHNlZWQsIHN0YWdlcyAodXNlLCBzZWVkLCBwYXJhbXMsIG1hc2spLCBwaW5zIHRoYXQgb3ZlcnJpZGUgZXZlcnkgc3RhZ2UsIGxvY2sgdGV4dCBmb3IgdGhlIHN0YWdlcycgcm9sbGVkIHBhcmFtcy5mb3JtYXRrZWVsLXdvcmxkZ2VudmVyc2lvbnNlZWR3aWR0aGRlcHRoY2h1bmt0aWxlU2l6ZXN0ZXBIZWlnaHRhY3RhY3Rzc3RhZ2VzaWRpZHN1c2VwYXJhbXNtYXNra2luZGFsbHJlY3RmZWF0aGVyY2lyY2xlYXRybm9pc2VmcmVxdGhyZXNob2xkYmlvbWViaW9tZXNoZWlnaHRtaW5tYXhub3RhbmRtYXNrc29ycGluc3R5cGV0eXBlc3dhdGVybG9ja3M"
+        },
+        {
+          "id": "keel/worldgen/biomes@1",
+          "hash": "2012b829f3ce2bb0b7090f3b201d2876b2fdfdca294b5398224567d64d833940",
+          "schema": "gARwKoBFoqc1EKTJWU4U4UMGDBgYESCES0Y1hLXEHNQKOaZOci6IcCZZDgTHDnIk0pzXEOa8Uc0wOai4lJkZM7T0IcTJUxxMljHEyXEnAmYOc1kQaiM0YU4cFhgwcLNnJ4IdKcT4ybXxDUDONJScJjkm01EY5qMxwpQoUKEkhjmpSnKkymXzCDmZDkXOQ5qg5zTSc5qoxzVYg5F2CjjSbW7jHGk3nbgY4nBiU40nF-hrZWVsL3dvcmxkZ2VuL2Jpb21lc0Jpb21lczogYSBwb2ludCBpbiBjbGltYXRlIHNwYWNlIGVhY2gsIGdyb3VuZCBtYXRlcmlhbHMsIHJlbGllZiwgZm9saWFnZSBydWxlcywgdGhlIGdyb3VuZCBwYWxldHRlJ3MgbG9vaywgd2F0ZXIsIGFtYmllbnQgaG9va3MgYW5kIG11c2ljLmJpb21lc2lka2luZGxhbmRvY2VhbmJlYWNoc2hvcmVyaXZlcnVuZGVyZ3JvdW5kY2xpbWF0ZXRlbXBlcmF0dXJlaHVtaWRpdHllcm9zaW9ud2VpcmRuZXNzaGVpZ2h0bWlubWF4cmVsaWVmYmFzZWFtcG1vdW50YWluc2dyb3VuZHR5cGV0eXBlc3dlaWdodGJlZHNob3Jlc3RlZXBzbm93bGluZWZvcmVzdGZvbGlhZ2VsYXllcmNhbm9weXVuZGVyc3RvcnlzaHJ1YmdyYXNzZmxvd2Vycm9ja29iamVjdG9iamVjdHNwYWNrcGFja3NkZW5zaXR5b25zY2FsZWdyb3Zld2hlcmVjb3JlZWRnZW9wZW5hbnl3YXRlcnBpbnNzdXJmYWNlaHVlY2hyb21hcml2ZXJzbGFrZXNhbWJpZW50cGFydGljbGVzZnhzb3VuZHNvdW5kc211c2ljdGFncw"
+        },
+        {
+          "id": "keel/worldgen/tileset@1",
+          "hash": "da60a7cc436714228f4ac25210c87ea2d49b248cf8bb1a66a2d7273e62711391",
+          "schema": "-gFwLIBQIlsmIzikDhwZIUAqijUS4pPMhpMAwAySnEuoScAI-GtlZWwvd29ybGRnZW4vdGlsZXNldEEgdGlsZXNldCBhdGxhcydzIHJ1bGVzOiBpdHMgbGF5b3V0IChibG9iLTQ3LCBXYW5nLTE2IGNvcm5lcnMsIFJQRyBNYWtlciBBMiBhdXRvdGlsZXMpLCB0aWxlIHNpemUgaW4gcGl4ZWxzLCBhbmQgd2hlcmUgZWFjaCBtYXRlcmlhbCdzIGJsb2NrIHN0YXJ0cyAoaW4gdGlsZXMpLmlkaWRzbGF5b3V0YmxvYjQ3d2FuZzE2cnBnbWFrZXItYTJ0aWxlbWF0ZXJpYWxzdHlwZXR5cGVzYXRvdmVydmFyaWFudHM"
+        },
+        {
+          "id": "keel/worldgen/rooms@1",
+          "hash": "18781ddd87d9d3793ec8a15d23d8803537a249eec7e0896f5cd9fc9b2de40b12",
+          "schema": "9QFwKIBVIqY1EsyciGNFEBgoQKFBIWdKaReOc06Aa2VlbC93b3JsZGdlbi9yb29tc1ByZWZhYiBkdW5nZW9uIHJvb21zIGFzIHJvd3Mgb2YgY2hhcmFjdGVycyAoIyB3YWxsLCAuIGZsb29yLCBEIGRvb3IgYW5jaG9yLCBUIHRvcmNoLCBDIGNoZXN0LCBQIHBpbGxhciwgfiB3YXRlciwgbyBwaXQsIHIgcnViYmxlLCBCIEsgUyBFIHRoZSBib3NzLCBrZXksIHN0YXJ0IGFuZCBleGl0KS5yb29tc2lkaWRzcm9sZXNzdGFydHJvb21rZXlib3NzZXhpdHRyZWFzdXJlY2F2ZXJvd3N3ZWlnaHQ"
+        }
+      ]
+    },
+    "title": "KEEL Engine world generation",
+    "description": "Climate biomes (data; packs add their own), biome swapping (re-skin, seasons, runtime spread), the infinite chunked overworld (rivers, lakes, structures, ores, caves), action-RPG dungeons (BSP, room grammar, cellular caves, drunkard walks, wave function collapse) dressed as action-RPG floors (acts, room kinds, props, lights, doors, stairs) and drawn in pixel art (walls with height, a flickering light map, the cutaway, fog of war), foliage scatter, and composable generator pipelines stored as codec recipes.",
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/codec": "keel/codec",
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/level": "keel/level",
+    "@keel-engine/runtime": "keel/runtime",
+    "@keel-engine/terrain": "keel/terrain",
+    "@keel-engine/world": "keel/world"
+  },
+  "manifests": {}
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/render",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The WebGL2 pixel renderer and its FX passes: palette ramps, dither screens, outlines, at any target size.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

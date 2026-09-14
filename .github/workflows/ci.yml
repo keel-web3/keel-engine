@@ -1,0 +1,67 @@
+name: ci
+
+# Typecheck, the test suite, and the verified-module gates on every push and
+# pull request.
+#
+# The engine builds with the KEEL SDK beside it (packages/keel links
+# ../keel-sdk for the module pipeline, @keel/builder), so both repositories
+# are checked out as siblings: the layout the toolchain and its tests expect.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: keel-engine
+      - uses: actions/checkout@v4
+        with:
+          repository: keel-web3/keel-sdk
+          path: keel-sdk
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: keel-engine/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: |
+            keel-sdk/pnpm-lock.yaml
+            keel-engine/pnpm-lock.yaml
+
+      - name: Build the KEEL SDK toolchain
+        working-directory: keel-sdk
+        run: |
+          pnpm install --frozen-lockfile
+          node scripts/build.mjs
+      - name: Install
+        working-directory: keel-engine
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        working-directory: keel-engine
+        run: npm run typecheck
+
+      # The equality tests against the proof of concept and NOCTURNES skip
+      # here: those references are not public checkouts.
+      - name: Tests
+        working-directory: keel-engine
+        run: npm test
+
+      # Every package's pipeline files (keel.module.json, tsconfig.json,
+      # keel/entry.ts, keel/link.json) are what `prepare` writes, and the
+      # committed catalog is byte-identical to a fresh index -- which builds
+      # every module through `keel module build`, so a module that doesn't
+      # reproduce fails here.
+      - name: Verified modules are current
+        working-directory: keel-engine
+        run: npm run modules:check
+
+      # Every vector against the readable build AND the shipped minified bytes.
+      - name: Vectors on both builds
+        working-directory: keel-engine
+        run: npm run modules:test

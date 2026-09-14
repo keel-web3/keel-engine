@@ -1,0 +1,21 @@
+{
+  "name": "@keel-engine/import",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "3D model import: glTF/GLB, OBJ+MTL, STL and MagicaVoxel .vox parsed, voxelised, clustered into roles, segmented into parts, split into a rigged body and socket attributes, fitted with primitives -- all as builder data and a replayable op list.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/entity": "workspace:*",
+    "@keel-engine/object": "workspace:*",
+    "@keel-engine/builder": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/render": "workspace:*",
+    "@keel-engine/keel": "workspace:*"
+  }
+}

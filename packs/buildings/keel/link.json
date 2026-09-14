@@ -1,0 +1,231 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "packs/buildings",
+    "version": "1.0.0",
+    "kind": "pack",
+    "needs": [
+      "keel/object@^0.1"
+    ],
+    "provides": [
+      "objects/buildings@1.0.0"
+    ],
+    "contents": {
+      "objects": [
+        {
+          "id": "building",
+          "tags": [
+            "building",
+            "modular",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "cottage",
+          "tags": [
+            "building",
+            "house",
+            "village",
+            "medieval",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "tower",
+          "tags": [
+            "building",
+            "tower",
+            "defence",
+            "medieval",
+            "tall",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "hall",
+          "tags": [
+            "building",
+            "hall",
+            "civic",
+            "village",
+            "large",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "workshop",
+          "tags": [
+            "building",
+            "workshop",
+            "production",
+            "village",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "shop",
+          "tags": [
+            "building",
+            "shop",
+            "market",
+            "village",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "hab",
+          "tags": [
+            "building",
+            "scifi",
+            "habitat",
+            "rts",
+            "supply",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "dome",
+          "tags": [
+            "building",
+            "scifi",
+            "dome",
+            "rts",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "pylon",
+          "tags": [
+            "building",
+            "scifi",
+            "gravitic",
+            "rts",
+            "tower",
+            "power",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "hive",
+          "tags": [
+            "building",
+            "biotic",
+            "alien",
+            "rts",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "factory",
+          "tags": [
+            "building",
+            "factory",
+            "machine",
+            "production",
+            "rts",
+            "scifi",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "bridge",
+          "tags": [
+            "bridge",
+            "span",
+            "crossing",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "ramp",
+          "tags": [
+            "ramp",
+            "level",
+            "floor",
+            "wedge",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "stairs",
+          "tags": [
+            "stairs",
+            "level",
+            "floor",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "cliff-steps",
+          "tags": [
+            "stairs",
+            "cliff",
+            "level",
+            "terrain",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "wall",
+          "tags": [
+            "wall",
+            "segment",
+            "defence",
+            "path",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "fence",
+          "tags": [
+            "fence",
+            "segment",
+            "path",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "gate",
+          "tags": [
+            "gate",
+            "segment",
+            "defence",
+            "path",
+            "entrance",
+            "tier:main"
+          ]
+        },
+        {
+          "id": "path-stones",
+          "tags": [
+            "path",
+            "road",
+            "segment",
+            "ground",
+            "tier:foreground"
+          ]
+        },
+        {
+          "id": "dock",
+          "tags": [
+            "dock",
+            "pier",
+            "water",
+            "coast",
+            "tier:main"
+          ]
+        }
+      ]
+    },
+    "title": "Buildings",
+    "description": "A modular building generator (rect/L/T/round footprints, floors, gable/hip/flat/dome/spire/vault/saucer/shell roofs, doors, windows, chimneys, balconies, awnings) and its variants -- cottage, tower, hall, workshop, shop, hab, dome, pylon, hive, factory -- with bridges (beam, arch, rope, plank), wedge ramps, stairs and cliff steps, wall/fence/gate segments along paths, path stones and a dock; styled objects in pixel or voxel style with the design's colliders, sockets and fronts, cultures as look profiles.",
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -500
+  },
+  "imports": {
+    "@keel-engine/object": "keel/object"
+  },
+  "manifests": {}
+}

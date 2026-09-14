@@ -1,0 +1,146 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "packs/cloth",
+    "version": "1.0.0",
+    "kind": "pack",
+    "needs": [
+      "keel/runtime@^0.1"
+    ],
+    "provides": [
+      "attributes/wearable@1.0.0"
+    ],
+    "compatible": [
+      "packs/humans@^1",
+      "packs/animals@^1"
+    ],
+    "contents": {
+      "entities": [],
+      "attributes": [
+        {
+          "id": "beanie",
+          "slot": "head",
+          "tags": [
+            "hat",
+            "knit",
+            "winter"
+          ]
+        },
+        {
+          "id": "cap",
+          "slot": "head",
+          "tags": [
+            "hat",
+            "cap",
+            "sport"
+          ]
+        },
+        {
+          "id": "top-hat",
+          "slot": "head",
+          "tags": [
+            "hat",
+            "formal"
+          ]
+        },
+        {
+          "id": "hood",
+          "slot": "head",
+          "tags": [
+            "hood",
+            "cloth"
+          ]
+        },
+        {
+          "id": "horned-helmet",
+          "slot": "head",
+          "tags": [
+            "hat",
+            "helmet",
+            "horns",
+            "armour"
+          ]
+        },
+        {
+          "id": "backpack-round",
+          "slot": "back",
+          "tags": [
+            "backpack",
+            "pack"
+          ]
+        },
+        {
+          "id": "backpack-tall",
+          "slot": "back",
+          "tags": [
+            "backpack",
+            "pack",
+            "hiking"
+          ]
+        },
+        {
+          "id": "flag",
+          "slot": "back",
+          "tags": [
+            "flag",
+            "banner",
+            "tall"
+          ]
+        },
+        {
+          "id": "cape",
+          "slot": "back",
+          "tags": [
+            "cape",
+            "cloth",
+            "hero"
+          ]
+        },
+        {
+          "id": "scarf",
+          "slot": "neck",
+          "tags": [
+            "scarf",
+            "knit",
+            "winter"
+          ]
+        },
+        {
+          "id": "glasses",
+          "slot": "face",
+          "tags": [
+            "glasses",
+            "face"
+          ]
+        },
+        {
+          "id": "boots-l",
+          "slot": "foot.L",
+          "tags": [
+            "boots",
+            "shoes",
+            "pair"
+          ]
+        },
+        {
+          "id": "boots-r",
+          "slot": "foot.R",
+          "tags": [
+            "boots",
+            "shoes",
+            "pair"
+          ]
+        }
+      ]
+    },
+    "title": "Cloth",
+    "description": "Hats (beanie, cap, top hat, hood, horned helmet), backpacks (round, tall), a flag and a cape, a scarf, glasses and boots -- each with shape variants and look roles -- built to the head, back, neck, face and foot sockets of packs/humans' characters and packs/animals' animals.",
+    "phase": "runtime",
+    "weight": -500
+  },
+  "imports": {
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/audio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Generative lo-fi records from a mood and a seed, live intensity, seeded game SFX, KEEL audio.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/codec": "workspace:*"
+  }
+}
