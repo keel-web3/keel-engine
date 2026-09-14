@@ -4,14 +4,15 @@ import { engineVectors, surface, digest, dataDigest } from "../../keel/src/vecto
 
 export default await engineVectors(import.meta.url, [
   {
+    // (Re-pinned for the depth sprites (7a5fb59): 27 exports added -- depth.ts (HEIGHT_STEPS, OCCLUSION_LAYERS, SPRITE_DEPTH_GLSL and its functions) and raycast.ts (rayBox/Wedge/Capsule, raycastWorld, placeWorld). Nothing that was there changed.)
     name: "the export surface is intact",
     run: async (api) => { const names = surface(api); return { count: names.length, digest: await digest(names) }; },
-    expect: {"count":126,"digest":"58c9d0ff4f8f69b675f44c83de85a77940e1c8cd94fa38c1c1af1ddcf86e119a"},
+    expect: {"count":153,"digest":"c4e87f1398c6cff7a0f59f9b05e3b8d297b020ebe66937892baa7727c8079228"},
   },
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "ca9977fa61ab29254f096d7660c7aa533ff3dcc55f86f8e34d7dcff26be105f8",
+    expect: "17ffb077fd9ce262d42b660daa631d0634f5b778262e52e15e6abd0a8384fdc7",
   },
   {
     name: "texels encode and decode",

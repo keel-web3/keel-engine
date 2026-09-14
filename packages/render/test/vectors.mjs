@@ -4,14 +4,15 @@ import { engineVectors, surface, digest, dataDigest } from "../../keel/src/vecto
 
 export default await engineVectors(import.meta.url, [
   {
+    // (Re-pinned for the depth sprites (7a5fb59): 2 exports added -- the heights pass's HEIGHT_FS shader and unpackHeight. Nothing that was there changed.)
     name: "the export surface is intact",
     run: async (api) => { const names = surface(api); return { count: names.length, digest: await digest(names) }; },
-    expect: {"count":45,"digest":"949d4f1594f5df7ac7ddd8efdf7eca47b125c596f96879769c343e99861988d1"},
+    expect: {"count":47,"digest":"ed521cbec16ec32ce3ca76291ee69dbd0d3270297f386314b79d36ef16ff5b34"},
   },
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "4ec0385069a5a38bfcb48b66d27550a1ea7783ad8cf1b203e3a70ccbc5f86f81",
+    expect: "f1a112371043b8c33d10962710ef31d6e79a5019eb1a31fa227a5f717fbe033b",
   },
   {
     name: "fx resolve and toggle",

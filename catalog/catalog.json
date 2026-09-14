@@ -440,7 +440,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/bake/test/vectors.mjs",
-        "sha256": "0xd944818a567c95f84ad069a4af2e27583c9fc411f5114dcc24451f3f0e564ea9"
+        "sha256": "0x8d9ca4aa3851e072cbca04cfce7091a3cf59b12c211712649711a2d8175f77e6"
       },
       "deployments": [],
       "deployed": false
@@ -1845,7 +1845,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/render/test/vectors.mjs",
-        "sha256": "0x138f561a2f3dd37aa23417b619cb0c5572f1302e9c491af0a21b899f86ea3fce"
+        "sha256": "0xfd32c8e4bd9d2ca81de39266318c2e64e0f4bf7147268b4b06e33149da77f356"
       },
       "deployments": [],
       "deployed": false
