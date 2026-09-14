@@ -15,6 +15,7 @@
 // The camera sees faces whose normals point -x or -z (it looks along +x +z,
 // down): only those are built.
 
+import { dcos, dhypot, dsin } from "@keel-engine/core";
 import { CELL } from "./dungeon.ts";
 import { DECOR, DIR_X, DIR_Z, FLOOR } from "./dungeon-dress.ts";
 import type { DungeonDressing } from "./dungeon-dress.ts";
@@ -262,9 +263,9 @@ export function buildDungeonScene(S: DungeonDressing): DungeonScene {
     const r = 0.42;
     for (let s = 0; s < OCT; s += 1) {
       const a0 = (s / OCT) * Math.PI * 2 + Math.PI / OCT, a1 = ((s + 1) / OCT) * Math.PI * 2 + Math.PI / OCT;
-      const x0 = cx + Math.cos(a0) * r, z0 = cz + Math.sin(a0) * r, x1 = cx + Math.cos(a1) * r, z1 = cz + Math.sin(a1) * r;
+      const x0 = cx + dcos(a0) * r, z0 = cz + dsin(a0) * r, x1 = cx + dcos(a1) * r, z1 = cz + dsin(a1) * r;
       // (Faces whose outward normal leans toward the camera, -x -z.)
-      const nx = Math.cos((a0 + a1) / 2), nz = Math.sin((a0 + a1) / 2);
+      const nx = dcos((a0 + a1) / 2), nz = dsin((a0 + a1) / 2);
       if (nx + nz > 0.05) continue;
       // (U so that up x U is the outward normal: from the first point to the second.)
       push(QUAD.FACE, MAT.PILLAR, x0, 0.32, z0, x1 - x0, 0, z1 - z0, 0, H - 0.62, 0, seed, 8 + s, cx, cz);
@@ -351,7 +352,7 @@ export function buildDungeonScene(S: DungeonDressing): DungeonScene {
     const r = p.id === "sarcophagus" ? 0.7 : p.id === "table" ? 0.6 : p.id === "throne" ? 0.9 : p.id === "bookshelf" || p.id === "weapon-rack" ? 0.35 : 0.3;
     for (let fz = Math.floor((p.z - r) / fs); fz <= Math.floor((p.z + r) / fs); fz += 1) for (let fx = Math.floor((p.x - r) / fs); fx <= Math.floor((p.x + r) / fs); fx += 1) {
       if (fx < 0 || fz < 0 || fx >= fw || fz >= fd) continue;
-      if (Math.hypot((fx + 0.5) * fs - p.x, (fz + 0.5) * fs - p.z) <= r + fs * 0.35) walk[fz * fw + fx] = 0;
+      if (dhypot((fx + 0.5) * fs - p.x, (fz + 0.5) * fs - p.z) <= r + fs * 0.35) walk[fz * fw + fx] = 0;
     }
   }
 

@@ -9,6 +9,7 @@
 // ring) and stamps its tiles and things -- all a pure function of its own
 // seed and place.
 
+import { datan2, dcos, dhypot, dsin } from "@keel-engine/core";
 import { FLAG, WATER_NONE } from "@keel-engine/terrain";
 import type { TerrainTable } from "@keel-engine/terrain";
 import type { BiomeTable } from "./biomes.ts";
@@ -80,7 +81,7 @@ export const STRUCTURES: readonly StructureDef[] = [
       const pave = biome === "desert" ? "sandstone" : "flagstone", lane = biome === "desert" || biome === "savanna" ? "clay" : "path";
       const set = (di: number, dj: number, type: string): void => { tiles.push({ di, dj, type }); };
       // The plaza and its well.
-      for (let dj = -3; dj <= 3; dj += 1) for (let di = -3; di <= 3; di += 1) if (Math.hypot(di, dj) < 2.8) set(di, dj, pave);
+      for (let dj = -3; dj <= 3; dj += 1) for (let di = -3; di <= 3; di += 1) if (dhypot(di, dj) < 2.8) set(di, dj, pave);
       things.push({ kind: "prop", pack: "packs/buildings", object: "path-stones", at: [0.5, 0.5], yaw: 0, scale: 1, tags: ["well"] });
       things.push({ kind: "light", at: [2.5, 2.5], yaw: 0, scale: 1, tags: ["lantern"] }, { kind: "light", at: [-1.5, -1.5], yaw: 0, scale: 1, tags: ["lantern"] });
       // Lanes out to the edge, wandering a little; lots beside them.
@@ -104,7 +105,7 @@ export const STRUCTURES: readonly StructureDef[] = [
           const ax = DZ[d]! * sideSign, az = DX[d]! * sideSign;
           const hi = DX[d]! * s + ax * 3, hj = DZ[d]! * s + az * 3;
           const object = R.pick(houses);
-          const yaw = Math.atan2(-ax, -az);
+          const yaw = datan2(-ax, -az);
           things.push({ kind: "building", pack: "packs/buildings", object, at: [hi + 0.5, hj + 0.5], yaw, scale: 1, tags: ["house", "village"], foot: [hi - 1, hj - 1, hi + 2, hj + 2] });
           for (let dj = -1; dj <= 1; dj += 1) for (let di = -1; di <= 1; di += 1) tiles.push({ di: hi + di, dj: hj + dj, type: "dirt", flags: FLAG.BLOCKED | FLAG.NOBUILD });
           // (A garden plot behind some.)
@@ -114,7 +115,7 @@ export const STRUCTURES: readonly StructureDef[] = [
       }
       // A field or two at the edge: furrows (dirt and green rows).
       for (let f = 0; f < R.int(1, 2); f += 1) {
-        const ang = R.between(0, Math.PI * 2), fi = Math.round(Math.cos(ang) * 9), fj = Math.round(Math.sin(ang) * 9);
+        const ang = R.between(0, Math.PI * 2), fi = Math.round(dcos(ang) * 9), fj = Math.round(dsin(ang) * 9);
         for (let dj = -2; dj <= 2; dj += 1) for (let di = -3; di <= 3; di += 1) set(fi + di, fj + dj, (dj & 1) ? "moss" : "dirt");
       }
       return { tiles, things };
@@ -145,7 +146,7 @@ export const STRUCTURES: readonly StructureDef[] = [
     build({ rng: R, seed }) {
       const tiles: Array<{ di: number; dj: number; dh?: number; type?: string; flags?: number }> = [];
       for (let dj = -3; dj <= 3; dj += 1) for (let di = -3; di <= 3; di += 1) {
-        const r = Math.hypot(di + 0.5, dj + 0.5);
+        const r = dhypot(di + 0.5, dj + 0.5);
         if (r > 3.3) continue;
         const pit = di >= -1 && di <= 0 && dj >= -1 && dj <= 0;
         const rim = !pit && Math.max(Math.abs(di + 0.5), Math.abs(dj + 0.5)) <= 2 && dj !== -2;
@@ -203,7 +204,7 @@ function placeAt(def: StructureDef, seed: string, salt: number, a: number, b: nu
     let lo = c.height, hi = c.height;
     for (let q = 0; q < 12 && ok; q += 1) {
       const ang = (q / 12) * Math.PI * 2;
-      const s = column(Math.round(ci + Math.cos(ang) * def.radius), Math.round(cj + Math.sin(ang) * def.radius));
+      const s = column(Math.round(ci + dcos(ang) * def.radius), Math.round(cj + dsin(ang) * def.radius));
       if (s.water !== WATER_NONE && s.water > s.height) ok = false;
       lo = Math.min(lo, s.height); hi = Math.max(hi, s.height);
     }
@@ -239,7 +240,7 @@ export function stampStructure(st: PlacedStructure, L: TileLayers, T: TerrainTab
   for (let j = cj - R - APRON; j <= cj + R + APRON; j += 1) for (let i = ci - R - APRON; i <= ci + R + APRON; i += 1) {
     const k = inL(i, j);
     if (k < 0) continue;
-    const d = Math.max(0, Math.ceil(Math.hypot(i + 0.5 - (ci + 0.5), j + 0.5 - (cj + 0.5)) - 0.5) - R);
+    const d = Math.max(0, Math.ceil(dhypot(i + 0.5 - (ci + 0.5), j + 0.5 - (cj + 0.5)) - 0.5) - R);
     if (d > APRON) continue;
     const h = L.height[k]!;
     const nh = d === 0 ? level : Math.max(level - d, Math.min(level + d, h));

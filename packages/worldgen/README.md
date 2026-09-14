@@ -35,7 +35,7 @@ above them: `worldgen -> level -> terrain`. keel/level knows nothing of it
 | `overworld.ts` | `createOverworld(seed, { params })`: `column(i, j)` (pure) and `block(i0, j0, w, d)` (pure over a margin): climate, height, rivers, lakes, biomes and transitions, materials, structures, ore, caves, mode smoothing, steep faces, ramps |
 | `structures.ts` | `STRUCTURES` (village, ruin, dungeon entrance), spacing/separation placement, validation, flatten + stamp |
 | `dungeon.ts` | `generateDungeon(seed, w, d, { algorithm })` (rooms, bsp, cave, drunkard, wfc), `checkDungeon` (the gate), `ROOM_TEMPLATES`, `THEMES` (crypt, tomb, ice, hell), `dungeonLayers` (walls as cliffs, torchlight baked into the light layer, things) |
-| `wfc.ts` | `solveWfc` (constraints, backtracking, a time budget), `tiledModel`, `edgeTiles`, `overlappingModel`, `wfcDungeonCells`, `wfcTown` |
+| `wfc.ts` | `solveWfc` (constraints, backtracking, a step budget -- never a clock), `tiledModel`, `edgeTiles`, `overlappingModel`, `wfcDungeonCells`, `wfcTown` |
 | `scatter.ts` | `scatterIn(layers, rect, opts)`: blue noise per layer, the forest field, groves, moisture, slope, exclusion; `drawLayersFor(k)` |
 | `swap.ts` | `reskin`, `seasonPaletteFor`, `foliageProfile`, `createBiomePainter` (paint, spread) |
 | `pipeline.ts` | `defineRecipe`, `runPipeline`, `createWorldStream`, `defineStage`, masks, pins, locks; the stages `overworld@1 biome@1 dungeon@1 cave@1 town@1 level@1 foliage@1` |
@@ -274,7 +274,7 @@ tile, three seeds); biome coverage and acts; the table's nearest and a pack's
 biome; structures' spacing and separation; dungeons -- 1,000 seeds of each
 generator through the gate, determinism, the grammar's rooms, themes; WFC
 (constraints, edges agree, overlapping windows all in the sample, an
-impossible set, backtracking on a hard set, the budget); towns; the same
+impossible set, backtracking on a hard set, the step budget; no map moves when the clock races); towns; the same
 recipe byte for byte; mixing, pins and locks; an infinite stream in any
 order, region stages cut in, a re-skin keeping its shape, finite = streamed;
 scatter chunk independence and spacing and exclusion; codec round trips;

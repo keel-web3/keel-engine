@@ -57,6 +57,19 @@ test("dressing: every generator in every act keeps its floor fair -- props off t
   }
 });
 
+test("dressing: the stairs up never wall the start in (a small start room's only way out)", () => {
+  // (Found by the flaky "wfc/crypt/d1: the key can't be reached": a WFC floor cut short left a three-cell start
+  // room, and the stairs up -- which block their cell -- stood in its only opening. These floors did the same.)
+  const floors: Array<[string, number, number, number | undefined]> = [["sw1", 72, 54, undefined], ["sw2", 84, 45, undefined], ["sw10", 72, 45, undefined], ["d1-wfc", 72, 54, 100], ["d2-wfc", 72, 54, 200]];
+  for (const [seed, w, d, steps] of floors) for (const act of CRAWL_ACTS) {
+    const S = dressDungeon(generateDungeon(seed, w, d, { algorithm: "wfc", rooms: 10, ...(steps ? { wfcSteps: steps } : {}) }), act);
+    const tag = `${seed}/${act}`;
+    const noKey = reach(S, S.start, false), withKey = reach(S, S.start, true);
+    if (S.key) assert.ok(noKey[S.key[1] * S.w + S.key[0]], `${tag}: the key can't be reached`);
+    assert.ok(withKey[S.exit[1] * S.w + S.exit[0]] || S.floor[S.exit[1] * S.w + S.exit[0]] === FLOOR.STAIRS_DOWN, `${tag}: the exit can't be reached`);
+  }
+});
+
 test("dressing: the grammar's roles become rooms, the rooms their props; deterministic; 50+ lights on an 84 x 60 floor", () => {
   const D = generateDungeon("crawl-1", 84, 60, { algorithm: "rooms", rooms: 12 });
   const a = dressDungeon(D, "crypt"), b = dressDungeon(D, "crypt");

@@ -16,6 +16,7 @@
 // The palette is a surfacePalette over the stream's biome table: a season's
 // palette has the same layout, so setting one rebakes nothing.
 
+import { dhypot } from "@keel-engine/core";
 import { autoTile, bakeChunk, chunkBakeJob, groundRectFor, groundSurface, groundStyleKey, surfacePalette } from "@keel-engine/terrain";
 import type { ChunkBakeJob, GroundLayer, GroundPalette, GroundStyle, GroundView, LayerToDraw, Terrain } from "@keel-engine/terrain";
 import type { TileLayers, WorldThing } from "./map.ts";
@@ -140,13 +141,13 @@ export function createWorldBaker({ stream, palette: pal0, style: style0 = { name
       wanted = [];
       for (let cz = b0 - prefetch; cz <= b1 + prefetch; cz += 1) for (let cx = a0 - prefetch; cx <= a1 + prefetch; cx += 1) {
         const ring = Math.max(0, a0 - cx, cx - a1, b0 - cz, cz - b1);
-        wanted.push({ cx, cz, ring, dist: Math.hypot((cx + 0.5) * cs - v.center[0], (cz + 0.5) * cs - v.center[2]) });
+        wanted.push({ cx, cz, ring, dist: dhypot((cx + 0.5) * cs - v.center[0], (cz + 0.5) * cs - v.center[2]) });
       }
       wanted.sort((x, y) => x.ring - y.ring || x.dist - y.dist);
       // Forget what's far (beyond `keep` chunks, the farthest first).
       if (chunks.size > wanted.length + keep) {
         const near = new Set(wanted.map((w) => key(w.cx, w.cz)));
-        const far = [...chunks.values()].filter((s) => !near.has(key(s.cx, s.cz))).sort((x, y) => Math.hypot((y.cx + 0.5) * cs - v.center[0], (y.cz + 0.5) * cs - v.center[2]) - Math.hypot((x.cx + 0.5) * cs - v.center[0], (x.cz + 0.5) * cs - v.center[2]));
+        const far = [...chunks.values()].filter((s) => !near.has(key(s.cx, s.cz))).sort((x, y) => dhypot((y.cx + 0.5) * cs - v.center[0], (y.cz + 0.5) * cs - v.center[2]) - dhypot((x.cx + 0.5) * cs - v.center[0], (x.cz + 0.5) * cs - v.center[2]));
         for (const s of far.slice(0, chunks.size - wanted.length - keep)) { chunks.delete(key(s.cx, s.cz)); baked.delete(key(s.cx, s.cz)); }
       }
       if (job && !wanted.some((w) => w.cx === job!.cx && w.cz === job!.cz)) job = null;

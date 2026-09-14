@@ -11,6 +11,8 @@
 //
 // Ids are small integers (0..capacity-1), as an entity pool hands out.
 
+import { dhypot } from "@keel-engine/core";
+
 export interface Grid {
   /** Put an id at (x, z) with radius r (inserting, or moving it if it's there). */
   set(id: number, x: number, z: number, r?: number): void;
@@ -39,7 +41,7 @@ export interface GridOptions {
 export function createGrid({ cell, capacity }: GridOptions): Grid {
   if (!(cell > 0)) throw new RangeError("A grid's cell size must be positive.");
   const inv = 1 / cell;
-  const buckets = 1 << Math.max(8, Math.ceil(Math.log2(capacity * 2)));
+  const buckets = 1 << Math.max(8, 32 - Math.clz32(Math.ceil(capacity * 2) - 1)); // (ceil(log2(capacity x 2)), in integers)
   const mask = buckets - 1;
   const head = new Int32Array(buckets).fill(-1); // first id in each bucket
   const next = new Int32Array(capacity).fill(-1); // the chain through a bucket
@@ -133,7 +135,7 @@ export function createGrid({ cell, capacity }: GridOptions): Grid {
       for (let reach = cell; ; reach = Math.min(maxRadius, reach * 2)) {
         scan(x - reach, z - reach, x + reach, z + reach, (id) => {
           if (accept && !accept(id)) return;
-          const d = Math.hypot(px[id]! - x, pz[id]! - z) - pr[id]!;
+          const d = dhypot(px[id]! - x, pz[id]! - z) - pr[id]!;
           if (d < bd || (d === bd && id < best)) { bd = d; best = id; }
         });
         if ((best >= 0 && bd <= reach) || reach >= maxRadius) break;

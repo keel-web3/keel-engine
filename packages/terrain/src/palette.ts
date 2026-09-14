@@ -8,7 +8,7 @@
 //   const pal = groundPalette(terrain.types, { biome: { hue: 0, chroma: 1 } });
 //   pal.ramps["grass"] -> [base, length];  pal.cycles -> [{ base, length, speed }]
 
-import { oklch } from "@keel-engine/core";
+import { dsin, oklch } from "@keel-engine/core";
 import type { RGB } from "@keel-engine/core";
 import type { TerrainTable } from "./types.ts";
 
@@ -62,7 +62,7 @@ function rampOf(n: number, c: RampColour, tint: { hue: number; chroma: number; l
   for (let e = 0; e < n; e += 1) {
     const f = n === 1 ? 0.5 : e / (n - 1);
     const L = Math.min(0.99, (c.L[0] + (c.L[1] - c.L[0]) * f) * tint.light);
-    const C = c.C * tint.chroma * (0.75 + 0.5 * Math.sin(Math.PI * f)); // (most chroma in the middle)
+    const C = c.C * tint.chroma * (0.75 + 0.5 * dsin(Math.PI * f)); // (most chroma in the middle)
     out.push(oklch(L, C, c.h + tint.hue + (f - 0.5) * 24));
   }
   return out;

@@ -14,7 +14,7 @@
 //   const f = noiseField(seedOf("world-1", "temperature"), { freq: 1 / 320, octaves: 4, warp: { freq: 1 / 200, amp: 60 } });
 //   f(x, z) -> 0..1
 
-import { hash2, vnoise2 } from "@keel-engine/core";
+import { dcos, dsin, hash2, vnoise2 } from "@keel-engine/core";
 
 /** A 32-bit seed from text and a label (FNV-1a, then an avalanche): the same text, the same seed, everywhere. */
 export function seedOf(seed: string | number, label = ""): number {
@@ -37,8 +37,8 @@ export const hash01 = hash2;
 export const value2 = vnoise2;
 
 // 12 gradient directions, 30 degrees apart, picked by hash.
-const GX = Array.from({ length: 12 }, (_, i) => Math.cos((i * Math.PI) / 6));
-const GY = Array.from({ length: 12 }, (_, i) => Math.sin((i * Math.PI) / 6));
+const GX = Array.from({ length: 12 }, (_, i) => dcos((i * Math.PI) / 6));
+const GY = Array.from({ length: 12 }, (_, i) => dsin((i * Math.PI) / 6));
 const F2 = 0.5 * (Math.sqrt(3) - 1), G2 = (3 - Math.sqrt(3)) / 6;
 const grad = (i: number, j: number, s: number, x: number, y: number): number => {
   const g = Math.floor(hash2(i, j, s) * 12);

@@ -7,13 +7,14 @@
 //   const t = raycastWorld(world, origin, dir);   // the first hit's distance along dir (Infinity: none)
 //   const w = placeWorld(world, at, yaw, scale);  // a posed design moved into the world
 
+import { dcos, dsin } from "@keel-engine/core";
 import type { BakeBox, BakeWorld } from "./bake.ts";
 
 type V3 = readonly [number, number, number];
 
 // (World -> a box's frame: the renderer's turn -- x' = c x - s z, z' = s x + c z.)
 function toBox(b: BakeBox, o: V3, d: V3): { o: [number, number, number]; d: [number, number, number] } {
-  const yaw = b.yaw ?? 0, c = Math.cos(yaw), s = Math.sin(yaw);
+  const yaw = b.yaw ?? 0, c = dcos(yaw), s = dsin(yaw);
   const x = o[0] - (b.c[0] ?? 0), y = o[1] - (b.c[1] ?? 0), z = o[2] - (b.c[2] ?? 0);
   return { o: [c * x - s * z, y, s * x + c * z], d: [c * d[0] - s * d[2], d[1], s * d[0] + c * d[2]] };
 }
@@ -95,7 +96,7 @@ export function raycastWorld(world: BakeWorld, o: V3, d: V3): number {
 
 /** A design's world moved into the world: turned by `yaw` (the frame convention: +z toward (sin, cos)), scaled, set at `at`. */
 export function placeWorld(world: BakeWorld, at: V3, yaw = 0, scale = 1): BakeWorld {
-  const c = Math.cos(yaw), s = Math.sin(yaw);
+  const c = dcos(yaw), s = dsin(yaw);
   const P = (p: ArrayLike<number>): [number, number, number] => {
     const x = (p[0] ?? 0) * scale, y = (p[1] ?? 0) * scale, z = (p[2] ?? 0) * scale;
     return [at[0] + x * c + z * s, at[1] + y, at[2] - x * s + z * c];

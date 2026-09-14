@@ -20,6 +20,7 @@
 // the design's own slots: the caller names which slot a scaffold or membrane
 // wears (one its look paints).
 
+import { dcos, dsin } from "@keel-engine/core";
 import type { BakeBox, BakeCapsule, BakeWorld } from "./bake.ts";
 import type { IndexedSource } from "./indexed.ts";
 import type { ClipSpec, DesignSpec } from "./plan.ts";
@@ -58,7 +59,7 @@ export function worldBounds(w: BakeWorld): [number, number, number, number, numb
   for (const c of w.capsules ?? []) { add(c.a, c.r); add(c.b, c.r); }
   for (const x of [...(w.boxes ?? []), ...(w.wedges ?? [])]) {
     // (A box turned about y: its footprint's reach along each axis, turned.)
-    const cs = Math.abs(Math.cos(x.yaw ?? 0)), sn = Math.abs(Math.sin(x.yaw ?? 0));
+    const cs = Math.abs(dcos(x.yaw ?? 0)), sn = Math.abs(dsin(x.yaw ?? 0));
     const ex = (x.h[0] ?? 0) * cs + (x.h[2] ?? 0) * sn, ez = (x.h[0] ?? 0) * sn + (x.h[2] ?? 0) * cs;
     b[0] = Math.min(b[0], (x.c[0] ?? 0) - ex); b[3] = Math.max(b[3], (x.c[0] ?? 0) + ex);
     b[2] = Math.min(b[2], (x.c[2] ?? 0) - ez); b[5] = Math.max(b[5], (x.c[2] ?? 0) + ez);
@@ -91,7 +92,7 @@ export function withFall<T extends Source>(source: T, { clip = "fall", frames = 
     const t = (frame + 1) / n;
     const a = lie * (t * t * (3 - 2 * t)); // (eased: slow to go, quick to land)
     const w = source.pose(base, 0);
-    const cs = Math.cos(a), sn = Math.sin(a);
+    const cs = dcos(a), sn = dsin(a);
     // Forward: about x (+y toward +z). Side: about z (+y toward +x).
     const rot = (p: ArrayLike<number>): V3 => {
       const [x, y, z] = v3(p);
@@ -185,10 +186,10 @@ export function withStages<T extends Source>(source: T, options: StageOptions): 
       if (mechanic === "scaffold") for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) pole(cx + sx * hx, cz + sz * hz, 0.45, Math.max(0.04, Math.min(hx, hz) * 0.04), scaffold);
       if (mechanic === "grow") {
         // A creep stain over the footprint (thin turned slabs: a ragged edge) and a seed bud swelling in its middle.
-        for (let i = 0; i < 5; i += 1) { const a = (i / 5) * Math.PI * 2; bx.push({ c: [cx + Math.cos(a) * hx * 0.35, 0.02, cz + Math.sin(a) * hz * 0.35], h: [hx * 0.55, 0.02, hz * 0.32], yaw: a, mat: scaffold }); }
+        for (let i = 0; i < 5; i += 1) { const a = (i / 5) * Math.PI * 2; bx.push({ c: [cx + dcos(a) * hx * 0.35, 0.02, cz + dsin(a) * hz * 0.35], h: [hx * 0.55, 0.02, hz * 0.32], yaw: a, mat: scaffold }); }
         const R = Math.min(hx, hz) * 0.5;
         caps.push({ a: [cx, R * 0.45, cz], b: [cx, R * 0.6, cz], r: R, mat: accent });
-        for (let i = 0; i < 6; i += 1) { const a = (i / 6) * Math.PI * 2; caps.push({ a: [cx + Math.cos(a) * hx * 0.72, 0.1, cz + Math.sin(a) * hz * 0.72], b: [cx + Math.cos(a) * hx * 0.55, 0.14, cz + Math.sin(a) * hz * 0.55], r: R * 0.3, mat: accent }); }
+        for (let i = 0; i < 6; i += 1) { const a = (i / 6) * Math.PI * 2; caps.push({ a: [cx + dcos(a) * hx * 0.72, 0.1, cz + dsin(a) * hz * 0.72], b: [cx + dcos(a) * hx * 0.55, 0.14, cz + dsin(a) * hz * 0.55], r: R * 0.3, mat: accent }); }
       }
     }
     if (mechanic === "scaffold" && f > 0) {
@@ -215,7 +216,7 @@ export function withStages<T extends Source>(source: T, options: StageOptions): 
       for (let i = 0; i < lobes; i += 1) {
         const a = (i / lobes) * Math.PI * 2 + g * 0.4;
         const out = g === 2 ? 0.82 : 0.6;
-        const rx = Math.cos(a) * hx * out, rz = Math.sin(a) * hz * out;
+        const rx = dcos(a) * hx * out, rz = dsin(a) * hz * out;
         caps.push({ a: [cx + rx, R * 0.6, cz + rz], b: [cx + rx * 0.8, Math.max(R * 0.6, rise - R * 0.4), cz + rz * 0.8], r: R * 0.55, mat: accent });
       }
       if (g < 2) caps.push({ a: [cx, R * 0.5, cz], b: [cx, Math.max(R * 0.5, rise), cz], r: R * (g === 0 ? 0.85 : 0.7), mat: accent });
@@ -226,10 +227,10 @@ export function withStages<T extends Source>(source: T, options: StageOptions): 
       const tall = Math.max(0.35, Math.min(1.4, height * 0.3));
       for (let i = 0; i < n; i += 1) {
         const a = (i / n) * Math.PI * 2 + Math.PI / n;
-        const x = cx + Math.cos(a) * hx * ring, z = cz + Math.sin(a) * hz * ring;
+        const x = cx + dcos(a) * hx * ring, z = cz + dsin(a) * hz * ring;
         pole(x, z, tall, Math.max(0.05, Math.min(hx, hz) * 0.06), accent);
         const b = ((i + 1) / n) * Math.PI * 2 + Math.PI / n;
-        rail([x, 0.05, z], [cx + Math.cos(b) * hx * ring, 0.05, cz + Math.sin(b) * hz * ring], 0.05, accent);
+        rail([x, 0.05, z], [cx + dcos(b) * hx * ring, 0.05, cz + dsin(b) * hz * ring], 0.05, accent);
       }
     }
     return { capsules: caps, boxes: bx, wedges: inner.wedges ?? [] };

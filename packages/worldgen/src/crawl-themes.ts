@@ -14,7 +14,7 @@
 //   forge   black basalt with molten seams, lava, braziers, embers
 //   ruin    broken sandstone brick, ivy and moss, moonlight shafts, spores
 
-import { oklch } from "@keel-engine/core";
+import { dsin, oklch } from "@keel-engine/core";
 import type { RGB } from "@keel-engine/core";
 
 /** A ramp: OKLCH lightness from L0 to L1 over `n` entries, a chroma, a hue, and how far the hue turns dark -> light. */
@@ -202,7 +202,7 @@ export function crawlRamp(r: RampSpec, n = RAMP_LENGTH): RGB[] {
   for (let i = 0; i < n; i += 1) {
     const t = i / (n - 1);
     const Lt = r.L[0] + (r.L[1] - r.L[0]) * t;
-    const C = r.c * (0.55 + 0.45 * Math.sin(Math.PI * (0.12 + 0.76 * t)));
+    const C = r.c * (0.55 + 0.45 * dsin(Math.PI * (0.12 + 0.76 * t)));
     out.push(oklch(Lt, C, r.h + (r.shift ?? 0) * (0.5 - t) * -1));
   }
   return out;

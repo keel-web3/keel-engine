@@ -8,6 +8,8 @@
 //   const plan = planBake(designs, { directions: 8, pixelsPerMetre: 24 });
 //   plan.sprites -> [{ key, design, clip, frame, direction, angle }]
 
+import { dcos, dsin } from "@keel-engine/core";
+
 export interface ClipSpec {
   readonly name: string;
   /** Frames baked for one cycle (a looping clip) or the whole clip. */
@@ -64,7 +66,7 @@ export interface BakePlan {
 /** A design's sprite box before trimming, at a scale and pitch (pixels). */
 export function spriteBox(d: Pick<DesignSpec, "height" | "radius">, pixelsPerMetre: number, pitch: number): { w: number; h: number } {
   // (Seen from above at `pitch`, a thing's screen height is its height foreshortened plus its footprint's depth.)
-  return { w: Math.ceil(2 * d.radius * pixelsPerMetre) + 2, h: Math.ceil((d.height * Math.cos(pitch) + 2 * d.radius * Math.sin(pitch)) * pixelsPerMetre) + 2 };
+  return { w: Math.ceil(2 * d.radius * pixelsPerMetre) + 2, h: Math.ceil((d.height * dcos(pitch) + 2 * d.radius * dsin(pitch)) * pixelsPerMetre) + 2 };
 }
 
 /** A sprite's cache key: everything that changes its pixels. */

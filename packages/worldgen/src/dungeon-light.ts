@@ -7,6 +7,7 @@
 // in), what he has seen (dimmed), what he never has (dark), eased so rooms
 // fade in rather than pop.
 
+import { dhypot } from "@keel-engine/core";
 import { CELL } from "./dungeon.ts";
 import type { DungeonDressing } from "./dungeon-dress.ts";
 import { FINE, SUB } from "./dungeon-scene.ts";
@@ -40,7 +41,7 @@ export function lightMask(s: DungeonScene, x: number, z: number, radius: number,
   const step = 0.2;
   for (let b = 0; b < size; b += 1) for (let a = 0; a < size; a += 1) {
     const tx = x0 + (a + 0.5) / m, tz = z0 + (b + 0.5) / m;
-    const dx = tx - x, dz = tz - z, len = Math.hypot(dx, dz);
+    const dx = tx - x, dz = tz - z, len = dhypot(dx, dz);
     if (len > radius + 0.5) { data[b * size + a] = 0; continue; }
     const n = Math.max(1, Math.ceil(len / step));
     let lit = 255;
@@ -93,8 +94,8 @@ export function createFog(S: DungeonDressing, { radius = 12, remembered = 0.42 }
       // Line of sight on the cell grid: a wall (or a shut door) stops it, and is itself seen.
       for (let dj = -R; dj <= R; dj += 1) for (let di = -R; di <= R; di += 1) {
         const i = ci + di, j = cj + dj;
-        if (i < 0 || j < 0 || i >= w || j >= d || Math.hypot(di, dj) * tile > radius) continue;
-        const n = Math.max(1, Math.ceil(Math.hypot(di, dj) * 3));
+        if (i < 0 || j < 0 || i >= w || j >= d || dhypot(di, dj) * tile > radius) continue;
+        const n = Math.max(1, Math.ceil(dhypot(di, dj) * 3));
         let ok = true;
         for (let q = 1; q < n; q += 1) {
           const a = Math.floor(ci + 0.5 + (di * q) / n), b = Math.floor(cj + 0.5 + (dj * q) / n);

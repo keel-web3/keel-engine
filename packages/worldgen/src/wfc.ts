@@ -14,11 +14,14 @@
 // weighted choice; the choice propagates (arc consistency over the adjacency
 // table). CONSTRAINTS restrict domains up front (a border that must be wall,
 // a cell pinned to a tile). On a contradiction it BACKTRACKS: the last
-// decisions are snapshots; restore, ban the choice, propagate again. A TIME
-// BUDGET (and a cap on backtracks) bounds it: past either, it stops with
-// ok: false and the best it had (undecided cells take their likeliest tile),
-// so a caller always gets a grid.
+// decisions are snapshots; restore, ban the choice, propagate again. A STEP
+// BUDGET (decisions plus backtracks) and a cap on backtracks bound it: past
+// either, it stops with ok: false and the best it had (undecided cells take
+// their likeliest tile), so a caller always gets a grid. (Steps, never
+// milliseconds: a time budget stops at a different point on a slower or busier
+// machine, and the same seed would make a different map there.)
 
+import { dlog } from "@keel-engine/core";
 import { hash01, rngOf, seedOf } from "./noise.ts";
 
 export interface WfcModel {
@@ -37,8 +40,8 @@ export interface WfcOptions {
   readonly seed: string | number;
   /** Restrict a cell's domain: return the tiles it may take (null: any). */
   readonly constrain?: (x: number, y: number) => readonly number[] | null;
-  /** Milliseconds before giving up (default 200). */
-  readonly budget?: number;
+  /** Decisions plus backtracks before giving up (default 8 x the cells; a solvable grid takes about one a cell). */
+  readonly steps?: number;
   readonly maxBacktracks?: number;
   /** Snapshots kept for backtracking (default 64). */
   readonly depth?: number;
@@ -51,8 +54,7 @@ export interface WfcResult {
   readonly contradictions: number;
   readonly backtracks: number;
   readonly decisions: number;
-  readonly ms: number;
-  readonly reason: "solved" | "budget" | "backtracks" | "impossible";
+  readonly reason: "solved" | "steps" | "backtracks" | "impossible";
 }
 
 const DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];
@@ -129,16 +131,15 @@ const popcount = (v: number): number => { v -= (v >>> 1) & 0x55555555; v = (v & 
 export function solveWfc(model: WfcModel, opts: WfcOptions): WfcResult {
   const { width: W, height: H } = opts;
   const { count: T, words: Wd, weights, allowed } = model;
-  const t0 = performance.now();
-  const budget = opts.budget ?? 200, maxBack = opts.maxBacktracks ?? 2000, depthCap = opts.depth ?? 64;
   const N = W * H;
+  const steps = opts.steps ?? 8 * N, maxBack = opts.maxBacktracks ?? 2000, depthCap = opts.depth ?? 64;
   let dom: Uint32Array = new Uint32Array(N * Wd);
   const full = new Uint32Array(Wd);
   for (let t = 0; t < T; t += 1) full[t >> 5] = full[t >> 5]! | (1 << (t & 31));
   for (let c = 0; c < N; c += 1) dom.set(full, c * Wd);
   const seed = typeof opts.seed === "number" ? opts.seed : seedOf(opts.seed, "wfc");
   const f = rngOf(seed);
-  const logW = Float64Array.from(weights, (w) => (w > 0 ? w * Math.log(w) : 0));
+  const logW = Float64Array.from(weights, (w) => (w > 0 ? w * dlog(w) : 0));
   let contradictions = 0, backtracks = 0, decisions = 0;
   const stack: number[] = [];
   const onStack = new Uint8Array(N);
@@ -186,7 +187,7 @@ export function solveWfc(model: WfcModel, opts: WfcOptions): WfcResult {
       for (let t = 0; t < T; t += 1) if (dom[c * Wd + (t >> 5)]! & (1 << (t & 31)) && weights[t]! > bw) { bw = weights[t]!; best = t; }
       grid[c] = best;
     }
-    return { ok, grid, contradictions, backtracks, decisions, ms: performance.now() - t0, reason };
+    return { ok, grid, contradictions, backtracks, decisions, reason };
   };
   // (Arc consistency over the whole grid first: a tile set that can't tile the plane at all is found here.)
   for (let c = 0; c < N; c += 1) if (!onStack[c]) { onStack[c] = 1; stack.push(c); }
@@ -194,7 +195,7 @@ export function solveWfc(model: WfcModel, opts: WfcOptions): WfcResult {
   // Decisions: snapshots for backtracking.
   const snaps: Array<{ dom: Uint32Array; cell: number; tile: number }> = [];
   for (;;) {
-    if (performance.now() - t0 > budget) return finish(false, "budget");
+    if (decisions + backtracks >= steps) return finish(false, "steps");
     // The least-entropy undecided cell.
     let best = -1, bestE = Infinity;
     for (let c = 0; c < N; c += 1) {
@@ -203,7 +204,7 @@ export function solveWfc(model: WfcModel, opts: WfcOptions): WfcResult {
       if (n <= 1) continue;
       let sw = 0, swl = 0;
       for (let q = 0; q < Wd; q += 1) { let bits = dom[c * Wd + q]!; while (bits) { const b = bits & -bits; const t = (q << 5) + (31 - Math.clz32(b)); bits ^= b; sw += weights[t]!; swl += logW[t]!; } }
-      const e = Math.log(sw) - swl / sw + hash01(c, decisions, seed) * 1e-6;
+      const e = dlog(sw) - swl / sw + hash01(c, decisions, seed) * 1e-6;
       if (e < bestE) { bestE = e; best = c; }
     }
     if (best < 0) return finish(true, "solved");
@@ -258,13 +259,13 @@ export const DUNGEON_TILES = edgeTiles([
 ]);
 
 /** A dungeon's cells (0 wall, 1 floor) by simple tiled WFC over DUNGEON_TILES, walls round the border. */
-export function wfcDungeonCells(seed: string, w: number, d: number, budget = 250): Uint8Array {
+export function wfcDungeonCells(seed: string, w: number, d: number, steps?: number): Uint8Array {
   const tiles = DUNGEON_TILES;
   const model = tiledModel(tiles);
   const gw = Math.max(2, Math.floor(w / 3)), gh = Math.max(2, Math.floor(d / 3));
   const solid = (edge: string): boolean => !edge.includes(".");
   const res = solveWfc(model, {
-    width: gw, height: gh, seed: seedOf(seed, "wfc-dungeon"), budget,
+    width: gw, height: gh, seed: seedOf(seed, "wfc-dungeon"), ...(steps === undefined ? {} : { steps }),
     constrain: (x, y) => {
       if (x > 0 && y > 0 && x < gw - 1 && y < gh - 1) return null;
       return tiles.map((t, i) => ((y > 0 || solid(t.edges[0])) && (x < gw - 1 || solid(t.edges[1])) && (y < gh - 1 || solid(t.edges[2])) && (x > 0 || solid(t.edges[3])) ? i : -1)).filter((i) => i >= 0);
@@ -298,13 +299,13 @@ export const TOWN_TILES = edgeTiles([
 ]);
 
 /** A town plan by simple tiled WFC: per cell 'g' 'r' 'h' 'f' (w x d cells), roads kept off the border's outside. */
-export function wfcTown(seed: string, w: number, d: number, budget = 200): { plan: string[]; result: WfcResult } {
+export function wfcTown(seed: string, w: number, d: number, steps?: number): { plan: string[]; result: WfcResult } {
   const tiles = TOWN_TILES;
   const model = tiledModel(tiles);
   const gw = Math.max(2, Math.floor(w / 3)), gh = Math.max(2, Math.floor(d / 3));
   const quiet = (edge: string): boolean => !edge.includes("r");
   const result = solveWfc(model, {
-    width: gw, height: gh, seed: seedOf(seed, "wfc-town"), budget,
+    width: gw, height: gh, seed: seedOf(seed, "wfc-town"), ...(steps === undefined ? {} : { steps }),
     constrain: (x, y) => {
       // (Roads may leave the town on its south and west edges' middles -- the way in; elsewhere the border is quiet.)
       if (x > 0 && y > 0 && x < gw - 1 && y < gh - 1) return null;

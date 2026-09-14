@@ -317,7 +317,7 @@
         },
         {
           "path": "packages/bake/src/atlas.ts",
-          "sha256": "0xc3115ad1ad0cba33921a9fc47450d71f8b6c73659b7034028fe01ba692cb9424"
+          "sha256": "0x8ca39d07cb3f0d815b476d8d25150281861360daef637dfcd89a67e9d4bdd036"
         },
         {
           "path": "packages/bake/src/bake.ts",
@@ -333,11 +333,11 @@
         },
         {
           "path": "packages/bake/src/depth.ts",
-          "sha256": "0x3fa27a2c026d76078935cbf7615999354b90b4a8dcc3b936ca2cf2ba5b6834d5"
+          "sha256": "0xfa7c28660d11967835141bbb4f9be83ed7827eccb460006865e39edb62ce371d"
         },
         {
           "path": "packages/bake/src/entity-design.ts",
-          "sha256": "0xda44cab81a0cf987b7eb04103fe5d5170c696eea82cfcbe97d4ac083d00839df"
+          "sha256": "0xe67e3cab077f2072b68cddedcc2641416267ca800a917e673ad6109b8ddcb16c"
         },
         {
           "path": "packages/bake/src/fx.ts",
@@ -345,7 +345,7 @@
         },
         {
           "path": "packages/bake/src/grid.ts",
-          "sha256": "0xa78a602dbe5f0c2853d1e49b006992696ce777f3fece7322496db4ecee9a435c"
+          "sha256": "0x93ce0b6342b67f2c9935215d942814cb467a74940a96307deae1eabcffc1f8dc"
         },
         {
           "path": "packages/bake/src/hybrid.ts",
@@ -365,7 +365,7 @@
         },
         {
           "path": "packages/bake/src/plan.ts",
-          "sha256": "0xb502ad90c02a497bd3f15eedd8818958290d1dec8ae56da03cc09d6f17f3c741"
+          "sha256": "0x3cfba2b4e1f00296cc019cd225f7f417166d18ffd318227c3750e340ce6580c2"
         },
         {
           "path": "packages/bake/src/population.ts",
@@ -381,11 +381,11 @@
         },
         {
           "path": "packages/bake/src/raycast.ts",
-          "sha256": "0x62beadac7a599a26f42ab17aded4563e90e95c7e1ea1dacd2ec7f94daeac43af"
+          "sha256": "0x4424cd365e3b630c7de3a12be3a811b3eac394ba96a27eefc76cd41fb33671ff"
         },
         {
           "path": "packages/bake/src/shapes.ts",
-          "sha256": "0xc7b4fd7d05aa9f484dfb11b3afeb71f17dd46e1cdd3d9142713abd34b8eb3dca"
+          "sha256": "0x58c103df2ae0883919d76d7842af26cf611691a9bf9f9c2aa19abb9c5c2951f8"
         },
         {
           "path": "packages/bake/src/shelf.ts",
@@ -401,7 +401,7 @@
         },
         {
           "path": "packages/bake/src/stages.ts",
-          "sha256": "0x7a0a3bae4e832a251b640cf65e52eac2ef7a11c57e9f713b0f43dc8c5dda3cff"
+          "sha256": "0x35f88f94485dd37813fbf42bc3a0015617681b1210a40f2a61e2aa288bc310e0"
         },
         {
           "path": "packages/bake/src/stream.ts",
@@ -413,7 +413,7 @@
         },
         {
           "path": "packages/bake/src/view.ts",
-          "sha256": "0x74020027d9df99ad44acefb08d6a950bf23c604528d4d61a547f21b5d418c851"
+          "sha256": "0x24f27178ebf70c6d7fe15ce1c221b94758c4deb88419090f537806b4a1519190"
         },
         {
           "path": "packages/bake/src/worker.ts",
@@ -430,12 +430,12 @@
         ]
       },
       "output": {
-        "digest": "0x8241d5b567557e549f08203017144917727a51a511267df7a243992a6c0b03ed",
-        "byteLength": 142370
+        "digest": "0x6aa7e99e062d8ec8f51e161447abb758f893f0e6cc1c2c1886e6937df1848ff6",
+        "byteLength": 142709
       },
-      "sourceDigest": "0x1947cae712ef29bc09fa2c2ae00f8f0a9fab7504c9510617bc4ba11a2453d4e0",
-      "recipeDigest": "0x0b774021fae258ff7da36406c029958cf7bdba681709ce94097ba0a96f15b200",
-      "receiptDigest": "0xb19ac39e016a87e2cd8bb7519ec4040506904715845c9e3946b316a3cab2ffee",
+      "sourceDigest": "0x289c6887b820581ff8ea38598b3a57a0248942cdadf8dd221512ef4be32d9e46",
+      "recipeDigest": "0xdeb54dc1f2a994029ea881bb2dfe8507fe2283aa87c7c25e78508980295a9fdc",
+      "receiptDigest": "0x5a05278b23cf50f92ad5f0b02eaaf0a9f4fc4ca83ecd88b8ebfc4906fa861ad6",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -2048,7 +2048,7 @@
         },
         {
           "path": "packages/terrain/src/flowfield.ts",
-          "sha256": "0x5a31b53d570884fe3c2519d5f4bdb713cacd18b03c64399f93fad2607e8299dc"
+          "sha256": "0xb99a8f7067c9525fa725a74a4f46fd810bd15ee17c3005fbade55d6907930b56"
         },
         {
           "path": "packages/terrain/src/grid.ts",
@@ -2076,7 +2076,7 @@
         },
         {
           "path": "packages/terrain/src/ground.ts",
-          "sha256": "0x3720bb9031f95530870bb99828de9f5e202e4aa49bd622cd65a537d4faa1a175"
+          "sha256": "0x1511f12bf8302d64faba4efcd8bf777415d9663e37d843ba3c14c4b06523c42c"
         },
         {
           "path": "packages/terrain/src/hpa.ts",
@@ -2088,7 +2088,7 @@
         },
         {
           "path": "packages/terrain/src/palette.ts",
-          "sha256": "0x0f0e4b162bbe880c8637d90f4addc510840a1702516e22ab3eb36ed452f06480"
+          "sha256": "0x3e437a52751acdfae4d53564c315d664cb763fec4c8282c2e5818388c1244ab6"
         },
         {
           "path": "packages/terrain/src/pathing.ts",
@@ -2119,12 +2119,12 @@
         ]
       },
       "output": {
-        "digest": "0xa6477f72ae1dac1cc7278a23a6d1e7f42f6d2c12c605cc5afad55247b4cd9359",
-        "byteLength": 138125
+        "digest": "0x3e08ae83b78df24ff7dca002b40fadb1a005792171b47abdc61d4742e797d306",
+        "byteLength": 138178
       },
-      "sourceDigest": "0xd36546f2f74cf2b5b58aacc709ad85e977b1ed97cfd67c7e6c2f9ecf8b9fc16b",
-      "recipeDigest": "0x0d2d83d11f21a10a00bff454630797dc3ec0552fac958ad05938d9aef4d0a947",
-      "receiptDigest": "0x09764f750d697eb3b3260ddd19a94bc78603f216e32f6945671c290cb2265ba2",
+      "sourceDigest": "0xaa3d79810fe951ba38a40d5a7fc37076a99751c56e96611a113b670d38d0c7a2",
+      "recipeDigest": "0x21760b4e0c2cd97a811c731862424d0e5fb33a975dd3ed096a0bc7a55fdbe958",
+      "receiptDigest": "0x236f56b4193d5bc05f8839f0564cc65e5cb6f325b4d2d8ee69d680d26af4caaa",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -2536,11 +2536,11 @@
         },
         {
           "path": "packages/worldgen/src/crawl-themes.ts",
-          "sha256": "0xcceaf6c779d24493e8e438482ce9d520a37802a0a0c02f916aadbc8e8fa69609"
+          "sha256": "0x84f60465bf846ccebc1deb991b7bf92f6f1d72b8661a23ca10bb329eeee8aec5"
         },
         {
           "path": "packages/worldgen/src/dungeon-dress.ts",
-          "sha256": "0xd59e88842ecc78f8a6be01a02729d7c37d1ff34cb3f9ec262fc45fedd4c9191f"
+          "sha256": "0x3acf9692c59be101bad8ef7ab1ce390ba012ac73eeb78ea793d5ec3e7162f001"
         },
         {
           "path": "packages/worldgen/src/dungeon-gl.ts",
@@ -2548,15 +2548,15 @@
         },
         {
           "path": "packages/worldgen/src/dungeon-light.ts",
-          "sha256": "0x9ff7f54c79a6887914ef3adb6b7f21ae9ee010f9a1e4dda9881c8d660c2e7e2c"
+          "sha256": "0x7c24dd6d4a2f95d846a9ec5f8d3d509a2a0b956f36b15d5e91973f50ae549e97"
         },
         {
           "path": "packages/worldgen/src/dungeon-scene.ts",
-          "sha256": "0x15c84238234c2855dc4eb943a2995698448cc2f689742f10d2bda62825cd7199"
+          "sha256": "0x46fa21a2b2372428a1cc65ffdc04bc95cece185862e0f997a2e683f86c1f27ff"
         },
         {
           "path": "packages/worldgen/src/dungeon.ts",
-          "sha256": "0x7e4898f5cd96532dcb6d02d3dd3413e6e5fd193dd3447986358844305c764847"
+          "sha256": "0xd0924d50f73eba970a14588b15a76e079a1da39f150de946528131fa15fa0d91"
         },
         {
           "path": "packages/worldgen/src/index.ts",
@@ -2572,11 +2572,11 @@
         },
         {
           "path": "packages/worldgen/src/noise.ts",
-          "sha256": "0xe56fecc6433970f5d41bcee40447c26125a38d985ae2a2d7118b133bb4df0bb7"
+          "sha256": "0xc4ae6c501249787f77bf5b5f2aa8cf3b128c15ba6642a301801d8f19945ca554"
         },
         {
           "path": "packages/worldgen/src/overworld.ts",
-          "sha256": "0xcea708bb27ad21efd673e8fc101540f0f516bed08dd71f9d6360aee2b5ab5e89"
+          "sha256": "0x5778e4938a3b4476fc0df4e7eb111749e1876cf5c58c25dc38176fb9bbfa6fe0"
         },
         {
           "path": "packages/worldgen/src/packs.ts",
@@ -2584,7 +2584,7 @@
         },
         {
           "path": "packages/worldgen/src/pipeline.ts",
-          "sha256": "0x46a05b83ac63f34ad4c69df683e8dc0a551a188097c6b3debde7b26d28575b35"
+          "sha256": "0x81bc6b97470e93f7f9296878d51041f7a1f3ecaa7cce3d35ffbdbe420d02ee61"
         },
         {
           "path": "packages/worldgen/src/scatter.ts",
@@ -2596,7 +2596,7 @@
         },
         {
           "path": "packages/worldgen/src/structures.ts",
-          "sha256": "0x178ed926ee3103c8bf17aa8def0e65cf79b5a108dcf353650c2bc249f7d04204"
+          "sha256": "0x44bd08743bf24c48856a57c561e516a8a05864d21f7102dae04abe6f3672da32"
         },
         {
           "path": "packages/worldgen/src/swap.ts",
@@ -2604,11 +2604,11 @@
         },
         {
           "path": "packages/worldgen/src/wfc.ts",
-          "sha256": "0x6d9732ae19877912239bab6624a9cfe29314ef9c621df0324ca22395a544f75a"
+          "sha256": "0xc18064e7de98d5fbc21058f3ed9380afcf00b795dc5e2e4c3e413a3c0905ad2f"
         },
         {
           "path": "packages/worldgen/src/world-baker.ts",
-          "sha256": "0xb8209818b9df6246a2dfb9d1b842676ce67ca52ef851beaec8e44ad2074443b7"
+          "sha256": "0x8e408bf28f95e350ccae603ed6ce6567d5be40daa3bc1d54333b8b924be3eda5"
         }
       ],
       "build": {
@@ -2624,12 +2624,12 @@
         ]
       },
       "output": {
-        "digest": "0x30d72eb373c464235c4fe913d6c48040bd5502f2c7f2d30715675b7c339eebe3",
-        "byteLength": 214053
+        "digest": "0x2e2a4baf5c23cf8a105db7780725bf2e4884f498845c2f679def3a92d9acd16d",
+        "byteLength": 214375
       },
-      "sourceDigest": "0x2b89a9e91c0a71e62511252736ca2616ae824061b073f2ead29dbbf2cc3d3303",
-      "recipeDigest": "0xc1244c83a72bc842a5045cd0aaa1296898b3056eebf90a50b3415bd4b9cf1e27",
-      "receiptDigest": "0xf2d3398dcf6c5b0991dd738563bec3bef76de06036e0cbbe0a256af0f9395cfe",
+      "sourceDigest": "0xd02df1dd4d145473c9364da7619cea66e71ed302a008f67ba245f28b433e0acb",
+      "recipeDigest": "0x94f5b062acf2461aa818526edf46fe2ffc72d78ea75aa56ee4e9f13aebad1005",
+      "receiptDigest": "0x7ecd2345ff5b410aca0ed1bb5edc62706695b3605ea51b85741ee3fc9ce39379",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {

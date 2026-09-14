@@ -25,6 +25,7 @@
 // on or before the ground point its own pixel's ray meets. Walls, props and
 // units hide each other exactly where their surfaces are in front, per pixel.
 
+import { dcos, dsin } from "@keel-engine/core";
 import type { BakeWorld } from "./bake.ts";
 import { decodeHeight, heightAt } from "./indexed.ts";
 import { worldBounds } from "./stages.ts";
@@ -151,7 +152,7 @@ export const designBounds = (world: BakeWorld): [number, number, number, number,
  * and coarse picking share: [x0, y0, z0, x1, y1, z1].
  */
 export function placedBounds(b: readonly [number, number, number, number, number, number], at: Vec3, yaw = 0): [number, number, number, number, number, number] {
-  const c = Math.cos(yaw), s = Math.sin(yaw);
+  const c = dcos(yaw), s = dsin(yaw);
   let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
   for (const lx of [b[0], b[3]]) for (const lz of [b[2], b[5]]) {
     // (The frame convention: yaw turns +z toward +x.)

@@ -10,6 +10,8 @@
 //   v.ground(px, py)     -> [x, 0, z]            (where a pixel hits the ground: picking)
 //   v.groundRect()       -> the ground rectangle (x0, z0, x1, z1) the picture covers, for culling
 
+import { dcos, dsin } from "@keel-engine/core";
+
 export type Vec3 = readonly [number, number, number];
 
 export interface PixelViewSpec {
@@ -37,10 +39,10 @@ export interface PixelView extends PixelViewSpec {
 
 export function pixelView(spec: PixelViewSpec): PixelView {
   const { center, yaw, pitch, pixelsPerMetre: k, width, height } = spec;
-  const cy = Math.cos(yaw);
-  const sy = Math.sin(yaw);
-  const cp = Math.cos(pitch);
-  const sp = Math.sin(pitch);
+  const cy = dcos(yaw);
+  const sy = dsin(yaw);
+  const cp = dcos(pitch);
+  const sp = dsin(pitch);
   // Forward: along the heading, tipped down by the pitch. Right: the heading's right (frame convention: [cos, 0, -sin]).
   const forward: Vec3 = [sy * cp, -sp, cy * cp];
   const right: Vec3 = [cy, 0, -sy];

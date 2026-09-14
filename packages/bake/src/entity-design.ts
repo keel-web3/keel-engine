@@ -9,7 +9,7 @@
 //   bakeSprites(px, plan.sprites, new Map([[fox.key, fox], ...]));
 //   fox.clip("walk") -> { frames, cycle, speed, period }   (frames advance by distance: frameOf)
 
-import { createRoll, deriveSeed, oklch, stream } from "@keel-engine/core";
+import { createRoll, deriveSeed, dhypot, dsin, oklch, stream } from "@keel-engine/core";
 import type { Oklch } from "@keel-engine/entity";
 import { LOCOMOTION, clipsFor, placeAttribute, poseSkeleton, skinOf, wear } from "@keel-engine/entity";
 import type { AttributeShape, Capsule, EntitySpec, MaterialTable, Worn } from "@keel-engine/entity";
@@ -80,7 +80,7 @@ export function contentHash(text: string): string {
 // A ramp of n entries dark to light round a colour (WALLRUN's rampAround): chroma easing off at both ends, the hue turning a little.
 function rampAround([L, C, h]: Oklch, n: number): Array<[number, number, number]> {
   const L0 = Math.max(0.12, L - 0.42), L1 = Math.min(0.98, L + 0.16), c = Math.max(C, 0.02), turn = 12;
-  return Array.from({ length: n }, (_, i) => { const k = n > 1 ? i / (n - 1) : 0.5; return oklch(L0 + (L1 - L0) * k, c * Math.sin(Math.PI * (0.15 + 0.7 * k)), h + turn * (k - 0.5)); });
+  return Array.from({ length: n }, (_, i) => { const k = n > 1 ? i / (n - 1) : 0.5; return oklch(L0 + (L1 - L0) * k, c * dsin(Math.PI * (0.15 + 0.7 * k)), h + turn * (k - 0.5)); });
 }
 
 /** The default look: a ramp round each of the entity's colour roles, and WALLRUN's materials over them. */
@@ -164,8 +164,8 @@ export function entityDesign(spec: EntitySpec, options: EntityDesignOptions = {}
   let radius = 0;
   for (const c of clips) for (let f = 0; f < c.frames; f += 1) {
     const { capsules, boxes } = pose(c.name, f);
-    for (const k of capsules) for (const p of [k.a, k.b]) { height = Math.max(height, p[1] + k.r); radius = Math.max(radius, Math.hypot(p[0], p[2]) + k.r); }
-    for (const b of boxes) { const e = Math.hypot(b.h[0] ?? 0, b.h[1] ?? 0, b.h[2] ?? 0); height = Math.max(height, (b.c[1] ?? 0) + e); radius = Math.max(radius, Math.hypot(b.c[0] ?? 0, b.c[2] ?? 0) + e); }
+    for (const k of capsules) for (const p of [k.a, k.b]) { height = Math.max(height, p[1] + k.r); radius = Math.max(radius, dhypot(p[0], p[2]) + k.r); }
+    for (const b of boxes) { const e = dhypot(b.h[0] ?? 0, b.h[1] ?? 0, b.h[2] ?? 0); height = Math.max(height, (b.c[1] ?? 0) + e); radius = Math.max(radius, dhypot(b.c[0] ?? 0, b.c[2] ?? 0) + e); }
   }
 
   // The key: where it's from, who it is, a hash of everything that shapes it (the spec, what it wears, the clips' frames, the look).

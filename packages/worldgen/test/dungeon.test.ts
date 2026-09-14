@@ -10,7 +10,7 @@ test("dungeons: 1,000 seeds of every generator pass the fairness gate (connected
     const fails: string[] = [];
     const t0 = performance.now();
     for (let s = 0; s < 1000; s += 1) {
-      const D = generateDungeon(`gate-${s}`, 48, 36, { algorithm, budget: 60 });
+      const D = generateDungeon(`gate-${s}`, 48, 36, { algorithm });
       const c = checkDungeon(D, { minPath: 10 });
       if (c.pass) { pass += 1; path += c.startToExit; } else if (fails.length < 3) fails.push(`gate-${s}: ${c.problems.join("; ")}`);
       rerolls += D.stats["attempt"] ?? 0;
@@ -47,7 +47,7 @@ test("dungeons: deterministic; the rooms grammar places start, key, boss and exi
 
 test("WFC: simple tiled solves with its constraints; overlapping reproduces the sample's local patterns", () => {
   const model = tiledModel(DUNGEON_TILES);
-  const r = solveWfc(model, { width: 16, height: 12, seed: "wfc-1", budget: 500, constrain: (x, y) => (x === 0 && y === 0 ? [0] : null) });
+  const r = solveWfc(model, { width: 16, height: 12, seed: "wfc-1", constrain: (x, y) => (x === 0 && y === 0 ? [0] : null) });
   assert.equal(r.ok, true, r.reason);
   assert.equal(r.grid[0], 0, "the pinned cell");
   // Every neighbouring pair agrees on its edge.
@@ -60,7 +60,7 @@ test("WFC: simple tiled solves with its constraints; overlapping reproduces the 
   const sw = 12, sh = 12;
   const sample = new Uint8Array(sw * sh).map((_, k) => ((k % sw) % 4 === 0 || (Math.floor(k / sw) % 5 === 0 && (k % sw) > 3) ? 1 : 0));
   const om = overlappingModel(sample, sw, sh, { N: 3, symmetry: 2 });
-  const res = solveWfc(om, { width: 20, height: 20, seed: "wfc-2", budget: 800 });
+  const res = solveWfc(om, { width: 20, height: 20, seed: "wfc-2" });
   assert.equal(res.ok, true, res.reason);
   const out = new Uint8Array(20 * 20).map((_, k) => om.patterns[res.grid[k]!]![0]!);
   const windows = new Set(om.patterns.map((p) => p.join(",")));
@@ -71,7 +71,7 @@ test("WFC: simple tiled solves with its constraints; overlapping reproduces the 
   }
 });
 
-test("WFC: contradictions are handled -- an impossible set says so, a hard one backtracks, the budget holds", () => {
+test("WFC: contradictions are handled -- an impossible set says so, a hard one backtracks, the step budget holds", () => {
   // Impossible: a tile that only fits next to a tile that doesn't exist.
   const bad = tiledModel([{ name: "a", weight: 1, edges: ["x", "y", "x", "z"] }]);
   const r1 = solveWfc(bad, { width: 4, height: 4, seed: 1 });
@@ -87,7 +87,7 @@ test("WFC: contradictions are handled -- an impossible set says so, a hard one b
   const hard = tiledModel(tiles);
   let backtracked = 0, solved = 0;
   for (let s = 0; s < 30; s += 1) {
-    const r = solveWfc(hard, { width: 10, height: 10, seed: s, budget: 400, constrain: (x, y) => (x === 0 || y === 0 || x === 9 || y === 9 ? [0] : null) });
+    const r = solveWfc(hard, { width: 10, height: 10, seed: s, constrain: (x, y) => (x === 0 || y === 0 || x === 9 || y === 9 ? [0] : null) });
     if (r.ok) solved += 1;
     backtracked += r.backtracks;
     // (Whatever happened, the grid has a tile everywhere.)
@@ -95,12 +95,29 @@ test("WFC: contradictions are handled -- an impossible set says so, a hard one b
   }
   assert.ok(solved >= 25, `${solved}/30 solved`);
   assert.ok(backtracked > 0, "some backtracking happened");
-  // The budget: a big grid with 1 ms stops on time with a best-effort grid.
-  const t0 = performance.now();
-  const r3 = solveWfc(tiledModel(DUNGEON_TILES), { width: 120, height: 120, seed: 3, budget: 1 });
-  assert.ok(performance.now() - t0 < 150, "stopped near its budget");
-  assert.equal(r3.reason, "budget");
+  // The budget: a big grid given 50 steps stops after exactly 50 with a best-effort grid -- the same grid every run.
+  const r3 = solveWfc(tiledModel(DUNGEON_TILES), { width: 120, height: 120, seed: 3, steps: 50 });
+  assert.equal(r3.reason, "steps");
+  assert.equal(r3.decisions + r3.backtracks, 50);
   assert.ok([...r3.grid].every((t) => t >= 0));
+  assert.deepEqual([...solveWfc(tiledModel(DUNGEON_TILES), { width: 120, height: 120, seed: 3, steps: 50 }).grid], [...r3.grid]);
+});
+
+test("WFC and the dungeons never read the clock: a clock racing ahead (a slow or busy machine) changes no map", () => {
+  // (WFC once stopped on a 250 ms budget: under the full parallel test run a crawl floor came out different --
+  // "wfc/crypt/d1: the key can't be reached" -- and passed on rerun. Its budget is steps now.)
+  const maps = (): string[] => [
+    ...["d1", "d2", "same"].map((s) => [...generateDungeon(`${s}-wfc`, 72, 54, { algorithm: "wfc", rooms: 10 }).cells].join("")),
+    wfcTown("town-1", 30, 24).plan.join("/"),
+  ];
+  const calm = maps();
+  const real = performance.now.bind(performance);
+  let skew = 0;
+  performance.now = () => (skew += 1000) + real();
+  try { assert.deepEqual(maps(), calm); } finally { performance.now = real; }
+  const realDate = Date.now;
+  Date.now = () => realDate() + (skew += 1000);
+  try { assert.deepEqual(maps(), calm); } finally { Date.now = realDate; }
 });
 
 test("WFC towns: roads and lots, the border quiet but for the way in", () => {

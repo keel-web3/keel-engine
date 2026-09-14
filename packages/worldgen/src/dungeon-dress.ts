@@ -25,6 +25,7 @@
 //             camera sees), braziers, candles, crystals, fungi, lava cracks,
 //             moon shafts through a ruin's roof, the key's glow, a sigil.
 
+import { datan2, dcos, dhypot, dsin } from "@keel-engine/core";
 import { CELL, wrapYaw } from "./dungeon.ts";
 import type { Dungeon } from "./dungeon.ts";
 import { hash01, rng, seedOf, value2 } from "./noise.ts";
@@ -361,6 +362,22 @@ export function dressDungeon(D: Dungeon, themeOrId: CrawlTheme | string = "crypt
   }
 
   // ---------------------------------------------------------------- stairs
+  // (Would blocking this cell cut the ground round it in two? Its open neighbours must still join round its ring.)
+  const RING_X = [0, 1, 1, 1, 0, -1, -1, -1], RING_Z = [-1, -1, 0, 1, 1, 1, 0, -1];
+  const ringCuts = (k: number, blockedNow: Uint8Array | null): boolean => {
+    const [i, j] = at(k);
+    const open = RING_X.map((dx, q) => { const a = i + dx, b = j + RING_Z[q]!; return inside(a, b) && (walkable(cells[b * w + a]!) || bridge[b * w + a] === 1) && !blockedNow?.[b * w + a]; });
+    let runs = 0;
+    for (let q = 0; q < 8; q += 1) {
+      if (!open[q] || open[(q + 7) % 8]) continue;
+      // (A run starts here: does it hold one of the four side neighbours?)
+      let side = false;
+      for (let r2 = q; open[r2 % 8] && r2 < q + 8; r2 += 1) if ((r2 % 8) % 2 === 0) side = true;
+      if (side) runs += 1;
+    }
+    if (open.every(Boolean)) return false;
+    return runs > 1;
+  };
   const stairsFor = (p: readonly [number, number], down: boolean): Stairs | null => {
     // Up: against the nearest wall the camera sees (+z, then +x); down: the mark's own cell, going away from the camera.
     if (down) return { i: p[0], j: p[1], dir: isWall(p[0], p[1] + 1) && !isWall(p[0] + 1, p[1]) ? 0 : 1 };
@@ -368,7 +385,8 @@ export function dressDungeon(D: Dungeon, themeOrId: CrawlTheme | string = "crypt
       for (let s = 0; s <= 4; s += 1) {
         const i = p[0] + DIR_X[dir]! * s, j = p[1] + DIR_Z[dir]! * s;
         if (!walkable(cellAt(i, j))) break;
-        if (isWall(i + DIR_X[dir]!, j + DIR_Z[dir]!) && s >= 1) return { i, j, dir };
+        // (The stairs up block their cell: never where that would cut the way out -- a small start room's only door.)
+        if (isWall(i + DIR_X[dir]!, j + DIR_Z[dir]!) && s >= 1 && !ringCuts(j * w + i, null)) return { i, j, dir };
       }
     }
     return null;
@@ -398,22 +416,7 @@ export function dressDungeon(D: Dungeon, themeOrId: CrawlTheme | string = "crypt
     lights.push({ x, y, z, kind, radius: L.radius * scale, colour: L.colour, strength: L.strength, flicker: L.flicker, speed: L.speed, seed: (seedOf(seed, `light${lights.length}`) >>> 8) / 16777216, prop, flame });
     return lights.length - 1;
   };
-  // (Would blocking this cell cut the ground round it in two? Its open neighbours must still join round its ring.)
-  const RING_X = [0, 1, 1, 1, 0, -1, -1, -1], RING_Z = [-1, -1, 0, 1, 1, 1, 0, -1];
-  const cuts = (k: number): boolean => {
-    const [i, j] = at(k);
-    const open = RING_X.map((dx, q) => { const a = i + dx, b = j + RING_Z[q]!; return inside(a, b) && (walkable(cells[b * w + a]!) || bridge[b * w + a] === 1) && !blocked[b * w + a]; });
-    let runs = 0;
-    for (let q = 0; q < 8; q += 1) {
-      if (!open[q] || open[(q + 7) % 8]) continue;
-      // (A run starts here: does it hold one of the four side neighbours?)
-      let side = false;
-      for (let r2 = q; open[r2 % 8] && r2 < q + 8; r2 += 1) if ((r2 % 8) % 2 === 0) side = true;
-      if (side) runs += 1;
-    }
-    if (open.every(Boolean)) return false;
-    return runs > 1;
-  };
+  const cuts = (k: number): boolean => ringCuts(k, blocked);
   const templatePins = (id: string): Record<string, string | number | boolean> => (id === "chest" ? { size: "large", build: "iron", state: "closed" } : id === "rubble" ? { form: "heap" } : id === "throne" ? { build: "iron", crown: "skulls" } : {});
   const put = (id: string, x: number, z: number, yaw0: number, room: number, wall: number, pins: Record<string, string | number | boolean> = {}, cell = -1): DressedProp | null => {
     const yaw = wrapYaw(yaw0);
@@ -423,7 +426,7 @@ export function dressDungeon(D: Dungeon, themeOrId: CrawlTheme | string = "crypt
     props.push(p);
     if (r.light) {
       const off = LIGHT_AT[r.light] ?? [0, 1, 0];
-      const c = Math.cos(yaw), s = Math.sin(yaw);
+      const c = dcos(yaw), s = dsin(yaw);
       const flame = r.light === "torch" || r.light === "brazier" || r.light === "candle" || r.light === "sconce";
       // (Candles on a table or an altar sit higher.)
       const y = id === "table" || id === "altar" ? 1.1 : off[1];
@@ -431,7 +434,7 @@ export function dressDungeon(D: Dungeon, themeOrId: CrawlTheme | string = "crypt
     }
     return p;
   };
-  const yawFacing = (dx: number, dz: number): number => Math.atan2(dx, dz);
+  const yawFacing = (dx: number, dz: number): number => datan2(dx, dz);
 
   // Spots in a room.
   interface Spot { k: number; dir: number }
@@ -660,7 +663,7 @@ export function dressDungeon(D: Dungeon, themeOrId: CrawlTheme | string = "crypt
         for (const k of freeCells.slice(0, 2)) onFloor("ore-cart", k, r.id, Rr, { load: Rr.pick(["ore", "glowing"]) }, 0.2, Rr.chance(0.5) ? 0 : Math.PI / 2);
         inCorners(["crate", "barrel"], 3); decals(["stain", "rubble", "bones"], count(r, 0.06));
         // A molten pool in the middle -- the forge's heart -- where it cuts no one off; and a channel of cracks.
-        { const ci = (r.i0 + r.i1) / 2 - 0.5, cj = (r.j0 + r.j1) / 2 - 0.5; const near = mids.slice().sort((a2, b2) => Math.hypot(at(a2)[0] - ci, at(a2)[1] - cj) - Math.hypot(at(b2)[0] - ci, at(b2)[1] - cj));
+        { const ci = (r.i0 + r.i1) / 2 - 0.5, cj = (r.j0 + r.j1) / 2 - 0.5; const near = mids.slice().sort((a2, b2) => dhypot(at(a2)[0] - ci, at(a2)[1] - cj) - dhypot(at(b2)[0] - ci, at(b2)[1] - cj));
           let m = 0; for (const k of near) { if (m >= 4) break; if (lane[k] || (used[k]! & 1) || cuts(k)) continue; cells[k] = CELL.WATER; floor[k] = FLOOR.LAVA; used[k] = used[k]! | 1; const [lx, lz] = centreOf(k); addLight("lava", lx, 0.4, lz, -1, false, 1.2); m += 1; } }
         const midJ = Math.floor((r.j0 + r.j1) / 2);
         for (const k of r.cells) { const cj = at(k)[1]; if (cj === midJ && !lane[k] && !(used[k]! & 1) && walkable(cells[k]!)) decor[k] = decor[k]! | DECOR.LAVA_CRACK; }

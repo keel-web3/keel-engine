@@ -24,6 +24,7 @@
 // checkDungeon() is the fairness gate: test/dungeon.test.ts runs it over a
 // thousand seeds of every generator.
 
+import { dhypot } from "@keel-engine/core";
 import { FLAG, WATER_NONE } from "@keel-engine/terrain";
 import type { TerrainTable } from "@keel-engine/terrain";
 import { createLayers } from "./map.ts";
@@ -79,8 +80,8 @@ export interface DungeonParams {
   readonly boss?: boolean;
   /** Room templates (rooms generator; default ROOM_TEMPLATES). */
   readonly templates?: readonly RoomTemplate[];
-  /** WFC: its time budget (ms). */
-  readonly budget?: number;
+  /** WFC: its step budget (decisions plus backtracks; default 8 x its macro cells). A count, never a clock. */
+  readonly wfcSteps?: number;
 }
 
 const isOpen = (c: number): boolean => c !== CELL.WALL && c !== CELL.PIT;
@@ -176,7 +177,7 @@ function bsp(w: number, d: number, R: Rng, P: DungeonParams): { cells: Uint8Arra
   const extra = Math.round(rooms.length * (P.loops ?? 0.25));
   for (let n = 0; n < extra && rooms.length > 2; n += 1) {
     const a = R.pick(rooms);
-    const near = rooms.filter((r) => r !== a).sort((p, q) => Math.hypot(p.x - a.x, p.y - a.y) - Math.hypot(q.x - a.x, q.y - a.y))[R.int(0, 1)]!;
+    const near = rooms.filter((r) => r !== a).sort((p, q) => dhypot(p.x - a.x, p.y - a.y) - dhypot(q.x - a.x, q.y - a.y))[R.int(0, 1)]!;
     const [ax, ay] = centre(a), [bx, by] = centre(near);
     carveL(cells, w, ax, ay, bx, by, R);
   }
@@ -495,7 +496,7 @@ function assignRoles(D: Dungeon, R: Rng, boss: boolean): void {
   let bk = -1, bd = Infinity;
   for (let k = 0; k < w * d; k += 1) {
     if (!pocket[k] || !walk(cells[k]!) || (k % w === D.exit[0] && Math.floor(k / w) === D.exit[1])) continue;
-    const dd = Math.hypot(k % w - sx / n, Math.floor(k / w) - sy / n);
+    const dd = dhypot(k % w - sx / n, Math.floor(k / w) - sy / n);
     if (dd < bd) { bd = dd; bk = k; }
   }
   D.boss = bk >= 0 ? at(bk) : D.exit;
@@ -537,7 +538,6 @@ export function generateDungeon(seed: string, w: number, d: number, params: Dung
 function generateOnce(seed: string, w: number, d: number, params: DungeonParams): Dungeon {
   const algorithm = params.algorithm ?? "rooms";
   const s = seedOf(seed, `dungeon:${algorithm}`);
-  const t0 = performance.now();
   let D: Dungeon | null = null;
   const boss = params.boss ?? true;
   if (algorithm === "rooms") {
@@ -559,7 +559,7 @@ function generateOnce(seed: string, w: number, d: number, params: DungeonParams)
     if (algorithm === "bsp") base = bsp(w, d, R, params);
     else if (algorithm === "cave") base = cave(w, d, R, params, s);
     else if (algorithm === "drunkard") base = drunkard(w, d, R, params);
-    else base = { cells: wfcDungeonCells(seed, w, d, params.budget ?? 250), rooms: [] };
+    else base = { cells: wfcDungeonCells(seed, w, d, params.wfcSteps), rooms: [] };
     D = { w, d, cells: base.cells, rooms: base.rooms, start: [0, 0], exit: [0, 0], key: null, boss: null, props: [], lights: [], algorithm, seed, stats: {} };
     // (Caves and walks: the biggest region is home; a room map: the rooms all join.)
     D.stats["tunnels"] = connect(D.cells, w, d);
@@ -579,7 +579,6 @@ function generateOnce(seed: string, w: number, d: number, params: DungeonParams)
     D.stats["tunnels"] = 0;
     torches(D, rng(s + 2), 9);
   }
-  D.stats["ms"] = performance.now() - t0;
   return D;
 }
 
@@ -682,7 +681,7 @@ export function dungeonLayers(D: Dungeon, types: TerrainTable, { i0 = 0, j0 = 0,
   // Light: torches pooled over an ambient floor (a sqrt falloff, so the pool has a soft rim).
   const light = new Float32Array(D.w * D.d).fill(theme.ambient);
   for (const [x, y, r] of D.lights) for (let j = Math.max(0, y - r); j <= Math.min(D.d - 1, y + r); j += 1) for (let i = Math.max(0, x - r); i <= Math.min(D.w - 1, x + r); i += 1) {
-    const q = Math.hypot(i - x, j - y) / r;
+    const q = dhypot(i - x, j - y) / r;
     if (q < 1) light[j * D.w + i] = Math.max(light[j * D.w + i]!, theme.ambient + (255 - theme.ambient) * (1 - q * q));
   }
   // (Wall tops are the dark between the rooms: their faces, lit from the floor beside them, are the walls you see.)

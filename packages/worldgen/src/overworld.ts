@@ -34,6 +34,7 @@
 // too), what needs neighbours: steep faces, ramps up the terraces (the best
 // candidate in a radius), the cave automaton's steps.
 
+import { dcos, dhypot, dpow, dsin } from "@keel-engine/core";
 import { FLAG, WATER_NONE, terrainTypes } from "@keel-engine/terrain";
 import type { TerrainTable } from "@keel-engine/terrain";
 import { DEFAULT_BIOMES, createBiomeTable } from "./biomes.ts";
@@ -159,7 +160,7 @@ export function createOverworld(seed: string, { params = {}, table = createBiome
     const inland = smooth(0.0, 0.3, C);
     const pv = 1 - Math.abs(3 * Math.abs(c.weirdness) - 2); // (peaks and valleys)
     const e = (c.erosion + 1) / 2;
-    const m = Math.max(0, pv * 0.5 + 0.5) ** 1.4 * (1 - e) ** 2 * 10 * P.relief * mtn * inland;
+    const m = dpow(Math.max(0, pv * 0.5 + 0.5), 1.4) * (1 - e) ** 2 * 10 * P.relief * mtn * inland;
     const hill = (fbm({ freq: 1 / 120, octaves: 3, gain: 0.45 }, i, j, detail) - 0.5) * 2.5 * amp * (0.35 + 0.65 * (1 - e));
     const landMask = C > -0.14 ? smooth(-0.14, 0.06, C) : 0;
     const shape = h;
@@ -167,7 +168,7 @@ export function createOverworld(seed: string, { params = {}, table = createBiome
     // River valleys: a river's level follows the land's SLOW shape (no hills, a third of the mountains), so its water
     // steps down rarely -- long flat reaches, now and then a fall -- and near its channel the ground falls toward it.
     const rb = table.list[near.first]!.rivers ?? 1;
-    const width = 0.02 * P.rivers * rb * (0.7 + 0.6 * (c.humidity + 1) / 2) * s ** -0.3;
+    const width = 0.02 * P.rivers * rb * (0.7 + 0.6 * (c.humidity + 1) / 2) * dpow(s, -0.3);
     let dv = 99, bank = 0;
     if (width > 0 && C > -0.12) {
       dv = Math.abs(riverF(i, j) - 0.5) / width;
@@ -194,7 +195,7 @@ export function createOverworld(seed: string, { params = {}, table = createBiome
       let level = Infinity;
       for (let q = 0; q < 14; q += 1) {
         const ang = (q / 14) * Math.PI * 2;
-        const x = Math.round(ci + Math.cos(ang) * r * 1.15), z = Math.round(cj + Math.sin(ang) * r * 1.15);
+        const x = Math.round(ci + dcos(ang) * r * 1.15), z = Math.round(cj + dsin(ang) * r * 1.15);
         level = Math.min(level, Math.floor(rawHeight(x, z, climateAt(x, z)).h));
       }
       if (level >= 1) out = { ci, cj, r, level };
@@ -210,7 +211,7 @@ export function createOverworld(seed: string, { params = {}, table = createBiome
       if (!L) continue;
       const dx = i - L.ci, dz = j - L.cj;
       const wob = 0.72 + 0.56 * fbm({ freq: 1 / 9, octaves: 2 }, i, j, lakeS + 5);
-      const q = Math.hypot(dx, dz) / (L.r * wob);
+      const q = dhypot(dx, dz) / (L.r * wob);
       if (q < 1) return { level: L.level, depth: q < 0.5 ? 2 : 1 };
     }
     return null;

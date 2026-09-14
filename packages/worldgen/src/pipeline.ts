@@ -28,6 +28,7 @@
 // twice gives the same tiles byte for byte; an infinite world's chunk is the
 // same whichever order the chunks are asked for (test/pipeline.test.ts).
 
+import { datan2, dhypot } from "@keel-engine/core";
 import { FLAG, WATER_NONE, terrainTypes } from "@keel-engine/terrain";
 import type { TerrainTable } from "@keel-engine/terrain";
 import { createSettings, parseLocks } from "@keel-engine/world";
@@ -172,7 +173,7 @@ export function maskFn(m: MaskSpec | undefined, seed: string, L: TileLayers, tab
     case "circle": {
       const f = m.feather ?? 0, s = seedOf(seed, "feather");
       return (i, j) => {
-        const q = Math.hypot(i + 0.5 - m.at[0], j + 0.5 - m.at[1]);
+        const q = dhypot(i + 0.5 - m.at[0], j + 0.5 - m.at[1]);
         return q < m.r + (f ? (fbm({ freq: 0.12, octaves: 2 }, i, j, s) - 0.5) * 2 * f : 0);
       };
     }
@@ -346,7 +347,6 @@ export interface WorldChunk {
   /** The chunk and an apron round it (world tiles [cx * C - apron, ...)). */
   readonly layers: TileLayers;
   readonly things: readonly WorldThing[];
-  readonly ms: number;
 }
 
 export interface WorldStream {
@@ -373,11 +373,10 @@ export function createWorldStream(recipe: WorldRecipe, opts: PipelineOptions = {
     recipe, table: sh.table, types: sh.types, chunkSize: C, overworld: ow,
     block,
     chunk(cx, cz, apron = 2) {
-      const t0 = performance.now();
       const map = block(cx * C - apron, cz * C - apron, C + 2 * apron, C + 2 * apron);
       // (Things belong to the chunk they stand in: each is in exactly one.)
       const own = map.things.filter((th) => { const ti = Math.floor(th.pos[0] / map.tileSize), tj = Math.floor(th.pos[2] / map.tileSize); return ti >= cx * C && tj >= cz * C && ti < (cx + 1) * C && tj < (cz + 1) * C; });
-      return { cx, cz, layers: map, things: own, ms: performance.now() - t0 };
+      return { cx, cz, layers: map, things: own };
     },
   };
 }
@@ -465,7 +464,9 @@ defineStage({
     const [a, b, c, d] = ctx.bounds;
     const w = c - a, h = d - b;
     const m = ctx.map;
-    const { plan } = wfcTown(ctx.seed, w, h, num(ctx.param("budget", 200), 200));
+    // (A step budget, never a clock: the same seed makes the same town on any machine. 0: the solver's default.)
+    const steps = num(ctx.param("steps", 0), 0);
+    const { plan } = wfcTown(ctx.seed, w, h, steps > 0 ? steps : undefined);
     const mid = (Math.floor((b + d) / 2) - m.j0) * m.w + Math.floor((a + c) / 2) - m.i0;
     const level = Math.max(1, m.height[mid] ?? 1);
     const road = ctx.types.id(ctx.param<string>("road", "path")), lot = ctx.types.id("dirt"), garden = ctx.types.id("moss");
@@ -484,7 +485,7 @@ defineStage({
         // (A house on its lot, facing the road beside it.)
         const DXF = [0, 1, 0, -1], DZF = [1, 0, -1, 0];
         const face = DXF.findIndex((dx, q) => plan[y + DZF[q]!]?.[x + dx] === "r");
-        const yaw = face >= 0 ? Math.atan2(DXF[face]!, DZF[face]!) : 0;
+        const yaw = face >= 0 ? datan2(DXF[face]!, DZF[face]!) : 0;
         m.things.push({ id: `${ctx.stage.id}:house-${x}-${y}`, kind: "building", pack: "packs/buildings", object: houses[Math.floor(hash01(i, j, 3) * houses.length)]!, pos: [(i + 0.5) * m.tileSize, level, (j + 0.5) * m.tileSize], yaw, scale: 1, footprint: [i, j, i + 1, j + 1], tags: ["house", "town"] });
         m.flags[k] = m.flags[k]! | FLAG.BLOCKED;
       }

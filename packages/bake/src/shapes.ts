@@ -34,7 +34,7 @@ import type { BakeBox, BakeWorld } from "./bake.ts";
 import type { ClipSpec, DesignSpec } from "./plan.ts";
 import type { IndexedSource } from "./indexed.ts";
 import { SLOTS } from "./indexed.ts";
-import { LOOK_ROLES, createRoll, deriveSeed, stream } from "@keel-engine/core";
+import { LOOK_ROLES, createRoll, datan2, dcos, deriveSeed, dhypot, dlog, dpow, dsin, stream } from "@keel-engine/core";
 import type { LookRole, Vec3 } from "@keel-engine/core";
 import { ACTION_PERIOD, LOCOMOTION, apply, clipOf, isAction, placeAttribute, poseSkeleton, skinOf, socketFrame, socketsOf } from "@keel-engine/entity";
 import type { AttributeShape, Capsule, EntitySocket, EntitySpec, Role, Skeleton, Worn } from "@keel-engine/entity";
@@ -155,7 +155,7 @@ const IDLE_PERIOD: Readonly<Record<string, number>> = { humanoid: 3.4, quadruped
 export function directionAxes(direction: number, directions: number, pitch: number): { right: Vec3; up: Vec3; forward: Vec3 } {
   const angle = (direction / directions) * Math.PI * 2;
   const yaw = -Math.PI - angle;
-  const sy = Math.sin(yaw), cy = Math.cos(yaw), sp = Math.sin(pitch), cp = Math.cos(pitch);
+  const sy = dsin(yaw), cy = dcos(yaw), sp = dsin(pitch), cp = dcos(pitch);
   const forward: Vec3 = [sy * cp, -sp, cy * cp];
   const right: Vec3 = [cy, 0, -sy];
   const up: Vec3 = [forward[1] * right[2] - forward[2] * right[1], forward[2] * right[0] - forward[0] * right[2], forward[0] * right[1] - forward[1] * right[0]];
@@ -222,10 +222,10 @@ export function bodyShape(spec: EntitySpec, options: BodyShapeOptions = {}): Bod
   const shapeText: string[] = [spec.plan, clips.map((c) => `${c.name}:${c.frames}`).join(",")];
   for (const c of clips) for (let f = 0; f < c.frames; f += 1) {
     const { capsules, world } = posed(c.name, f);
-    for (const k of capsules) { for (const p of [k.a, k.b]) { height = Math.max(height, p[1] + k.r); radius = Math.max(radius, Math.hypot(p[0], p[2]) + k.r); } shapeText.push(`${k.mat}:${geo(k).join(",")}`); }
+    for (const k of capsules) { for (const p of [k.a, k.b]) { height = Math.max(height, p[1] + k.r); radius = Math.max(radius, dhypot(p[0], p[2]) + k.r); } shapeText.push(`${k.mat}:${geo(k).join(",")}`); }
     for (const b of world.boxes ?? []) {
-      const e = Math.hypot(b.h[0] ?? 0, b.h[1] ?? 0, b.h[2] ?? 0);
-      height = Math.max(height, (b.c[1] ?? 0) + e); radius = Math.max(radius, Math.hypot(b.c[0] ?? 0, b.c[2] ?? 0) + e);
+      const e = dhypot(b.h[0] ?? 0, b.h[1] ?? 0, b.h[2] ?? 0);
+      height = Math.max(height, (b.c[1] ?? 0) + e); radius = Math.max(radius, dhypot(b.c[0] ?? 0, b.c[2] ?? 0) + e);
       shapeText.push(`b${b.mat}:${[b.c[0], b.c[1], b.c[2], b.h[0], b.h[1], b.h[2], b.yaw ?? 0].map((v) => r4(v ?? 0)).join(",")}`);
     }
   }
@@ -294,7 +294,7 @@ export function bodyShape(spec: EntitySpec, options: BodyShapeOptions = {}): Bod
             // (Around a part, what sits there wraps it: its near half is always in front. On a surface, it's in
             // front unless the surface faces well away from the camera.)
             data[o + 2] = sock.sits === "around" || -dot(out, ax.forward) > -0.35 ? 1 : 0;
-            data[o + 3] = Math.atan2(dot(upW, ax.right), dot(upW, ax.up));
+            data[o + 3] = datan2(dot(upW, ax.right), dot(upW, ax.up));
           });
         });
       }
@@ -325,9 +325,9 @@ export function bodyShape(spec: EntitySpec, options: BodyShapeOptions = {}): Bod
  * head; a finer ladder bakes more shapes for differences a pixel can't show).
  */
 export const SIZE_STEP = 1.2;
-const rung = (x: number): number => (x > 0 ? Math.round(SIZE_STEP ** Math.round(Math.log(x) / Math.log(SIZE_STEP)) * 1e5) / 1e5 : 0);
+const rung = (x: number): number => (x > 0 ? Math.round(dpow(SIZE_STEP, Math.round(dlog(x) / dlog(SIZE_STEP))) * 1e5) / 1e5 : 0);
 const dir = (v: ArrayLike<number>): [number, number, number] => {
-  const l = Math.hypot(v[0] ?? 0, v[1] ?? 0, v[2] ?? 0);
+  const l = dhypot(v[0] ?? 0, v[1] ?? 0, v[2] ?? 0);
   return l > 1e-9 ? [Math.round((v[0]! / l) * 10) / 10, Math.round((v[1]! / l) * 10) / 10, Math.round((v[2]! / l) * 10) / 10] : [0, 0, 0];
 };
 
@@ -369,7 +369,7 @@ export function attributeShape(def: AttributeDef<AttributeShape>, cls: SocketCla
   const boxes = design.boxes ?? [];
   let low = 0;
   for (const c of caps) low = Math.min(low, c.a[1] - c.r, c.b[1] - c.r);
-  for (const b of boxes) low = Math.min(low, b.c[1] - Math.hypot(b.h[0], b.h[1], b.h[2]));
+  for (const b of boxes) low = Math.min(low, b.c[1] - dhypot(b.h[0], b.h[1], b.h[2]));
   const lift = -low + 0.002;
   const roles = new Set<LookRole>();
   const role = (r: Role | undefined): Role => { const x = r ?? "primary"; roles.add(x as LookRole); return x; };
@@ -379,10 +379,10 @@ export function attributeShape(def: AttributeDef<AttributeShape>, cls: SocketCla
   };
   let height = 0, radius = 0;
   const text: string[] = [def.slot];
-  for (const c of world.capsules ?? []) { for (const p of [c.a, c.b]) { height = Math.max(height, p[1]! + c.r); radius = Math.max(radius, Math.hypot(p[0]!, p[2]!) + c.r); } text.push(`${c.mat}:${geo(c).join(",")}`); }
+  for (const c of world.capsules ?? []) { for (const p of [c.a, c.b]) { height = Math.max(height, p[1]! + c.r); radius = Math.max(radius, dhypot(p[0]!, p[2]!) + c.r); } text.push(`${c.mat}:${geo(c).join(",")}`); }
   for (const b of world.boxes ?? []) {
-    const e = Math.hypot(b.h[0]!, b.h[1]!, b.h[2]!);
-    height = Math.max(height, b.c[1]! + e); radius = Math.max(radius, Math.hypot(b.c[0]!, b.c[2]!) + e);
+    const e = dhypot(b.h[0]!, b.h[1]!, b.h[2]!);
+    height = Math.max(height, b.c[1]! + e); radius = Math.max(radius, dhypot(b.c[0]!, b.c[2]!) + e);
     text.push(`b${b.mat}:${[b.c[0], b.c[1], b.c[2], b.h[0], b.h[1], b.h[2], b.yaw].map((v) => r4(v ?? 0)).join(",")}`);
   }
   const key = `attr:${def.id}~${contentHash(text.join("|"))}`;

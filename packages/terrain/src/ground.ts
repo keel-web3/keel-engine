@@ -34,7 +34,7 @@
 // depth (16 bits, chunk-relative). A chunk bakes in slices (a job stepped a
 // few milliseconds a frame) or in one go (bakeChunk).
 
-import { fbm2, hash2, vnoise2 } from "@keel-engine/core";
+import { dcos, dsin, fbm2, hash2, vnoise2 } from "@keel-engine/core";
 import type { Vec3Like } from "@keel-engine/core";
 import { DX4, DZ4, FLAG, WATER_NONE } from "./types.ts";
 import type { TextureKind } from "./types.ts";
@@ -69,7 +69,8 @@ export interface ViewAxes {
 
 /** The pixel view's axes (exactly @keel-engine/bake pixelView's). */
 export function viewAxes({ yaw, pitch, pixelsPerMetre: k }: GroundView): ViewAxes {
-  const sy = Math.sin(yaw), cy = Math.cos(yaw), sp = Math.sin(pitch), cp = Math.cos(pitch);
+  // (dmath, as pixelView's: the ground's depth and a sprite's must agree to the bit, and picking reads them.)
+  const sy = dsin(yaw), cy = dcos(yaw), sp = dsin(pitch), cp = dcos(pitch);
   return { right: [cy, 0, -sy], up: [sp * sy, cp, sp * cy], forward: [sy * cp, -sp, cy * cp], k, sy, cy, sp, cp };
 }
 
@@ -104,7 +105,7 @@ export function spritePosition(a: ViewAxes, p: Vec3Like, out: [number, number, n
 /** How far a rectangle (half-extents hx along its x, hz along its z, turned by `yaw`) reaches toward the camera from its middle, along the view's heading. */
 export function footprintToward(a: ViewAxes, hx: number, hz: number, yaw = 0): number {
   // (The heading in the thing's own frame: its x and z axes' shares of it.)
-  const c = Math.cos(yaw), s = Math.sin(yaw);
+  const c = dcos(yaw), s = dsin(yaw);
   const ax = c * a.sy - s * a.cy, az = s * a.sy + c * a.cy;
   return Math.abs(hx * ax) + Math.abs(hz * az);
 }

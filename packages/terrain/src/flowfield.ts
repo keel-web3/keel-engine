@@ -15,6 +15,7 @@
 //   f.dist[k]          the integration value (UNREACHED where unreachable)
 //   steer(f, x, z, tileSize) -> [dx, dz]   a unit heading, blended across tiles
 
+import { dhypot } from "@keel-engine/core";
 import { DX8, DZ8 } from "./types.ts";
 import type { PathGrid } from "./pathing.ts";
 
@@ -168,7 +169,7 @@ export function steer(f: FlowField, x: number, z: number, tileSize: number, out:
   }
   // (The tile's own step wins when the blend cancels out or points somewhere it can't go.)
   if (hd < GOAL && sx * VX[hd]! + sz * VZ[hd]! <= 0.1) { sx = VX[hd]!; sz = VZ[hd]!; }
-  const L = Math.hypot(sx, sz);
+  const L = dhypot(sx, sz);
   if (L < 1e-9) { out[0] = 0; out[1] = 0; return out; }
   out[0] = sx / L; out[1] = sz / L;
   return out;

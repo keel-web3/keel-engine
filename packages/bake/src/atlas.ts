@@ -92,7 +92,7 @@ export function packAtlas(rects: readonly Rect[], { size = 2048, pad = 1, pow2 =
       break;
     }
   }
-  const up = (n: number) => (pow2 ? 2 ** Math.ceil(Math.log2(Math.max(1, n))) : n);
+  const up = (n: number) => (pow2 ? 2 ** (32 - Math.clz32(Math.ceil(Math.max(1, n)) - 1)) : n); // (the next power of two, in integers)
   const sized = pages.map((p) => ({ w: Math.min(size, up(p.w)), h: Math.min(size, up(p.h)) }));
   const total = sized.reduce((s, p) => s + p.w * p.h, 0);
   return { places, pages: sized, fill: total ? area / total : 0 };
