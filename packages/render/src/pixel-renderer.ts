@@ -25,7 +25,7 @@ import {
   FAR, FULLSCREEN_VS, MAX_BOXES, MAX_CAPS, MAX_COLOURS, MAX_MATERIALS, MAX_RAMPS, MAX_WEDGES, PALETTE_WIDTH,
   PIXEL_FS, POINTS_FS, POINTS_VS, SCREEN_TILE, SKY_MAT, WORLD_FS,
 } from "./shaders.ts";
-import { BAKE_WORLD_FS, DEPTH_FS, INDEX_FS, unpackDepth } from "./indexed.ts";
+import { BAKE_WORLD_FS, DEPTH_FS, HEIGHT_FS, INDEX_FS, unpackDepth } from "./indexed.ts";
 import { DEPTH_OUT_FS, DIRECT_PIXEL_FS, RASTER_FLOATS, RASTER_FS, RASTER_VS, boxTemplate, capsuleTemplate } from "./raster.ts";
 import type { DepthOut, RasterFrame, RasterMesh, RasterTemplate } from "./raster.ts";
 
@@ -189,6 +189,12 @@ export interface PixelRenderer {
   renderIndexed(options: RenderOptions & { readonly gap?: number | undefined; readonly split?: Vec3Like | undefined }): WebGLFramebuffer;
   /** The last renderIndexed picture (RGBA8, bottom row first): see indexed.ts's readIndexedPixel. */
   readIndexed(): Uint8Array;
+  /**
+   * Engine (depth sprites): right after renderIndexed, with the same camera, the height above the ground (y = 0) of
+   * the point each pixel shows, in sixteenths of a texel (`pixelsPerMetre` a metre) + 1 over R and G (indexed.ts HEIGHT_FS,
+   * unpackHeight), into the bake framebuffer (returned) -- over the index picture, so copy that first.
+   */
+  renderIndexedHeights(options: { readonly eye: Vec3Like; readonly target: Vec3Like; readonly fov?: number | undefined; readonly pixelsPerMetre: number; readonly eps?: number | undefined }): WebGLFramebuffer;
   /** Engine (raster.ts): a static mesh under a key, uploaded once (null removes it); a frame draws it by `raster.meshes`. */
   setMesh(key: string, mesh: RasterMesh | null): void;
   /** Engine: what the last frame rasterised. */
@@ -220,6 +226,7 @@ type PixelUniform =
   | "uData" | "uData2" | "uDepth" | "uPalette" | "uRamps" | "uScreenTex" | "uScreen" | "uDither" | "uTime" | "uOutline" | "uOutlineInk" | "uFog" | "uFogLook"
   | "uGlow" | "uGlowK" | "uVig" | "uScan" | "uCrt" | "uRim" | "uRimDir" | "uFlash" | "uFlashMats" | "uGrade" | "uCycle";
 type IndexUniform = "uData" | "uData2" | "uDepth" | "uGap";
+type HeightUniform = WorldUniform | "uData" | "uDepth" | "uScale" | "uEps";
 
 interface Program<N extends string> {
   p: WebGLProgram;
@@ -392,13 +399,13 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
   target(W, H);
 
   // ---- bake mode (indexed.ts): compiled the first time a bake asks, so a normal frame's GL calls never change.
-  interface Extra { world: Program<WorldUniform | "uSplit">; index: Program<IndexUniform>; depth: Program<"uDepth">; fb: WebGLFramebuffer; tex: WebGLTexture; w: number; h: number }
+  interface Extra { world: Program<WorldUniform | "uSplit">; index: Program<IndexUniform>; depth: Program<"uDepth">; height: Program<HeightUniform> | null; fb: WebGLFramebuffer; tex: WebGLTexture; w: number; h: number }
   let extra: Extra | null = null;
   function bakeMode(): Extra {
     if (!extra) {
       const bw = program<WorldUniform | "uSplit">(gl, FULLSCREEN_VS, BAKE_WORLD_FS);
       (["Boxes", "Wedges", "Capsules"] as const).forEach((name, i) => gl.uniformBlockBinding(bw.p, gl.getUniformBlockIndex(bw.p, name), i));
-      extra = { world: bw, index: program<IndexUniform>(gl, FULLSCREEN_VS, INDEX_FS), depth: program<"uDepth">(gl, FULLSCREEN_VS, DEPTH_FS), fb: gl.createFramebuffer(), tex: gl.createTexture(), w: 0, h: 0 };
+      extra = { world: bw, index: program<IndexUniform>(gl, FULLSCREEN_VS, INDEX_FS), depth: program<"uDepth">(gl, FULLSCREEN_VS, DEPTH_FS), height: null, fb: gl.createFramebuffer(), tex: gl.createTexture(), w: 0, h: 0 };
     }
     // (Its own picture, sized to the target: an RGBA8 texture the index and depth passes draw into.)
     if (extra.w !== W || extra.h !== H) {
@@ -726,6 +733,28 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
       return x.fb;
     },
     readIndexed() { return readTarget(bakeMode().fb, gl.COLOR_ATTACHMENT0); },
+    renderIndexedHeights({ eye, target: look, fov = 1.2, pixelsPerMetre, eps = 0 }) {
+      const x = bakeMode();
+      // (Compiled the first time a bake asks for heights: a bake without them never builds it. It marches the world's
+      // solids again -- pass 1's uniform blocks, still bound.)
+      if (!x.height) {
+        x.height = program<HeightUniform>(gl, FULLSCREEN_VS, HEIGHT_FS);
+        (["Boxes", "Wedges", "Capsules"] as const).forEach((name, i) => gl.uniformBlockBinding(x.height!.p, gl.getUniformBlockIndex(x.height!.p, name), i));
+      }
+      const hp = x.height;
+      const { forward: fwd, right, up } = cameraBasis(eye, look);
+      gl.disable(gl.DEPTH_TEST);
+      gl.useProgram(hp.p);
+      const L = hp.loc;
+      gl.uniform2f(L.uRes, W, H);
+      gl.uniform3fv(L.uEye, eye as unknown as Float32List); gl.uniform3fv(L.uFwd, fwd); gl.uniform3fv(L.uRight, right); gl.uniform3fv(L.uUp, up);
+      gl.uniform1f(L.uTan, Math.tan(fov / 2)); gl.uniform1f(L.uScale, pixelsPerMetre); gl.uniform1f(L.uEps, eps);
+      gl.uniform1i(L.uBoxes, nBoxes); gl.uniform1i(L.uWedges, nWedges); gl.uniform1i(L.uCaps, nCaps);
+      for (const blk of blocks) gl.bindBufferBase(gl.UNIFORM_BUFFER, blk.i, blk.buf);
+      pass(hp.p, x.fb, [[dataTex, L.uData], [depthTex, L.uDepth]]);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      return x.fb;
+    },
     setMesh(key, mesh) {
       const R = rasterMode();
       const old = R.meshes.get(key);

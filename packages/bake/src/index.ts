@@ -21,7 +21,10 @@ export { ACTION_BAKE_CLIPS, ENTITY_MATERIALS, HUMANOID_BAKE_CLIPS, QUADRUPED_BAK
 export type { ClipInfo, EntityDesign, EntityDesignOptions, WornAttribute } from "./entity-design.ts";
 
 // Indexed sprites (slot, shade, surface coordinate per texel), their looks, shapes and layering.
-export { EMPTY_TEXEL, SLOTS, SLOT_MAT, bakeIndexed, decodeTexel, encodeTexel, renderIndexedSprites, slotWorld, trimIndexed } from "./indexed.ts";
+export { EMPTY_TEXEL, HEIGHT_STEPS, SLOTS, SLOT_MAT, bakeIndexed, decodeHeight, decodeTexel, encodeHeight, encodeTexel, heightAt, renderIndexedSprites, slotWorld, trimIndexed } from "./indexed.ts";
+export { OCCLUSION_LAYERS, SPRITE_DEPTH_GLSL, anchorB, applyLayer, layerOf, overlayShows, anchorPixel, boundsRect, depthKappa, designBounds, pickSprite, pixelPoint, placedBounds, pointDepth, rowB, spriteRect, spriteTexelAt, texelDepth } from "./depth.ts";
+export type { DepthAxis, OcclusionLayer, PickSprite } from "./depth.ts";
+export { placeWorld, rayBox, rayCapsule, raycastWorld, rayWedge } from "./raycast.ts";
 export type { IndexedBakeRenderer, IndexedSource, IndexedSources, Texel } from "./indexed.ts";
 export { LOOKS_PER_ROW, LOOK_TEXELS, PAINTS_PER_ROW, PALETTE_ROW, createLookTable, paintRoles, paintSlots } from "./looks.ts";
 export type { LayerPaint, LookTable, SlotPaint } from "./looks.ts";

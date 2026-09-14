@@ -158,7 +158,9 @@ walk through:
    colour; the CUTAWAY (`"stub"`: front walls and walls near the hero sink to
    a 0.7 m stub; `"dither"`; `"off"`); the fog per cell; LIT SPRITES (keel's
    baked indexed sprites and look tables, 14 floats each, flags unlit /
-   unfogged / cut with walls / hero) standing as vertical cards; procedural
+   unfogged / cut with walls, standing / hero) as DEPTH SPRITES -- each texel at the
+   depth of the point it shows (keel/bake depth.ts; a card at its anchor
+   without heights); procedural
    FLAMES; banded CONTACT SHADOWS; the hero's ring and an x-ray silhouette
    when a wall hides him; the abyss under chasms. keel/particles adds embers,
    smoke and each act's motes.
@@ -168,6 +170,21 @@ Four acts, each its own palette, tiles, props (their look profiles live in
 torches, bone and candles), **cave** (rough brown rock, cyan crystals and
 fungus, no torches), **forge** (black basalt, bronze, lava cracks and molten
 pools, embers), **ruin** (weathered sandstone, moss, roots, green motes).
+
+### Occlusion in the crawl
+
+The crawl draws by the engine's one model (docs/ARCHITECTURE.md "Occlusion and
+layers"). Before it, a sprite stood as a vertical CARD at its anchor: every
+texel below the anchor's picture row lay under the floor, so the floor hid it --
+the front half of every sarcophagus, table and chest (the ones with the lid off
+lost the lid lying beside them), and a unit's front foot in every stride. Depth
+sprites fix both by construction. A prop against a front wall the cutaway sinks:
+hung on it (torch, banner, chains, roots, cobweb: flag 4) it goes with the wall;
+standing before it (bookshelf, weapon rack, statue, furnace: flags 4 + 16) it's
+cut at the stub by each texel's height -- it used to vanish whole.
+
+`tools/occlusion-check.html` (`node packages/worldgen/tools/build.mjs`) is the
+gate: see the table under Measured.
 
 ## Pipelines
 
@@ -225,6 +242,25 @@ back -- the ground's decals (tufts, flowers) carry them there.
 | biome table | 28 biomes | 2,301 bytes packed |
 | dungeon crawl frame, 1920 x 1080 native, cutaway on, all revealed: bsp 96 x 72 at density 1.6 -- 1,223 props, 323 lights (311 flames flickering), 30 mobs, 48,686 quads, ~300 particles (Apple M4 Max, Chrome) | 24 / 32 / 48 px/m, GPU finished | **0.8-1.6 ms median, 0.9-2.6 p95** over two runs (max 2.9) -- 120 fps needs 8.3; the CPU step under 0.1 ms |
 | crawl floor: generate + dress + scene | 64 x 48 | ~90-320 ms; baking its ~1,000 sprites 280-330 ms (once per zoom level) |
+| the same crawl frame with depth sprites (2026-09-14, bsp 96 x 72 at density 1.6: 1,144 props, 332 lights, 30 mobs, 46,584 quads, 1920 x 1080) | 24 / 32 / 48 px/m, GPU finished | **1.0 / 1.0-1.2 / 0.9-1.6 ms median, p95 <= 1.9** (the committed renderer, same scene: 1.1 / 1.0 / 0.9, p95 <= 1.6); heights off in the new renderer 1.0 / 0.9 / 0.9 |
+| baking the crawl's 1,211 sprites with heights | 16 / 32 / 48 px/m | 508 / 661 / 893 ms (without: 359 / 517 / 695: +28-41 %, once per zoom level); height planes 0.9 / 3.4 / 7.8 MB (two bytes a texel: half the colour pages') |
+
+### The occlusion gate (`tools/occlusion-check.html`, 2026-09-14)
+
+False-hidden / false-visible sprite pixels, card depth (before) -> depth sprites (after); the pass mark 0.1 % each.
+
+| scene | judged pixels | before | after |
+| --- | --- | --- | --- |
+| dungeon (crypt), every state: cutaway stub / dither / off x fog visible / explored x doors shut / open; 16 24 32 48 px/m x 30 deg and 0.7 rad; 3 rooms each; the dressing and 28 more props and walking bodies against walls and doors | 2,669,732 | 23.7 % / 1.22 % | **0.009 % / 0.0001 %** |
+| per state (stub, dither, off) | | 22.7 / 24.4 / 24.6 % false-hidden | 0.010 / 0.008 / 0.009 % |
+| per place: dressing / back wall / front wall / door | | 28.8 / 21.2 / 12.3 / 18.4 % | 0.011 / 0.009 / 0.004 / 0.000 % |
+| the four acts at 24 px/m (crypt, cave, forge, ruin) | 167-215 k each | 17.4-21.7 % / 0.8-3.1 % | 0.000-0.007 % / 0.000 % |
+| terrain, GPU ground: cliff tops and feet, ramps, flats; 4 zooms x 2 pitches x 2 yaws | 441,936 | 16.2 % / 0.37 % | **0.005 % / 0.000 %** |
+| terrain, CPU ground (16, 24 px/m, 2 pitches) | 49,899 | 16.8 % / 1.8 % | 0.004 % / 0.014 % |
+| walk: every body across the floor kinds (room, corridor, rug, puddle, moss, doorway), 8 stride frames | 9,548 foot texels (under 12 cm) over 736 frames | 3,547 hidden (35-39 %; worst frame 100 %) | **1 hidden** (cave) |
+
+Not judged, too close to call (within the tie and a sixteenth-texel height step, or two things touching): 0.4 % of
+the dungeon's pixels, 0.3 % of the terrain's.
 
 Coverage over 6,000 x 6,000 tiles (seed "coverage"): ocean 19%, taiga 10%,
 warm ocean 9%, forest 9%, frozen ocean 9%, cold steppe 8%, beach 8%, plains

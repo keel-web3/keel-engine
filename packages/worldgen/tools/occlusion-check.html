@@ -1,0 +1,16 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Occlusion check</title>
+<style>body{margin:8px;background:#0c0d10;color:#cfd3e6;font:12px ui-monospace,monospace}pre{margin:6px 0;white-space:pre-wrap}</style>
+<canvas id="c" style="image-rendering:pixelated;width:960px"></canvas><canvas id="t" style="image-rendering:pixelated;width:960px"></canvas><canvas id="b" style="width:960px"></canvas><pre id="out">idle: globalThis.occlusion.run({ ks, pitches, frames, heatmaps })</pre>
+<script type="module">
+  import { bench, run, runTerrain } from "./dist/occlusion-check.js";
+  const out = document.getElementById("out");
+  const log = (s) => { out.textContent += "\n" + s; console.log(s); };
+  globalThis.occlusion = { run: (o = {}) => run(document.getElementById("c"), { log, ...o }), terrain: (o = {}) => runTerrain(document.getElementById("t"), { log, ...o }), bench: (o = {}) => bench(document.getElementById("b"), o) };
+  const q = new URLSearchParams(location.search);
+  if (q.has("run")) {
+    try { globalThis.occlusionResults = await globalThis.occlusion.run({ ks: q.get("ks")?.split(",").map(Number), frames: Number(q.get("frames") ?? 2) }); log(JSON.stringify(globalThis.occlusionResults.totals)); }
+    catch (e) { log(String(e && e.stack || e)); globalThis.occlusionError = String(e && e.stack || e); }
+  }
+</script>

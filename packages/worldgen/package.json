@@ -10,12 +10,18 @@
   "dependencies": {
     "@keel-engine/runtime": "workspace:*",
     "@keel-engine/core": "workspace:*",
+    "@keel-engine/bake": "workspace:*",
     "@keel-engine/codec": "workspace:*",
     "@keel-engine/terrain": "workspace:*",
     "@keel-engine/world": "workspace:*",
     "@keel-engine/level": "workspace:*"
   },
   "devDependencies": {
-    "@keel-engine/import": "workspace:*"
+    "@keel-engine/import": "workspace:*",
+    "@keel-engine/object": "workspace:*",
+    "@keel-engine/render": "workspace:*",
+    "@keel-engine/dungeon": "workspace:*",
+    "@keel-engine/humans": "workspace:*",
+    "@keel-engine/animals": "workspace:*"
   }
 }

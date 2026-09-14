@@ -168,8 +168,8 @@ export interface SpriteStreamOptions {
   readonly pageSize?: number;
   /** The atlas opened pages: the texture array needs this many layers of `size`². */
   readonly onPages?: (pages: number, size: number) => void;
-  /** A sprite's texels go here (upload them). */
-  readonly onWrite?: (rect: ShelfRect, rgba: Uint8Array) => void;
+  /** A sprite's texels go here (upload them) -- and its height plane, a depth sprite's (indexed.ts). */
+  readonly onWrite?: (rect: ShelfRect, rgba: Uint8Array, heights?: Uint8Array) => void;
 }
 
 export interface StreamStats {
@@ -532,7 +532,7 @@ export function createSpriteStream(options: SpriteStreamOptions): SpriteStream {
       while (!at && evictFor(rank)) at = atlas.alloc(sprite.w, sprite.h);
       if (!at) { st[s] = 0; full = true; return false; }
       if (atlas.pages > pagesSeen) { pagesSeen = atlas.pages; onPages?.(pagesSeen, pageSize); }
-      onWrite?.(at, sprite.rgba);
+      if (sprite.heights) onWrite?.(at, sprite.rgba, sprite.heights); else onWrite?.(at, sprite.rgba);
       const r = rects[si]!;
       r[s * 7] = at.x; r[s * 7 + 1] = at.y; r[s * 7 + 2] = sprite.w; r[s * 7 + 3] = sprite.h; r[s * 7 + 4] = sprite.ax; r[s * 7 + 5] = sprite.ay; r[s * 7 + 6] = at.page;
       st[s] = 2; groupBaked[si]![slotGroup[s]!]! += 1; bakedCount[si]! += 1;

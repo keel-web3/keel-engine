@@ -25,14 +25,28 @@
 //   FOG        per cell: in sight, remembered (dimmed), never seen (black),
 //              sampled soft and dithered at its edges.
 //   SPRITES    indexed sprites (keel/bake's LayerInstances layout, its look
-//              tables) lit per texel from the light map, depth as a card
-//              standing at its anchor (so a tall bookshelf in front of a wall
-//              is never cut by it).
+//              tables) lit per texel from the light map. DEPTH SPRITES
+//              (keel/bake depth.ts): each texel at the depth of the point it
+//              shows, from its baked height -- the floor never hides what
+//              stands on it, a wall hides exactly the part of a prop behind
+//              it. A sprite baked without heights stands as a card at its
+//              anchor, as before.
+//   LAYERS     (docs/ARCHITECTURE.md "Occlusion and layers") the abyss; the
+//              surfaces (floors at the floor plane, walls and caps as their
+//              cutaway state leaves them: stub moves the geometry, dither
+//              drops fragments -- depth goes with the colour, never ghost
+//              depth); contact shadows and the hero's ring (floor decals:
+//              depth-tested, never written, never over a thing); sprites
+//              (depth-tested, written); the hero's silhouette where walls
+//              hide him (the one overlay drawn through walls); flames (tested,
+//              not written). Fog is a colour pass inside each shader, never
+//              depth.
 //   FLAMES     procedural pixel flames (torch, brazier, candle, magic) and
 //              moon shafts, flickering with their lights.
 //   ABYSS      the void below: rubble far down, drifting mist, a forge's
 //              molten glow, depth-shaded.
 
+import { HEIGHT_STEPS, SPRITE_DEPTH_GLSL, applyLayer } from "@keel-engine/bake";
 import { CRAWL_RAMPS, RAMP_LENGTH, crawlPalette } from "./crawl-themes.ts";
 import type { CrawlTheme } from "./crawl-themes.ts";
 import type { DungeonDressing } from "./dungeon-dress.ts";
@@ -50,7 +64,12 @@ export interface DungeonDrawView {
 }
 /** keel/bake's look-table layout constants (its SLOTS, LOOKS_PER_ROW, LOOK_TEXELS, PAINTS_PER_ROW, PALETTE_ROW). */
 export interface LookLayout { readonly slots: number; readonly looksPerRow: number; readonly lookTexels: number; readonly paintsPerRow: number; readonly paletteRow: number }
-/** Sprites: keel/bake's LayerInstances floats (x y z, u0 v0 w h, ax ay, page, look, flags, scale, dissolve). Flags: 1 unlit (glows), 2 unfogged, 4 cut with the walls (a prop on a wall the cutaway sinks), 8 the hero (inked outline, lifted). */
+/**
+ * Sprites: keel/bake's LayerInstances floats (x y z, u0 v0 w h, ax ay, page, look, flags, scale, dissolve). Flags: 1
+ * unlit (glows), 2 unfogged, 4 cut with the walls (a prop on a wall the cutaway sinks: hung on it, it goes with the
+ * wall; with 16 too it stands on the floor against it, and is cut at the stub as the wall is), 8 the hero (inked
+ * outline, lifted).
+ */
 export const LIT_SPRITE_FLOATS = 14;
 
 export interface DungeonDrawOptions {
@@ -75,6 +94,14 @@ export interface DungeonDrawOptions {
   readonly silhouette?: number;
   /** Light scale (1 as the theme says). */
   readonly exposure?: number;
+  /** Depth sprites (keel/bake depth.ts): texels at the depth of what they show (default on when the pages carry heights). */
+  readonly heights?: boolean;
+  /**
+   * Checks (tools/occlusion-check): `ids` draws every sprite pixel as its index + 1 (24 bits over RGB; surfaces 0,
+   * no abyss, shadows, flames); `surfaceDepth` draws the surfaces alone, each pixel its depth (24 bits over RGB, the
+   * clear 0); `depthTest: false` draws the sprites over everything (the no-depth reference).
+   */
+  readonly debug?: { readonly ids?: boolean; readonly surfaceDepth?: boolean; readonly depthTest?: boolean };
 }
 
 export interface DungeonRenderer {
@@ -82,14 +109,15 @@ export interface DungeonRenderer {
   setTheme(theme: CrawlTheme): void;
   /** Move a light (a prop's flame found after building it); re-cuts its mask. Call before draw; cheap for a few. */
   moveLight(index: number, x: number, y: number, z: number): void;
-  setPages(pages: ReadonlyArray<{ readonly width: number; readonly height: number; readonly rgba: Uint8Array }>): void;
+  /** The atlas pages (keel/bake's), with their height planes for depth sprites. */
+  setPages(pages: ReadonlyArray<{ readonly width: number; readonly height: number; readonly rgba: Uint8Array; readonly heights?: Uint8Array | undefined }>): void;
   setLooks(t: { readonly palette: { readonly width: number; readonly height: number; readonly rgba: Uint8Array }; readonly paints: { readonly width: number; readonly height: number; readonly data: Uint32Array }; readonly looks: { readonly width: number; readonly height: number; readonly data: Uint32Array } }): void;
   /** The fog (a byte a cell, 0..255), or null: all in sight. */
   setFog(fog: Uint8Array | null): void;
   /** Where the hero is (world x, z): his light's mask is re-cut when he's moved a quarter metre. */
   setHero(x: number, z: number): void;
   draw(view: DungeonDrawView, opts: DungeonDrawOptions): void;
-  readonly stats: { quads: number; lights: number; flames: number; sprites: number; heroMasks: number; lightmap: string };
+  readonly stats: { quads: number; lights: number; flames: number; sprites: number; heroMasks: number; lightmap: string; heightBytes: number };
   readonly gl: WebGL2RenderingContext;
 }
 
@@ -287,6 +315,7 @@ uniform sampler2D uLiquid;         // per cell, blended: pool or lava (its shore
 uniform float uLava;
 uniform sampler2D uAo;             // per half metre: how shut in by walls (contact shade)
 uniform vec2 uAoScale;
+uniform float uIds;                // checks: 1 surfaces draw as 0, 2 as their depth (24 bits over RGB; see DungeonDrawOptions.debug)
 ${SHADE}
 in vec3 vPos;
 in vec2 vFace;
@@ -298,6 +327,11 @@ flat in vec4 vC;
 in float vCut;
 out vec4 outColor;
 ${COMMON}
+// (What a surface writes: its colour, or for the checks 0 or its depth -- see DungeonDrawOptions.debug.)
+vec4 surfaceOut(vec3 c) {
+  if (uIds > 1.5) { uint v = uint(clamp(gl_FragCoord.z, 0.0, 1.0) * 16777215.0 + 0.5); return vec4(float(v >> 16u) / 255.0, float((v >> 8u) & 255u) / 255.0, float(v & 255u) / 255.0, 1.0); }
+  return uIds > 0.5 ? vec4(0.0, 0.0, 0.0, 1.0) : vec4(c, 1.0);
+}
 struct Surf { int row; float t; float emit; };
 Surf S(int row, float t) { return Surf(row, clamp(t, 0.0, 1.0), 0.0); }
 Surf E(int row, float t) { return Surf(row, clamp(t, 0.0, 1.0), 1.0); }
@@ -718,7 +752,7 @@ void main() {
     float top = 1.0 + sqrt(max(0.0, 0.55 - u * u)) * 0.6;
     if (abs(u) > 0.74 || y > top) discard;
     bool rim = abs(u) > 0.62 || y > top - 0.1;
-    outColor = vec4(rim ? palRow(R_TRIM, 3.0) : palRow(R_ABYSS, 0.0) * 0.5, 1.0);
+    outColor = surfaceOut(rim ? palRow(R_TRIM, 3.0) : palRow(R_ABYSS, 0.0) * 0.5);
     return;
   }
   else if (mat == M_BRIDGE) {
@@ -789,7 +823,7 @@ void main() {
   vec3 c = litEntry(o.row, o.t, o.emit, L * (0.2 + 0.8 * below), vis, dth);
   if (below < 1.0) c = mix(uAbyssFog, c, below * below);
 
-  outColor = vec4(c, 1.0);
+  outColor = surfaceOut(c);
 }`;
 
 // ---------------------------------------------------------------- the abyss (a full-screen pass, drawn first)
@@ -847,6 +881,8 @@ flat out int vLook;
 flat out vec3 vAnchor;
 flat out float vFlags;
 flat out float vFade;
+flat out vec4 vDS;                             // depth sprites: the anchor's depth (m), its metres up the picture, its rect's height (texels), scale
+flat out int vId;
 void main() {
   vec3 d = aPos - uCenter;
   vec2 anchor = floor(vec2(uSize.x * 0.5 + dot(d, uRight) * uK, uSize.y * 0.5 - dot(d, uUp) * uK) + 0.5);
@@ -861,6 +897,8 @@ void main() {
   vOff = vec2((px.x - anchor.x) / uK, h);
   vLook = int(floor(aExtra.y + 0.5));
   vAnchor = aPos; vFlags = aExtra.z; vFade = aFade;
+  vDS = vec4(dot(d, uForward), dot(d, uUp), aRect.w, s);
+  vId = gl_InstanceID;
 }`;
   const fs = `#version 300 es
 precision highp float;
@@ -875,6 +913,11 @@ uniform vec3 uRight; uniform vec3 uForward;
 uniform float uTime;
 uniform vec2 uFocus; uniform vec2 uHead; uniform vec2 uLat; uniform float uCutMode; uniform float uStub;
 uniform vec4 uSil;                              // a silhouette pass: its colour, on
+uniform highp sampler2DArray uHeights;          // depth sprites: a height per texel (keel/bake indexed.ts: two bytes)
+uniform int uHeightOn;
+uniform int uIds;                               // checks: every pixel its sprite's index + 1
+uniform int uIdBase;
+uniform float uK; uniform vec2 uSize; uniform float uDepthRange; uniform vec3 uUp;
 ${SHADE}
 in vec3 vUv;
 in vec2 vOff;
@@ -882,8 +925,12 @@ flat in int vLook;
 flat in vec3 vAnchor;
 flat in float vFlags;
 flat in float vFade;
+flat in vec4 vDS;
+flat in int vId;
 out vec4 outColor;
 ${COMMON}
+${SPRITE_DEPTH_GLSL}
+vec4 idColour() { int id = vId + uIdBase + 1; return vec4(float(id & 255) / 255.0, float((id >> 8) & 255) / 255.0, float((id >> 16) & 255) / 255.0, 1.0); }
 vec4 lpal(int i) { return texelFetch(uLookPal, ivec2(i % ${L.paletteRow}, i / ${L.paletteRow}), 0); }
 uint paintOf(int look, int slot) { uvec4 t = texelFetch(uLooks, ivec2((look % ${L.looksPerRow}) * ${L.lookTexels} + slot / 4, look / ${L.looksPerRow}), 0); int k = slot & 3; return k == 0 ? t.x : k == 1 ? t.y : k == 2 ? t.z : t.w; }
 uvec4 paintTexel(uint p, int k) { int i = int(p); return texelFetch(uPaints, ivec2((i % ${L.paintsPerRow}) * 2 + k, i / ${L.paintsPerRow}), 0); }
@@ -901,21 +948,40 @@ void main() {
   ivec2 fc = ivec2(gl_FragCoord.xy);
   float dth = bayer4(fc) - 0.5;
   if (vFade > 0.0 && bayer4(fc) < vFade) discard;
-  // (A prop on a wall the cutaway sinks goes down with it: above the stub it's gone, its edge dithered.)
+  vec4 c = texelFetch(uPages, ivec3(ivec2(vUv.xy), int(vUv.z + 0.5)), 0);
+  // Depth: the point this texel shows (its baked height: metres above the anchor), or the card's without one.
+  float hy = vOff.y;
+  float z = gl_FragCoord.z;
+  if (uHeightOn == 1) {
+    vec2 hb = texelFetch(uHeights, ivec3(ivec2(vUv.xy), int(vUv.z + 0.5)), 0).rg * 255.0;
+    float hv = floor(hb.r + 0.5) * 256.0 + floor(hb.g + 0.5);
+    if (hv > 0.5) {
+      hy = (hv - 1.0) / ${HEIGHT_STEPS.toFixed(1)} * vDS.w / uK;
+      float fragB = (gl_FragCoord.y - uSize.y * 0.5) / uK;
+      // (A tie with the floor under it goes to the thing: 2 mm.)
+      z = clamp(0.5 + (spriteTexelDepth(vDS.x, vDS.y, fragB, hy, uUp.y, -uForward.y, 1.0) - 0.002) / uDepthRange, 0.0, 1.0);
+    }
+  }
+  gl_FragDepth = z;
+  // (A prop on a wall the cutaway sinks goes down with it -- by the height of each texel, as the wall's own top.)
   if (uCutMode > 0.5 && mod(floor(vFlags / 4.0), 2.0) > 0.5) {
     vec2 d = vAnchor.xz - uFocus;
     vec2 e = vec2(dot(d, uLat) / 6.5, (dot(d, uHead) + 3.3) / 3.8);
-    // (Sunk to a stub, a front wall keeps nothing that hung on it: a stump of a banner reads as a black box.)
-    if (uCutMode < 1.5) discard;
-    float cut = 1.0 - smoothstep(0.72, 1.0, length(e));
-    if (cut > 0.0 && vOff.y > uStub + (1.0 - cut) * 3.2 + (bayer4(fc) - 0.5) * 0.25) discard;
+    bool stands = mod(floor(vFlags / 16.0), 2.0) > 0.5;
+    // (Sunk to a stub, a front wall keeps nothing that hung on it -- a stump of a banner reads as a black box; what
+    // stands on the floor against it is cut where the stub is.)
+    if (uCutMode < 1.5) { if (!stands || hy > uStub) discard; }
+    else {
+      float cut = 1.0 - smoothstep(0.72, 1.0, length(e));
+      if (cut > 0.0 && hy > uStub + (1.0 - cut) * 3.2 + (bayer4(fc) - 0.5) * 0.25) discard;
+    }
   }
-  vec4 c = texelFetch(uPages, ivec3(ivec2(vUv.xy), int(vUv.z + 0.5)), 0);
   if (uSil.a > 0.5) {
     // (Behind a wall: every other pixel of him in one pale colour, his outline solid.)
     bool on = vLook < 0 ? c.a >= 0.5 : (int(c.r * 255.0 + 0.5) & 63) != 0;
-    // (Not his feet: the floor he stands on hides their soles, and that's no wall.)
-    if (!on || vOff.y < 0.35) discard;
+    // (Depth sprites: the floor he stands on never hides him, so only walls and what's before him call this. A card
+    // without heights: not his feet -- the floor hid their soles, and that's no wall.)
+    if (!on || (uHeightOn == 0 && vOff.y < 0.35)) discard;
     bool rim = vLook >= 0 && (int(c.r * 255.0 + 0.5) & 128) != 0;
     if (!rim && ((fc.x + fc.y) & 1) == 0) discard;
     outColor = vec4(uSil.rgb * (rim ? 1.0 : 0.8), 1.0);
@@ -933,6 +999,7 @@ void main() {
   float vis = mod(floor(vFlags / 2.0), 2.0) > 0.5 ? 1.0 : max(fogAt(lp), fogAt(at.xz));
   if (vLook < 0) {
     if (c.a < 0.5) discard;
+    if (uIds == 1) { outColor = idColour(); return; }
     float lum = max(Lc.r, max(Lc.g, Lc.b));
     outColor = vec4(c.rgb * (unlit ? vec3(1.0) : Lc / max(lum, 1e-4) * min(lum, 1.6)) * vis, 1.0);
     return;
@@ -973,7 +1040,7 @@ void main() {
   vec3 col = lpal(base + idx).rgb * tint;
   if (hero && edge) col *= 0.35;
   if (!glow && lum * vis < 0.16) col *= 0.55 + lum * vis * 2.8;
-  outColor = vec4(col * clamp(vis * 3.5, 0.0, 1.0), 1.0);
+  outColor = uIds == 1 ? idColour() : vec4(col * clamp(vis * 3.5, 0.0, 1.0), 1.0);
 }`;
   return { vs, fs };
 }
@@ -1152,7 +1219,7 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
 
   const tex2d = (filter: number) => { const t = gl.createTexture()!; gl.bindTexture(gl.TEXTURE_2D, t); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE); return t; };
   const palTex = tex2d(gl.NEAREST), fogTex = tex2d(gl.LINEAR), maskTex = tex2d(gl.LINEAR), lightTex = tex2d(gl.LINEAR), decorTex = tex2d(gl.LINEAR), aoTex = tex2d(gl.LINEAR), liquidTex = tex2d(gl.LINEAR);
-  let lookPal: WebGLTexture | null = null, looksTex: WebGLTexture | null = null, paintsTex: WebGLTexture | null = null, pages: WebGLTexture | null = null;
+  let lookPal: WebGLTexture | null = null, looksTex: WebGLTexture | null = null, paintsTex: WebGLTexture | null = null, pages: WebGLTexture | null = null, heights: WebGLTexture | null = null;
   const floatOk = !!gl.getExtension("EXT_color_buffer_float");
   const lightFbo = gl.createFramebuffer()!;
   let lightW = 0, lightH = 0;
@@ -1188,7 +1255,7 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
 
   const api: DungeonRenderer = {
     gl,
-    stats: { quads: 0, lights: 0, flames: 0, sprites: 0, heroMasks: 0, lightmap: "" },
+    stats: { quads: 0, lights: 0, flames: 0, sprites: 0, heroMasks: 0, lightmap: "", heightBytes: 0 },
     setTheme(t) {
       theme = t;
       const pal = crawlPalette(t);
@@ -1294,6 +1361,20 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
       list.forEach((p, i) => gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, p.width, p.height, 1, gl.RGBA, gl.UNSIGNED_BYTE, p.rgba));
       gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      // (Depth sprites: the height planes, an RG8 array beside the pages.)
+      if (heights) { gl.deleteTexture(heights); heights = null; }
+      api.stats.heightBytes = 0;
+      if (list.some((p) => p.heights)) {
+        heights = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D_ARRAY, heights);
+        gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.RG8, w, h, list.length);
+        gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+        list.forEach((p, i) => gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, p.width, p.height, 1, gl.RG, gl.UNSIGNED_BYTE, p.heights ?? new Uint8Array(p.width * p.height * 2)));
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+        api.stats.heightBytes = w * h * list.length * 2;
+      }
     },
     setLooks({ palette, paints, looks: lk }) {
       const up = (old: WebGLTexture | null, t: { width: number; height: number; data: Uint32Array }) => { if (old) gl.deleteTexture(old); const x = tex2d(gl.NEAREST); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32UI, t.width, t.height, 0, gl.RGBA_INTEGER, gl.UNSIGNED_INT, t.data); return x; };
@@ -1328,6 +1409,8 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
       if (!scene || !dress || !theme) return;
       const s = scene, th = theme;
       const { time } = opts;
+      const surfaceDepth = !!opts.debug?.surfaceDepth;
+      const ids = !!opts.debug?.ids || surfaceDepth;
       const W = view.width, H = view.height, k = view.pixelsPerMetre;
       const ax = view.axes;
       const range = (Math.max(W, H) / k) * 4;
@@ -1358,7 +1441,7 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
       gl.enable(gl.DEPTH_TEST);
       gl.depthFunc(gl.LEQUAL);
       gl.depthMask(true);
-      gl.clearColor(th.abyss.fog[0], th.abyss.fog[1], th.abyss.fog[2], 1);
+      if (ids) gl.clearColor(0, 0, 0, 1); else gl.clearColor(th.abyss.fog[0], th.abyss.fog[1], th.abyss.fog[2], 1);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       const view3 = (u: (n: string) => WebGLUniformLocation | null) => {
         gl.uniform3f(u("uCenter"), view.center[0], view.center[1], view.center[2]);
@@ -1385,7 +1468,7 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
       // The abyss.
       gl.depthMask(false);
       gl.useProgram(P.abyss.p);
-      {
+      if (!ids) {
         const u = P.abyss.u;
         view3(u);
         gl.uniform1f(u("uDepth"), s.abyss);
@@ -1398,7 +1481,7 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
         gl.bindVertexArray(abyssVao);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       }
-      gl.depthMask(true);
+      applyLayer(gl, "ground"); // (floors, then the walls and doors: "objects", the same rule)
       // Surfaces.
       const focus = opts.focus ?? null;
       const cutMode = !focus || opts.cutaway === "off" ? 0 : opts.cutaway === "dither" ? 2 : 1;
@@ -1424,6 +1507,7 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
         gl.uniform1f(u("uLava"), th.liquid === "lava" ? 1 : 0);
         gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, aoTex); gl.uniform1i(u("uAo"), 4);
         gl.uniform2f(u("uAoScale"), 1 / (s.w * tile), 1 / (s.d * tile));
+        gl.uniform1f(u("uIds"), surfaceDepth ? 2 : ids ? 1 : 0);
         gl.bindVertexArray(quadVao);
         gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, quadCount);
         // Doors: their leaves, turned by their angles.
@@ -1437,10 +1521,10 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
       }
       // Contact shadows: under the characters and the big props, dithered, multiplied onto the floor.
       const sh = opts.shadows;
-      if (sh && sh.count) {
+      if (sh && sh.count && !ids) {
         gl.useProgram(P.shadow.p);
         view3(P.shadow.u);
-        gl.depthMask(false);
+        applyLayer(gl, "decals");
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.ZERO, gl.SRC_COLOR);
         gl.bindBuffer(gl.ARRAY_BUFFER, shadowBuf);
@@ -1456,12 +1540,12 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
           gl.uniform1f(P.shadow.u("uRing"), 1);
           gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, 1);
         }
-        gl.depthMask(true);
+        applyLayer(gl, "objects");
       }
       // Sprites.
       const spr = opts.sprites;
       api.stats.sprites = spr?.count ?? 0;
-      if (spr && spr.count && pages && lookPal && looksTex && paintsTex) {
+      if (spr && spr.count && pages && lookPal && looksTex && paintsTex && !surfaceDepth) {
         gl.useProgram(P.sprite.p);
         const u = P.sprite.u;
         view3(u);
@@ -1476,30 +1560,36 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
         gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, lookPal); gl.uniform1i(u("uLookPal"), 4);
         gl.activeTexture(gl.TEXTURE5); gl.bindTexture(gl.TEXTURE_2D, looksTex); gl.uniform1i(u("uLooks"), 5);
         gl.activeTexture(gl.TEXTURE6); gl.bindTexture(gl.TEXTURE_2D, paintsTex); gl.uniform1i(u("uPaints"), 6);
+        const hOn = !!heights && opts.heights !== false;
+        gl.activeTexture(gl.TEXTURE7); gl.bindTexture(gl.TEXTURE_2D_ARRAY, hOn ? heights : null); gl.uniform1i(u("uHeights"), 7);
+        gl.uniform1i(u("uHeightOn"), hOn ? 1 : 0);
+        gl.uniform1i(u("uIds"), ids ? 1 : 0);
+        gl.uniform1i(u("uIdBase"), 0);
+        applyLayer(gl, "objects");
+        if (opts.debug?.depthTest === false) gl.depthFunc(gl.ALWAYS);
         gl.bindBuffer(gl.ARRAY_BUFFER, spriteBuf);
         if (spr.count > spriteCap) { spriteCap = Math.max(capacity, spr.count); gl.bufferData(gl.ARRAY_BUFFER, spriteCap * LIT_SPRITE_FLOATS * 4, gl.DYNAMIC_DRAW); }
         gl.bufferSubData(gl.ARRAY_BUFFER, 0, spr.data, 0, spr.count * LIT_SPRITE_FLOATS);
         gl.uniform4f(u("uSil"), 0, 0, 0, 0);
         gl.bindVertexArray(spriteVao);
         gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, spr.count);
+        applyLayer(gl, "objects");
         // The hero where a wall hides him: a pale silhouette through it.
         const si = opts.silhouette ?? -1;
-        if (si >= 0 && si < spr.count) {
+        if (si >= 0 && si < spr.count && !ids) {
           gl.bindBuffer(gl.ARRAY_BUFFER, silBuf);
           gl.bufferSubData(gl.ARRAY_BUFFER, 0, spr.data, si * LIT_SPRITE_FLOATS, LIT_SPRITE_FLOATS);
           gl.uniform4f(u("uSil"), 0.62, 0.72, 0.95, 1);
-          gl.depthFunc(gl.GREATER);
-          gl.depthMask(false);
+          applyLayer(gl, "through");
           gl.bindVertexArray(silVao);
           gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, 1);
-          gl.depthFunc(gl.LEQUAL);
-          gl.depthMask(true);
+          applyLayer(gl, "objects");
           gl.uniform4f(u("uSil"), 0, 0, 0, 0);
         }
       }
       // Flames and shafts (no depth written: a flame never hides what's behind its glow).
-      if (flameCount && opts.lights !== false) {
-        gl.depthMask(false);
+      if (flameCount && opts.lights !== false && !ids) {
+        applyLayer(gl, "translucent");
         gl.useProgram(P.flame.p);
         const u = P.flame.u;
         view3(u);
@@ -1511,7 +1601,7 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
         gl.uniform1f(u("uRemembered"), th.remembered);
         gl.bindVertexArray(flameVao);
         gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, flameCount);
-        gl.depthMask(true);
+        applyLayer(gl, "objects");
       }
       gl.bindVertexArray(null);
       gl.activeTexture(gl.TEXTURE0);

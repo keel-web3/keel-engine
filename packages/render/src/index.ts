@@ -24,7 +24,7 @@ export { DEPTH_OUT_FS, DIRECT_MAT, DIRECT_PIXEL_FS, RASTER_FLOATS, RASTER_FS, RA
 export type { DepthOut, RasterContext, RasterFrame, RasterLook, RasterMesh, RasterTemplate } from "./raster.ts";
 
 // Bake mode: pass 1 with surface coordinates, and the index pass the baker reads instead of colours.
-export { BAKE_WORLD_FS, DEPTH_FS, INDEX_FS, INDEX_MAX_MATERIAL, readIndexedPixel, unpackDepth } from "./indexed.ts";
+export { BAKE_WORLD_FS, DEPTH_FS, HEIGHT_FS, INDEX_FS, INDEX_MAX_MATERIAL, readIndexedPixel, unpackDepth, unpackHeight } from "./indexed.ts";
 export type { IndexedPixel } from "./indexed.ts";
 
 // A pixel-art sky for perspective views: a gradient and flat pixel clouds, from a raster hook.

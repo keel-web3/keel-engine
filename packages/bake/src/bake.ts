@@ -28,6 +28,7 @@
 
 import { packAtlas } from "./atlas.ts";
 import type { PackOptions } from "./atlas.ts";
+import type { IndexedBakeRenderer } from "./indexed.ts";
 import type { SpriteJob } from "./plan.ts";
 import type { AtlasPage } from "./sprites.ts";
 
@@ -85,6 +86,8 @@ export interface BakeSpriteOptions {
   readonly time?: number;
   /** Called as sprites are read back: how many are done of how many. */
   readonly onProgress?: (done: number, total: number) => void;
+  /** Depth sprites (indexed.ts, depth.ts): a height plane with every sprite (needs keel/render's renderIndexedHeights). */
+  readonly heights?: boolean;
 }
 
 /** A baked sprite: its trimmed pixels (RGBA, top row first; alpha 255 on the design, 0 off it) and its anchor. */
@@ -96,6 +99,8 @@ export interface BakedSprite {
   readonly ax: number;
   readonly ay: number;
   readonly rgba: Uint8Array;
+  /** Depth sprites (indexed.ts): a height per texel, two bytes each (w x h x 2), or none. */
+  readonly heights?: Uint8Array | undefined;
 }
 
 export interface BakeStats {
@@ -193,7 +198,7 @@ export function keyColourFor(colours: ReadonlyArray<ArrayLike<number>>): number 
  * `topDown`; `key` (0xRRGGBB) is the background; (ox, oy) is the origin's
  * pixel in the picture (top-down). Returns the sprite, top row first.
  */
-export function trimSprite(key: string, src: Uint8Array, srcWidth: number, sx: number, sy: number, w: number, h: number, keyColour: number, ox: number, oy: number, topDown = false): BakedSprite {
+export function trimSprite(key: string, src: Uint8Array, srcWidth: number, sx: number, sy: number, w: number, h: number, keyColour: number, ox: number, oy: number, topDown = false, heights: Uint8Array | null = null): BakedSprite {
   const kr = (keyColour >> 16) & 255, kg = (keyColour >> 8) & 255, kb = keyColour & 255;
   // (Row i of the picture, top-down, in the source.)
   const rowAt = (i: number) => (topDown ? sy + i : sy + h - 1 - i);
@@ -211,6 +216,8 @@ export function trimSprite(key: string, src: Uint8Array, srcWidth: number, sx: n
   if (x1 < 0) return { key, w: 1, h: 1, ax: ox, ay: oy, rgba: new Uint8Array(4) }; // (nothing there: one clear pixel, anchored)
   const tw = x1 - x0 + 1, th = y1 - y0 + 1;
   const rgba = new Uint8Array(tw * th * 4);
+  // (Depth sprites: keel/render's HEIGHT_FS bytes at the same place -- 0 where a halo fell outside the design: no height.)
+  const plane = heights ? new Uint8Array(tw * th * 2) : null;
   for (let i = 0; i < th; i += 1) {
     let o = (rowAt(y0 + i) * srcWidth + sx + x0) * 4;
     let d = i * tw * 4;
@@ -218,9 +225,10 @@ export function trimSprite(key: string, src: Uint8Array, srcWidth: number, sx: n
       const r = src[o]!, g = src[o + 1]!, b = src[o + 2]!;
       if (r === kr && g === kg && b === kb) continue;
       rgba[d] = r; rgba[d + 1] = g; rgba[d + 2] = b; rgba[d + 3] = 255;
+      if (plane) { plane[(i * tw + x) * 2] = heights![o]!; plane[(i * tw + x) * 2 + 1] = heights![o + 1]!; }
     }
   }
-  return { key, w: tw, h: th, ax: ox - x0, ay: oy - y0, rgba };
+  return plane ? { key, w: tw, h: th, ax: ox - x0, ay: oy - y0, rgba, heights: plane } : { key, w: tw, h: th, ax: ox - x0, ay: oy - y0, rgba };
 }
 
 // ---------------------------------------------------------------- atlases
@@ -238,12 +246,18 @@ export interface BakeAtlas {
 export function atlasOf(sprites: Iterable<BakedSprite>, { size = 2048, pad = 1, pow2 = false }: PackOptions = {}): BakeAtlas {
   const list = [...sprites].sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
   const packed = packAtlas(list, { size, pad, pow2 });
-  const pages: AtlasPage[] = packed.pages.map((p) => ({ width: Math.max(1, p.w), height: Math.max(1, p.h), rgba: new Uint8Array(Math.max(1, p.w) * Math.max(1, p.h) * 4) }));
+  // (Depth sprites: when any sprite carries heights every page carries a height plane; a sprite without them leaves 0s -- drawn as before.)
+  const withHeights = list.some((s) => s.heights);
+  const pages: AtlasPage[] = packed.pages.map((p) => {
+    const w = Math.max(1, p.w), h = Math.max(1, p.h);
+    return withHeights ? { width: w, height: h, rgba: new Uint8Array(w * h * 4), heights: new Uint8Array(w * h * 2) } : { width: w, height: h, rgba: new Uint8Array(w * h * 4) };
+  });
   const out = new Map<string, SpriteRect>();
   list.forEach((s, i) => {
     const pl = packed.places[i]!;
     const page = pages[pl.page]!;
     for (let y = 0; y < s.h; y += 1) page.rgba.set(s.rgba.subarray(y * s.w * 4, (y + 1) * s.w * 4), ((pl.y + y) * page.width + pl.x) * 4);
+    if (s.heights && page.heights) for (let y = 0; y < s.h; y += 1) page.heights.set(s.heights.subarray(y * s.w * 2, (y + 1) * s.w * 2), ((pl.y + y) * page.width + pl.x) * 2);
     out.set(s.key, { page: pl.page, x: pl.x, y: pl.y, w: s.w, h: s.h, ax: s.ax, ay: s.ay });
   });
   return { pages, sprites: out, fill: packed.fill };
@@ -291,8 +305,21 @@ export function renderSprites(renderer: BakeRenderer, jobs: readonly SpriteJob[]
   gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, staging, 0);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  // (Depth sprites: the heights pass into a second staging texture, when asked and the renderer can.)
+  const hr = options.heights ? (renderer as Partial<IndexedBakeRenderer>) : null;
+  if (hr && typeof hr.renderIndexedHeights !== "function") throw new Error("This renderer can't bake heights (renderIndexedHeights): keel/render's createPixelRenderer can.");
+  let hStaging: WebGLTexture | null = null, hfb: WebGLFramebuffer | null = null;
+  if (hr) {
+    hStaging = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, hStaging);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, S, S);
+    hfb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, hfb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, hStaging, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
   gl.activeTexture(prevUnit);
-  let readBuf = new Uint8Array(0);
+  let readBuf = new Uint8Array(0), hBuf = new Uint8Array(0);
 
   interface Slot { job: SpriteJob; x: number; y: number; w: number; h: number; ox: number; oy: number; key: number }
   let pending: Slot[] = [];
@@ -307,11 +334,16 @@ export function renderSprites(renderer: BakeRenderer, jobs: readonly SpriteJob[]
     if (readBuf.length < S * used * 4) readBuf = new Uint8Array(S * used * 4);
     gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
     gl.readPixels(0, 0, S, used, gl.RGBA, gl.UNSIGNED_BYTE, readBuf);
+    if (hfb) {
+      if (hBuf.length < S * used * 4) hBuf = new Uint8Array(S * used * 4);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, hfb);
+      gl.readPixels(0, 0, S, used, gl.RGBA, gl.UNSIGNED_BYTE, hBuf);
+    }
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     const r1 = now();
     readMs += r1 - r0;
     for (const s of pending) {
-      const sprite = trimSprite(s.job.key, readBuf, S, s.x, s.y, s.w, s.h, s.key, s.ox, s.oy);
+      const sprite = trimSprite(s.job.key, readBuf, S, s.x, s.y, s.w, s.h, s.key, s.ox, s.oy, false, hfb ? hBuf : null);
       kept += sprite.w * sprite.h;
       baked.push(sprite);
     }
@@ -353,6 +385,14 @@ export function renderSprites(renderer: BakeRenderer, jobs: readonly SpriteJob[]
       gl.bindTexture(gl.TEXTURE_2D, staging);
       gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
       gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, cx, cy, 0, 0, cam.width, cam.height);
+      if (hr && hStaging) {
+        const hf = hr.renderIndexedHeights!({ eye: cam.eye, target: cam.target, fov: cam.fov, pixelsPerMetre: job.pixelsPerMetre, eps: compensate ? cam.eps : 0 });
+        gl.activeTexture(gl.TEXTURE0 + 7);
+        gl.bindTexture(gl.TEXTURE_2D, hStaging);
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, hf);
+        gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, cx, cy, 0, 0, cam.width, cam.height);
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+      }
       pending.push({ job, x: cx, y: cy, w: cam.width, h: cam.height, ox: cam.ox, oy: cam.oy, key });
       rendered += cam.width * cam.height;
       cx += cam.width;
@@ -362,6 +402,8 @@ export function renderSprites(renderer: BakeRenderer, jobs: readonly SpriteJob[]
   flush();
   gl.deleteFramebuffer(fb);
   gl.deleteTexture(staging);
+  if (hfb) gl.deleteFramebuffer(hfb);
+  if (hStaging) gl.deleteTexture(hStaging);
   const ms = now() - t0;
   const stats: BakeStats = { sprites: baked.length, designs, ms, drawMs: ms - readMs - trimMs, readMs, trimMs, rendered, kept, dropped };
   return { baked, stats };

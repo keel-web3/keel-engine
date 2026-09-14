@@ -180,10 +180,14 @@ a paint (biome swap, creep): ground.touch(chunks)   // tiles only; a season: gpu
   stand-in of last resort, never dropped), and a chunk's last complete layer is kept as its stand-in until its new scale
   lands. Plan it with the SHOWN picture at the bake's scale (`width x bakeK / shownK`): zooming in, the target rung is
   finer than the k on screen.
-- **Sprites are depth-tested in the ground's own projection** (the sprite renderer's formula, the frame's view), and a
-  sprite's depth is its FOOTPRINT's front edge: `spritePosition(axes, p, out, footprint)` (`footprintToward(axes, hx,
-  hz, yaw)` for a rectangle). A sprite is one depth; at its middle, the front half of a wide base -- a building's walls
-  -- sank into the ground in front of the middle. Checked (`tools/ground-checks.html`): box buildings on flat ground at
+- **Sprites are depth-tested in the ground's own projection** (the sprite renderer's formula, the frame's view), placed
+  by `spritePosition(axes, p)` at their ground point's depth. DEPTH SPRITES (keel/bake, docs/ARCHITECTURE.md "Occlusion
+  and layers") then give every texel the depth of the point it shows (the layer renderer's `depth: "ground"`): a wide
+  base, a stride's front foot, a house's walls stand on the ground and a cliff's edge in front still hides what's below
+  it, per pixel -- checked by keel/worldgen's `tools/occlusion-check.html` (`runTerrain`: cliff tops and feet, ramps,
+  flats; GPU and CPU ground). The footprint (`spritePosition(axes, p, out, footprint)`, `footprintToward`) is for
+  sprites baked without heights: one depth, its footprint's front edge. (At its middle, the front half of a wide base
+  sank into the ground in front of it.) Checked (`tools/ground-checks.html`): box buildings on flat ground at
   4 to 128 px/m, both pitches: 0 pixels hidden with the footprint (the middle's: 15-89 %), over the GPU ground, the
   CPU's own scale and its 2 px/m stand-ins alike; a fast sweep 128 -> 2 -> 128 px/m in 40 frames with the pitch bucket
   switching: the GPU ground 100 % every frame, two CPU bakers as games had them 0 %, with the floor 99.2 % minimum.

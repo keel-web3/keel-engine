@@ -28,6 +28,21 @@
 // Patterns ride the part (the surface coordinate is the part's own), so stripes
 // stay on a sleeve through a walk cycle instead of sliding across the sprite;
 // they restart at each part's edge (every capsule and box has its own 0..1).
+//
+// DEPTH SPRITES (engine): baked with `heights`, a sprite also carries a HEIGHT
+// per texel (BakedSprite.heights, the atlas pages' `heights`: two bytes a texel,
+// high then low): how far above its ground anchor the point that texel shows is. In the engine's orthographic
+// pitched view a texel's pixel and its height fix the point exactly (its ray
+// meets that height once), so the draw gives every texel the depth of the point
+// it shows -- walls, the ground, other sprites hide exactly what's behind them,
+// and the ground under a thing never hides it (a height >= 0 is on or above the
+// ground its pixel's ray meets). docs/ARCHITECTURE.md "Occlusion and layers".
+//
+//   0              no height: the sprite draws as it did (its anchor's depth)
+//   1..65535       the height in sixteenths of a texel, plus one (up to 4095
+//                  texels: 32 m at 128 px/m) -- a sixteenth of a pixel's worth
+//                  of height, at any size: exact on the ground, exact against
+//                  a wall a prop is hung on
 
 import { atlasOf } from "./bake.ts";
 import type { BakedSprite, BakeRenderer, BakeSpriteOptions, BakeStats, BakeWorld, BakeAtlas } from "./bake.ts";
@@ -44,6 +59,19 @@ export const SLOTS = 32;
 export const SLOT_MAT = 0;
 /** An empty texel. */
 export const EMPTY_TEXEL = 0;
+
+/** Depth sprites: a height's steps a texel (a sixteenth of a texel each). */
+export const HEIGHT_STEPS = 16;
+/** A texel's height (texels above its anchor's ground) as its 16-bit value (1..65535; see the top of this file). */
+export function encodeHeight(texels: number): number {
+  return Math.min(65535, 1 + Math.round(Math.max(0, texels) * HEIGHT_STEPS));
+}
+/** A height value back to texels above the anchor's ground (NaN for 0: no height). */
+export function decodeHeight(value: number): number {
+  return value === 0 ? NaN : (value - 1) / HEIGHT_STEPS;
+}
+/** Texel i's height value in a plane (two bytes a texel, high then low). */
+export const heightAt = (plane: Uint8Array, i: number): number => (plane[i * 2]! << 8) | plane[i * 2 + 1]!;
 
 /** One indexed texel. */
 export interface Texel {
@@ -80,6 +108,8 @@ export type IndexedSources = ReadonlyMap<string, IndexedSource> | ((design: stri
 /** The renderer the indexed bake draws through (`createPixelRenderer` from @keel-engine/render has it). */
 export interface IndexedBakeRenderer extends BakeRenderer {
   renderIndexed(options: { eye: readonly [number, number, number]; target: readonly [number, number, number]; fov?: number; time?: number; sun?: readonly [number, number, number]; waterY?: number; fogNear?: number; fogFar?: number; gap?: number; split?: readonly [number, number, number] | undefined }): WebGLFramebuffer | null;
+  /** Depth sprites: after renderIndexed, each pixel's height in sixteenths of a texel + 1 over R (high) and G (low) (keel/render HEIGHT_FS). */
+  renderIndexedHeights?(options: { eye: readonly [number, number, number]; target: readonly [number, number, number]; fov?: number; pixelsPerMetre: number; eps?: number }): WebGLFramebuffer | null;
 }
 
 // Every slot's material is the same grey ramp at full light: the shade is the renderer's own lightness.
@@ -101,7 +131,7 @@ export function slotWorld(world: BakeWorld): BakeWorld {
  * at (sx, sy) in a `srcWidth`-wide RGBA buffer, rows bottom first (as GL reads them) unless `topDown`; (ox, oy) is
  * the origin's pixel in the picture (top-down).
  */
-export function trimIndexed(key: string, src: Uint8Array, srcWidth: number, sx: number, sy: number, w: number, h: number, ox: number, oy: number, topDown = false): BakedSprite {
+export function trimIndexed(key: string, src: Uint8Array, srcWidth: number, sx: number, sy: number, w: number, h: number, ox: number, oy: number, topDown = false, heights: Uint8Array | null = null): BakedSprite {
   const rowAt = (i: number) => (topDown ? sy + i : sy + h - 1 - i);
   let x0 = w, y0 = h, x1 = -1, y1 = -1;
   for (let i = 0; i < h; i += 1) {
@@ -117,6 +147,8 @@ export function trimIndexed(key: string, src: Uint8Array, srcWidth: number, sx: 
   if (x1 < 0) return { key, w: 1, h: 1, ax: ox, ay: oy, rgba: new Uint8Array(4) };
   const tw = x1 - x0 + 1, th = y1 - y0 + 1;
   const rgba = new Uint8Array(tw * th * 4);
+  // (Depth sprites: `heights` holds HEIGHT_FS's bytes at the same place -- the plane's own two bytes a texel.)
+  const plane = heights ? new Uint8Array(tw * th * 2) : null;
   for (let i = 0; i < th; i += 1) {
     let o = (rowAt(y0 + i) * srcWidth + sx + x0) * 4;
     let d = i * tw * 4;
@@ -125,9 +157,10 @@ export function trimIndexed(key: string, src: Uint8Array, srcWidth: number, sx: 
       if (!(r & 128)) continue;
       const slot = Math.max(0, Math.min(SLOTS - 1, (r & 31) - SLOT_MAT));
       rgba[d] = (slot + 1) | (r & 32 ? 64 : 0) | (r & 64 ? 128 : 0); rgba[d + 1] = src[o + 1]!; rgba[d + 2] = src[o + 2]!; rgba[d + 3] = src[o + 3]!;
+      if (plane) { plane[(i * tw + x) * 2] = heights![o]!; plane[(i * tw + x) * 2 + 1] = heights![o + 1]!; }
     }
   }
-  return { key, w: tw, h: th, ax: ox - x0, ay: oy - y0, rgba };
+  return plane ? { key, w: tw, h: th, ax: ox - x0, ay: oy - y0, rgba, heights: plane } : { key, w: tw, h: th, ax: ox - x0, ay: oy - y0, rgba };
 }
 
 const now = (): number => (globalThis.performance ? performance.now() : Date.now());
@@ -137,9 +170,12 @@ const now = (): number => (globalThis.performance ? performance.now() : Date.now
  * renderSprites, but no palette, no style, no key colour: slots, shades and surface coordinates. The renderer is
  * the baker's for the duration (give it one of its own).
  */
-export function renderIndexedSprites(renderer: IndexedBakeRenderer, jobs: readonly SpriteJob[], sources: IndexedSources, options: Omit<BakeSpriteOptions, "style" | "fx"> & { readonly gap?: number } = {}): { baked: BakedSprite[]; stats: BakeStats } {
+export function renderIndexedSprites(renderer: IndexedBakeRenderer, jobs: readonly SpriteJob[], sources: IndexedSources, options: Omit<BakeSpriteOptions, "style" | "fx"> & { readonly gap?: number; readonly heights?: boolean } = {}): { baked: BakedSprite[]; stats: BakeStats } {
   const t0 = now();
   const { margin = 3, compensate = true, time = 0, onProgress, gap = 0.56 } = options;
+  // (Depth sprites: a height per texel, from a second pass into a second staging texture -- when the renderer can.)
+  const heights = !!options.heights && typeof renderer.renderIndexedHeights === "function";
+  if (options.heights && !heights) throw new Error("This renderer can't bake heights (renderIndexedHeights): keel/render's createPixelRenderer can.");
   const gl = renderer.gl;
   const maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE) as number;
   const S = Math.min(options.staging ?? 2048, maxTex);
@@ -169,8 +205,18 @@ export function renderIndexedSprites(renderer: IndexedBakeRenderer, jobs: readon
   gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, staging, 0);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  let hStaging: WebGLTexture | null = null, hfb: WebGLFramebuffer | null = null;
+  if (heights) {
+    hStaging = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, hStaging);
+    gl.texStorage2D(gl.TEXTURE_2D, 1, gl.RGBA8, S, S);
+    hfb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, hfb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, hStaging, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
   gl.activeTexture(prevUnit);
-  let readBuf = new Uint8Array(0);
+  let readBuf = new Uint8Array(0), hBuf = new Uint8Array(0);
 
   interface Slot { job: SpriteJob; x: number; y: number; w: number; h: number; ox: number; oy: number }
   let pending: Slot[] = [];
@@ -184,11 +230,16 @@ export function renderIndexedSprites(renderer: IndexedBakeRenderer, jobs: readon
     if (readBuf.length < S * used * 4) readBuf = new Uint8Array(S * used * 4);
     gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
     gl.readPixels(0, 0, S, used, gl.RGBA, gl.UNSIGNED_BYTE, readBuf);
+    if (hfb) {
+      if (hBuf.length < S * used * 4) hBuf = new Uint8Array(S * used * 4);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, hfb);
+      gl.readPixels(0, 0, S, used, gl.RGBA, gl.UNSIGNED_BYTE, hBuf);
+    }
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     const r1 = now();
     readMs += r1 - r0;
     for (const s of pending) {
-      const sprite = trimIndexed(s.job.key, readBuf, S, s.x, s.y, s.w, s.h, s.ox, s.oy);
+      const sprite = trimIndexed(s.job.key, readBuf, S, s.x, s.y, s.w, s.h, s.ox, s.oy, false, hfb ? hBuf : null);
       kept += sprite.w * sprite.h;
       baked.push(sprite);
     }
@@ -220,6 +271,14 @@ export function renderIndexedSprites(renderer: IndexedBakeRenderer, jobs: readon
       gl.bindFramebuffer(gl.READ_FRAMEBUFFER, from);
       gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, cx, cy, 0, 0, cam.width, cam.height);
       gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+      if (hStaging) {
+        const hf = renderer.renderIndexedHeights!({ eye: cam.eye, target: cam.target, fov: cam.fov, pixelsPerMetre: job.pixelsPerMetre, eps: compensate ? cam.eps : 0 });
+        gl.activeTexture(gl.TEXTURE0 + 7);
+        gl.bindTexture(gl.TEXTURE_2D, hStaging);
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, hf);
+        gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, cx, cy, 0, 0, cam.width, cam.height);
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+      }
       pending.push({ job, x: cx, y: cy, w: cam.width, h: cam.height, ox: cam.ox, oy: cam.oy });
       rendered += cam.width * cam.height;
       cx += cam.width;
@@ -229,6 +288,8 @@ export function renderIndexedSprites(renderer: IndexedBakeRenderer, jobs: readon
   flush();
   gl.deleteFramebuffer(fb);
   gl.deleteTexture(staging);
+  if (hfb) gl.deleteFramebuffer(hfb);
+  if (hStaging) gl.deleteTexture(hStaging);
   const ms = now() - t0;
   return { baked, stats: { sprites: baked.length, designs, ms, drawMs: ms - readMs - trimMs, readMs, trimMs, rendered, kept, dropped } };
 }

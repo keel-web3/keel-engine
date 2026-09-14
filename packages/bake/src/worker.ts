@@ -39,21 +39,22 @@ const has = (src: IndexedSources | BakeSources | undefined, key: string): boolea
  * renderSprites (a plain job's style string, when it's JSON, is its renderer style). What the main thread and a
  * worker both do.
  */
-export function bakeSlice(renderer: IndexedBakeRenderer, jobs: readonly SpriteJob[], sources: SliceSources, options: { readonly staging?: number } = {}): { baked: BakedSprite[]; ms: number } {
+export function bakeSlice(renderer: IndexedBakeRenderer, jobs: readonly SpriteJob[], sources: SliceSources, options: { readonly staging?: number; readonly heights?: boolean } = {}): { baked: BakedSprite[]; ms: number } {
   const t0 = now();
   const baked: BakedSprite[] = [];
   const indexed = jobs.filter((j) => has(sources.indexed, j.design));
   const plain = jobs.filter((j) => !has(sources.indexed, j.design) && has(sources.plain, j.design));
   // (A big slice gathers into a big staging texture: fewer read-backs, each a wait for the GPU.)
   const staging = options.staging ?? (jobs.length > 200 ? 2048 : 1024);
-  if (indexed.length) baked.push(...renderIndexedSprites(renderer, indexed, sources.indexed!, { staging }).baked);
+  // (Depth sprites: indexed designs carry a height plane when asked -- indexed.ts.)
+  if (indexed.length) baked.push(...renderIndexedSprites(renderer, indexed, sources.indexed!, { staging, heights: !!options.heights }).baked);
   // (Plain jobs by style: each style is its own renderer setup.)
   const byStyle = new Map<string, SpriteJob[]>();
   for (const j of plain) (byStyle.get(j.style) ?? byStyle.set(j.style, []).get(j.style)!).push(j);
   for (const [style, list] of byStyle) {
     let parsed: BakeSpriteOptions["style"];
     if (style.startsWith("{")) { try { parsed = JSON.parse(style) as BakeSpriteOptions["style"]; } catch { /* a key, not a style */ } }
-    baked.push(...renderSprites(renderer, list, sources.plain!, { staging, ...(parsed ? { style: parsed } : {}) }).baked);
+    baked.push(...renderSprites(renderer, list, sources.plain!, { staging, heights: !!options.heights, ...(parsed ? { style: parsed } : {}) }).baked);
   }
   return { baked, ms: now() - t0 };
 }
@@ -68,6 +69,8 @@ export interface ServeBakesOptions {
   readonly renderer: (canvas: WorkerCanvas) => IndexedBakeRenderer;
   /** The designs, from what the page sent (the same seed makes the same designs, key for key). */
   readonly sources: (payload: unknown) => SliceSources | Promise<SliceSources>;
+  /** Depth sprites: bake indexed designs with their height planes (indexed.ts). */
+  readonly heights?: boolean;
 }
 
 const bootCanvas = (): OffscreenCanvas | undefined => (globalThis as { __KEEL_BAKE_CANVAS__?: OffscreenCanvas }).__KEEL_BAKE_CANVAS__;
@@ -75,7 +78,7 @@ const bootCanvas = (): OffscreenCanvas | undefined => (globalThis as { __KEEL_BA
 interface WorkerScope { postMessage(message: unknown, transfer?: Transferable[]): void; onmessage: ((e: MessageEvent) => void) | null }
 
 /** In a worker: bake what the page sends. (Call it from the game module's worker entry.) */
-export function serveBakes({ renderer, sources }: ServeBakesOptions): void {
+export function serveBakes({ renderer, sources, heights = false }: ServeBakesOptions): void {
   const scope = globalThis as unknown as WorkerScope;
   let px: IndexedBakeRenderer | null = null;
   let src: SliceSources | null = null;
@@ -89,13 +92,21 @@ export function serveBakes({ renderer, sources }: ServeBakesOptions): void {
     try {
       if (!src) throw new Error("A bake before init.");
       px ??= renderer(bootCanvas() ?? new OffscreenCanvas(64, 64));
-      const { baked, ms } = bakeSlice(px, b.jobs, src);
-      const total = baked.reduce((n, s) => n + s.rgba.byteLength, 0);
+      const { baked, ms } = bakeSlice(px, b.jobs, src, { heights });
+      const total = baked.reduce((n, s) => n + s.rgba.byteLength + (s.heights?.byteLength ?? 0), 0);
       const buffer = new ArrayBuffer(total);
       const bytes = new Uint8Array(buffer);
-      const table: Array<[string, number, number, number, number, number]> = [];
+      // ([key, w, h, ax, ay, texels at, heights at (-1: none)].)
+      const table: Array<[string, number, number, number, number, number, number]> = [];
       let o = 0;
-      for (const s of baked) { bytes.set(s.rgba, o); table.push([s.key, s.w, s.h, s.ax, s.ay, o]); o += s.rgba.byteLength; }
+      for (const s of baked) {
+        bytes.set(s.rgba, o);
+        const at = o;
+        o += s.rgba.byteLength;
+        let ht = -1;
+        if (s.heights) { bytes.set(s.heights, o); ht = o; o += s.heights.byteLength; }
+        table.push([s.key, s.w, s.h, s.ax, s.ay, at, ht]);
+      }
       scope.postMessage({ type: "baked", id: b.id, table, buffer, ms }, [buffer]);
     } catch (e) {
       scope.postMessage({ type: "error", id: b.id, message: String((e as Error)?.stack ?? e) });
@@ -303,7 +314,7 @@ export function createBakeWorkers<J extends SpriteJob = SpriteJob>(options: Bake
     const timer = setTimeout(() => { if (!rec.ready) fail(rec, "a worker didn't get ready in time"); }, timeout);
     w.onerror = (e) => { e.preventDefault?.(); fail(rec, `worker error: ${e.message}`); };
     w.onmessage = (e: MessageEvent) => {
-      const m = e.data as { type: string; id?: number; ms?: number; table?: Array<[string, number, number, number, number, number]>; buffer?: ArrayBuffer; message?: string };
+      const m = e.data as { type: string; id?: number; ms?: number; table?: Array<[string, number, number, number, number, number, number?]>; buffer?: ArrayBuffer; message?: string };
       if (m.type === "pong") return;
       if (m.type === "boot") { booting(); return; }
       if (m.type === "ready") { if (m.id === rec.initId) { rec.ready = true; readyDone(); readyMs.push(now() - rec.spawned); setupMs.push(m.ms ?? 0); setupParts.push({ context: Math.round((m as { contextMs?: number }).contextMs ?? 0), renderer: Math.round((m as { rendererMs?: number }).rendererMs ?? 0), sources: Math.round((m as { sourcesMs?: number }).sourcesMs ?? 0), sinceBoot: Math.round((m as { since?: number }).since ?? 0) }); clearTimeout(timer); } return; }
@@ -311,7 +322,7 @@ export function createBakeWorkers<J extends SpriteJob = SpriteJob>(options: Bake
       if (m.type === "baked" && b && m.table && m.buffer) {
         rec.out.delete(b.id);
         const buf = m.buffer;
-        const sprites: BakedSprite[] = m.table.map(([key, bw, bh, ax, ay, o]) => ({ key, w: bw, h: bh, ax, ay, rgba: new Uint8Array(buf, o, bw * bh * 4) }));
+        const sprites: BakedSprite[] = m.table.map(([key, bw, bh, ax, ay, o, ht]) => (ht !== undefined && ht >= 0 ? { key, w: bw, h: bh, ax, ay, rgba: new Uint8Array(buf, o, bw * bh * 4), heights: new Uint8Array(buf, ht, bw * bh * 2) } : { key, w: bw, h: bh, ax, ay, rgba: new Uint8Array(buf, o, bw * bh * 4) }));
         if (b.jobs.length) msPerSprite = msPerSprite * 0.7 + ((m.ms ?? 0) / b.jobs.length) * 0.3;
         api.onBaked?.(b.jobs, sprites, m.ms ?? 0);
         return;

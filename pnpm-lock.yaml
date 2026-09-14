@@ -413,6 +413,9 @@ importers:
 
   packages/worldgen:
     dependencies:
+      '@keel-engine/bake':
+        specifier: workspace:*
+        version: link:../bake
       '@keel-engine/codec':
         specifier: workspace:*
         version: link:../codec
@@ -432,9 +435,24 @@ importers:
         specifier: workspace:*
         version: link:../world
     devDependencies:
+      '@keel-engine/animals':
+        specifier: workspace:*
+        version: link:../../packs/animals
+      '@keel-engine/dungeon':
+        specifier: workspace:*
+        version: link:../../packs/dungeon
+      '@keel-engine/humans':
+        specifier: workspace:*
+        version: link:../../packs/humans
       '@keel-engine/import':
         specifier: workspace:*
         version: link:../import
+      '@keel-engine/object':
+        specifier: workspace:*
+        version: link:../object
+      '@keel-engine/render':
+        specifier: workspace:*
+        version: link:../render
 
   packs/animals:
     dependencies:

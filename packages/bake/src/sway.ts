@@ -105,7 +105,10 @@ flat out int vLook;
 flat out vec2 vDepth;
 flat out vec4 vSway;                          // shift at the top (texels), bend start, bend curve, the anchor's atlas row
 flat out vec4 vRect;
+flat out vec4 vDS;                            // depth sprites (sprites.ts LAYER_VS)
+flat out int vId;
 void main() {
+  vId = gl_InstanceID;
   vec3 d = aPos - uCenter;
   vec2 anchor = floor(vec2(uSize.x * 0.5 + dot(d, uRight) * uK, uSize.y * 0.5 - dot(d, uUp) * uK) + 0.5);
   float s = aExtra.w;
@@ -141,6 +144,7 @@ void main() {
   vDepth = vec2(depth, abs(aExtra.z) / uDepthRange);
   vSway = vec4((ampPx * sig * gust + lean) / s, from, bend, aRect.y + aAnchor.y);
   vRect = aRect;
+  vDS = vec4(dot(d, uForward), dot(d, uUp), aRect.w, s);
 }`;
 
 const FETCH = "void main() {\n  vec4 c = texelFetch(uPages, ivec3(ivec2(vUv.xy), int(vUv.z + 0.5)), 0);";
@@ -157,7 +161,9 @@ export function swayFragment(layerFs: string): string {
   float wgt = f <= vSway.y || vSway.y >= 1.0 ? 0.0 : pow(min(1.0, (f - vSway.y) / (1.0 - vSway.y)), vSway.z);
   uv.x -= floor(vSway.x * wgt + 0.5);
   if (uv.x < vRect.x || uv.x >= vRect.x + vRect.z) discard;
-  vec4 c = texelFetch(uPages, ivec3(ivec2(uv), int(vUv.z + 0.5)), 0);`);
+  vec4 c = texelFetch(uPages, ivec3(ivec2(uv), int(vUv.z + 0.5)), 0);`)
+    // (Depth sprites: the height from the same shifted texel.)
+    .replace("  ivec3 hAt = ivec3(ivec2(vUv.xy), int(vUv.z + 0.5));", "  ivec3 hAt = ivec3(ivec2(uv), int(vUv.z + 0.5));");
   if (out === layerFs || !out.includes("vSway.x * wgt")) throw new Error("swayFragment: the layer shader changed under its edits.");
   return out;
 }

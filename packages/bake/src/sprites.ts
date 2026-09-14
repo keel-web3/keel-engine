@@ -20,9 +20,11 @@
 //   sr.draw(view, instances, count);       // instances: a SpriteInstances buffer you fill each frame
 
 import type { PixelView } from "./view.ts";
-import { SLOTS } from "./indexed.ts";
+import { HEIGHT_STEPS, SLOTS } from "./indexed.ts";
 import { LOOKS_PER_ROW, LOOK_TEXELS, PAINTS_PER_ROW, PALETTE_ROW } from "./looks.ts";
 import { SWAY_INSTANCE_FLOATS, SWAY_VS, swayFragment } from "./sway.ts";
+import { SPRITE_DEPTH_GLSL, depthKappa } from "./depth.ts";
+import type { DepthAxis } from "./depth.ts";
 import type { SwayInstances, WindStyle } from "./sway.ts";
 
 const SLOTS_GLSL = String(SLOTS);
@@ -96,9 +98,25 @@ export interface LayerStyle {
   readonly outline?: number;
   /** Clear to this colour first (RGB 0..1; null keeps what's drawn, depth included). */
   readonly clear?: readonly [number, number, number] | null;
+  /**
+   * Depth sprites (depth.ts): each texel at the depth of the point it shows, from the pages' heights (default on when
+   * the pages carry them; texels without a height keep their anchor's depth, as before).
+   */
+  readonly heights?: boolean;
+  /** Which depth the scene writes (depth.ts): "ground" (keel/terrain's; sprites placed by spritePosition -- default) or "view". */
+  readonly depth?: DepthAxis;
+  /** Depth sprites: metres a texel wins a tie with what's under it by (default 5 mm: over the CPU ground's depth steps). */
+  readonly tie?: number;
+  /**
+   * An ID picture instead of colours (picking, the occlusion checks): every pixel its instance's index + 1 + `idBase`,
+   * 24 bits over RGB (depth as ever).
+   */
+  readonly ids?: boolean;
+  readonly idBase?: number;
 }
 
-export interface AtlasPage { readonly width: number; readonly height: number; readonly rgba: Uint8Array }
+/** An atlas page: RGBA texels, and for depth sprites a height per texel (two bytes each, high then low: indexed.ts). */
+export interface AtlasPage { readonly width: number; readonly height: number; readonly rgba: Uint8Array; readonly heights?: Uint8Array | undefined }
 
 const VS = `#version 300 es
 layout(location=0) in vec2 aCorner;           // 0..1 quad corner
@@ -149,7 +167,10 @@ uniform float uDepthRange;
 out vec3 vUv;
 flat out int vLook;
 flat out vec2 vDepth;                          // the instance's depth, and its bias (both 0..1 of the depth range)
+flat out vec4 vDS;                             // depth sprites: the anchor's depth (m), its metres up the picture, its rect's height (texels), scale
+flat out int vId;
 void main() {
+  vId = gl_InstanceID;
   vec3 d = aPos - uCenter;
   vec2 anchor = floor(vec2(uSize.x * 0.5 + dot(d, uRight) * uK, uSize.y * 0.5 - dot(d, uUp) * uK) + 0.5);
   float s = aExtra.w;
@@ -160,6 +181,7 @@ void main() {
   vUv = vec3(aRect.xy + aCorner * aRect.zw, aExtra.x);
   vLook = int(floor(aExtra.y + 0.5));
   vDepth = vec2(depth, abs(aExtra.z) / uDepthRange);
+  vDS = vec4(dot(d, uForward), dot(d, uUp), aRect.w, s);
 }`;
 
 // Per texel: the slot's ramp from the instance's look, the finish bending the shade onto it, the pattern (on the
@@ -177,10 +199,32 @@ uniform sampler2D uPalette;        // colours, ${PALETTE_ROW_GLSL} a row
 uniform int uScreen;
 uniform float uDither;
 uniform int uOutline;
+uniform highp sampler2DArray uHeights;  // depth sprites: a height per texel (indexed.ts: two bytes), beside the pages
+uniform int uHeightOn;
+uniform vec4 uDS;                       // cos pitch, sin pitch, kappa (depth.ts), the tie (m)
+uniform float uK;
+uniform vec2 uSize;
+uniform float uDepthRange;
+uniform int uIds;
+uniform int uIdBase;
 in vec3 vUv;
 flat in int vLook;
 flat in vec2 vDepth;
+flat in vec4 vDS;
+flat in int vId;
 out vec4 outColor;
+vec4 idColour() { int id = vId + uIdBase + 1; return vec4(float(id & 255) / 255.0, float((id >> 8) & 255) / 255.0, float((id >> 16) & 255) / 255.0, 1.0); }
+${SPRITE_DEPTH_GLSL}
+// The texel's depth (0..1): the point it shows (its height), or its instance's when it has none.
+float texelZ(ivec3 at, float fallback) {
+  if (uHeightOn == 0) return fallback;
+  vec2 hb = texelFetch(uHeights, at, 0).rg * 255.0;
+  float v = floor(hb.r + 0.5) * 256.0 + floor(hb.g + 0.5);
+  if (v < 0.5) return fallback;
+  float y = (v - 1.0) / ${HEIGHT_STEPS.toFixed(1)} * vDS.w / uK;
+  float fragB = (gl_FragCoord.y - uSize.y * 0.5) / uK;
+  return clamp(0.5 + (spriteTexelDepth(vDS.x, vDS.y, fragB, y, uDS.x, uDS.y, uDS.z) - uDS.w) / uDepthRange, 0.0, 1.0);
+}
 
 float bayer(ivec2 p, int n) {
   if (n == 2) { int m[4] = int[4](0, 2, 3, 1); return (float(m[(p.y & 1) * 2 + (p.x & 1)]) + 0.5) / 4.0; }
@@ -216,14 +260,15 @@ float marks(int kind, vec2 uv, float freq, float ang, float w) {
 }
 void main() {
   vec4 c = texelFetch(uPages, ivec3(ivec2(vUv.xy), int(vUv.z + 0.5)), 0);
-  if (vLook < 0) { if (c.a < 0.5) discard; outColor = vec4(c.rgb, 1.0); gl_FragDepth = vDepth.x; return; }
+  ivec3 hAt = ivec3(ivec2(vUv.xy), int(vUv.z + 0.5));
+  if (vLook < 0) { if (c.a < 0.5) discard; outColor = uIds == 1 ? idColour() : vec4(c.rgb, 1.0); gl_FragDepth = texelZ(hAt, vDepth.x); return; }
   int r = int(c.r * 255.0 + 0.5);
   int s = r & 63;
   if (s == 0) discard;
   int slot = s - 1;
   bool edge = (r & 128) != 0;
   // (A texel behind its split point -- the socket -- sits a hair behind the body it's on; the rest a hair in front.)
-  gl_FragDepth = clamp(vDepth.x + ((r & 64) != 0 ? vDepth.y : -vDepth.y), 0.0, 1.0);
+  gl_FragDepth = clamp(texelZ(hAt, vDepth.x) + ((r & 64) != 0 ? vDepth.y : -vDepth.y), 0.0, 1.0);
   uint p = paintOf(vLook, slot);
   if (p == 0u) discard;                // (nothing painted: a look that doesn't know this slot)
   uvec4 A = paintTexel(p - 1u, 0);
@@ -242,7 +287,7 @@ void main() {
   x += th * uDither;
   int idx = clamp(int(floor(x + 0.5)), 0, len - 1);
   if (edge) idx = max(0, idx - uOutline);
-  outColor = vec4(pal(base + idx).rgb, 1.0);
+  outColor = uIds == 1 ? idColour() : vec4(pal(base + idx).rgb, 1.0);
 }`;
 
 // Billboards (engine): the same layers seen through a PERSPECTIVE camera -- a unit far off in a first-person or chase
@@ -265,7 +310,11 @@ out vec3 vUv;
 flat out int vLook;
 flat out vec2 vDepth;
 flat out float vFade;
+flat out vec4 vDS;                             // (depth sprites are orthographic: a billboard keeps its distance)
+flat out int vId;
 void main() {
+  vDS = vec4(0.0);
+  vId = gl_InstanceID;
   vec3 e = aPos - uEye;
   float z = dot(e, uForward);
   vUv = vec3(aRect.xy + aCorner * aRect.zw, aExtra.x);
@@ -292,7 +341,7 @@ const SWAY_FS = swayFragment(LAYER_FS);
 const FX_VS = LAYER_VS
   .replace("layout(location=4) in vec4 aExtra;            // page layer, look, depth bias (m), scale", "layout(location=4) in vec4 aExtra;            // page layer, look, depth bias (m), scale\nlayout(location=5) in float aFx;              // packFx(flash, dissolve)")
   .replace("flat out vec2 vDepth;", "flat out vec2 vDepth;\nflat out float vFx;")
-  .replace("  vDepth = vec2(depth, abs(aExtra.z) / uDepthRange);\n}", "  vDepth = vec2(depth, abs(aExtra.z) / uDepthRange);\n  vFx = aFx;\n}");
+  .replace("  vDS = vec4(dot(d, uForward), dot(d, uUp), aRect.w, s);\n}", "  vDS = vec4(dot(d, uForward), dot(d, uUp), aRect.w, s);\n  vFx = aFx;\n}");
 const FX_FS = LAYER_FS
   .replace("flat in vec2 vDepth;", "flat in vec2 vDepth;\nflat in float vFx;")
   .replace("void main() {\n  vec4 c = texelFetch", "void main() {\n  float fxD = floor(max(vFx, 0.0)) / 16.0;\n  float fxF = fract(max(vFx, 0.0));\n  if (fxD > 0.0 && bayer(ivec2(gl_FragCoord.xy), 4) < fxD) discard;\n  vec4 c = texelFetch")
@@ -320,9 +369,11 @@ export interface SpriteRenderer {
    * A live atlas (a streaming bake's): at least `count` pages of `size`² -- grown on the GPU, what's on them kept --
    * that writeSprite() fills a sprite at a time. (Replaces pages setPages gave.)
    */
-  reservePages(count: number, size: number): void;
-  /** Put one sprite's texels on a reserved page. */
-  writeSprite(page: number, x: number, y: number, w: number, h: number, rgba: Uint8Array): void;
+  reservePages(count: number, size: number, options?: { readonly heights?: boolean }): void;
+  /** Put one sprite's texels on a reserved page (and its heights: depth sprites, pages reserved with heights). */
+  writeSprite(page: number, x: number, y: number, w: number, h: number, rgba: Uint8Array, heights?: Uint8Array): void;
+  /** Depth sprites: whether the pages carry heights, and the bytes they take on the GPU (the height planes alone). */
+  readonly heightBytes: number;
   /** Layers the page texture has now. */
   readonly pageCount: number;
   setTarget(width: number, height: number): void;
@@ -389,7 +440,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
   gl.bindVertexArray(null);
 
   // The layer program and its buffers: built the first time drawLayers or setLooks is called.
-  type LayerUniform = "center" | "right" | "up" | "forward" | "k" | "size" | "depth" | "pages" | "looks" | "paints" | "palette" | "screen" | "dither" | "outline";
+  type LayerUniform = "center" | "right" | "up" | "forward" | "k" | "size" | "depth" | "pages" | "looks" | "paints" | "palette" | "screen" | "dither" | "outline" | "heights" | "heightOn" | "ds" | "ids" | "idBase";
   interface Layers { prog: WebGLProgram; u: Record<LayerUniform, WebGLUniformLocation | null>; vao: WebGLVertexArrayObject; inst: WebGLBuffer; capacity: number; palette: WebGLTexture | null; looks: WebGLTexture | null; paints: WebGLTexture | null }
   let layerState: Layers | null = null;
   const layers = (): Layers => {
@@ -400,7 +451,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
     gl.linkProgram(p);
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(`Layer program: ${gl.getProgramInfoLog(p)}`);
     const lu = (name: string) => gl.getUniformLocation(p, name);
-    const u = { center: lu("uCenter"), right: lu("uRight"), up: lu("uUp"), forward: lu("uForward"), k: lu("uK"), size: lu("uSize"), depth: lu("uDepthRange"), pages: lu("uPages"), looks: lu("uLooks"), paints: lu("uPaints"), palette: lu("uPalette"), screen: lu("uScreen"), dither: lu("uDither"), outline: lu("uOutline") };
+    const u = { center: lu("uCenter"), right: lu("uRight"), up: lu("uUp"), forward: lu("uForward"), k: lu("uK"), size: lu("uSize"), depth: lu("uDepthRange"), pages: lu("uPages"), looks: lu("uLooks"), paints: lu("uPaints"), palette: lu("uPalette"), screen: lu("uScreen"), dither: lu("uDither"), outline: lu("uOutline"), heights: lu("uHeights"), heightOn: lu("uHeightOn"), ds: lu("uDS"), ids: lu("uIds"), idBase: lu("uIdBase") };
     const v = gl.createVertexArray()!;
     gl.bindVertexArray(v);
     gl.bindBuffer(gl.ARRAY_BUFFER, corners);
@@ -446,7 +497,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
   };
 
   // The sway program: built the first time drawSway is called (it shares the layer program's textures).
-  type SwayUniform = "center" | "right" | "up" | "forward" | "k" | "size" | "depth" | "pages" | "looks" | "paints" | "palette" | "screen" | "dither" | "outline" | "time" | "wind" | "bend" | "bendCount";
+  type SwayUniform = "center" | "right" | "up" | "forward" | "k" | "size" | "depth" | "pages" | "looks" | "paints" | "palette" | "screen" | "dither" | "outline" | "time" | "wind" | "bend" | "bendCount" | "heights" | "heightOn" | "ds" | "ids" | "idBase";
   let swayState: { prog: WebGLProgram; u: Record<SwayUniform, WebGLUniformLocation | null>; vao: WebGLVertexArrayObject; inst: WebGLBuffer; capacity: number } | null = null;
   const sways = () => {
     if (swayState) return swayState;
@@ -459,6 +510,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
     const u = {
       center: su("uCenter"), right: su("uRight"), up: su("uUp"), forward: su("uForward"), k: su("uK"), size: su("uSize"), depth: su("uDepthRange"), pages: su("uPages"), looks: su("uLooks"), paints: su("uPaints"), palette: su("uPalette"),
       screen: su("uScreen"), dither: su("uDither"), outline: su("uOutline"), time: su("uTime"), wind: su("uWind"), bend: su("uBend"), bendCount: su("uBendCount"),
+      heights: su("uHeights"), heightOn: su("uHeightOn"), ds: su("uDS"), ids: su("uIds"), idBase: su("uIdBase"),
     };
     const v = gl.createVertexArray()!;
     gl.bindVertexArray(v);
@@ -486,7 +538,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
     gl.linkProgram(p);
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(`Fx program: ${gl.getProgramInfoLog(p)}`);
     const fu = (name: string) => gl.getUniformLocation(p, name);
-    const u = { center: fu("uCenter"), right: fu("uRight"), up: fu("uUp"), forward: fu("uForward"), k: fu("uK"), size: fu("uSize"), depth: fu("uDepthRange"), pages: fu("uPages"), looks: fu("uLooks"), paints: fu("uPaints"), palette: fu("uPalette"), screen: fu("uScreen"), dither: fu("uDither"), outline: fu("uOutline") };
+    const u = { center: fu("uCenter"), right: fu("uRight"), up: fu("uUp"), forward: fu("uForward"), k: fu("uK"), size: fu("uSize"), depth: fu("uDepthRange"), pages: fu("uPages"), looks: fu("uLooks"), paints: fu("uPaints"), palette: fu("uPalette"), screen: fu("uScreen"), dither: fu("uDither"), outline: fu("uOutline"), heights: fu("uHeights"), heightOn: fu("uHeightOn"), ds: fu("uDS"), ids: fu("uIds"), idBase: fu("uIdBase") };
     const v = gl.createVertexArray()!;
     gl.bindVertexArray(v);
     gl.bindBuffer(gl.ARRAY_BUFFER, corners);
@@ -505,14 +557,35 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
 
   let tex: WebGLTexture | null = null;
   let texLayers = 0, texSize = 0, live = false;
+  // Depth sprites: the pages' height planes, an RG8 array beside the pages (null: no heights -- every draw as before).
+  let htex: WebGLTexture | null = null, hW = 0, hH = 0;
+  const heightArray = (w: number, h: number, layers: number): WebGLTexture => {
+    const t = gl.createTexture()!;
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, t);
+    gl.texStorage3D(gl.TEXTURE_2D_ARRAY, 1, gl.RG8, w, h, layers);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    return t;
+  };
+  // The depth-sprite uniforms of a layer draw: on when the pages carry heights (and the style doesn't turn them off).
+  const depthSprites = (U: { heights: WebGLUniformLocation | null; heightOn: WebGLUniformLocation | null; ds: WebGLUniformLocation | null; ids: WebGLUniformLocation | null; idBase: WebGLUniformLocation | null }, view: PixelView, style: LayerStyle): void => {
+    const on = !!htex && style.heights !== false;
+    gl.uniform1i(U.ids, style.ids ? 1 : 0); gl.uniform1i(U.idBase, style.idBase ?? 0);
+    gl.uniform1i(U.heightOn, on ? 1 : 0);
+    const cp = view.axes.up[1], sp = -view.axes.forward[1];
+    gl.uniform4f(U.ds, cp, sp, depthKappa(style.depth ?? "ground", cp), style.tie ?? 0.005);
+    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D_ARRAY, on ? htex : null); gl.uniform1i(U.heights, 4);
+    gl.activeTexture(gl.TEXTURE0);
+  };
   let W = width;
   let H = height;
   const maxLayers = gl.getParameter(gl.MAX_ARRAY_TEXTURE_LAYERS) as number;
   const api: SpriteRenderer = {
     gl,
     get pageCount() { return texLayers; },
-    reservePages(count, size) {
-      if (live && tex && texSize === size && texLayers >= count) return;
+    get heightBytes() { return htex ? hW * hH * texLayers * 2 : 0; },
+    reservePages(count, size, options = {}) {
+      if (live && tex && texSize === size && texLayers >= count && (!options.heights || htex)) return;
       // (Grow by doubling, up to what the GPU allows: each growth copies the old layers across on the GPU.)
       const layers = Math.min(maxLayers, Math.max(count, live && texSize === size ? texLayers * 2 : count));
       if (layers < count) throw new RangeError(`${count} atlas pages: this GPU allows ${maxLayers}.`);
@@ -531,14 +604,34 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
         gl.deleteFramebuffer(fb);
       }
+      if (options.heights || htex) {
+        // (The height planes grow with the pages, copied across the same way.)
+        const hn = heightArray(size, size, layers);
+        if (htex && hW === size && hH === size) {
+          const fb = gl.createFramebuffer();
+          gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fb);
+          for (let i = 0; i < texLayers; i += 1) {
+            gl.framebufferTextureLayer(gl.READ_FRAMEBUFFER, gl.COLOR_ATTACHMENT0, htex, 0, i);
+            gl.copyTexSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, 0, 0, size, size);
+          }
+          gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
+          gl.deleteFramebuffer(fb);
+        }
+        if (htex) gl.deleteTexture(htex);
+        htex = hn; hW = size; hH = size;
+      }
       if (tex) gl.deleteTexture(tex);
       tex = next; texLayers = layers; texSize = size; live = true;
     },
-    writeSprite(page, x, y, w, h, rgba) {
+    writeSprite(page, x, y, w, h, rgba, heights) {
       if (!tex || !live) throw new Error("reservePages first.");
       gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);
       gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
       gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, x, y, page, w, h, 1, gl.RGBA, gl.UNSIGNED_BYTE, rgba);
+      if (htex) {
+        gl.bindTexture(gl.TEXTURE_2D_ARRAY, htex);
+        gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, x, y, page, w, h, 1, gl.RG, gl.UNSIGNED_BYTE, heights ?? new Uint8Array(w * h * 2));
+      }
     },
     setPages(pages) {
       live = false;
@@ -553,6 +646,12 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
       pages.forEach((p, i) => gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, p.width, p.height, 1, gl.RGBA, gl.UNSIGNED_BYTE, p.rgba));
       gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
       gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+      if (htex) { gl.deleteTexture(htex); htex = null; }
+      if (pages.some((p) => p.heights)) {
+        htex = heightArray(pw, ph, pages.length); hW = pw; hH = ph;
+        gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+        pages.forEach((p, i) => gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, p.width, p.height, 1, gl.RG, gl.UNSIGNED_BYTE, p.heights ?? new Uint8Array(p.width * p.height * 2)));
+      }
     },
     setTarget(w, h) { W = w; H = h; canvas.width = w; canvas.height = h; },
     draw(view, instances, clear = [0.05, 0.05, 0.07]) {
@@ -602,7 +701,8 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
       L.paints = uint(3, L.paints, paints);
       gl.activeTexture(gl.TEXTURE0);
     },
-    drawLayers(view, instances, { screen = 4, dither = 0.9, outline = 3, clear = [0.05, 0.05, 0.07] } = {}) {
+    drawLayers(view, instances, style = {}) {
+      const { screen = 4, dither = 0.9, outline = 3, clear = [0.05, 0.05, 0.07] } = style;
       if (!tex) throw new Error("setPages first.");
       const L = layers();
       if (!L.palette || !L.looks || !L.paints) throw new Error("setLooks first.");
@@ -625,6 +725,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
       gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, L.looks); gl.uniform1i(U.looks, 2);
       gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, L.paints); gl.uniform1i(U.paints, 3);
       gl.activeTexture(gl.TEXTURE0);
+      depthSprites(U, view, style);
       gl.bindBuffer(gl.ARRAY_BUFFER, L.inst);
       if (instances.capacity > L.capacity) { gl.bufferData(gl.ARRAY_BUFFER, instances.capacity * LAYER_INSTANCE_FLOATS * 4, gl.DYNAMIC_DRAW); L.capacity = instances.capacity; }
       gl.bufferSubData(gl.ARRAY_BUFFER, 0, instances.data, 0, instances.count * LAYER_INSTANCE_FLOATS);
@@ -632,7 +733,8 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
       gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, instances.count);
       gl.bindVertexArray(null);
     },
-    drawLayersFx(view, instances, { screen = 4, dither = 0.9, outline = 3, clear = [0.05, 0.05, 0.07] } = {}) {
+    drawLayersFx(view, instances, style = {}) {
+      const { screen = 4, dither = 0.9, outline = 3, clear = [0.05, 0.05, 0.07] } = style;
       if (!tex) throw new Error("setPages first.");
       const L = layers();
       if (!L.palette || !L.looks || !L.paints) throw new Error("setLooks first.");
@@ -656,6 +758,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
       gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, L.looks); gl.uniform1i(U.looks, 2);
       gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, L.paints); gl.uniform1i(U.paints, 3);
       gl.activeTexture(gl.TEXTURE0);
+      depthSprites(U, view, style);
       gl.bindBuffer(gl.ARRAY_BUFFER, F.inst);
       if (instances.capacity > F.capacity) { gl.bufferData(gl.ARRAY_BUFFER, instances.capacity * LAYER_INSTANCE_FLOATS * 4, gl.DYNAMIC_DRAW); F.capacity = instances.capacity; }
       gl.bufferSubData(gl.ARRAY_BUFFER, 0, instances.data, 0, instances.count * LAYER_INSTANCE_FLOATS);
@@ -693,7 +796,8 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
       gl.drawArraysInstanced(gl.TRIANGLE_STRIP, 0, 4, instances.count);
       gl.bindVertexArray(null);
     },
-    drawSway(view, instances, { screen = 4, dither = 0.9, outline = 3, clear = null, time, wind = 0.6, speed = 3, gust = 0.6, benders = [] } = { time: 0 }) {
+    drawSway(view, instances, style = { time: 0 }) {
+      const { screen = 4, dither = 0.9, outline = 3, clear = null, time, wind = 0.6, speed = 3, gust = 0.6, benders = [] } = style;
       if (!tex) throw new Error("setPages first.");
       const L = layers();
       if (!L.palette || !L.looks || !L.paints) throw new Error("setLooks first.");
@@ -722,6 +826,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
       gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, L.looks); gl.uniform1i(U.looks, 2);
       gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, L.paints); gl.uniform1i(U.paints, 3);
       gl.activeTexture(gl.TEXTURE0);
+      depthSprites(U, view, style);
       gl.bindBuffer(gl.ARRAY_BUFFER, S.inst);
       if (instances.capacity > S.capacity) { gl.bufferData(gl.ARRAY_BUFFER, instances.capacity * SWAY_INSTANCE_FLOATS * 4, gl.DYNAMIC_DRAW); S.capacity = instances.capacity; }
       gl.bufferSubData(gl.ARRAY_BUFFER, 0, instances.data, 0, instances.count * SWAY_INSTANCE_FLOATS);

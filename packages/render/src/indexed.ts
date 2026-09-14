@@ -20,8 +20,11 @@
 //                    b, a = the surface coordinate
 //                  and 0 where there's nothing (the sky, the water, particles).
 //   DEPTH_FS       the depth buffer packed into RGBA8 (24 bits), for readData().
+//   HEIGHT_FS      (engine: depth sprites) each covered pixel's height above
+//                  the ground, in sixteenths of a texel (+ 1) over R and G:
+//                  the plane a depth sprite carries beside its indexed colour.
 
-import { WORLD_FS } from "./shaders.ts";
+import { FAR, WORLD_FS } from "./shaders.ts";
 
 // (Each edit names the exact text it replaces: if WORLD_FS ever changes under it, building the program throws
 // instead of quietly drawing without coordinates -- and test/indexed.test.ts says so first.)
@@ -98,6 +101,47 @@ void main() {
   bool behind = d.g > 0.5 / 255.0;
   outColor = vec4(float(128 + (edge ? 64 : 0) + (behind ? 32 : 0) + mat) / 255.0, d.r, d2.b, d2.a);
 }`;
+
+/**
+ * A bake's HEIGHT pass (depth sprites, engine): after pass 1, per pixel the height above the ground (y = 0) of the
+ * point it shows, in sixteenths of a texel (metres x uScale x 16) plus one, as 16 bits over R (high) and G (low); 0
+ * where nothing is. Read with unpackHeight. keel/bake keeps these two bytes per texel as they are: a depth sprite's
+ * height plane.
+ *
+ * The point is pass 1's hit, set on the surface it drew: a bake thins every solid by `uEps` so its silhouettes land
+ * true, and the march stops once inside its hit tolerance -- up to a texel past the surface along the ray. From just
+ * before that, the ray is marched again onto the tolerance's shell: the design's own surface, as the colours show it.
+ */
+export const HEIGHT_FS = `${WORLD_FS.slice(0, WORLD_FS.indexOf("void main() {"))}
+uniform sampler2D uData;
+uniform sampler2D uDepth;
+uniform float uScale;       // texels a metre (the bake's pixels per metre)
+uniform float uEps;         // how far the bake thinned each solid (metres)
+void main() {
+  ivec2 px = ivec2(gl_FragCoord.xy);
+  int id = int(texelFetch(uData, px, 0).a * 255.0 + 0.5);
+  if (id >= 253) { outData = vec4(0.0); outData2 = vec4(0.0); return; }
+  float t = texelFetch(uDepth, px, 0).r * FAR;
+  vec2 uv = (gl_FragCoord.xy / uRes) * 2.0 - 1.0;
+  vec3 rd = normalize(uFwd + uv.x * uTan * (uRes.x / uRes.y) * uRight + uv.y * uTan * uUp);
+  // (Back off past where the march could have overshot, then march onto the shell pass 1 calls a hit -- the thinned
+  // field within its hit tolerance, 0.0015 x the ray's length: at the bake's distance, uEps, the design's own
+  // surface -- the first point along the ray the colours were drawn from, never past it.)
+  float s = max(0.0, t - 3.0 * max(uEps, 0.0015 * t) - 0.002);
+  for (int i = 0; i < 48; i++) {
+    float d = map(uEye + rd * s).x - 0.0015 * s;
+    if (d < 0.0002) break;
+    s += d;
+    if (s > t) { s = t; break; }
+  }
+  float y = max(uEye.y + rd.y * s, 0.0);
+  uint v = uint(clamp(floor(y * uScale * 16.0 + 1.5), 1.0, 65535.0));
+  outData = vec4(float(v >> 8u) / 255.0, float(v & 255u) / 255.0, 0.0, 1.0);
+  outData2 = vec4(0.0);
+}`;
+
+/** HEIGHT_FS bytes (r, g) -> the height in texels (NaN: nothing there). */
+export const unpackHeight = (r: number, g: number): number => { const v = (r << 8) | g; return v ? (v - 1) / 16 : NaN; };
 
 /** The depth buffer, 24 bits over RGB. */
 export const DEPTH_FS = `#version 300 es

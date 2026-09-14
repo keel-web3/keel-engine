@@ -125,6 +125,77 @@ is a real setting (world units per pixel, dither screen and ramp length follow
 it), not fixed offsets. The raymarched renderer from the proof of concept
 stays for hero shots, previews and bake time.
 
+## Occlusion and layers: one model
+
+Every picture the engine draws in its orthographic pitched view -- the
+terrain, the worlds overworld, the dungeon crawl, level-demo, the army, the
+RTS -- hides things by ONE model (`@keel-engine/bake` `depth.ts`, its README
+"Depth sprites"). The standard technique of pre-rendered isometric games:
+
+- **Depth sprites.** A sprite baked from 3D parts carries a HEIGHT per texel
+  beside its indexed colour (the bake's `heights` option; keel/render's
+  `HEIGHT_FS`): how far above its ground anchor the point that texel shows
+  is, 16 bits (sixteenths of a texel, plus one; 0 is "none"). In this view a
+  pixel is a ray along the view's forward that meets each height once, so
+  the pixel a texel is drawn at and its height fix its 3D point, and so its
+  depth, exactly:
+  `depth = anchorDepth + (cos(pitch) * dUp - kappa * y) / sin(pitch)` --
+  `dUp` metres up the picture from the anchor, `y` the texel's height,
+  `kappa` 1 for the view's depth (the dungeon's geometry) or cos^2(pitch)
+  for the ground's (keel/terrain's heightfield convention). Occlusion between
+  sprites, walls, props and ground is then per pixel by construction. A
+  sprite baked without heights keeps its anchor's depth (as before).
+- **The ground never hides what stands on it.** Floors write depth at the
+  floor plane (keel/terrain its ground-plane depth); a texel's height is
+  >= 0, so it's on or before the ground its own pixel's ray meets; a tie (a
+  foot on the floor) goes to the thing by a few mm. `spritePosition`'s
+  footprint shift is no longer needed (kept for sprites without heights).
+- **Layers with fixed rules** (`OCCLUSION_LAYERS`, `applyLayer`), in order:
+  ground (tested, written) -> decals: contact shadows, selection rings,
+  ground marks (tested, never written: nothing standing is hidden by one, a
+  wall in front hides it) -> objects: walls, doors, props, units (tested,
+  written: real geometry and depth sprites) -> translucent: particles,
+  flames (tested, not written, back to front) -> through: what shows through
+  walls, the hero's or a selected unit's silhouette (drawn only where
+  hidden: the depth test inverted) -> overlays: health bars, markers
+  (screen-space, drawn while any of the thing is seen or it's selected or
+  the player's own: `overlayShows`) -> fog and light (colour only, never
+  depth: an unexplored room is masked, not hidden by depth) -> UI.
+- **Walls, the cutaway, doors.** Wall occlusion is the walls' real geometry.
+  The cutaway changes which wall depth is WRITTEN: "stub" moves the geometry
+  down in the vertex shader, "dither" drops fragments (depth goes with the
+  colour), "off" keeps it -- a cut wall never leaves invisible depth behind.
+  Doors are quads at their angles. A prop hung on a wall the cutaway sinks
+  goes with it; one standing on the floor against it is cut at the stub by
+  each texel's height, as the wall is.
+- **Boundaries.** Footprint boxes from a design's own solids
+  (`designBounds`, `placedBounds`, `boundsRect`) serve selection, culling and
+  coarse picking; picking by what's drawn (`pickSprite`: the nearest texel
+  under the cursor by the same depth, or an ID picture -- the layer
+  renderer's `ids` style) means a click hits what you see. Sorting is only
+  for what depth sprites can't do: translucent particles.
+
+`packages/worldgen/tools/occlusion-check.html` judges it: every prop and body
+against walls, doors, cliffs and ramps, at four zooms, two pitches, every
+cutaway, fog and door state and walking frames, against the points each texel
+really shows (its design's solids, keel/bake `raycastWorld`); a walk test
+checks feet across every floor kind. The gate: at most 0.1 % false-hidden and
+0.1 % false-visible pixels.
+
+**Adopting it (a game on the engine, the RTS included):** bake with
+`{ heights: true }` (renderIndexedSprites, renderSprites, bakeSlice,
+serveBakes); pass the pages' `heights` to `setPages` (or
+`reservePages(n, size, { heights: true })` and `writeSprite(..., heights)` for
+a stream, whose `onWrite` hands them over); place sprites at their ground
+point through `spritePosition` with no footprint; draw ground, then decals
+with no depth write, then `drawLayers` (its style's `depth` "ground" over
+keel/terrain, "view" over real geometry); selection rings as decals,
+silhouettes through walls with the inverted test, bars as overlays by
+`overlayShows`; pick with `pickSprite` or an `ids` picture. keel-rts (paused)
+adopts it in one pass when it resumes: its bake workers get `heights: true`,
+its unit and building sprites lose their footprint shifts, its selection
+rings move to the decal layer and its health bars to `overlayShows`.
+
 ## Editor, sandbox, agents
 
 - **The editor is part of the KEEL desktop app** (`keel-sdk/apps/desktop`, the

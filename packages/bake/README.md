@@ -47,6 +47,38 @@ Why orthographic: perspective scales sprites with distance and smears the
 pixel grid; pixel-art strategy games look down orthographically, and every
 sprite then keeps its exact pixels.
 
+## Depth sprites: the engine's occlusion model
+
+`docs/ARCHITECTURE.md` "Occlusion and layers" is the model; this package is
+its maths and its bake (`depth.ts`, `raycast.ts`, `indexed.ts`).
+
+| part | what it does |
+| --- | --- |
+| `renderIndexedSprites(..., { heights: true })` / `renderSprites(..., { heights: true })` / `bakeSlice(..., { heights })` / `serveBakes({ heights })` | a HEIGHT plane with every sprite: per texel, how far above its ground anchor the point it shows is -- keel/render's `HEIGHT_FS`, each hit set on the design's own surface (the bake thins every solid by a texel so silhouettes land true; the heights pass marches back onto the true surface) |
+| `BakedSprite.heights` / `AtlasPage.heights` | two bytes a texel, high then low: sixteenths of a texel, plus one (`encodeHeight` / `decodeHeight` / `heightAt`; 0 = no height). `atlasOf`, the cache, `encodeBake` / `decodeBake` (a `heights: true` header, planes after the pages) and the workers carry them; without heights every byte is as it was |
+| `setPages(pages)` / `reservePages(n, size, { heights: true })` / `writeSprite(..., rgba, heights)` | the planes on the GPU: an RG8 texture array beside the pages (`heightBytes`) |
+| `drawLayers` / `drawLayersFx` / `drawSway` style `{ heights, depth, tie, ids, idBase }` | each texel at the depth of the point it shows (on when the pages carry heights); `depth` "ground" (keel/terrain's, sprites placed by `spritePosition`) or "view"; the tie a thing wins against the ground it stands on (5 mm); `ids` draws the ID picture (instance + 1 over RGB) |
+| `SPRITE_DEPTH_GLSL` / `texelDepth` / `pointDepth` / `pixelPoint` / `depthKappa` | the formula, in GLSL (both sprite shaders: this package's and keel/worldgen's dungeon renderer) and TypeScript |
+| `pickSprite(view, sprites, px, py)` / `spriteTexelAt` / `spriteRect` / `anchorPixel` | picking by what's drawn: the nearest texel under the cursor, by the depth the picture used |
+| `designBounds(world)` / `placedBounds(box, at, yaw)` / `boundsRect(view, box)` | footprint boxes from a design's solids: selection, culling, coarse picking |
+| `OCCLUSION_LAYERS` / `applyLayer(gl, name)` / `overlayShows` | the draw layers and their fixed depth rules; when a bar or marker shows |
+| `raycastWorld(world, o, d)` / `rayBox` / `rayWedge` / `rayCapsule` / `placeWorld` | a ray against a design's solids, analytically -- the occlusion check's truth |
+
+Why heights and not depths: in this view a pixel's ray meets each height once,
+so a height IS a depth -- and it doesn't depend on the anchor's snap to a whole
+pixel, holds across a pitch bucket's small pitch changes, and a height >= 0 can
+never be under the ground its pixel shows. Why 16 bits: 8 bits over a sprite's
+height are 1-2 cm steps, and a torch hung on a wall or two props touching are
+closer than that; 16 bits are a sixteenth of a texel at any size, for 2 bytes a
+texel (half the colour page's 4).
+
+Measured (keel/worldgen `tools/occlusion-check.html` `bench`, 2026-09-14, this Mac under other agents' load, Chrome in
+the app's Browser pane): 2,000 walking bodies over the GPU ground at 1920 x 1080, GPU finished -- heights off 2.2-3.9
+ms median, on 2.6-5.8 (8 / 24 px/m; the run-to-run spread is the machine's); 4,000 bodies 6.7-8.8 off, 6.3-8.3 on;
+at 48 px/m 1.8-5.9 off, 2.0-6.2 on. The layer shader already wrote `gl_FragDepth`, so heights add a texture fetch and a
+few multiplies a texel, no lost early-Z. Height planes: 0.16 / 0.99 / 3.8 MB for 960 body sprites at 8 / 24 / 48 px/m
+(colour 0.33 / 1.98 / 7.6 MB). The bake: +0-30 % (a second, short march per sprite).
+
 ## The bake
 
 ```ts

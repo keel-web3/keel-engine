@@ -69,15 +69,15 @@ export function createSpriteCache(): SpriteCache {
     add(sprites) {
       for (const s of sprites) {
         const had = map.get(s.key);
-        if (had) bytes -= had.rgba.byteLength;
+        if (had) bytes -= had.rgba.byteLength + (had.heights?.byteLength ?? 0);
         map.set(s.key, s);
-        bytes += s.rgba.byteLength;
+        bytes += s.rgba.byteLength + (s.heights?.byteLength ?? 0);
       }
     },
     missing: (jobs) => { const seen = new Set<string>(); return jobs.filter((j) => !map.has(j.key) && !seen.has(j.key) && (seen.add(j.key), true)); },
     drop(which) {
       let n = 0;
-      for (const [k, s] of map) if (!which || which(k)) { map.delete(k); bytes -= s.rgba.byteLength; n += 1; }
+      for (const [k, s] of map) if (!which || which(k)) { map.delete(k); bytes -= s.rgba.byteLength + (s.heights?.byteLength ?? 0); n += 1; }
       return n;
     },
     get size() { return map.size; },
@@ -103,40 +103,54 @@ export function spritesOf(saved: SavedBake): BakedSprite[] {
     if (!p || x + w > p.width || y + h > p.height) throw new RangeError(`Sprite "${key}" lies outside its page.`);
     const rgba = new Uint8Array(w * h * 4);
     for (let r = 0; r < h; r += 1) rgba.set(p.rgba.subarray(((y + r) * p.width + x) * 4, ((y + r) * p.width + x + w) * 4), r * w * 4);
-    return { key, w, h, ax, ay, rgba };
+    if (!p.heights) return { key, w, h, ax, ay, rgba };
+    const heights = new Uint8Array(w * h * 2);
+    for (let r = 0; r < h; r += 1) heights.set(p.heights.subarray(((y + r) * p.width + x) * 2, ((y + r) * p.width + x + w) * 2), r * w * 2);
+    return { key, w, h, ax, ay, rgba, heights };
   });
 }
 
 /** A saved bake as a table the sprite renderer reads: key -> rect. */
 export const rectsOf = (saved: SavedBake): Map<string, SpriteRect> => new Map(saved.table.map(([k, page, x, y, w, h, ax, ay]) => [k, { page, x, y, w, h, ax, ay }]));
 
-// One byte array: "KBAK", a u32 header length, the header (JSON: format, page sizes, table), then each page's bytes.
+// One byte array: "KBAK", a u32 header length, the header (JSON: format, page sizes, table; `heights: true` for depth
+// sprites), then each page's bytes (and after them, with heights, each page's height plane).
 const MAGIC = [0x4b, 0x42, 0x41, 0x4b];
 
 export function encodeBake(saved: SavedBake): Uint8Array {
-  const header = new TextEncoder().encode(JSON.stringify({ format: saved.format, pages: saved.pages.map((p) => [p.width, p.height]), table: saved.table }));
-  const total = 8 + header.byteLength + saved.pages.reduce((n, p) => n + p.rgba.byteLength, 0);
+  const heights = saved.pages.length > 0 && saved.pages.every((p) => p.heights);
+  const header = new TextEncoder().encode(JSON.stringify(heights ? { format: saved.format, pages: saved.pages.map((p) => [p.width, p.height]), table: saved.table, heights: true } : { format: saved.format, pages: saved.pages.map((p) => [p.width, p.height]), table: saved.table }));
+  const total = 8 + header.byteLength + saved.pages.reduce((n, p) => n + p.rgba.byteLength + (heights ? p.width * p.height * 2 : 0), 0);
   const out = new Uint8Array(total);
   out.set(MAGIC, 0);
   new DataView(out.buffer).setUint32(4, header.byteLength, true);
   out.set(header, 8);
   let o = 8 + header.byteLength;
   for (const p of saved.pages) { out.set(p.rgba, o); o += p.rgba.byteLength; }
+  if (heights) for (const p of saved.pages) { out.set(p.heights!, o); o += p.width * p.height * 2; }
   return out;
 }
 
 export function decodeBake(bytes: Uint8Array): SavedBake {
   if (bytes.byteLength < 8 || MAGIC.some((m, i) => bytes[i] !== m)) throw new TypeError("Not an encoded bake.");
   const n = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength).getUint32(4, true);
-  const head = JSON.parse(new TextDecoder().decode(bytes.subarray(8, 8 + n))) as { format: typeof BAKE_FORMAT; pages: Array<[number, number]>; table: SavedBake["table"] };
+  const head = JSON.parse(new TextDecoder().decode(bytes.subarray(8, 8 + n))) as { format: typeof BAKE_FORMAT; pages: Array<[number, number]>; table: SavedBake["table"]; heights?: boolean };
   if (head.format !== BAKE_FORMAT) throw new TypeError(`Not a bake: format "${String(head.format)}".`);
   let o = 8 + n;
-  const pages = head.pages.map(([width, height]) => {
+  const pages: AtlasPage[] = head.pages.map(([width, height]) => {
     const len = width * height * 4;
     if (o + len > bytes.byteLength) throw new RangeError("The encoded bake is cut short.");
     const rgba = bytes.slice(o, o + len);
     o += len;
     return { width, height, rgba };
   });
+  if (head.heights) {
+    for (let i = 0; i < pages.length; i += 1) {
+      const p = pages[i]!, len = p.width * p.height * 2;
+      if (o + len > bytes.byteLength) throw new RangeError("The encoded bake is cut short.");
+      pages[i] = { ...p, heights: bytes.slice(o, o + len) };
+      o += len;
+    }
+  }
   return { format: head.format, pages, table: head.table };
 }

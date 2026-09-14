@@ -1,6 +1,7 @@
-// Bundles the worldgen tools into tools/dist/ (gitignored): the GPU ground's parity tool.
+// Bundles the worldgen tools into tools/dist/ (gitignored): the GPU ground's parity tool, the occlusion check.
 // Engine packages resolve to their workspace source, linked or not.
 //   node packages/worldgen/tools/build.mjs    ->  http://localhost:4300/packages/worldgen/tools/ground-parity.html
+//                                              http://localhost:4300/packages/worldgen/tools/occlusion-check.html
 import { build } from "esbuild";
 import { existsSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -12,9 +13,10 @@ const engine = {
   name: "keel-engine-source",
   setup(b) {
     b.onResolve({ filter: /^@keel-engine\/[\w-]+$/ }, (a) => {
-      const file = resolve(root, "packages", a.path.slice("@keel-engine/".length), "src/index.ts");
-      return existsSync(file) ? { path: file } : undefined;
+      const name = a.path.slice("@keel-engine/".length);
+      for (const dir of ["packages", "packs"]) { const file = resolve(root, dir, name, "src/index.ts"); if (existsSync(file)) return { path: file }; }
+      return undefined;
     });
   },
 };
-await build({ bundle: true, format: "esm", platform: "browser", target: "es2022", logLevel: "info", plugins: [engine], entryPoints: [resolve(here, "ground-parity.ts")], outfile: resolve(here, "dist/ground-parity.js") });
+for (const name of ["ground-parity", "occlusion-check"]) await build({ bundle: true, format: "esm", platform: "browser", target: "es2022", logLevel: "info", plugins: [engine], entryPoints: [resolve(here, `${name}.ts`)], outfile: resolve(here, `dist/${name}.js`) });

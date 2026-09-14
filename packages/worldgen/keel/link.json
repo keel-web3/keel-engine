@@ -8,6 +8,7 @@
     "needs": [
       "keel/runtime@^0.1",
       "keel/core@^0.1",
+      "keel/bake@^0.1",
       "keel/codec@^0.1",
       "keel/terrain@^0.1",
       "keel/world@^0.1",
@@ -53,6 +54,7 @@
     "weight": -1000
   },
   "imports": {
+    "@keel-engine/bake": "keel/bake",
     "@keel-engine/codec": "keel/codec",
     "@keel-engine/core": "keel/core",
     "@keel-engine/level": "keel/level",
