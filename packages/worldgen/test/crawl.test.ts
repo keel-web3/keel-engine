@@ -70,6 +70,20 @@ test("dressing: the stairs up never wall the start in (a small start room's only
   }
 });
 
+test("dressing: no blocking prop beside a locked door cuts the way to the key -- a sweep of seeds, sizes, generators and acts", () => {
+  // (Found on sw0/cave/crypt 60 x 45: a prop at (9,30) beside the locked door at (8,29) stood in the only way to the
+  // key -- its ring joined round through the locked door, and the cave's lanes missed the passage. sw4/wfc and
+  // sw10/cave did the same.)
+  for (let n = 0; n < 40; n += 1) for (const algorithm of DUNGEON_ALGORITHMS) for (const act of CRAWL_ACTS) {
+    const w = 60 + (n * 7) % 25, d = 45 + (n * 5) % 10;
+    const S = dressDungeon(generateDungeon(`sw${n}`, w, d, { algorithm, rooms: 10 }), act);
+    const tag = `sw${n}/${algorithm}/${act} ${w} x ${d}`;
+    const noKey = reach(S, S.start, false), withKey = reach(S, S.start, true);
+    if (S.key) assert.ok(noKey[S.key[1] * S.w + S.key[0]], `${tag}: the key can't be reached`);
+    assert.ok(withKey[S.exit[1] * S.w + S.exit[0]] || S.floor[S.exit[1] * S.w + S.exit[0]] === FLOOR.STAIRS_DOWN, `${tag}: the exit can't be reached`);
+  }
+});
+
 test("dressing: the grammar's roles become rooms, the rooms their props; deterministic; 50+ lights on an 84 x 60 floor", () => {
   const D = generateDungeon("crawl-1", 84, 60, { algorithm: "rooms", rooms: 12 });
   const a = dressDungeon(D, "crypt"), b = dressDungeon(D, "crypt");

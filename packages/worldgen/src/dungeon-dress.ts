@@ -376,7 +376,23 @@ export function dressDungeon(D: Dungeon, themeOrId: CrawlTheme | string = "crypt
       if (side) runs += 1;
     }
     if (open.every(Boolean)) return false;
-    return runs > 1;
+    if (runs > 1) return true;
+    // (The ring counts a locked door as open, so beside one it can join round through the door: then walk the
+    // whole floor -- the key reached without the key, the exit with it -- with this cell blocked.)
+    return RING_X.some((dx, q) => cellAt(i + dx, j + RING_Z[q]!) === CELL.LOCKED) && !keepsWay(k, blockedNow);
+  };
+  const keepsWay = (k: number, blockedNow: Uint8Array | null): boolean => {
+    const walk = (to: readonly [number, number], locked: boolean): boolean => {
+      const goal = to[1] * w + to[0], seen = new Uint8Array(N), q = [D.start[1] * w + D.start[0]];
+      seen[q[0]!] = 1;
+      for (let h = 0; h < q.length; h += 1) {
+        const c = q[h]!, [i, j] = at(c);
+        if (c === goal) return true;
+        for (let dir = 0; dir < 4; dir += 1) { const a = i + DIR_X[dir]!, b = j + DIR_Z[dir]!; if (!inside(a, b)) continue; const n = b * w + a; if (!seen[n] && n !== k && !blockedNow?.[n] && (locked || cells[n] !== CELL.LOCKED) && (walkable(cells[n]!) || bridge[n])) { seen[n] = 1; q.push(n); } }
+      }
+      return false;
+    };
+    return (!D.key || walk(D.key, false)) && walk(D.exit, true);
   };
   const stairsFor = (p: readonly [number, number], down: boolean): Stairs | null => {
     // Up: against the nearest wall the camera sees (+z, then +x); down: the mark's own cell, going away from the camera.
