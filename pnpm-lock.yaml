@@ -56,6 +56,18 @@ importers:
         specifier: workspace:*
         version: link:../../packages/keel
 
+  packages/alchemy:
+    dependencies:
+      '@keel-engine/codec':
+        specifier: workspace:*
+        version: link:../codec
+      '@keel-engine/replay':
+        specifier: workspace:*
+        version: link:../replay
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
   packages/audio:
     dependencies:
       '@keel-engine/codec':
@@ -317,6 +329,15 @@ importers:
       '@keel-engine/core':
         specifier: workspace:*
         version: link:../core
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
+  packages/replay:
+    dependencies:
+      '@keel-engine/codec':
+        specifier: workspace:*
+        version: link:../codec
       '@keel-engine/runtime':
         specifier: workspace:*
         version: link:../runtime

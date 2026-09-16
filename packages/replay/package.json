@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/replay",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Runs that prove themselves: input tapes, state checksums, checkpointed recording and replay verification with a transcript hash chain.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

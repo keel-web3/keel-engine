@@ -1,0 +1,20 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-alchemy",
+  "version": "0.1.0",
+  "description": "A combination matrix whose cells are programs -- stat mods, bounded formulas, triggers, looks -- read through a versioned contract that clamps and prices them to a budget by depth, content-addresses them, and lays them on a hero's sheet deterministically; with a seeded oracle and a relay queue for the AI bridge.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/alchemy"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/codec",
+      "@keel-engine/replay"
+    ]
+  }
+}

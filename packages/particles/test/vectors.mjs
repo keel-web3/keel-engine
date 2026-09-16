@@ -11,7 +11,8 @@ export default await engineVectors(import.meta.url, [
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "9475a071f9e1a1bb826851f8bc0e512a11aa0ba1ef4486d87e53098e6863b10a",
+    // The exported vertex shader now supports perspective views.
+    expect: "6f3bf503bb945893c9c8e0053f392944d6696890e22520160d83122de3635698",
   },
   {
     name: "curves and hashing",

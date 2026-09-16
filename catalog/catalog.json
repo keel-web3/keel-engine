@@ -6,6 +6,8 @@
   "order": [
     "keel/runtime",
     "keel/codec",
+    "keel/replay",
+    "keel/alchemy",
     "keel/audio",
     "keel/core",
     "keel/scene",
@@ -167,6 +169,84 @@
       "vectors": {
         "path": "ai/wander/test/vectors.mjs",
         "sha256": "0xd61ac20426ac50c23dcb95a9c01d546595ea58bb9c9b8c0cf3d7615350bb3201"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "keel/alchemy",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/codec@^0.1",
+        "keel/replay@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-alchemy",
+      "license": "MIT",
+      "summary": "A combination matrix whose cells are programs -- stat mods, bounded formulas, triggers, looks -- read through a versioned contract that clamps and prices them to a budget by depth, content-addresses them, and lays them on a hero's sheet deterministically; with a seeded oracle and a relay queue for the AI bridge.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/alchemy"
+      },
+      "githubPath": "packages/alchemy/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/alchemy/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/alchemy/keel/link.json",
+          "sha256": "0x51ec5f78cdfcee718cfcb671585d3e3f3c1c6980991a6a8a83407b45a2ba338f"
+        },
+        {
+          "path": "packages/alchemy/src/contract.ts",
+          "sha256": "0xf17e648f03d4cdb62b9088d20667a6000c91bde7f156c512203ea93c74733f18"
+        },
+        {
+          "path": "packages/alchemy/src/expr.ts",
+          "sha256": "0x66ed883ecfe69a3c499d1a4d2ee8576501df6e7f28ad7efa586f51baba60fb5e"
+        },
+        {
+          "path": "packages/alchemy/src/index.ts",
+          "sha256": "0x05bb1e3d65aea307bf653a5395d61db7d1195e9d129ba61477db3f504db39de6"
+        },
+        {
+          "path": "packages/alchemy/src/matrix.ts",
+          "sha256": "0x4aece2c795cb89111f7d669c9a83d29e082f95856797109476903344429e45a7"
+        },
+        {
+          "path": "packages/alchemy/src/relay.ts",
+          "sha256": "0xae84212e27731edc92cf2e4219da7c566b1c66f5a8d48e583abe007590358f42"
+        },
+        {
+          "path": "packages/alchemy/src/sheet.ts",
+          "sha256": "0x0ccc54af3a38495f512cc2de4e2589ef47c57aae87e1de02f3aede17fa3f62cb"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/codec",
+          "@keel-engine/replay"
+        ]
+      },
+      "output": {
+        "digest": "0xcc5e19c016c32ec19d2d0bbe223d8bb3b2c1d3ba23c381b0cd859388c94e5ada",
+        "byteLength": 16540
+      },
+      "sourceDigest": "0xbd10ff7a515840b879b4b01fe36839777bf62b963d8b0499cbf597e5b25e566a",
+      "recipeDigest": "0x72ce44985ceed3e1bfab9397325a1d3ea8c0b8111ed41b2e15da48c82eb02571",
+      "receiptDigest": "0xb6ec8d2bb62774fbf4c74c1099eba665bc4c0f7fe268c30407042cefa552a17b",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packages/alchemy/test/vectors.mjs",
+        "sha256": "0x115e63d970658dc420a2f0ed7e4d19fc9d933e6c00ba03c8d400d18b44b608f9"
       },
       "deployments": [],
       "deployed": false
@@ -1472,7 +1552,7 @@
         },
         {
           "path": "packages/particles/src/gpu.ts",
-          "sha256": "0x391e49b39398643e103e6061cc30d56228ae7d20980992299a4d3b422e6ef6f9"
+          "sha256": "0x5a7298de753db19627084e58a1a982653bed6ba2a966217a04465282ad679991"
         },
         {
           "path": "packages/particles/src/index.ts",
@@ -1691,17 +1771,17 @@
         ]
       },
       "output": {
-        "digest": "0x6e569a1fcb2234f7760d232d91ecc67d10773b28fc52b9566906001a053ba5e2",
-        "byteLength": 77925
+        "digest": "0xbb19bf358f187d505b1b270136cf4f48b0790a68b3824c3e51eb10f2349d5ad0",
+        "byteLength": 78822
       },
-      "sourceDigest": "0xfe4ec691f822aa437e64910ae998e6be5c3333f615608c5f5be038246220c80a",
-      "recipeDigest": "0x8fcf0a5c72f89e299935a1847581224cbf47d0b7d809aea17523536aa6b69992",
-      "receiptDigest": "0x73c8209f27f3cda2896887333cd25239569f7925d48e3a790c6d6a751c26dd6e",
+      "sourceDigest": "0x5ccb033fc41aea88c323e4e052a03dc686d7fcb3a835197719097d2ab9aa132e",
+      "recipeDigest": "0xef3f23a70de128245166b3744d968d4582c74f24dc00fe1c5ff746a02a657532",
+      "receiptDigest": "0x7fb52b519c9093362b47e8129eefe15b2bad21f0704e6f15672afe09bc60f92b",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/particles/test/vectors.mjs",
-        "sha256": "0x9d7c5237334d75dec5197d3f9e2c6379e0155aeedc9fc4dabde5344a177b3c77"
+        "sha256": "0xb0547a79652448de85371be1c52235fbf3d3a5b2b3b725607c4f0eae8a409c00"
       },
       "deployments": [],
       "deployed": false
@@ -1846,6 +1926,74 @@
       "vectors": {
         "path": "packages/render/test/vectors.mjs",
         "sha256": "0xfd32c8e4bd9d2ca81de39266318c2e64e0f4bf7147268b4b06e33149da77f356"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "keel/replay",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/codec@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-replay",
+      "license": "MIT",
+      "summary": "Input tapes, state checksums, checkpointed recording and replay verification: a run's result derived from its seed, rules and inputs, never trusted.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/replay"
+      },
+      "githubPath": "packages/replay/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/replay/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/replay/keel/link.json",
+          "sha256": "0x4a9c1f176023c1eafa1b9c44145a1d8cb4efab7e01b2b7c5761a58c756d3e7bb"
+        },
+        {
+          "path": "packages/replay/src/hash.ts",
+          "sha256": "0xaf0ca512845451cbce4eb5f1fa3171c84cff8ad1874de444f4eeb7551a49fa58"
+        },
+        {
+          "path": "packages/replay/src/index.ts",
+          "sha256": "0x99e2d84f6fd85dc7edc1f8060138f502e555d8ac94d8af3ba0d99b1f83d432fe"
+        },
+        {
+          "path": "packages/replay/src/run.ts",
+          "sha256": "0x8b7e6b7ff757b4fd6dbd7548947d502d1de1e13d7105d68ec176b9eb89eb5050"
+        },
+        {
+          "path": "packages/replay/src/tape.ts",
+          "sha256": "0x42bf068e4e0185c597929e6b822fd655e8f8fc3f0a6b1849e7152dcdfe0d7da7"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/codec"
+        ]
+      },
+      "output": {
+        "digest": "0x4b7f643ef6cb2f9b3f65a11f20c0f79288ea116a345136f7e5c1aabed786a638",
+        "byteLength": 7299
+      },
+      "sourceDigest": "0xc945f840d98caec396abb5d33a2149748f6d9f294cd2ee4fec45d3791ecf103a",
+      "recipeDigest": "0x397eb635dfdb0d25afeeeff2d18f5aa8cf7f1dafe377f52ce723a52aea97cfab",
+      "receiptDigest": "0x881afe7e4cefe70018839fc16874306a6ecbc0861643ae14bd868893785a6285",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packages/replay/test/vectors.mjs",
+        "sha256": "0xd4c01098040567b13d5134747860b808fc67523ce9b6c5be5c189a2c6525417e"
       },
       "deployments": [],
       "deployed": false
@@ -2544,7 +2692,7 @@
         },
         {
           "path": "packages/worldgen/src/dungeon-gl.ts",
-          "sha256": "0xb6e12233be7e2a203ac6486909192f6e2c134153c6684c008b03f76a8874071a"
+          "sha256": "0x456064287fab44209a246697aef249ae10fbe7eb743cba583d207ea2d19e6bf6"
         },
         {
           "path": "packages/worldgen/src/dungeon-light.ts",
@@ -2552,7 +2700,7 @@
         },
         {
           "path": "packages/worldgen/src/dungeon-scene.ts",
-          "sha256": "0x46fa21a2b2372428a1cc65ffdc04bc95cece185862e0f997a2e683f86c1f27ff"
+          "sha256": "0x729d57c7e76dd4586f94f9972e41135b645fc0240b19821070cc930b20fb19a9"
         },
         {
           "path": "packages/worldgen/src/dungeon.ts",
@@ -2560,7 +2708,7 @@
         },
         {
           "path": "packages/worldgen/src/index.ts",
-          "sha256": "0x64c3affbdc4c35097aef6f85b97f52c103ad1ecd0f39a65d70a4b3794e38c4dd"
+          "sha256": "0x37a8660a669c3f008c6ef34632008ba6c34347061b5b8f7b13e43808395f9403"
         },
         {
           "path": "packages/worldgen/src/level.ts",
@@ -2585,6 +2733,10 @@
         {
           "path": "packages/worldgen/src/pipeline.ts",
           "sha256": "0x81bc6b97470e93f7f9296878d51041f7a1f3ecaa7cce3d35ffbdbe420d02ee61"
+        },
+        {
+          "path": "packages/worldgen/src/runner.ts",
+          "sha256": "0x6275f3cb87e69d986423017cb8b9810078d4f06e931c4bd0d38266c05cd7d162"
         },
         {
           "path": "packages/worldgen/src/scatter.ts",
@@ -2624,17 +2776,17 @@
         ]
       },
       "output": {
-        "digest": "0x4be1a3880d591758288bc0f1e8b3aaa811b6f2c40699ba7d21531bba7c4a4980",
-        "byteLength": 214818
+        "digest": "0x0d9c4192c674ddbfe5b11cf36b461837e4260c0ba6b02d31d4a173fac71c581e",
+        "byteLength": 221065
       },
-      "sourceDigest": "0xeebad14c80ea76f13567d9745afe022105e03bd350286e33ef8e4172ee76109a",
-      "recipeDigest": "0xabb9f7146398c602786c48d52f4ec0f722c770129061fde33406476f2d5020ed",
-      "receiptDigest": "0x6c89be1fbc36e5116a967def1bedf68dd09b748bec3fe0f308f7dc890cc46255",
+      "sourceDigest": "0xe8ff05a881e8168a824fea9f28de5f1d11c0b9a64d43b9976a849f3ef051a681",
+      "recipeDigest": "0xccc3373a8e4cc1c81f11a8c344665340a8cde1a8e2505f2aba6e3b00c31e31b4",
+      "receiptDigest": "0xfe2290d103234151a27bd24acc8e68f52e22f7a15e73c912c602acb113211127",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/worldgen/test/vectors.mjs",
-        "sha256": "0x7f26d37536af3b358d91e30696d27807b7c74e3a9f624d06761a50cb3fabc33d"
+        "sha256": "0x9b0cd206544c3a55cb075a79719afeade4562c4bf42727daafc5afcd56724708"
       },
       "deployments": [],
       "deployed": false

@@ -1,0 +1,15 @@
+{
+  "name": "@keel-engine/alchemy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The element matrix: combine things into new things, each with a program (stats, formulas, triggers, looks) written by anyone -- an AI through the bridge, a seeded generator, a person -- and read through a versioned contract that bounds, prices and content-addresses it.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/replay": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

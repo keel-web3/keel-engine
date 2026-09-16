@@ -39,6 +39,8 @@ const SIM = [
   "packages/codec/src", // the canonical bytes: fixed-point and decimal numbers
   "packages/terrain/src", // flow fields, paths, colliders, the palette, the view axes the ground and sprites share
   "packages/worldgen/src", // noise and climate, overworlds, WFC, dungeons and their dressing, structures, the pipeline
+  "packages/replay/src", // tapes, checksums, transcripts: what a run is verified by
+  "packages/alchemy/src", // the element matrix: programs read through a contract, laid on a sheet a sim reads
   "packages/bake/src", // what a bake is keyed and sized by, populations, atlases, the pixel view, depth and picking
   "packs", // every pack's generators (src/ only: see below)
   "ai", // brains and steering

@@ -56,6 +56,12 @@ explains how a package is written.
 You make games with the engine through the KEEL SDK, which carries it as
 `@keel/game-engine`:
 
+The SDK's [friend quickstart](https://github.com/keel-web3/keel-sdk/blob/codex/friend-test-setup/docs/FRIEND_QUICKSTART.md)
+installs these engine parts, the editor, MCP and skills together. It also includes
+the original JavaScript pixel engine under `packages/pixel-engine`. They are
+parts of the same KEEL SDK workflow; a tester does not need to arrange sibling
+checkouts manually.
+
 ```bash
 git clone https://github.com/keel-web3/keel-sdk
 cd keel-sdk && pnpm install && node scripts/build.mjs

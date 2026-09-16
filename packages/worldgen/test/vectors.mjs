@@ -6,7 +6,8 @@ export default await engineVectors(import.meta.url, [
   {
     name: "the export surface is intact",
     run: async (api) => { const names = surface(api); return { count: names.length, digest: await digest(names) }; },
-    expect: {"count":111,"digest":"be8693feee86af6a904cce95b07f0bda08bbc8b0575c7a818601546eade77a2f"},
+    // generateRunner is the one added public function; constants remain unchanged.
+    expect: {"count":112,"digest":"022bea514c9aa5ea04bcdb5372ef163d7cb456a023975ad358742e366fadb2f9"},
   },
   {
     name: "its tables and constants are intact",
