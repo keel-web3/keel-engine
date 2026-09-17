@@ -1,5 +1,5 @@
 // The modules a build can see: the engine's own (every package, pack, ai and
-// system with a src/module.ts) and any number of PROJECTS outside it -- an
+// system with a src/module file) and any number of PROJECTS outside it -- an
 // example, a creator's game, someone's pack -- which reach the engine the way
 // a third party does, through the KEEL SDK. (Node runs the TypeScript
 // directly, so reading a manifest is just importing it.)
@@ -7,22 +7,27 @@
 //   readWorkspace(engineRoot)                         the engine alone
 //   readWorkspace(engineRoot, { projects: [dir] })   the engine and a project
 //
-// A project directory is one module (it has src/module.ts), or a folder of
+// A project directory is one module (it has a src/module file), or a folder of
 // them (any child -- or grandchild, one group deep like packs/x -- with one).
 //
-// Schemas: a package with a src/schemas.ts gets every named codec schema it
+// TypeScript is the default, never a requirement: every src/<name>.ts this
+// reads may be plain JavaScript instead (src/module.js, src/index.js, ...),
+// and builds, links and verifies the same way (source.ts).
+//
+// Schemas: a package with a src/schemas file gets every named codec schema it
 // exports (named("packs/tiles/tile", struct({...}))) listed in its manifest's
 // contents.schemas, bytes embedded (codec schemaEntry) -- so the bundled
 // module's manifest carries them and keel/codec registers them on the page
 // before anything starts. Entries the manifest lists itself win (by id).
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { KINDS, schemaEntry, schemaName } from "@keel-engine/codec";
 import type { SchemaEntryLike, Type } from "@keel-engine/codec";
 import { defineManifest } from "@keel-engine/runtime";
 import type { ModuleManifest, SchemaEntry } from "@keel-engine/runtime";
+import { sourceFile } from "./source.ts";
 
 export interface WorkspaceModule {
   readonly manifest: ModuleManifest;
@@ -44,10 +49,10 @@ export const SDK_PREFIX = "@keel/game-engine/";
 export const ENGINE_PREFIX = "@keel-engine/";
 
 async function moduleAt(dir: string, origin: WorkspaceModule["origin"]): Promise<WorkspaceModule | null> {
-  const file = join(dir, "src", "module.ts");
-  if (!existsSync(file)) return null;
+  const file = sourceFile(dir, "module");
+  if (!file) return null;
   const pkgFile = join(dir, "package.json");
-  if (!existsSync(pkgFile)) throw new Error(`${dir} has a src/module.ts but no package.json: its package name is how code imports it.`);
+  if (!existsSync(pkgFile)) throw new Error(`${dir} has a ${relative(dir, file)} but no package.json: its package name is how code imports it.`);
   const pkg = JSON.parse(readFileSync(pkgFile, "utf8")) as { name: string };
   const mod = (await import(pathToFileURL(file).href)) as { manifest?: ModuleManifest };
   if (!mod.manifest) throw new Error(`${file} doesn't export a manifest.`);
@@ -58,10 +63,10 @@ async function moduleAt(dir: string, origin: WorkspaceModule["origin"]): Promise
 const isNamedSchema = (v: unknown): v is Type<unknown> =>
   typeof v === "object" && v !== null && (KINDS as readonly string[]).includes((v as { kind?: string }).kind ?? "") && schemaName(v as Type<unknown>) !== null;
 
-/** The named codec schemas a package's src/schemas.ts exports, as manifest entries (bytes embedded), by id. */
+/** The named codec schemas a package's src/schemas file exports, as manifest entries (bytes embedded), by id. */
 export async function schemasOf(dir: string): Promise<SchemaEntryLike[]> {
-  const file = join(dir, "src", "schemas.ts");
-  if (!existsSync(file)) return [];
+  const file = sourceFile(dir, "schemas");
+  if (!file) return [];
   const mod = (await import(pathToFileURL(file).href)) as Record<string, unknown>;
   const out = new Map<string, SchemaEntryLike>();
   for (const [name, v] of Object.entries(mod)) {
@@ -74,7 +79,7 @@ export async function schemasOf(dir: string): Promise<SchemaEntryLike[]> {
   return [...out.values()];
 }
 
-/** The manifest with its package's src/schemas.ts schemas in contents.schemas (its own entries win). */
+/** The manifest with its package's src/schemas schemas in contents.schemas (its own entries win). */
 export async function withSchemas(manifest: ModuleManifest, dir: string): Promise<ModuleManifest> {
   const found = await schemasOf(dir);
   if (!found.length) return manifest;

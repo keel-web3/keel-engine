@@ -12,6 +12,13 @@ standard pack and every AI:
   You don't have to trust us: anyone with a commit hash can rebuild the exact
   published bytes (see "Check it yourself" below).
 
+The engine's own source is TypeScript, and TypeScript is what we recommend for
+games and packs. It is never required. A game or pack can be plain JavaScript
+(`src/module.js`, `src/index.js`), or a mix of the two. It goes through the same
+verified pipeline to the same kind of receipt. Its TypeScript files are type-checked
+strictly; its JavaScript is built as written. Bringing an existing JavaScript game
+onto the engine means wiring it to the engine's modules, not retyping it.
+
 Games and the KEEL desktop editor normally load the engine from chain at a
 chosen version. Each module's bytes are checked against the digest its
 receipt binds. With a local checkout or a clone at a tag, you can compile the
