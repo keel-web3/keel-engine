@@ -54,13 +54,26 @@ import { MASK_PER_METRE, lightMask } from "./dungeon-light.ts";
 import { MAT, QUAD, QUAD_FLOATS } from "./dungeon-scene.ts";
 import type { DungeonScene } from "./dungeon-scene.ts";
 
-/** The view, as keel/bake's PixelView has it (structurally). */
+/**
+ * The view, as keel/bake's PixelView has it (structurally) -- orthographic. With an `eye` it's a PERSPECTIVE view
+ * instead (a chase camera, a third-person camera behind the hero): the camera stands at `eye` looking along
+ * `axes.forward` (right and up its basis), `fov` its vertical field of view; `center` is what it looks at (the
+ * cutaway's and the depth range's middle), and `pixelsPerMetre` is the sprites' baked density (a sprite is drawn
+ * at the scale its distance gives it). Everything else -- the light map, fog, flames, the abyss, lit sprites -- is
+ * the same.
+ */
 export interface DungeonDrawView {
   readonly center: readonly [number, number, number];
   readonly pixelsPerMetre: number;
   readonly width: number;
   readonly height: number;
   readonly axes: { readonly right: readonly [number, number, number]; readonly up: readonly [number, number, number]; readonly forward: readonly [number, number, number] };
+  readonly eye?: readonly [number, number, number];
+  /** Vertical field of view (radians; default 1.0). */
+  readonly fov?: number;
+  /** Near and far planes (m; default 0.3, 90). */
+  readonly near?: number;
+  readonly far?: number;
 }
 /** keel/bake's look-table layout constants (its SLOTS, LOOKS_PER_ROW, LOOK_TEXELS, PAINTS_PER_ROW, PALETTE_ROW). */
 export interface LookLayout { readonly slots: number; readonly looksPerRow: number; readonly lookTexels: number; readonly paintsPerRow: number; readonly paletteRow: number }
@@ -77,6 +90,9 @@ export interface DungeonDrawOptions {
   /** The hero (world x, z): the cutaway's focus and the light he carries. */
   readonly focus?: readonly [number, number] | null;
   readonly cutaway?: "stub" | "dither" | "off";
+  /** How far round the focus the cutaway reaches (m): across the view either side (default 6.5), and toward the camera (default 7.1) -- a side-scroller wants its whole screen open; `front: false` stops keeping
+   * the default camera's front walls low (for a camera turned another way, where they can be the walls behind). */
+  readonly cutReach?: { readonly across?: number; readonly before?: number; readonly front?: boolean };
   /** Fog of war on (else everything as if in sight). */
   readonly fog?: boolean;
   /** Lights on (else the ambient alone). */
@@ -141,12 +157,24 @@ float flick(float seed, float speed, float amount, float t) {
 }`;
 
 const VIEW_UNIFORMS = `uniform vec3 uCenter, uRight, uUp, uForward; uniform float uK; uniform vec2 uSize; uniform float uDepthRange;
+uniform float uPersp; uniform vec3 uEye; uniform float uTan; uniform vec2 uClip;   // perspective: on, the eye, tan(fov/2), near far
 vec4 project(vec3 p) {
+  if (uPersp > 0.5) {
+    // (Depth linear in distance along forward, like the orthographic one: sprites and surfaces compare the same way.)
+    vec3 e = p - uEye;
+    float z = dot(e, uForward);
+    return vec4(dot(e, uRight) / (uTan * uSize.x / uSize.y), dot(e, uUp) / uTan, (2.0 * (z - uClip.x) / (uClip.y - uClip.x) - 1.0) * z, z);
+  }
   vec3 d = p - uCenter;
   vec2 px = vec2(uSize.x * 0.5 + dot(d, uRight) * uK, uSize.y * 0.5 - dot(d, uUp) * uK);
   float depth = clamp(0.5 + dot(d, uForward) / uDepthRange, 0.0, 1.0);
   return vec4(px.x / uSize.x * 2.0 - 1.0, 1.0 - px.y / uSize.y * 2.0, depth * 2.0 - 1.0, 1.0);
-}`;
+}
+// (Perspective: where a point lands in pixels, how far along forward it is, and how many pixels a metre is there.)
+vec2 perspPx(vec3 p) { vec4 c = project(p); float w = max(c.w, 0.05); return vec2((c.x / w * 0.5 + 0.5) * uSize.x, (0.5 - c.y / w * 0.5) * uSize.y); }
+float perspZ(vec3 p) { return dot(p - uEye, uForward); }
+float perspK(vec3 p) { return uSize.y * 0.5 / (max(perspZ(p), 0.05) * uTan); }
+float perspDepth(float z) { return clamp(2.0 * (z - uClip.x) / (uClip.y - uClip.x) - 1.0, -1.0, 1.0); }`;
 
 // Lighting + fog + palette, shared by surfaces and sprites.
 const SHADE = `
@@ -233,6 +261,7 @@ layout(location=4) in vec3 aM;     // material, seed, bits + 256 kind
 layout(location=5) in vec4 aC;     // column x z, neighbour column x z
 ${VIEW_UNIFORMS}
 uniform vec2 uFocus; uniform vec2 uHead; uniform vec2 uLat;
+uniform vec3 uCutE;              // the cutaway's ellipse: across (half), its centre toward the camera, its reach along
 uniform float uCutMode;            // 0 off, 1 stub, 2 dither
 uniform float uStub;
 uniform float uFront;              // front walls (bit 32; a neighbour's, bit 64) kept low everywhere: 1, or 0
@@ -250,8 +279,8 @@ uniform float uFogOn;
 float cutAt(vec2 c) {
   if (uCutMode < 0.5 || c.x > 1e8) return 0.0;
   vec2 d = c - uFocus;
-  // (An ellipse in front of the hero: across the view 6.5 m either side, along it from just behind him to 7 m before.)
-  vec2 e = vec2(dot(d, uLat) / 6.5, (dot(d, uHead) + 3.3) / 3.8);
+  // (An ellipse in front of the hero: by default across the view 6.5 m either side, along it from just behind him to 7 m before.)
+  vec2 e = vec2(dot(d, uLat) / uCutE.x, (dot(d, uHead) + uCutE.y) / uCutE.z);
   float cut = 1.0 - smoothstep(0.72, 1.0, length(e));
   // (Kept low too: a wall whose near side is ground he has never seen -- the back wall of some unexplored corridor
   // -- never stands as a black slab between the camera and the rooms he knows.)
@@ -308,6 +337,7 @@ uniform float uTime;
 uniform ivec4 uStyle;              // wall, floor, corridor, stain row
 uniform vec3 uAbyssFog;
 uniform vec3 uCam;                 // the camera's direction (forward)
+uniform float uPersp; uniform vec3 uEye;   // perspective: the camera's direction is from the eye to each point
 uniform vec4 uDoorGlow;            // (unused .xyz) , niches share
 uniform float uTile;
 uniform sampler2D uDecor;          // per cell, blended: moss, puddle, stain, lava crack
@@ -727,7 +757,8 @@ void main() {
   float dth = bayer4(fc) - 0.5;
   if (vCut > 0.0 && bayer4(fc) < vCut * 0.9) discard;
   vec3 n = vN;
-  if (dot(n, uCam) > 0.0) n = -n;
+  vec3 cam = uPersp > 0.5 ? normalize(vPos - uEye) : uCam;
+  if (dot(n, cam) > 0.0) n = -n;
   vec3 pos = vPos;
   vec2 cell = vec2(mod(pos.x, uTile), mod(pos.z, uTile));
   Surf o;
@@ -801,7 +832,7 @@ void main() {
   // The light: the ground in front of a face (not inside the wall), the ground under anything flat.
   // (The light: the ground in front of a face; for a wall's top and a face the cutaway opened, the ground a metre
   // toward the camera from it -- a wall's top catches the room's light along its rim.)
-  vec2 toCam = -normalize(uCam.xz);
+  vec2 toCam = -normalize(abs(cam.x) + abs(cam.z) > 1e-4 ? cam.xz : uCam.xz + vec2(1e-4));
   vec2 lp = pos.xz + (kind == ${QUAD.INNER} ? toCam * 1.2 : mat == M_CAP ? toCam * 0.9 : (face || (abs(n.y) < 0.5) ? n.xz * 0.35 : vec2(0.0)));
   vec3 L = lightAt(lp);
   // (Contact shade: the floor darkens toward a wall's foot, a wall toward its own.)
@@ -837,6 +868,7 @@ const ABYSS_FS = `#version 300 es
 precision highp float;
 ${ROWS_GLSL}
 uniform vec3 uCenter, uRight, uUp, uForward; uniform float uK; uniform vec2 uSize;
+uniform float uPersp; uniform vec3 uEye; uniform float uTan;
 uniform float uDepth; uniform vec3 uFogC; uniform vec3 uGlow; uniform float uGlowOn; uniform float uMist; uniform float uTime;
 uniform sampler2D uPal;
 in vec2 vPx;
@@ -845,9 +877,19 @@ ${COMMON}
 vec3 palRow(int row, float x) { int i = clamp(int(floor(x + 0.5)), 0, ${RAMP_LENGTH - 1}); return texelFetch(uPal, ivec2(i, row), 0).rgb; }
 void main() {
   vec2 px = floor(vPx) + 0.5;
-  vec3 o = uCenter + uRight * ((px.x - uSize.x * 0.5) / uK) + uUp * ((uSize.y * 0.5 - px.y) / uK);
-  float t = (-uDepth - o.y) / uForward.y;
-  vec3 p = o + uForward * t;
+  vec3 o, ray;
+  if (uPersp > 0.5) {
+    // (A ray from the eye through the pixel, down to the rubble; a pixel looking above the horizon sees only fog.)
+    vec2 ndc = vec2(px.x / uSize.x * 2.0 - 1.0, 1.0 - px.y / uSize.y * 2.0);
+    o = uEye;
+    ray = normalize(uForward + uRight * ndc.x * uTan * uSize.x / uSize.y + uUp * ndc.y * uTan);
+  } else {
+    o = uCenter + uRight * ((px.x - uSize.x * 0.5) / uK) + uUp * ((uSize.y * 0.5 - px.y) / uK);
+    ray = uForward;
+  }
+  if (ray.y > -1e-3) { outColor = vec4(uFogC, 1.0); return; }
+  float t = (-uDepth - o.y) / ray.y;
+  vec3 p = o + ray * t;
   float dth = bayer4(ivec2(gl_FragCoord.xy)) - 0.5;
   // Rubble far down: blocks and boulders, lit by nothing but the mist.
   float n = fbm(p.xz * 0.55);
@@ -885,6 +927,24 @@ flat out vec4 vDS;                             // depth sprites: the anchor's de
 flat out int vId;
 void main() {
   vec3 d = aPos - uCenter;
+  if (uPersp > 0.5) {
+    // Perspective: the card stands at its anchor, scaled by its distance (its bake's density against the pixels a
+    // metre is there), at the anchor's depth pulled a little toward the eye (so it stands clear of the floor).
+    float z = perspZ(aPos);
+    if (z < uClip.x) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+    float pk = perspK(aPos);
+    vec2 an = floor(perspPx(aPos) + 0.5);
+    float sc = aExtra.w * pk / uK;
+    vec2 pp = an - floor(aAnchor * sc + 0.5) + aCorner * max(vec2(1.0), floor(aRect.zw * sc + 0.5));
+    gl_Position = vec4(pp.x / uSize.x * 2.0 - 1.0, 1.0 - pp.y / uSize.y * 2.0, perspDepth(z - 0.35 * aExtra.w), 1.0);
+    vUv = vec3(aRect.xy + aCorner * aRect.zw, aExtra.x);
+    vOff = vec2((pp.x - an.x) / pk, (an.y - pp.y) / pk);
+    vLook = int(floor(aExtra.y + 0.5));
+    vAnchor = aPos; vFlags = aExtra.z; vFade = aFade;
+    vDS = vec4(z, 0.0, aRect.w, aExtra.w);
+    vId = gl_InstanceID;
+    return;
+  }
   vec2 anchor = floor(vec2(uSize.x * 0.5 + dot(d, uRight) * uK, uSize.y * 0.5 - dot(d, uUp) * uK) + 0.5);
   float s = aExtra.w;
   vec2 px = anchor - floor(aAnchor * s + 0.5) + aCorner * floor(aRect.zw * s + 0.5);
@@ -911,7 +971,7 @@ uniform highp usampler2D uPaints;
 uniform sampler2D uLookPal;
 uniform vec3 uRight; uniform vec3 uForward;
 uniform float uTime;
-uniform vec2 uFocus; uniform vec2 uHead; uniform vec2 uLat; uniform float uCutMode; uniform float uStub;
+uniform vec2 uFocus; uniform vec2 uHead; uniform vec2 uLat; uniform vec3 uCutE; uniform float uCutMode; uniform float uStub;
 uniform vec4 uSil;                              // a silhouette pass: its colour, on
 uniform highp sampler2DArray uHeights;          // depth sprites: a height per texel (keel/bake indexed.ts: two bytes)
 uniform int uHeightOn;
@@ -966,7 +1026,7 @@ void main() {
   // (A prop on a wall the cutaway sinks goes down with it -- by the height of each texel, as the wall's own top.)
   if (uCutMode > 0.5 && mod(floor(vFlags / 4.0), 2.0) > 0.5) {
     vec2 d = vAnchor.xz - uFocus;
-    vec2 e = vec2(dot(d, uLat) / 6.5, (dot(d, uHead) + 3.3) / 3.8);
+    vec2 e = vec2(dot(d, uLat) / uCutE.x, (dot(d, uHead) + uCutE.y) / uCutE.z);
     bool stands = mod(floor(vFlags / 16.0), 2.0) > 0.5;
     // (Sunk to a stub, a front wall keeps nothing that hung on it -- a stump of a banner reads as a black box; what
     // stands on the floor against it is cut where the stub is.)
@@ -1061,13 +1121,16 @@ void main() {
   bool shaft = kind > 3.5;
   vec2 m = shaft ? vec2(2.2, 7.0) : vec2(0.5, 0.9) * aA.w;      // metres wide, tall
   vec3 d = aA.xyz - uCenter;
-  vec2 anchor = floor(vec2(uSize.x * 0.5 + dot(d, uRight) * uK, uSize.y * 0.5 - dot(d, uUp) * uK) + 0.5);
-  vec2 sz = floor(m * vec2(uK, uK * (shaft ? uUp.y : 1.0)) + 0.5);
+  bool persp = uPersp > 0.5;
+  if (persp && perspZ(aA.xyz) < uClip.x) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  float fk = persp ? perspK(aA.xyz) : uK;
+  vec2 anchor = persp ? floor(perspPx(aA.xyz) + 0.5) : floor(vec2(uSize.x * 0.5 + dot(d, uRight) * uK, uSize.y * 0.5 - dot(d, uUp) * uK) + 0.5);
+  vec2 sz = floor(m * vec2(fk, fk * (shaft && !persp ? uUp.y : 1.0)) + 0.5);
   sz = max(sz, vec2(3.0, 4.0));
   vec2 px = anchor + vec2((aCorner.x - 0.5) * sz.x, -aCorner.y * sz.y + (shaft ? 0.0 : sz.y * 0.18));
   px = floor(px + 0.5);
   float depth = clamp(0.5 + (dot(d, uForward) - 0.35) / uDepthRange, 0.0, 1.0);
-  gl_Position = vec4(px.x / uSize.x * 2.0 - 1.0, 1.0 - px.y / uSize.y * 2.0, depth * 2.0 - 1.0, 1.0);
+  gl_Position = vec4(px.x / uSize.x * 2.0 - 1.0, 1.0 - px.y / uSize.y * 2.0, persp ? perspDepth(perspZ(aA.xyz) - 0.35) : depth * 2.0 - 1.0, 1.0);
   vUv = vec2(aCorner.x, aCorner.y) * sz;
   vB = aB; vSize = sz.y; vFogXZ = aA.xz;
 }`;
@@ -1414,6 +1477,10 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
       const W = view.width, H = view.height, k = view.pixelsPerMetre;
       const ax = view.axes;
       const range = (Math.max(W, H) / k) * 4;
+      const persp = !!view.eye;
+      const eye = view.eye ?? view.center;
+      const tanHalf = Math.tan((view.fov ?? 1.0) / 2);
+      const near = view.near ?? 0.3, far = view.far ?? 90;
       const tile = s.tile;
       // (The hero's light: on or off.)
       if (heroSlot >= 0) { const on = opts.heroLight !== false && opts.focus ? 1 : 0; const o = heroSlot * LIGHT_FLOATS + 17; if (lightData[o] !== on) { lightData[o] = on; gl.bindBuffer(gl.ARRAY_BUFFER, lightBuf); gl.bufferSubData(gl.ARRAY_BUFFER, o * 4, lightData, o, 1); } }
@@ -1451,6 +1518,10 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
         gl.uniform1f(u("uK"), k);
         gl.uniform2f(u("uSize"), W, H);
         gl.uniform1f(u("uDepthRange"), range);
+        gl.uniform1f(u("uPersp"), persp ? 1 : 0);
+        gl.uniform3f(u("uEye"), eye[0], eye[1], eye[2]);
+        gl.uniform1f(u("uTan"), tanHalf);
+        gl.uniform2f(u("uClip"), near, far);
       };
       const shadeUniforms = (u: (n: string) => WebGLUniformLocation | null) => {
         gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, palTex); gl.uniform1i(u("uPal"), 0);
@@ -1485,6 +1556,9 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
       // Surfaces.
       const focus = opts.focus ?? null;
       const cutMode = !focus || opts.cutaway === "off" ? 0 : opts.cutaway === "dither" ? 2 : 1;
+      // (The cutaway's reach: across the view either side, and toward the camera from just behind him.)
+      const across = opts.cutReach?.across ?? 6.5, before = opts.cutReach?.before ?? 7.1;
+      const cutE: [number, number, number] = [across, (before - 0.5) / 2, (before + 0.5) / 2];
       gl.useProgram(P.world.p);
       {
         const u = P.world.u;
@@ -1494,9 +1568,10 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
         gl.uniform2f(u("uFocus"), focus ? focus[0] : 0, focus ? focus[1] : 0);
         gl.uniform2f(u("uHead"), hx / hl, hz / hl);
         gl.uniform2f(u("uLat"), ax.right[0], ax.right[2]);
+        gl.uniform3f(u("uCutE"), cutE[0], cutE[1], cutE[2]);
         gl.uniform1f(u("uCutMode"), cutMode);
         gl.uniform1f(u("uStub"), 0.7);
-        gl.uniform1f(u("uFront"), cutMode === 1 ? 1 : 0);
+        gl.uniform1f(u("uFront"), cutMode === 1 && opts.cutReach?.front !== false ? 1 : 0);
         gl.uniform4i(u("uStyle"), th.wall.style, th.floor.style, th.floor.corridor, th.id === "cave" ? ROW.moss : th.id === "forge" ? ROW.lava : ROW.rug);
         gl.uniform3f(u("uAbyssFog"), th.abyss.fog[0], th.abyss.fog[1], th.abyss.fog[2]);
         gl.uniform3f(u("uCam"), ax.forward[0], ax.forward[1], ax.forward[2]);
@@ -1554,6 +1629,7 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
         gl.uniform2f(u("uFocus"), focus ? focus[0] : 0, focus ? focus[1] : 0);
         gl.uniform2f(u("uHead"), hx2 / hl2, hz2 / hl2);
         gl.uniform2f(u("uLat"), ax.right[0], ax.right[2]);
+        gl.uniform3f(u("uCutE"), cutE[0], cutE[1], cutE[2]);
         gl.uniform1f(u("uCutMode"), cutMode);
         gl.uniform1f(u("uStub"), 0.7);
         gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D_ARRAY, pages); gl.uniform1i(u("uPages"), 3);
@@ -1562,7 +1638,7 @@ export function createDungeonRenderer(gl: WebGL2RenderingContext, { looks, capac
         gl.activeTexture(gl.TEXTURE6); gl.bindTexture(gl.TEXTURE_2D, paintsTex); gl.uniform1i(u("uPaints"), 6);
         const hOn = !!heights && opts.heights !== false;
         gl.activeTexture(gl.TEXTURE7); gl.bindTexture(gl.TEXTURE_2D_ARRAY, hOn ? heights : null); gl.uniform1i(u("uHeights"), 7);
-        gl.uniform1i(u("uHeightOn"), hOn ? 1 : 0);
+        gl.uniform1i(u("uHeightOn"), hOn && !persp ? 1 : 0); // (depth sprites are orthographic: a perspective card is flat)
         gl.uniform1i(u("uIds"), ids ? 1 : 0);
         gl.uniform1i(u("uIdBase"), 0);
         applyLayer(gl, "objects");

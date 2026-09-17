@@ -15,6 +15,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { indexOf } from "./source.ts";
 
 interface Manifest {
   readonly id: string;
@@ -70,7 +71,7 @@ export async function engineVectors<Api = Record<string, unknown>>(vectorsUrl: s
   if (self.id !== "keel/runtime") {
     const known = engineModules();
     const runtimeDir = known.get("keel/runtime")!.dir;
-    const runtime = (await import(pathToFileURL(join(runtimeDir, "src", "index.ts")).href)) as { createEngine(): Engine };
+    const runtime = (await import(pathToFileURL(indexOf({ manifest: known.get("keel/runtime")!.link.manifest, dir: runtimeDir })).href)) as { createEngine(): Engine };
     const engine = runtime.createEngine();
     page.KEEL_ENGINE = engine;
     const defined = new Set<string>([self.id]);
@@ -80,7 +81,7 @@ export async function engineVectors<Api = Record<string, unknown>>(vectorsUrl: s
       if (!entry) throw new Error(`${self.id}'s vectors need ${id}, which isn't an engine module.`);
       defined.add(id);
       for (const need of entry.link.manifest.needs) needFrom(need);
-      const src = pathToFileURL(join(entry.dir, "src", "index.ts")).href;
+      const src = pathToFileURL(indexOf({ manifest: entry.link.manifest, dir: entry.dir })).href;
       engine.define(entry.link.manifest, id === "keel/runtime" ? () => runtime : async (ctx) => {
         const api = (await import(src)) as { setup?: (ctx: Ctx) => unknown };
         if (typeof api.setup === "function") await api.setup(ctx);

@@ -11,7 +11,8 @@ import { encode, encodeSchema, schemaEntry, schemaId, toBase64 } from "@keel-eng
 import { defineManifest } from "@keel-engine/runtime";
 import { bundleModule } from "../src/bundle.ts";
 import { buildGameDocument, closureOf, keelAudioScripts } from "../src/document.ts";
-import { readWorkspace, schemasOf, withSchemas } from "../src/workspace.ts";
+import { MODULE_ENTRY, entryFor } from "../src/link.ts";
+import { readProject, readWorkspace, schemasOf, withSchemas } from "../src/workspace.ts";
 import { BLOB } from "./fixtures/hello/pack/src/schemas.ts";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
@@ -144,4 +145,29 @@ test("a module may read another's manifest (<package>/module): the build puts th
   assert.equal((engine.get("fixtures/reader") as { runtimeVersion: string }).runtimeVersion, find("keel/runtime").manifest.version);
   const undeclared = { ...reader, manifest: defineManifest({ ...reader.manifest, needs: [] }) };
   await assert.rejects(bundleModule(undeclared, [...workspace, undeclared]), /doesn't need keel\/runtime/);
+});
+
+test("TypeScript is the default, not a requirement: a project in plain JavaScript is found, linked and runs the same way", async () => {
+  const { mkdtempSync, mkdirSync, writeFileSync } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const dir = mkdtempSync(join(tmpdir(), "keel-plain-js-"));
+  mkdirSync(join(dir, "src"));
+  writeFileSync(join(dir, "package.json"), '{ "name": "@fixture/plain", "private": true, "type": "module" }\n');
+  const manifest = defineManifest({ id: "fixtures/plain", version: "0.1.0", kind: "game", needs: ["keel/runtime@^0.1"] });
+  writeFileSync(join(dir, "src", "module.js"), `export const manifest = ${JSON.stringify(manifest)};\n`);
+  writeFileSync(join(dir, "src", "greet.js"), "export const greet = (v) => `runtime ${v}`;\n");
+  writeFileSync(join(dir, "src", "index.js"), 'import { manifest } from "@keel-engine/runtime/module";\nimport { greet } from "./greet.js";\nexport const hello = greet(manifest.version);\n');
+  const [plain] = await readProject(dir);
+  assert.ok(plain, "src/module.js makes it a module");
+  assert.equal(plain.manifest.id, "fixtures/plain");
+  assert.match(entryFor(plain), /require\("\.\.\/src\/index\.js"\)/);
+  assert.equal(entryFor(find("fixtures/hello")), MODULE_ENTRY, "a TypeScript module's entry is unchanged");
+  const page: Record<string, unknown> = { console };
+  page["globalThis"] = page;
+  vm.createContext(page);
+  vm.runInContext((await bundleModule(find("keel/runtime"), workspace)).code, page);
+  vm.runInContext((await bundleModule(plain, [...workspace, plain])).code, page);
+  const engine = page["KEEL_ENGINE"] as { start(): Promise<unknown>; get(id: string): unknown };
+  await engine.start();
+  assert.equal((engine.get("fixtures/plain") as { hello: string }).hello, `runtime ${find("keel/runtime").manifest.version}`);
 });

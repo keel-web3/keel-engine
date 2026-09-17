@@ -1,5 +1,6 @@
 // The KEEL build for engine modules and games (see README): workspace discovery,
 // bundling a package into a KEEL browser module, and a game's local document.
+export { SOURCE_EXTENSIONS, indexOf, sourceFile } from "./source.ts";
 export { ENGINE_PREFIX, ENGINE_ROOT, GROUPS, SDK_PREFIX, SDK_ROOT, moduleForImport, readProject, readWorkspace, schemasOf, withSchemas } from "./workspace.ts";
 // The engine as KEEL verified modules (the SDK's `keel module` pipeline).
 export { ENGINE_REPOSITORY, LINK_SCHEMA, MODULE_ENTRY, RUNTIME_ENTRY, engineModuleFiles, entryFor, linkRecord, linkedSpecifiers, pipelineManifest, pipelineName } from "./link.ts";

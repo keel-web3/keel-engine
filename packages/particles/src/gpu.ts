@@ -69,6 +69,7 @@ uniform vec3 uCenter, uRight, uUp, uForward;
 uniform float uK;                             // pixels per metre
 uniform vec2 uSize;                           // picture size in pixels
 uniform float uDepthRange;                    // metres of depth mapped to 0..1 (the sprite renderer's)
+uniform float uPersp; uniform vec3 uEye; uniform float uTan; uniform vec2 uClip;   // a perspective view: on, eye, tan(fov/2), near far
 uniform highp sampler2D uStyles;              // per style: ${CURVE_SAMPLES} curve texels, then constants
 flat out vec4 vLook;                          // ramp base, ramp length, lightness, alpha
 flat out vec4 vShape;                         // quad length (px), sprite, sprite scale, shade
@@ -97,10 +98,15 @@ void main() {
   uint rb = uint(s3.y + 0.5);
   float r1 = float(rb) / 255.0;
   float r2 = float((rb * 151u + 71u) & 255u) / 255.0;
-  float px = max(1.0, floor(mix(k0.x, k0.y, r1) * cur.x * s3.z / 16.0 * uK + 0.5));
+  // (Perspective: a particle's pixels a metre are its distance's -- and one behind the eye isn't drawn.)
+  float pz = dot(p - uEye, uForward);
+  if (uPersp > 0.5 && pz < uClip.x) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  float K = uPersp > 0.5 ? uSize.y * 0.5 / (pz * uTan) : uK;
+  float px = max(1.0, floor(mix(k0.x, k0.y, r1) * cur.x * s3.z / 16.0 * K + 0.5));
   vLook = vec4(k1.x, k1.y, clamp(mix(k0.z, k0.w, r2) * cur.y, 0.0, 1.0), cur.z);
   vec3 d = p - uCenter;
   vec2 sp = vec2(uSize.x * 0.5 + dot(d, uRight) * uK, uSize.y * 0.5 - dot(d, uUp) * uK);
+  if (uPersp > 0.5) { vec3 e = p - uEye; sp = vec2(uSize.x * 0.5 + dot(e, uRight) * K, uSize.y * 0.5 - dot(e, uUp) * K); }
   float sprite = k1.z;
   float scale = 1.0;
   float w = px;
@@ -110,7 +116,7 @@ void main() {
   if (abs(sprite - ${PUFF.toFixed(1)}) < 0.5) sprite = 0.0;
   // (A sprite needs room to read: from 4 px it's drawn at a whole-number scale of its 8 texels; smaller, a speck.)
   if (sprite > 0.5 && px >= 4.0) { scale = max(1.0, floor(px / ${SPRITE_CELL.toFixed(1)} + 0.5)); w = ${SPRITE_CELL.toFixed(1)} * scale; } else sprite = 0.0;
-  vec2 vs = vec2(dot(vel, uRight), -dot(vel, uUp)) * uK * k2.x;
+  vec2 vs = vec2(dot(vel, uRight), -dot(vel, uUp)) * K * k2.x;
   float len = length(vs);
   vec2 pix;
   if (len > w) {
@@ -133,7 +139,8 @@ void main() {
   // Depth from the ground point under it, as a sprite's from its anchor (nearer the camera: smaller).
   vec3 g = vec3(p.x, 0.0, p.z) - uCenter;
   float depth = clamp(0.5 + (dot(g, uForward) - k2.y) / uDepthRange, 0.0, 1.0);
-  gl_Position = vec4(ndc, depth * 2.0 - 1.0, 1.0);
+  float zc = uPersp > 0.5 ? clamp(2.0 * (pz - k2.y - uClip.x) / (uClip.y - uClip.x) - 1.0, -1.0, 1.0) : depth * 2.0 - 1.0;
+  gl_Position = vec4(ndc, zc, 1.0);
 }`;
 
 export const PARTICLE_FS = `#version 300 es
@@ -217,7 +224,8 @@ export interface ParticleRenderer {
   /** Colours ([[r,g,b],...] 0-255) and ramps ({ name: [base, length] }), as the pixel renderer's setPalette. */
   setPalette(colours: readonly (readonly number[])[], ramps: Readonly<Record<string, readonly [number, number]>>): void;
   /** Draw the pool's live particles through `view` into what's bound (after the sprites: same depth buffer). */
-  draw(view: Pick<PixelView, "center" | "axes" | "pixelsPerMetre" | "width" | "height">, pool: ParticlePool, options?: ParticleDrawOptions): void;
+  /** Through a pixel view -- or, with `eye` (keel/worldgen's DungeonDrawView perspective), through a perspective camera. */
+  draw(view: Pick<PixelView, "center" | "axes" | "pixelsPerMetre" | "width" | "height"> & { readonly eye?: readonly [number, number, number]; readonly fov?: number; readonly near?: number; readonly far?: number }, pool: ParticlePool, options?: ParticleDrawOptions): void;
   /** Ramps the pool's styles name that the palette hasn't got (drawn on ramp 0). */
   readonly missingRamps: readonly string[];
   /** Slots written to the GPU by the last draw, and bytes uploaded for them. */
@@ -247,6 +255,7 @@ export function createParticleRenderer(gl: WebGL2RenderingContext, { capacity }:
   const prog = link(PARTICLE_VS, PARTICLE_FS);
   const u = (name: string) => gl.getUniformLocation(prog, name);
   const U = {
+    persp: u("uPersp"), eye: u("uEye"), tan: u("uTan"), clip: u("uClip"),
     center: u("uCenter"), right: u("uRight"), up: u("uUp"), forward: u("uForward"), k: u("uK"), size: u("uSize"), depth: u("uDepthRange"), now: u("uNow"),
     styles: u("uStyles"), palette: u("uPalette"), sprites: u("uSprites"), t: [u("uT0"), u("uT1"), u("uT2"), u("uT3")],
   };
@@ -466,6 +475,11 @@ export function createParticleRenderer(gl: WebGL2RenderingContext, { capacity }:
       gl.uniform3f(U.up, view.axes.up[0], view.axes.up[1], view.axes.up[2]);
       gl.uniform3f(U.forward, view.axes.forward[0], view.axes.forward[1], view.axes.forward[2]);
       gl.uniform1f(U.k, view.pixelsPerMetre);
+      const eye = view.eye ?? view.center;
+      gl.uniform1f(U.persp, view.eye ? 1 : 0);
+      gl.uniform3f(U.eye, eye[0], eye[1], eye[2]);
+      gl.uniform1f(U.tan, Math.tan((view.fov ?? 1.0) / 2));
+      gl.uniform2f(U.clip, view.near ?? 0.3, view.far ?? 90);
       gl.uniform2f(U.size, W, H);
       gl.uniform1f(U.depth, Math.max(W, H) / view.pixelsPerMetre * 4); // (the sprite renderer's depth range: the two share a depth buffer)
       gl.uniform1f(U.now, pool.time + ahead - base);

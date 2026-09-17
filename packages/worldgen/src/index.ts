@@ -54,8 +54,10 @@ export type { CrawlLight, CrawlLightKind, CrawlRamp, CrawlRoomKind, CrawlTheme, 
 export { DECOR, DIR_X, DIR_Z, DUNGEON_PROP_RULES, FLOOR, dressDungeon } from "./dungeon-dress.ts";
 export type { DressOptions, DressedDoor, DressedLight, DressedProp, DressedRoom, DungeonDressing, PropRule, Stairs } from "./dungeon-dress.ts";
 export { DECOR_NAMES, FINE, FLAME_KIND, MAT, NO_COLUMN, QUAD, QUAD_FLOATS, SUB, buildDungeonScene, walkableAt } from "./dungeon-scene.ts";
-export type { DungeonScene, SceneDoor, SceneFlame } from "./dungeon-scene.ts";
+export type { DungeonScene, SceneOptions, SceneDoor, SceneFlame } from "./dungeon-scene.ts";
 export { MASK_PER_METRE, createFog, lightMask } from "./dungeon-light.ts";
+export { generateRunner } from "./runner.ts";
+export type { Heading, Runner, RunnerLeg, RunnerParams } from "./runner.ts";
 export type { Fog, LightMask } from "./dungeon-light.ts";
 export { LIT_SPRITE_FLOATS, createDungeonRenderer } from "./dungeon-gl.ts";
 export type { DungeonDrawOptions, DungeonDrawView, DungeonRenderer, LookLayout } from "./dungeon-gl.ts";

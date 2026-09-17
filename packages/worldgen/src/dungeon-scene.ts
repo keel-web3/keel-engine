@@ -12,8 +12,10 @@
 // and open up only when one sinks lower than the other -- the stub keeps a
 // solid top, never a hole.
 //
-// The camera sees faces whose normals point -x or -z (it looks along +x +z,
-// down): only those are built.
+// The crawl's camera sees faces whose normals point -x or -z (it looks along
+// +x +z, down): only those are built -- unless `allFaces`, for a camera that
+// turns (a perspective view behind the hero): then every side of every wall,
+// drop and pillar is, and no wall is a "front" one kept low.
 
 import { dcos, dhypot, dsin } from "@keel-engine/core";
 import { CELL } from "./dungeon.ts";
@@ -68,7 +70,13 @@ export interface DungeonScene {
 /** Flame kinds (the renderer's): 0 torch, 1 brazier, 2 candle, 3 sconce (magic). */
 export const FLAME_KIND: Readonly<Record<string, number>> = { torch: 0, brazier: 1, candle: 2, sconce: 3 };
 
-export function buildDungeonScene(S: DungeonDressing): DungeonScene {
+export interface SceneOptions {
+  /** Build the faces toward every side, not only the crawl camera's (-x, -z). */
+  readonly allFaces?: boolean;
+}
+
+export function buildDungeonScene(S: DungeonDressing, opts: SceneOptions = {}): DungeonScene {
+  const all = opts.allFaces === true;
   const { w, d, tile, theme } = S;
   const sub = SUB, fs = tile / sub;
   const fw = w * sub, fd = d * sub;
@@ -190,14 +198,16 @@ export function buildDungeonScene(S: DungeonDressing): DungeonScene {
     const k = j * w + i, f = S.floor[k]!;
     if (f === FLOOR.WALL || f === FLOOR.PIT || f === FLOOR.BRIDGE) continue;
     const top = levelOf(f === FLOOR.STAIRS_DOWN ? FLOOR.ROOM : f);
-    for (const dir of [2, 3]) {
+    for (const dir of all ? [0, 1, 2, 3] : [2, 3]) {
       const a = i + DIR_X[dir]!, b = j + DIR_Z[dir]!;
       const fn = a < 0 || b < 0 || a >= w || b >= d ? FLOOR.WALL : S.floor[b * w + a]!;
       if (fn === FLOOR.WALL) continue; // (a wall there has its own face)
       const low = levelOf(fn);
       if (low >= top - 1e-3) continue;
       if (dir === 3) push(QUAD.FREE, MAT.DROP, i * tile, low, j * tile, tile, 0, 0, 0, top - low, 0, S.variant[k]!, 0);
-      else push(QUAD.FREE, MAT.DROP, i * tile, low, (j + 1) * tile, 0, 0, -tile, 0, top - low, 0, S.variant[k]!, 0);
+      else if (dir === 2) push(QUAD.FREE, MAT.DROP, i * tile, low, (j + 1) * tile, 0, 0, -tile, 0, top - low, 0, S.variant[k]!, 0);
+      else if (dir === 1) push(QUAD.FREE, MAT.DROP, (i + 1) * tile, low, (j + 1) * tile, -tile, 0, 0, 0, top - low, 0, S.variant[k]!, 0);
+      else push(QUAD.FREE, MAT.DROP, (i + 1) * tile, low, j * tile, 0, 0, tile, 0, top - low, 0, S.variant[k]!, 0);
     }
   }
 
@@ -218,7 +228,7 @@ export function buildDungeonScene(S: DungeonDressing): DungeonScene {
     // (A chasm before it is no room: a wall on a pit's far rim, seen across the drop, goes low too.)
     const ground = (k: number): boolean => k === FINE.FLOOR || k === FINE.LIQUID || k === FINE.PILLAR;
     for (let d2 = 1; d2 <= 2 && !before; d2 += 1) before = ground(kindAt(fx - d2, fz)) || ground(kindAt(fx, fz - d2));
-    if (behind && !before) front[q] = 1;
+    if (behind && !before && !all) front[q] = 1;
   }
   for (let fz = 0; fz < fd; fz += 1) for (let fx = 0; fx < fw; fx += 1) {
     const q = fz * fw + fx;
@@ -230,11 +240,13 @@ export function buildDungeonScene(S: DungeonDressing): DungeonScene {
     const rim = (kindAt(fx - 1, fz) !== FINE.WALL ? 1 : 0) | (kindAt(fx, fz - 1) !== FINE.WALL ? 2 : 0);
     const fr = front[q] ? 32 : 0;
     push(QUAD.CAP, MAT.CAP, x, H, z, fs, 0, 0, 0, 0, fs, seed, rim | fr, cx, cz);
-    for (const dir of [3, 2]) {
-      const ax = fx + (dir === 2 ? -1 : 0), az = fz + (dir === 3 ? -1 : 0);
+    for (const dir of all ? [3, 2, 1, 0] : [3, 2]) {
+      const ax = fx + DIR_X[dir]!, az = fz + DIR_Z[dir]!;
       const nk = kindAt(ax, az);
-      // (Face along +x at the column's -z edge (normal -z), or along -z at its -x edge (normal -x).)
-      const px = x, pz = dir === 3 ? z : z + fs, ux = dir === 3 ? fs : 0, uz = dir === 3 ? 0 : -fs;
+      // (Face along +x at the column's -z edge (normal -z), along -z at its -x edge (normal -x), along -x at its +z
+      // edge (normal +z), along +z at its +x edge (normal +x).)
+      const px = dir === 1 || dir === 0 ? x + fs : x, pz = dir === 2 || dir === 1 ? z + fs : z;
+      const ux = dir === 3 ? fs : dir === 1 ? -fs : 0, uz = dir === 2 ? -fs : dir === 0 ? fs : 0;
       if (nk === FINE.WALL) {
         const Hn = height[az * fw + ax]!;
         push(QUAD.INNER, MAT.WALL, px, Hn, pz, ux, 0, uz, 0, H - Hn, 0, seed, dir | fr | (front[az * fw + ax] ? 64 : 0), cx, cz, ax * fs + fs / 2, az * fs + fs / 2);
@@ -258,6 +270,10 @@ export function buildDungeonScene(S: DungeonDressing): DungeonScene {
       push(QUAD.CAP, mat, cx - hx, y1, cz - hx, hx * 2, 0, 0, 0, 0, hx * 2, seed, 1, cx, cz);
       push(QUAD.FACE, mat, cx - hx, y0, cz - hx, hx * 2, 0, 0, 0, y1 - y0, 0, seed, 3, cx, cz);
       push(QUAD.FACE, mat, cx - hx, y0, cz + hx, 0, 0, -hx * 2, 0, y1 - y0, 0, seed, 2, cx, cz);
+      if (all) {
+        push(QUAD.FACE, mat, cx + hx, y0, cz + hx, -hx * 2, 0, 0, 0, y1 - y0, 0, seed, 1, cx, cz);
+        push(QUAD.FACE, mat, cx + hx, y0, cz - hx, 0, 0, hx * 2, 0, y1 - y0, 0, seed, 0, cx, cz);
+      }
     };
     box(0.62, 0, 0.32, MAT.TRIM);
     const r = 0.42;
@@ -266,7 +282,7 @@ export function buildDungeonScene(S: DungeonDressing): DungeonScene {
       const x0 = cx + dcos(a0) * r, z0 = cz + dsin(a0) * r, x1 = cx + dcos(a1) * r, z1 = cz + dsin(a1) * r;
       // (Faces whose outward normal leans toward the camera, -x -z.)
       const nx = dcos((a0 + a1) / 2), nz = dsin((a0 + a1) / 2);
-      if (nx + nz > 0.05) continue;
+      if (!all && nx + nz > 0.05) continue;
       // (U so that up x U is the outward normal: from the first point to the second.)
       push(QUAD.FACE, MAT.PILLAR, x0, 0.32, z0, x1 - x0, 0, z1 - z0, 0, H - 0.62, 0, seed, 8 + s, cx, cz);
     }

@@ -51,8 +51,11 @@ export async function prepareModule(mod: WorkspaceModule, workspace: readonly Wo
   const staged = mod.origin !== "engine";
   const dir = staged ? (options.stage?.(mod) ?? join(mod.dir, "out", "keel-module")) : mod.dir;
   const sourcePath = staged ? posix(mod.dir) : posix(relative(engineRoot, mod.dir));
-  // (A staged project extends the engine's base config by path; the config is read by the typecheck, never a build input.)
-  const tsconfig = staged ? { ...ENGINE_TSCONFIG, extends: posix(relative(dir, join(engineRoot, "tsconfig.base.json"))) } : ENGINE_TSCONFIG;
+  // (A staged project extends the engine's base config by path; the config is read by the typecheck, never a build input.
+  // Its TypeScript is checked strictly; plain JavaScript it has, or that its TypeScript imports, isn't checked, just built.)
+  const tsconfig = staged
+    ? { ...ENGINE_TSCONFIG, extends: posix(relative(dir, join(engineRoot, "tsconfig.base.json"))), compilerOptions: { ...ENGINE_TSCONFIG.compilerOptions, allowJs: true, checkJs: false } }
+    : ENGINE_TSCONFIG;
   return { module: mod, name: pipelineName(mod), dir, sourcePath, link, files: engineModuleFiles(mod, link, sourcePath, tsconfig), staged };
 }
 

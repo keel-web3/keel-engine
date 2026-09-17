@@ -31,7 +31,7 @@ export async function bundleModule(mod: WorkspaceModule, workspace: readonly Wor
   if (!entry.includes(LINK_IMPORT)) throw new Error("The module entry no longer imports its link record the way bundleModule inlines it.");
   const result = await build({
     // (Resolved from the package itself: a project has no keel/ directory of its own.)
-    stdin: { contents: entry.replace(LINK_IMPORT, `const link = ${JSON.stringify(link)};`).replaceAll('"../src/index.ts"', '"./src/index.ts"'), resolveDir: mod.dir, sourcefile: "keel/entry.ts", loader: "ts" },
+    stdin: { contents: entry.replace(LINK_IMPORT, `const link = ${JSON.stringify(link)};`).replace(/"\.\.\/src\/(index\.[cm]?[jt]s)"/g, '"./src/$1"'), resolveDir: mod.dir, sourcefile: "keel/entry.ts", loader: "ts" },
     bundle: true,
     write: false,
     format: "iife",

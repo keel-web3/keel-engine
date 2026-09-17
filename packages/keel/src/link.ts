@@ -27,6 +27,7 @@ import { build } from "esbuild";
 import { join } from "node:path";
 import { splitRef } from "@keel-engine/runtime";
 import type { ModuleManifest } from "@keel-engine/runtime";
+import { indexName, indexOf } from "./source.ts";
 import { moduleForImport } from "./workspace.ts";
 import type { WorkspaceModule } from "./workspace.ts";
 
@@ -67,7 +68,7 @@ export async function linkRecord(mod: WorkspaceModule, workspace: readonly Works
   const needed = new Set(manifest.needs.filter((n) => !n.startsWith("contract:")).map((n) => splitRef(n).name));
   const others = workspace.filter((w) => w !== mod).map((w) => w.packageName);
   const result = await build({
-    entryPoints: [join(mod.dir, "src", "index.ts")],
+    entryPoints: [indexOf(mod)],
     bundle: true,
     write: false,
     format: "esm",
@@ -179,7 +180,12 @@ const engine = page.KEEL_ENGINE ?? (page.KEEL_ENGINE = runtime.createEngine());
 engine.define(link.manifest as unknown as ModuleManifest, () => runtime);
 `;
 
-export const entryFor = (mod: WorkspaceModule): string => (mod.manifest.id === RUNTIME_ID ? RUNTIME_ENTRY : MODULE_ENTRY);
+/** The entry a module builds from: MODULE_ENTRY, requiring its index in the language it's written in (unchanged for index.ts). */
+export function entryFor(mod: WorkspaceModule): string {
+  if (mod.manifest.id === RUNTIME_ID) return RUNTIME_ENTRY;
+  const index = indexName(mod);
+  return index === "index.ts" ? MODULE_ENTRY : MODULE_ENTRY.replace('require("../src/index.ts")', `require("../src/${index}")`);
+}
 
 // --------------------------------------------------------- the pipeline's files
 
