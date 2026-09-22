@@ -1,0 +1,17 @@
+{
+  "name": "@keel-engine/vehicles",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "packs/vehicles: generative cars -- dials on curves, archetype biases, gated parts, weighted tables, colour curves and rarity -- built as indexed bake shapes: a body, and wheels as their own layers that spin and steer, every part wearing its own finish and dither screen; plus handling from the same dials.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./module": "./src/module.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/bake": "workspace:*",
+    "@keel-engine/vehicle": "workspace:*"
+  }
+}

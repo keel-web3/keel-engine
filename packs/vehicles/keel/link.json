@@ -1,0 +1,26 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "packs/vehicles",
+    "version": "1.0.0",
+    "kind": "pack",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/core@^0.1",
+      "keel/vehicle@^0.1"
+    ],
+    "provides": [
+      "vehicles/car@1.0.0"
+    ],
+    "title": "Vehicles",
+    "description": "Generative cars: every seed its own -- continuous dials on curves (length, width, stance, cabin, glass rake, fastback, wheels and stagger, aero, flares, ride, power, mass), eight archetypes as biases (hyper, GT, muscle, rally, kei, pickup, buggy, prototype), gated parts and weighted forms (lights, spoilers, scoops, splitters, cages, beds, exhausts, rims, livery), colours as curves, a rarity and a tier -- built as indexed bake shapes: a body, and wheels as their own layers that spin and steer; every part wearing its own finish and dither screen; handling from the same dials.",
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -500
+  },
+  "imports": {
+    "@keel-engine/core": "keel/core"
+  },
+  "manifests": {}
+}

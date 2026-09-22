@@ -1,0 +1,19 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-packs-vehicles",
+  "version": "1.0.0",
+  "description": "Generative cars: every seed its own -- continuous dials on curves (length, width, stance, cabin, glass rake, fastback, wheels and stagger, aero, flares, ride, power, mass), eight archetypes as biases (hyper, GT, muscle, rally, kei, pickup, buggy, prototype), gated parts and weighted forms (lights, spoilers, scoops, splitters, cages, beds, exhausts, rims, livery), colours as curves, a rarity and a tier -- built as indexed bake shapes: a body, and wheels as their own layers that spin and steer; every part ...",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packs/vehicles"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/core"
+    ]
+  }
+}
