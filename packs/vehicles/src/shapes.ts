@@ -397,26 +397,36 @@ function bodySolids(car: Car): Solids {
   } else {
     const gTop = g.roof - roofT;
     // The cabin inside, seen through the glass: a floor, a dash, two seats, a steering wheel, a helmeted driver.
-    // (The seats live INSIDE the glass house: their z is held between the rear glass's foot and the screen's, so a
-    // short cabin's backrest can't stand through the back window.)
+    // It's laid out round a PERSON, not a helmet: the driver's head goes where the roof is highest (just behind the
+    // windscreen's top edge), the seat back stands behind their head -- no taller than the glass over it -- the
+    // cushion low enough for them to sit in, and the dash and the wheel in front of them, not under them. A short roof
+    // (a fastback's) lends the seat back the rear glass's slope. (The game's driver is fitted into this: seat-fit.ts.)
     const zLo = Math.min(zr, zs), zHi = Math.max(zr, zs);
-    const seatZ = Math.min(Math.max((zs + zr) / 2 - 0.12, zLo + 0.33), Math.max(zLo + 0.33, zHi - 0.14));
+    // (The glass over any z: the roof's flat between the screens, falling to the belt at each end.)
+    const ceilingAt = (z: number): number => z > zHi ? g.belt + (gTop - g.belt) * Math.max(0, Math.min(1, (cabF - z) / Math.max(0.05, cabF - zHi)))
+      : z < zLo ? g.belt + (gTop - g.belt) * Math.max(0, Math.min(1, (z - cabR) / Math.max(0.05, zLo - cabR))) : gTop;
+    const zHead = Math.max(cabR + 0.42, zHi - Math.max(0.06, Math.min(0.14, (zHi - zLo) * 0.3)));
     box(S, P.interior, -Ci * 0.95, g.belt - 0.08, Math.min(zr, zs) - 0.05, Ci * 0.95, g.belt + 0.01, Math.max(zr, zs) + 0.25);
     // A firewall at the screen's foot and a bulkhead behind the seats: the cabin is a CLOSED box, so looking in
     // through the glass shows the cabin -- never the bonnet, the boot or the exhaust on the car's far side.
     box(S, P.interior, -Ci, g.belt - 0.06, Math.max(zr, zs) - 0.04, Ci, gTop, Math.max(zr, zs));
     box(S, P.interior, -Ci, g.belt - 0.06, Math.min(zr, zs), Ci, gTop, Math.min(zr, zs) + 0.04);
     both((sd) => box(S, P.interior, sd * Ci, g.belt - 0.06, Math.min(zr, zs), sd * (Ci - 0.03), gTop, Math.max(zr, zs)));
-    box(S, P.dark, -Ci * 0.9, g.belt, zs - 0.08, Ci * 0.9, g.belt + 0.13, Math.min(cabF - 0.12, zs + 0.3));
+    // The dash: in front of the driver, under the windscreen.
+    const dashZ = Math.max(zHead + 0.24, zs - 0.08);
+    box(S, P.dark, -Ci * 0.9, g.belt, dashZ, Ci * 0.9, g.belt + 0.13, Math.max(dashZ + 0.12, Math.min(cabF - 0.12, zHead + 0.56)));
     both((sd) => {
       const x0 = sd * 0.07, x1 = sd * Math.max(0.2, Ci * 0.82);
-      box(S, P.interior, x0, g.belt, Math.max(zLo + 0.02, seatZ - 0.22), x1, g.belt + 0.14, Math.min(zHi - 0.02, seatZ + 0.12));
-      box(S, P.interior, x0, g.belt + 0.1, Math.max(zLo + 0.02, seatZ - 0.3), x1, Math.min(gTop - 0.04, g.belt + 0.42), Math.max(zLo + 0.09, seatZ - 0.19));
+      // (The cushion, low: the driver's sitting in it, and the back, its top under the glass where it stands.)
+      box(S, P.interior, x0, g.belt, zHead - 0.2, x1, g.belt + Math.min(0.05, (gTop - g.belt) * 0.15), zHead + 0.14);
+      const backTop = Math.min(gTop - 0.04, g.belt + 0.42, ceilingAt(zHead - 0.27) - 0.03, ceilingAt(zHead - 0.16) - 0.03);
+      box(S, P.interior, x0, g.belt + 0.03, zHead - 0.27, x1, Math.max(g.belt + 0.12, backTop), zHead - 0.16);
     });
     const dx = -Math.max(0.2, Ci * 0.45);
-    cap(S, P.dark, [dx, g.belt + 0.22, zs + 0.02], [dx, g.belt + 0.26, zs - 0.02], 0.055);
-    box(S, P.dark, dx - 0.14, g.belt + 0.12, seatZ - 0.2, dx + 0.14, Math.min(gTop - 0.2, g.belt + 0.3), seatZ - 0.02);
-    cap(S, P.accent, [dx, Math.min(gTop - 0.1, g.belt + 0.36), seatZ - 0.1], [dx, Math.min(gTop - 0.1, g.belt + 0.36), seatZ - 0.1], Math.min(0.11, (gTop - g.belt) * 0.3));
+    // The wheel's hub, ahead of the driver; the stand-in's torso and helmet (the game puts its own driver there).
+    cap(S, P.dark, [dx, g.belt + 0.2, zHead + 0.34], [dx, g.belt + 0.24, zHead + 0.3], 0.055);
+    box(S, P.dark, dx - 0.14, g.belt + 0.06, zHead - 0.12, dx + 0.14, Math.min(gTop - 0.2, g.belt + 0.3), zHead + 0.06);
+    cap(S, P.accent, [dx, Math.min(gTop - 0.1, g.belt + 0.36), zHead], [dx, Math.min(gTop - 0.1, g.belt + 0.36), zHead], Math.min(0.11, (gTop - g.belt) * 0.3));
     box(S, P.glass, -Ci, g.belt - 0.01, Math.min(zr, zs), Ci, gTop, Math.max(zr, zs));
     both((s) => wedgeX(S, P.glass, s * Ci, s * C2, g.belt - 0.01, gTop, Math.min(zr, zs), Math.max(zr, zs), 0.04));
     wedge(S, P.screen, -Cm, g.belt - 0.01, zs, Cm, g.roof - 0.01, cabF, 0.02, "front");
@@ -616,7 +626,7 @@ function partDesign(car: Car, part: string, keep: (mat: number) => boolean): Veh
   }
   for (const c of S.capsules) for (const q of [c.a, c.b]) { height = Math.max(height, (q[1] ?? 0) + c.r); radius = Math.max(radius, dhypot(q[0] ?? 0, q[2] ?? 0) + c.r); }
   const components = [...S.boxes, ...S.wedges, ...S.capsules].map(s => all.components?.get(s) ?? null);
-  return { components, key: `packs/vehicles:${part}:mechanical-v2:${geometryKey(car)}`, clips: [{ name: "still", frames: 1 }], height: r3(Math.max(0.2, height) + 0.05), radius: r3(Math.max(0.2, radius) + 0.05), pose: () => world };
+  return { components, key: `packs/vehicles:${part}:cabin-v3:${geometryKey(car)}`, clips: [{ name: "still", frames: 1 }], height: r3(Math.max(0.2, height) + 0.05), radius: r3(Math.max(0.2, radius) + 0.05), pose: () => world };
 }
 
 /**
