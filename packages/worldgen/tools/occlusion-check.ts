@@ -194,7 +194,7 @@ export async function run(canvas: HTMLCanvasElement, o: CheckOptions = {}): Prom
       const room = S.rooms[(f * 5 + Math.round(k) + Math.round(pitch * 10)) % S.rooms.length]!;
       const c = room.cells[Math.floor(room.cells.length / 2)]!;
       const fx = (c % S.w + 0.5) * T, fz = (Math.floor(c / S.w) + 0.5) * T;
-      const view = viewAt(fx, fz, pitch, k, W, H);
+      const view = viewAt({ x: fx, z: fz, pitch, k, width: W, height: H });
       const inView = (x: number, z: number, m = 24): boolean => { const p = view.project([x, 0, z]); return p[0] > m && p[0] < W - m && p[1] > m * 2 && p[1] < H - m / 2; };
       const subjects: Subject[] = [];
       S.props.forEach((p) => {
@@ -230,7 +230,7 @@ export async function run(canvas: HTMLCanvasElement, o: CheckOptions = {}): Prom
         const key = `${sub.design}|${sub.clip}|${sub.frame}|${sub.dir}`;
         const r = rects.get(key)!, job = jobOf.get(key)!;
         data.set([sub.x, 0, sub.z, r.x, r.y, r.w, r.h, r.ax, r.ay, r.page, sub.look, sub.flags, 1, 0], i * LIT_SPRITE_FLOATS);
-        texels.push(subjectTexels(view, sub, r, job, pages[r.page]!, painted));
+        texels.push(subjectTexels(view, sub, r, job, { page: pages[r.page]!, painted }));
       });
       const spr = { data, count: subjects.length };
 
@@ -258,7 +258,7 @@ export async function run(canvas: HTMLCanvasElement, o: CheckOptions = {}): Prom
           for (const t of texels[i]!) {
             const q = t.py * W + t.px;
             if (Number.isNaN(t.depth)) { edge.add(q); continue; }
-            const cutState = cutAway(sub, t, cutaway, fx, fz, view, H);
+            const cutState = cutAway(sub, t, cutaway, [fx, fz], view);
             if (cutState === 2) { edge.add(q); continue; }
             if (cutState === 1) continue;
             (cand.get(q) ?? cand.set(q, []).get(q)!).push({ i, depth: t.depth, tol: t.quant });
@@ -361,7 +361,7 @@ export async function run(canvas: HTMLCanvasElement, o: CheckOptions = {}): Prom
         for (let step = 0; step < 8; step += 1) {
           const s = (step / 7 - 0.5) * 1.2;
           const x = cx + Math.sin(yaw) * s, z = cz + Math.cos(yaw) * s;
-          const view = viewAt(cx, cz, pitch, k, W, H);
+          const view = viewAt({ x: cx, z: cz, pitch, k, width: W, height: H });
           const key = `${b.body.key}|${step}|${dirIdx}`;
           const r = rects.get(key)!, job = jobOf.get(key)!;
           const sub: Subject = { design: b.body.key, world: b.body.pose("walk", step), clip: "walk", frame: step, dir: dirIdx, x, z, look: unitLook[b.unit]!, flags: 0, kind: b.kind, where: kind };
@@ -378,7 +378,7 @@ export async function run(canvas: HTMLCanvasElement, o: CheckOptions = {}): Prom
           const old = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, old);
           const range = (Math.max(W, H) / k) * 4;
           let fe = 0, hid = 0, hidOld = 0;
-          for (const t of subjectTexels(view, sub, r, job, atlas.pages[r.page]!, painted)) {
+          for (const t of subjectTexels(view, sub, r, job, { page: atlas.pages[r.page]!, painted })) {
             if (Number.isNaN(t.depth) || t.y > 0.12) continue;
             const qq = ((H - 1 - t.py) * W + t.px) * 4;
             const v = (surf[qq]! << 16) | (surf[qq + 1]! << 8) | surf[qq + 2]!;
@@ -506,7 +506,7 @@ export async function runTerrain(canvas: HTMLCanvasElement, o: TerrainCheckOptio
       // (Middles among the cliffs, away from the map's edge.)
       const mids = spots.filter((s2) => s2.where !== "flat" && s2.x > 24 && s2.z > 24 && s2.x < t.width * T - 24 && s2.z < t.depth * T - 24);
       const c0 = mids[Math.floor(rnd() * mids.length)]!;
-      const view = viewAt(c0.x, c0.z, pitch, k, W, H, yaw);
+      const view = viewAt({ x: c0.x, z: c0.z, pitch, k, width: W, height: H, yaw });
       const a = viewAxes({ yaw, pitch, pixelsPerMetre: k });
       const inView = (x: number, z: number): boolean => { const q = view.project([x, t.heightAt(x, z), z]); return q[0] > 30 && q[0] < W - 30 && q[1] > 60 && q[1] < H - 10; };
       const near = spots.filter((s2) => inView(s2.x, s2.z));
@@ -523,7 +523,7 @@ export async function runTerrain(canvas: HTMLCanvasElement, o: TerrainCheckOptio
         const r = rects.get(key)!, job = jobOf.get(key)!;
         const p = spritePosition(a, [sub.x, sub.y, sub.z]);
         insts.push(p[0], p[1], p[2], r.x, r.y, r.w, r.h, r.ax, r.ay, r.page, sub.look, 0, 1);
-        return subjectTexels(view, sub, r, job, atlas.pages[r.page]!, painted, sub.y, "ground");
+        return subjectTexels(view, sub, r, job, { page: atlas.pages[r.page]!, painted, ground: sub.y, axis: "ground" });
       });
       // The ground (its depth kept), then the sprites as ids against it -- with heights, and without.
       const drawGround = () => {
@@ -632,7 +632,7 @@ export async function bench(canvas: HTMLCanvasElement, { units = [2000, 4000], k
     const atlas = cacheH.atlas(plan.sprites.map((j) => j.key), { size: 4096 });
     sr.setPages(atlas.pages);
     const colourBytes = atlas.pages.reduce((n, p) => n + p.width * p.height * 4, 0);
-    const view = viewAt(160, 160, pitch, k, W, H, 0);
+    const view = viewAt({ x: 160, z: 160, pitch, k, width: W, height: H, yaw: 0 });
     const a = viewAxes({ yaw: 0, pitch, pixelsPerMetre: k });
     const [x0, z0, x1, z1] = view.groundRect(2);
     for (const n of units) {
@@ -666,7 +666,8 @@ export async function bench(canvas: HTMLCanvasElement, { units = [2000, 4000], k
 }
 
 /** The demo's view: yaw 45 degrees (or `yaw`), the centre snapped to whole pixels (as the crawl's). */
-function viewAt(x: number, z: number, pitch: number, k: number, W: number, H: number, yaw = YAW): PixelView {
+interface ViewAtOptions { x: number; z: number; pitch: number; k: number; width: number; height: number; yaw?: number }
+function viewAt({ x, z, pitch, k, width: W, height: H, yaw = YAW }: ViewAtOptions): PixelView {
   const v0 = pixelView({ center: [x, 0, z], yaw, pitch, pixelsPerMetre: k, width: W, height: H });
   const a = v0.axes;
   const gx = Math.round((x * a.right[0] + z * a.right[2]) * k) / k;
@@ -681,7 +682,13 @@ function viewAt(x: number, z: number, pitch: number, k: number, W: number, H: nu
  * height: its depth. NaN where the ray misses (a silhouette's edge: not judged). `quant`: half the height byte's step,
  * as depth.
  */
-function subjectTexels(view: PixelView, sub: Subject, r: Rect, job: SpriteJob, page: { width: number; rgba: Uint8Array; heights?: Uint8Array | undefined }, painted: (look: number, slot: number) => boolean, ground = 0, axis: "view" | "ground" = "view"): Array<{ px: number; py: number; y: number; depth: number; quant: number; gy: number }> {
+interface SubjectTexelOptions {
+  page: { width: number; rgba: Uint8Array; heights?: Uint8Array | undefined };
+  painted: (look: number, slot: number) => boolean;
+  ground?: number;
+  axis?: "view" | "ground";
+}
+function subjectTexels(view: PixelView, sub: Subject, r: Rect, job: SpriteJob, { page, painted, ground = 0, axis = "view" }: SubjectTexelOptions): Array<{ px: number; py: number; y: number; depth: number; quant: number; gy: number }> {
   const out: Array<{ px: number; py: number; y: number; depth: number; quant: number; gy: number }> = [];
   const [x0, y0] = spriteRect(view, { at: [sub.x, ground, sub.z], w: r.w, h: r.h, ax: r.ax, ay: r.ay });
   // The bake's camera for this job (renderIndexedSprites rounds a job's box up to 16 px first).
@@ -787,17 +794,17 @@ function shownWorld(w: BakeWorld, eps: number): BakeWorld {
  * The flags' cut rules (the dungeon sprite shader's), by a texel's true height: 0 kept, 1 cut away in this state, 2
  * too close to the cut to call (the shader cuts by the height byte).
  */
-function cutAway(sub: Subject, t: { px: number; py: number; y: number; quant: number }, cutaway: "stub" | "dither" | "off", fx: number, fz: number, view: PixelView, H: number): 0 | 1 | 2 {
+function cutAway(sub: Subject, t: { px: number; py: number; y: number; quant: number }, cutaway: "stub" | "dither" | "off", focus: readonly [number, number], view: PixelView): 0 | 1 | 2 {
   if (!(sub.flags & 4) || cutaway === "off") return 0;
   const stands = (sub.flags & 16) !== 0;
   const hq = t.quant * Math.max(-view.axes.forward[1], 0.05) + 0.004; // (the height byte's half step, in metres)
   const vs = (line: number): 0 | 1 | 2 => (Math.abs(t.y - line) < hq ? 2 : t.y > line ? 1 : 0);
   if (cutaway === "stub") return stands ? vs(STUB) : 1;
   const hx = view.axes.forward[0], hz = view.axes.forward[2], hl = Math.hypot(hx, hz) || 1;
-  const dx = sub.x - fx, dz = sub.z - fz;
+  const dx = sub.x - focus[0], dz = sub.z - focus[1];
   const e = [(dx * view.axes.right[0] + dz * view.axes.right[2]) / 6.5, ((dx * hx + dz * hz) / hl + 3.3) / 3.8];
   const cut = 1 - smoothstep(0.72, 1, Math.hypot(e[0]!, e[1]!));
-  return cut > 0 ? vs(STUB + (1 - cut) * 3.2 + (bayer4(t.px, H - 1 - t.py) - 0.5) * 0.25) : 0;
+  return cut > 0 ? vs(STUB + (1 - cut) * 3.2 + (bayer4(t.px, view.height - 1 - t.py) - 0.5) * 0.25) : 0;
 }
 
 /** A heatmap: the picture dimmed, false-hidden red, false-visible cyan (unexplained: magenta). PUT /out/<name>.png. */
