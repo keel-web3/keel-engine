@@ -14,6 +14,7 @@
 //   sr.setMesh("verge:grass", grass);
 //   sr.drawMeshes(view, [{ mesh: "verge:grass", matrix: meshMatrix(), look }], style);
 
+import { dcos, dhypot, dsin } from "@keel-engine/core";
 import { bodySpace, meshBounds } from "./mesh.ts";
 import type { LookMesh } from "./mesh.ts";
 
@@ -73,7 +74,7 @@ export function cardsMesh(spots: readonly CardSpot[], options: CardsOptions = {}
     const hw = (s.width ?? (kind === 1 || kind === 2 ? s.height : s.height * 0.8)) / 2;
     const yaw0 = s.yaw ?? (seed / 1024) * Math.PI;
     for (let c = 0; c < cards; c += 1) {
-      const a = yaw0 + (c * Math.PI) / cards, ca = Math.cos(a), sa = Math.sin(a);
+      const a = yaw0 + (c * Math.PI) / cards, ca = dcos(a), sa = dsin(a);
       const n0 = [-sa, 0, ca]; // (the card's face)
       const base = v;
       for (const [side, up] of [[-1, 0], [1, 0], [1, 1], [-1, 1]] as const) {
@@ -81,7 +82,7 @@ export function cardsMesh(spots: readonly CardSpot[], options: CardsOptions = {}
         positions[o] = s.x + ca * hw * side; positions[o + 1] = s.y + s.height * up; positions[o + 2] = s.z + sa * hw * side;
         // (Out from the middle along the card, a little of its face, and up.)
         const nx = ca * side * round + n0[0]! * (1 - round) * 0.5, nz = sa * side * round + n0[2]! * (1 - round) * 0.5, ny = 0.8 + 0.4 * up;
-        const l = Math.hypot(nx, ny, nz) || 1;
+        const l = dhypot(nx, ny, nz) || 1;
         normals[o] = nx / l; normals[o + 1] = ny / l; normals[o + 2] = nz / l;
         attrs.set([slot, (side + 1) / 2 + 2 * id, -(1 + up), part & 65535], v * 4);
         v += 1;

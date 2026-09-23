@@ -12,7 +12,7 @@
 //   sprites.drawMeshes(view, [{ mesh: design.key, x, y: 0, z, yaw, look }], style);
 
 import { cleanTriangles } from "./clean-triangles.ts";
-import { dcos, dhypot, dsin } from "@keel-engine/core";
+import { dacos, dcos, dhypot, dsin } from "@keel-engine/core";
 import type { BakeBox, BakeCapsule, BakeWorld } from "./bake.ts";
 
 /**
@@ -254,7 +254,7 @@ function appendWorld(B: Builder, world: BakeWorld, around: number, rings: number
     let sides = around, arcs = rings;
     if (chordError > 0 && c.r > 0) {
       // Circle sagitta: error = r * (1 - cos(angle / 2)). Share the error between the two surface axes.
-      const angle = Math.acos(Math.max(-1, Math.min(1, 1 - chordError / (2 * c.r))));
+      const angle = dacos(Math.max(-1, Math.min(1, 1 - chordError / (2 * c.r))));
       sides = Math.min(around, Math.max(4, Math.ceil(Math.PI / angle)));
       arcs = Math.min(rings, Math.max(1, Math.ceil(Math.PI / (4 * angle))));
     }

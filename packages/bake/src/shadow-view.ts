@@ -1,3 +1,4 @@
+import { dhypot } from "@keel-engine/core";
 import type { Bounds } from "./draw-bounds.ts";
 
 export interface ShadowBox { readonly bounds: Bounds; readonly matrix: ArrayLike<number> }
@@ -7,12 +8,12 @@ export interface ShadowBox { readonly bounds: Bounds; readonly matrix: ArrayLike
  * it uses exactly the same projection, but submits every caster to the GPU. */
 export function shadowView<T extends ShadowBox>(receivers: readonly ShadowBox[], candidates: readonly T[], sun: readonly number[], size: number, cull = true): { matrix: Float32Array; casters: readonly T[] } | null {
   if (!receivers.length) return null;
-  const length = Math.hypot(sun[0]!, sun[1]!, sun[2]!) || 1;
+  const length = dhypot(sun[0]!, sun[1]!, sun[2]!) || 1;
   const f = [-sun[0]! / length, -sun[1]! / length, -sun[2]! / length];
   if (f.every(v => v === 0)) return null;
   const up = Math.abs(f[1]!) > .95 ? [0, 0, 1] : [0, 1, 0];
   const r = [f[1]! * up[2]! - f[2]! * up[1]!, f[2]! * up[0]! - f[0]! * up[2]!, f[0]! * up[1]! - f[1]! * up[0]!];
-  const rl = Math.hypot(...r); for (let a = 0; a < 3; a++) r[a]! /= rl;
+  const rl = dhypot(r[0]!, r[1]!, r[2]!); for (let a = 0; a < 3; a++) r[a]! /= rl;
   const u = [r[1]! * f[2]! - r[2]! * f[1]!, r[2]! * f[0]! - r[0]! * f[2]!, r[0]! * f[1]! - r[1]! * f[0]!];
   const axes = [r, u, f];
   const projected = (it: ShadowBox): number[] => {
