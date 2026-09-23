@@ -423,10 +423,27 @@ function bodySolids(car: Car): Solids {
       box(S, P.interior, x0, g.belt + 0.03, zHead - 0.27, x1, Math.max(g.belt + 0.12, backTop), zHead - 0.16);
     });
     const dx = -Math.max(0.2, Ci * 0.45);
+    // The stand-in's helmet, INSIDE the glasshouse: under the headlining, well behind the windscreen's glass and ahead of
+    // the rear glass's (the glass's outer faces: the lines from the belt at the cabin's ends up to the roof at zs and
+    // zr) -- slid back and, if it must, down from the seat's own place until it clears them all. (A helmet left at
+    // zHead stood through a raked or upright screen on half of all hardtops.)
+    const hr = Math.min(0.11, (gTop - g.belt) * 0.3);
+    // (Each glass's outer face as a line with its normal facing OUT of the cabin: inside is n.p < d.)
+    const outward = (nz: number, ny: number, za: number, ya: number) => {
+      const l = Math.hypot(nz, ny) || 1;
+      return { nz: nz / l, ny: ny / l, d: (nz * za + ny * ya) / l };
+    };
+    const yFoot = g.belt - 0.01 + 0.02 * (g.roof - g.belt), rise = g.roof - 0.01 - yFoot;
+    const screen = outward(rise, cabF - zs, cabF, yFoot), rear = outward(-rise, zr - cabR, cabR, yFoot);
+    const zFront = (y: number): number => (screen.d - (hr + 0.05) - screen.ny * y) / screen.nz;
+    const zBack = (y: number): number => (rear.d - (hr + 0.03) - rear.ny * y) / rear.nz;
+    let hy = Math.min(gTop - hr - 0.015, g.belt + 0.36), hz = zHead;
+    for (let i = 0; i < 40 && zBack(hy) > zFront(hy) - 1e-6 && hy > g.belt; i += 1) hy -= 0.01;
+    hz = Math.max(Math.min(hz, zFront(hy)), Math.min(zBack(hy), zFront(hy)));
     // The wheel's hub, ahead of the driver; the stand-in's torso and helmet (the game puts its own driver there).
-    cap(S, P.dark, [dx, g.belt + 0.2, zHead + 0.34], [dx, g.belt + 0.24, zHead + 0.3], 0.055);
-    box(S, P.dark, dx - 0.14, g.belt + 0.06, zHead - 0.12, dx + 0.14, Math.min(gTop - 0.2, g.belt + 0.3), zHead + 0.06);
-    cap(S, P.accent, [dx, Math.min(gTop - 0.1, g.belt + 0.36), zHead], [dx, Math.min(gTop - 0.1, g.belt + 0.36), zHead], Math.min(0.11, (gTop - g.belt) * 0.3));
+    cap(S, P.dark, [dx, g.belt + 0.2, hz + 0.34], [dx, g.belt + 0.24, hz + 0.3], 0.055);
+    box(S, P.dark, dx - 0.14, g.belt + 0.06, hz - 0.12, dx + 0.14, Math.max(g.belt + 0.1, Math.min(hy - hr, g.belt + 0.3)), hz + 0.06);
+    cap(S, P.accent, [dx, hy, hz], [dx, hy, hz], hr);
     box(S, P.glass, -Ci, g.belt - 0.01, Math.min(zr, zs), Ci, gTop, Math.max(zr, zs));
     both((s) => wedgeX(S, P.glass, s * Ci, s * C2, g.belt - 0.01, gTop, Math.min(zr, zs), Math.max(zr, zs), 0.04));
     wedge(S, P.screen, -Cm, g.belt - 0.01, zs, Cm, g.roof - 0.01, cabF, 0.02, "front");
