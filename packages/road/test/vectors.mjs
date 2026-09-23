@@ -11,7 +11,7 @@ export default await engineVectors(import.meta.url, [
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "a00dc8eebfffd26182bdcf0147d01869ba64efafac315223978b4596aee8a224",
+    expect: "39d5dfcccd0f06c855f63551a4164bc9adc05335010e97bc36b0b1fd679d3ce8",
   },
   {
     name: "a loop through five points samples to the same metres and the same curvature",

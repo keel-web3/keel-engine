@@ -101,7 +101,7 @@ test("bodies: the golden runs, stepped side by side, every field every step", { 
   for (const seed of [1, 2, 3, 4, 5, 6]) { const next = wanderInputs(seed); lockstep(YARD, () => next(), 120 * 20, `yard ${seed}`); }
   lockstep(SKIM, skimDrive, 120 * 8, "skim");
   // (And the golden trace's own hash, from either body.)
-  same("golden hashes", trace(COURSE, coursePilot, 1200).hash, trace(COURSE, coursePilot, 1200, undefined, J.createCharacter as (s: CharacterSpec) => Character).hash);
+  same("golden hashes", trace(COURSE, coursePilot, { steps: 1200 }).hash, trace(COURSE, coursePilot, { steps: 1200, make: J.createCharacter as (s: CharacterSpec) => Character }).hash);
 });
 
 // A random world: a floor (sometimes none), turned boxes -- walls tall enough to run, pads, thin slabs --

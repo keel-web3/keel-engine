@@ -1,6 +1,6 @@
 {
   "schema": "keel-engine-module-catalog@1",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "repository": "https://github.com/keel-web3/keel-engine",
   "revision": null,
   "order": [
@@ -675,7 +675,7 @@
     },
     {
       "id": "keel/bake",
-      "version": "0.1.0",
+      "version": "0.1.2",
       "kind": "runtime",
       "phase": "runtime",
       "weight": -1000,
@@ -703,7 +703,7 @@
         },
         {
           "path": "packages/bake/keel/link.json",
-          "sha256": "0xb095b8ea92c00f89ccbea8969440e143e94b8e47e30e9e412def78320a308bff"
+          "sha256": "0xbe8fac883e0d5db03984c8c14ed1f87f31eac9102709fca26a3f9f305490be26"
         },
         {
           "path": "packages/bake/src/atlas.ts",
@@ -727,7 +727,11 @@
         },
         {
           "path": "packages/bake/src/cards.ts",
-          "sha256": "0x087623d2e259f5d034601d377695a9277b8fef3dbb99dbf7c6a1637f9a1070c2"
+          "sha256": "0x5baa38027e898ede17f0a53c28b8922f4823fd5be661a95c99845be40764225f"
+        },
+        {
+          "path": "packages/bake/src/clean-triangles.ts",
+          "sha256": "0xd73ad0f4f919acfbd335e6e40cfc6580f21c91b497cc12264d304dcac8097750"
         },
         {
           "path": "packages/bake/src/cull.ts",
@@ -787,7 +791,7 @@
         },
         {
           "path": "packages/bake/src/mesh.ts",
-          "sha256": "0xdd490be661f44291aa6375b2bcaa524020d417cbcdc4661f925942dc642bf595"
+          "sha256": "0x9e227718857ed4ba359fa34063df8d830cc4c7b25cc8a6b9225bffd34f214c92"
         },
         {
           "path": "packages/bake/src/paint-shader.ts",
@@ -827,7 +831,7 @@
         },
         {
           "path": "packages/bake/src/shadow-view.ts",
-          "sha256": "0x36b48d88badaf1ffedeb3003886477e7a2a0b5676586e06501216fea76154ff3"
+          "sha256": "0x645d901e9e611cf06dc326a1a1a9cf046245d775a645851f8780e7f5e9940e3e"
         },
         {
           "path": "packages/bake/src/shapes.ts",
@@ -846,8 +850,12 @@
           "sha256": "0x5f2e3464556feb973d2276dd555ffa313c41f8d085894f4f83e250f9541b95cb"
         },
         {
+          "path": "packages/bake/src/sprite-shaders.ts",
+          "sha256": "0x279e436536981c09525634b7612901d010e202b621e8c4b23b9a70e0d3fbbfbd"
+        },
+        {
           "path": "packages/bake/src/sprites.ts",
-          "sha256": "0x3fe653fa0fcbf8c5bcced3ad664fd9f3027da7e1e727b9b5e3a7e683cb599d28"
+          "sha256": "0x136d57ab071bec59694f146b466e96c9332f938aa1ab43ce70339f5667f7cbed"
         },
         {
           "path": "packages/bake/src/stages.ts",
@@ -884,12 +892,12 @@
         ]
       },
       "output": {
-        "digest": "0x4670874205d9055e90961b1a026807aee00263b8d392356e5f6cdf34e838998b",
-        "byteLength": 254225
+        "digest": "0x45310d827c2a83e9e6f4105449a8a70c2752dd6bbfcb95cc4f0ff24565e9aec2",
+        "byteLength": 254861
       },
-      "sourceDigest": "0x979add19c56a545afe27b735cb285b85829a57673a1c1b4eff920e7d265010c5",
-      "recipeDigest": "0xe32c5a44e8fd7bdc10dd6538af5a4034c83ee01af3ccb1314fbd344b063bcb11",
-      "receiptDigest": "0xf2939acdfbdd31d306a8bb929ff6bd82ce526f918b512a60736b6bda4aa532ac",
+      "sourceDigest": "0x16e0fb8fb43f295fa6c536607cb96be0d74d77b533ba7b6b7f5d85b2264e855a",
+      "recipeDigest": "0x8f1a2aac3020c11b32a5f7b7e3d400bdfcfef1e8ae434d1de8cda0db0448dda8",
+      "receiptDigest": "0xac28606bfd59f8c1c40984b80e743c16d2a475b7050c58cd366d689f2f3ba5f4",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -901,7 +909,7 @@
     },
     {
       "id": "keel/builder",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "kind": "runtime",
       "phase": "runtime",
       "weight": -1000,
@@ -933,7 +941,7 @@
         },
         {
           "path": "packages/builder/keel/link.json",
-          "sha256": "0xd6fb70fda889a67ee1f0eef8a588504fd44f52d189683a14c53b002401f6377e"
+          "sha256": "0xb4b67c224f964f82b7b514aa4ebe06e88e613909edc5c7d0da2d75e37f78c29d"
         },
         {
           "path": "packages/builder/src/animate.ts",
@@ -996,8 +1004,12 @@
           "sha256": "0xd4a732a7ea5d346e0093373bf72fb56ff2386ed98440a6f61e5d3c2f886fa86e"
         },
         {
+          "path": "packages/builder/src/rig-pose.ts",
+          "sha256": "0x77d3d03376abfe92dc06fa48ddfcdc9a23ad5e67a285f213b3bca96015d2ed65"
+        },
+        {
           "path": "packages/builder/src/rig.ts",
-          "sha256": "0x2d17b7ecb4d2f184ca5b821bd492c2ca0ab50ea6bfd4e42635ab58a20f4a1a72"
+          "sha256": "0x4d9b828ac9011a2854efee617e193d7423347a683184004a500d47ec8c5b4b42"
         },
         {
           "path": "packages/builder/src/store.ts",
@@ -1028,12 +1040,12 @@
         ]
       },
       "output": {
-        "digest": "0xaeec9e2f377ce45093c4283966558c465a5d5b8725228d775799e73eb6fdb16d",
-        "byteLength": 129736
+        "digest": "0x71bedf0dfe216572e7fe5041a26f9392879bdb729045ddd974c1dbffe6f8e382",
+        "byteLength": 129786
       },
-      "sourceDigest": "0xa9af520fe613b26198c123558c1b9c8672bcb8fed23178d68e4bdff88582f141",
-      "recipeDigest": "0xcd8ce16cd00d1196fb5699566a1202e2ecbc7479be5a12fc3fc0a857b69744d1",
-      "receiptDigest": "0xdff54a435fcb1d48ca3dfb58bc940d89caa21d6d0121498a176b1a0a04a41755",
+      "sourceDigest": "0x58aa8e7af2b65e93553ff5a4eb1fa1466766b76749d583fc286e057c2b781dc5",
+      "recipeDigest": "0xc80213f9ffab73e1b8a99e602bfbda33b5b724dcd7ca64137d82e161df4272ab",
+      "receiptDigest": "0xa0d437ab70bf84e97aead5acf0e0ac3205dfdc43bb805d9718c53fd64a7b49f4",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -1171,7 +1183,7 @@
     },
     {
       "id": "keel/city",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "kind": "runtime",
       "phase": "runtime",
       "weight": -1000,
@@ -1199,7 +1211,7 @@
         },
         {
           "path": "packages/city/keel/link.json",
-          "sha256": "0x3feed6b8f3c2b56dc185519ed659fb6d08cd9cf2c9317f27a03092da0882bf67"
+          "sha256": "0x02b6563981f5eccad2266f03a340dae478864d171b43fcfb890dcf1496f4fc1a"
         },
         {
           "path": "packages/city/src/arterials.ts",
@@ -1235,11 +1247,11 @@
         },
         {
           "path": "packages/city/src/landmarks.ts",
-          "sha256": "0xe08b716351b8dd5ae2b10bdb2484daccd54a1885669055636fff9724789de4e0"
+          "sha256": "0x1b389e2903cb8a3ba5e551e712e6aac44be721b9a07bf8f52e171b2e5b395723"
         },
         {
           "path": "packages/city/src/module.ts",
-          "sha256": "0xc27d915640ff81dec473b46e829c1524990b2fca4923001344dbe35493cac0d6"
+          "sha256": "0xeba3f335c09cce22b0198937aa8731309f432d8b6b2bff3e5f562b02ab1c685d"
         },
         {
           "path": "packages/city/src/plows.ts",
@@ -1247,7 +1259,7 @@
         },
         {
           "path": "packages/city/src/region.ts",
-          "sha256": "0x3f03801eed0beab5c16aa6ba60fc98ae04eadcc94413bcb3f9241ecad0a0a300"
+          "sha256": "0x230685687bf2440a7126bf96e54bc253e62a7ec62f7c83eb7375d59c2a74c2ed"
         },
         {
           "path": "packages/city/src/sidewalks.ts",
@@ -1263,7 +1275,7 @@
         },
         {
           "path": "packages/city/src/venues.ts",
-          "sha256": "0x9d3a2e9d4cc313b1d1a43246bd07308a414ea45f1f0896713faa0747cd84a721"
+          "sha256": "0xd9addd92ebc01a48eb8e0d39fab161e8ece977535117a978f3ab10c89aebc9bc"
         },
         {
           "path": "packages/city/src/weather.ts",
@@ -1280,24 +1292,24 @@
         ]
       },
       "output": {
-        "digest": "0xaaab0aba6f4dcb84216bda551d2885a9a01a3cfb2d61891e01cc82c24970a1b9",
-        "byteLength": 77756
+        "digest": "0x54f9b221a6aff666a710a1e77991ae29cb975358ee5ede7f27c9ce2a82ecd353",
+        "byteLength": 77863
       },
-      "sourceDigest": "0xf88966264b260d1808ac1b20f9924a4ff676ac1fa7c827aba6b6d5979652c585",
-      "recipeDigest": "0x59731dc09651ac6eeddc0a3ce4fbb7cf51850f7146e779ad348b949cfee4efc0",
-      "receiptDigest": "0x7a26db4125da355d0c41e4d020b4794c69584c48079676fa57cbfa4a0095708f",
+      "sourceDigest": "0x695f91e7542b417d58ad9ebbd826ff5c30a990087817e3149c179491260afceb",
+      "recipeDigest": "0x85481ffe0781a71caaf7608b6e8d7b1cedca0daef2e3df9eee4a5e4ab3d87c96",
+      "receiptDigest": "0x59adec9ff03fb83c406e3b41f21857a265346586c273d192bf869224a218a685",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/city/test/vectors.mjs",
-        "sha256": "0x35e72b9d900e20cf424d2b715d9f313e28214f03422db61b178ae9b669f1ee8c"
+        "sha256": "0xba336c7720e3fd6611466866d6d504075aea0d4971da29198174c82f63629133"
       },
       "deployments": [],
       "deployed": false
     },
     {
       "id": "keel/codec",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "kind": "runtime",
       "phase": "data",
       "weight": -31000,
@@ -1320,7 +1332,7 @@
         },
         {
           "path": "packages/codec/keel/link.json",
-          "sha256": "0x1622aea37a75e6ab13c4dfba1fbcd9be7970a43a172345c3dc78f8f759015336"
+          "sha256": "0x56109aef2ab1fd97872686de031296becf39d2e5cc670c1de1b1a7a1334cf158"
         },
         {
           "path": "packages/codec/src/bits.ts",
@@ -1331,8 +1343,12 @@
           "sha256": "0x557a6ade9cecc3971ba1599da3112ff3031b4821785ab5128616eaf32ff1a2a9"
         },
         {
+          "path": "packages/codec/src/codec-primitives.ts",
+          "sha256": "0x3e162185e1871607782583cd4b9529ff358f9553adb59763398b244ffb264377"
+        },
+        {
           "path": "packages/codec/src/codec.ts",
-          "sha256": "0x37dec4dce7aa3039a40dbb355570256351f028b9df630da0bc6b64f0ede983ee"
+          "sha256": "0x1741e99af6198f7d96ca38155d1dcb7fee722ebba74a26bb0b5fc523b2a5629a"
         },
         {
           "path": "packages/codec/src/document.ts",
@@ -1416,12 +1432,12 @@
         "external": []
       },
       "output": {
-        "digest": "0xc72eff120f9588beae9b370a6b3ab4aefa39736f4debd15ce8ebe29595edb817",
-        "byteLength": 106993
+        "digest": "0x9050745da0d1533156deb84a3e19cb4a713b24b79fa00e5ddafbfbc1c0beb5af",
+        "byteLength": 107055
       },
-      "sourceDigest": "0x4c54c7e65ca3ebb555ceb194c0992b162f4e4c400dbf6dd8780610ba2f2e35fc",
-      "recipeDigest": "0x44cbacd79fe99f17926b118952a9f3e89dfb31f0c3ecbdc70395ec9e805c564c",
-      "receiptDigest": "0x055d5202a2b63049f85b19f3fab122fe0b011d6b4807d55c30580d4920e1dff0",
+      "sourceDigest": "0x0b983c1d370850bca1004481ffe2addf29247df645e927bd2c202aeef2351984",
+      "recipeDigest": "0xcca913d8aedc726aea04539e5a64379b55c2acd641244ce3ec631e7361cc3b56",
+      "receiptDigest": "0x25ae2443e19fca298a7c38fb233c21af39a810a88d192ce382d712f558d726de",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -2400,7 +2416,7 @@
     },
     {
       "id": "keel/particles",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "kind": "runtime",
       "phase": "runtime",
       "weight": -1000,
@@ -2426,15 +2442,19 @@
         },
         {
           "path": "packages/particles/keel/link.json",
-          "sha256": "0x553a9cb1f7d9bc3e5701bfd585a7a9779e1729e28f12c6316a052a4733b22394"
+          "sha256": "0x3e12bec3d04cfcc952b45f6ebb32d8eab6871fe8a7126b38e4790ee54a6f0f23"
         },
         {
           "path": "packages/particles/src/damage.ts",
           "sha256": "0xe7fa87a20c88b011e84cb34d4b50a66903eedfd2c6e412580a6924f44ee5479d"
         },
         {
+          "path": "packages/particles/src/gpu-shaders.ts",
+          "sha256": "0xafd973d9bd3150892805326e15993435df2d0c876bcbe460bedfa0e665709825"
+        },
+        {
           "path": "packages/particles/src/gpu.ts",
-          "sha256": "0x4107aac694bde611e8605f79969cfffea0cb4eb9e605a59b55004c78d3338f3c"
+          "sha256": "0xace2022e5e0f6e93ce7934d27ec81a3cc6b2b533b594633b5c0ec0efc07cf582"
         },
         {
           "path": "packages/particles/src/index.ts",
@@ -2449,8 +2469,24 @@
           "sha256": "0xa8c12f24ca2d2221f19b6cdd73bb760b1adebf39d760c91a553ba929149e94c2"
         },
         {
+          "path": "packages/particles/src/pool-codec.ts",
+          "sha256": "0x8fe73df6249ec51624283c0ad342f1831b49aba7ffaabfab22699d4e942e8981"
+        },
+        {
+          "path": "packages/particles/src/pool-frame.ts",
+          "sha256": "0xb0c4edd8e5bab8a2118be6764558561bdcecd70c5e22044311739002456d774b"
+        },
+        {
+          "path": "packages/particles/src/pool-internal.ts",
+          "sha256": "0x53663305940e6cf506ca5e0a177344f36c9770c3f89efedc3ba3b02f3675a89f"
+        },
+        {
+          "path": "packages/particles/src/pool-state.ts",
+          "sha256": "0xc5820fc47c2d2cd0a4f01fd06d60ce876332ca6db2eecc865add2c08241ce2bb"
+        },
+        {
           "path": "packages/particles/src/pool.ts",
-          "sha256": "0xa7464e951dec5798fc3ff378fa4149ebb83e347418d46573bf8f008f50697887"
+          "sha256": "0x787c0b6b5ad31be8d95ace039cdd026997cbd29f74546e97522659afbeb5fc5d"
         },
         {
           "path": "packages/particles/src/presets/bleed-drip.ts",
@@ -2653,12 +2689,12 @@
         ]
       },
       "output": {
-        "digest": "0xf57412f4c6ee7de2b95806dc1b5f07ceb4a9d582af4ea03a5b80f8275eecd48e",
-        "byteLength": 79329
+        "digest": "0xbd12fe548cba946e578d637169a5d53dd021dd80abe660c92901ff77a361743e",
+        "byteLength": 79493
       },
-      "sourceDigest": "0x93378f969fded1b479158608de3bfceb1a57605b8c8368a943597c68311fa8fe",
-      "recipeDigest": "0x246cd22b4c2707c84c99140eb079d0300e58a5a508363c2d1c8075d04928a610",
-      "receiptDigest": "0xe8b614ab664995a270cb35b1afe587b6a7191841f68713b210faf250f30d6245",
+      "sourceDigest": "0x34a18af60786c6f4ede9898c8500faaa1fd32250e2b340f00e821f0ffb64707c",
+      "recipeDigest": "0xa9ed7a8ca65913d9b8524a512fc1414972dec2543bc3ebc3a745f286549a6776",
+      "receiptDigest": "0x5cfe8c30cd4ea1393b9d87b34e700c1dfc5861f55d91842242fd9fae8c295f00",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -2971,7 +3007,7 @@
     },
     {
       "id": "keel/road",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "kind": "runtime",
       "phase": "runtime",
       "weight": -1000,
@@ -2997,11 +3033,11 @@
         },
         {
           "path": "packages/road/keel/link.json",
-          "sha256": "0x7f3722d9450eeddcd51de21e9981f725fb85b863b83d55e5bf0d41542d3f4115"
+          "sha256": "0xbf9061e999cf86102bf290053cc2b685431cd1e6b161b940724ec004c547f3dc"
         },
         {
           "path": "packages/road/src/field.ts",
-          "sha256": "0x694ae01bdf7b44af7548a6da9baf89205eac4de865dac449886b0cfca5d3539f"
+          "sha256": "0xc4aaf9598d864b7388e7db9086e1178fa6dae612f42c1829caa3aae74c5af334"
         },
         {
           "path": "packages/road/src/graph.ts",
@@ -3013,7 +3049,7 @@
         },
         {
           "path": "packages/road/src/module.ts",
-          "sha256": "0x2973bbc4711d4bebe898b9b4ae91f7d38b8af5e6305b93c17372450c0da66bbf"
+          "sha256": "0x6a6454845ba34fd77d8cef897fd21c21ed25277ff7d7086a71a6fa5235dbcacd"
         },
         {
           "path": "packages/road/src/path.ts",
@@ -3028,17 +3064,17 @@
         ]
       },
       "output": {
-        "digest": "0x6333a43f5588aa46b707f10c53f948b2586d465693f601539308f1b588479ffa",
-        "byteLength": 10007
+        "digest": "0xa78153c8fbc8d7d58f59186b31b09722eeab09cd3e90b7c1209eb8fa3386f2af",
+        "byteLength": 10018
       },
-      "sourceDigest": "0xa991a133959afc71e8d64ead7ffdebb0d456f8b514e0cb40854b8c641c7120ce",
-      "recipeDigest": "0x95c7b57ede6809f0749d795a618de0fde1215eab80dc5913bd42115bd621a9d0",
-      "receiptDigest": "0x8ed7810f78969184ddccd4857e84d16c047ae7ac1b515fa4399df6794f1857a7",
+      "sourceDigest": "0x5348975ec011f9c8a211846a738e4e33a9afbc8f0a79a3702fd7223e2c8637ad",
+      "recipeDigest": "0x47b0077eb82fdbcb43fb14b57e604568deab9a2b9d688e4920d0cce749851fe2",
+      "receiptDigest": "0xa8b1a15aa083e484b388fdbc230c3d1604491f9e4c41a9002739859ade6e5dc5",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/road/test/vectors.mjs",
-        "sha256": "0x03a5f222ff562d527b2766d432fca1ffc173194456ad6ae1ef49e4b0b6e45f81"
+        "sha256": "0x12ce5b518527ad01477df100358fdd19368a140f5de011d768e0ae74d092a836"
       },
       "deployments": [],
       "deployed": false
@@ -3782,7 +3818,7 @@
         },
         {
           "path": "packages/world/src/world.ts",
-          "sha256": "0x4625afc77ae8fe3c508d051b84cdcf29b6547b7194769beefd88945eb6a7f168"
+          "sha256": "0xe2acfe2350ac15bce4dbc87a8f64995dfc7724abf2f0aa9debd7485004390cce"
         }
       ],
       "build": {
@@ -3802,9 +3838,9 @@
         "digest": "0x0327ca631629f5b94e484dfb1c928cf110018f8f1e2979e388404b457a4da5de",
         "byteLength": 31805
       },
-      "sourceDigest": "0x6c9f7c7f7fbbb166e79e1e9681c7053282e83ca1ac5f797ac14feecfd081c597",
-      "recipeDigest": "0xccbd07b41c0858d2926959e369cbaf19ade4f0e429aad32709397a10f22dd58c",
-      "receiptDigest": "0x10fb68b6ef6c82398bc9fc4bf7b8f38779ecdfced53996469fe8c54da8ca5c40",
+      "sourceDigest": "0x08ed173c0126e8b0a1253015be178662e3e9154eef6fa217628460f813bc4abb",
+      "recipeDigest": "0xf91e59fe49dd73535c9de1b581c1dce40f2b3f3cb367e3d9cceb1c791da58009",
+      "receiptDigest": "0xc9213826246eb78012cfc73328f58ee1e5512f6a35a27d13e7b4b2875ca98393",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -3816,7 +3852,7 @@
     },
     {
       "id": "keel/worldgen",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "kind": "runtime",
       "phase": "runtime",
       "weight": -1000,
@@ -3855,7 +3891,7 @@
         },
         {
           "path": "packages/worldgen/keel/link.json",
-          "sha256": "0x777f0c6fdbe564eeb6b92469f7203bfbd99c4b03a4322c80321c55e7bfb1ab5a"
+          "sha256": "0x811e4abf42bc18d315bd18546ba48f0d2faf29277c76a43618fa31ea4fe874d6"
         },
         {
           "path": "packages/worldgen/src/biomes.ts",
@@ -3870,8 +3906,16 @@
           "sha256": "0x3dc29e1da301b78dac6af2eef5a944ca85b70605d3e0f344ce0a9bb86aaf4179"
         },
         {
+          "path": "packages/worldgen/src/dungeon-gl-fx-shaders.ts",
+          "sha256": "0xe87de879e605eac1b0a223d1e1300a46b693258e366c4d1c452c04c61d389d16"
+        },
+        {
+          "path": "packages/worldgen/src/dungeon-gl-world-shaders.ts",
+          "sha256": "0x62fd1c152b77f64759324753b302164a83aab529d87fb97bb57510243e74691a"
+        },
+        {
           "path": "packages/worldgen/src/dungeon-gl.ts",
-          "sha256": "0x456064287fab44209a246697aef249ae10fbe7eb743cba583d207ea2d19e6bf6"
+          "sha256": "0xc6935d4ce994dc1b0db5a717f9ba71c6e8f5bf8cc9e36a5c21ec3b02f62a404e"
         },
         {
           "path": "packages/worldgen/src/dungeon-light.ts",
@@ -3955,12 +3999,12 @@
         ]
       },
       "output": {
-        "digest": "0x75650d52d05020f3ed59797c436105ec0d71aaee71d68152d71b652456322432",
-        "byteLength": 223020
+        "digest": "0x09d7913c61b0a911d1170072fb54bab5d07aa0701a610a38f9030cf0021f9b66",
+        "byteLength": 223108
       },
-      "sourceDigest": "0x648696f1522d12c49add8f632f19a4de0f339c1ca75bc8d15582d2a4d951fbde",
-      "recipeDigest": "0xf68f9cde4769362d08402dcbb940fd516c7185d47e915a3a2c75e34a1cb9631d",
-      "receiptDigest": "0xc0ff5f2a588dec2f0b846053e6718cdb1eff5a0525631a82b7a03d210a76842d",
+      "sourceDigest": "0x0f4fd594c6df059f629992f97a16e931c8cbcff79f10386ad8736d569ff600ee",
+      "recipeDigest": "0xdcf1b49eff0ce2e19f2458358a7657f60e70ad9278735a58e4ec62b6c1fb0868",
+      "receiptDigest": "0xcb2e38d519b0c68a1de4971178ca3962d014e479e87c135f9d8008833e2d3c80",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -4085,7 +4129,7 @@
     },
     {
       "id": "packs/buildings",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "kind": "pack",
       "phase": "runtime",
       "weight": -500,
@@ -4113,7 +4157,7 @@
         },
         {
           "path": "packs/buildings/keel/link.json",
-          "sha256": "0xfb87807fa55e87d66df4830085c757c5f2e3fbfa876420273b45dd58256fd63e"
+          "sha256": "0x131faefcfee74d9adb4a378e83db6f0638954e6944a0434b4f093e0e8c4d0a7a"
         },
         {
           "path": "packs/buildings/src/building-object.ts",
@@ -4137,7 +4181,7 @@
         },
         {
           "path": "packs/buildings/src/city/trees.ts",
-          "sha256": "0x8f4279eb7dd1a2a8c4d4dfbe08123f22970dbd9d0b5675f944c79401a989aad6"
+          "sha256": "0x9fa3c22edfb8126851ec69763b437de1ee3353c2f2463625d801f335b41d5efc"
         },
         {
           "path": "packs/buildings/src/generator.ts",
@@ -4233,7 +4277,7 @@
         },
         {
           "path": "packs/buildings/src/pack.ts",
-          "sha256": "0xf75fdb51100da82e7a109f11fc523ff395b0ceb5f4768d6adc1a764fc3c06f85"
+          "sha256": "0xf72b784447767e0a5a62370afa4442fe75576a101eb83186e6c91c605597beee"
         },
         {
           "path": "packs/buildings/src/paths.ts",
@@ -4252,17 +4296,17 @@
         ]
       },
       "output": {
-        "digest": "0xf8818528893a44b439702553a211e985787b054eddfe95304b55c977ec6ff3b5",
-        "byteLength": 102958
+        "digest": "0x774e58baef807f25013bc96e1a580e797bd201610e63940589c7571d196940c8",
+        "byteLength": 102974
       },
-      "sourceDigest": "0xdf24d4d9d900996f9bcdeec62af7cddbeed77fee422c269e3e027ffaf9d85388",
-      "recipeDigest": "0xdc58e2e8a2837888c3e1e3783be7b959b852a7c6024d75410ce2d9ac01722051",
-      "receiptDigest": "0xa86859125eb0202f5d95679ac295539240245d4f34d1e728e9e2deb6b5e2d1b0",
+      "sourceDigest": "0x0f31e2255300187bbf36704778865fdb8f05a45acb9a54c5e357faf541d3f19f",
+      "recipeDigest": "0x7c1c6fda7a3e13cd2de7f752a15f1ed3d8edbd00c8edf1ef061fb7d343254103",
+      "receiptDigest": "0x08bdc5f73e0d971fbee18c80fff7f8330f60e5dd2d08c7f56a702d1c0f7a38af",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packs/buildings/test/vectors.mjs",
-        "sha256": "0xefccdd93989ef6c91de5ffb40f9a29e3b0d8763f710525f2c3557ee0ec2c8063"
+        "sha256": "0xf58a081e0ea9711db50ddefa2459882388fec3cfa552786fbcb72c9931e0f532"
       },
       "deployments": [],
       "deployed": false
@@ -4979,7 +5023,7 @@
     },
     {
       "id": "packs/vehicles",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "kind": "pack",
       "phase": "runtime",
       "weight": -500,
@@ -5009,7 +5053,7 @@
         },
         {
           "path": "packs/vehicles/keel/link.json",
-          "sha256": "0x75b148a07ae1aeb9fecc3ff28b44b14116e740c978336776df13626a2589ef5c"
+          "sha256": "0x7b755fb9c95e379b9808ee9cb0da5c2cb74cde18aee36905cd1d97dc31a44fe2"
         },
         {
           "path": "packs/vehicles/src/bumpers.ts",
@@ -5061,7 +5105,7 @@
         },
         {
           "path": "packs/vehicles/src/plate.ts",
-          "sha256": "0xf662849f9ce141897a587970b4f5632b986d67562cdd41cfaeec83ace9b57524"
+          "sha256": "0x90cd0a29b253760948a9e42c2e3d3ff4ff4093bf3615c0229e8d7ae2e4d21ed0"
         },
         {
           "path": "packs/vehicles/src/roof.ts",
@@ -5073,7 +5117,7 @@
         },
         {
           "path": "packs/vehicles/src/shapes.ts",
-          "sha256": "0x5f848574a99ae65d7b7aa7b76a60af3332a83eb14786a3360ff85e4ebd9c0a00"
+          "sha256": "0xe971630a5b0b67fcb5f92d15c5f8a4d9d8023ec147cfd6775bdecc9e716aff27"
         },
         {
           "path": "packs/vehicles/src/slots.ts",
@@ -5100,12 +5144,12 @@
         ]
       },
       "output": {
-        "digest": "0xec519d28df2c75170b0482c78d22320bfa73bde8acd29c66e273f2c2a1691a1c",
-        "byteLength": 130659
+        "digest": "0xca24117245b9ea6cd445737fa18c8a9846d619a33cc8383b7b3095de6366cab2",
+        "byteLength": 130964
       },
-      "sourceDigest": "0x5fb039923f7baf3514cf563e8bd4eb699c1b60dd0fa909836b87b21b255d6027",
-      "recipeDigest": "0x76fb5b9633937db295a57a028531d971bd736031d049ffa3c7a93230fc9b546b",
-      "receiptDigest": "0xcffad949b609e608667b699dc32c67d895297446bf06a31541e552339a0d248a",
+      "sourceDigest": "0x514ee9d60374b9d16130b581322e12d64b3ef8d3098b4d437876b6e1ab7a754d",
+      "recipeDigest": "0x19b35c34a71072ca33e6ac5fe2a1f96b4c282df153acd319139323289586c62d",
+      "receiptDigest": "0xac8f0b36aeecf1e811d1c60c0d241b52878804bacc53a39383cec3069f75dfcc",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {

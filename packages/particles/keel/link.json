@@ -3,7 +3,7 @@
   "manifest": {
     "schema": "keel-engine-module@1",
     "id": "keel/particles",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "kind": "runtime",
     "needs": [
       "keel/core@^0.1",

@@ -1,6 +1,6 @@
 {
   "name": "@keel-engine/road",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "Roads as data: sampled paths (splines, locate, pointAt), a road graph whose widths are rules, and a sparse per-chunk road field -- what a ground shader, a tyre and an AI driver all read. Deterministic dmath, no GL.",

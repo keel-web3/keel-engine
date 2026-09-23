@@ -24,7 +24,10 @@ A TypeScript port of the proof of concept's `src/physics/character.js`
   and water with random input streams and tuning; and every solid's distance
   over 20 000 random points.
 - `test/physics.test.ts` — the proof of concept's `tests/physics.test.mjs` (and
-  the physics part of `tests/frame.test.mjs`), ported.
+  the physics part of `tests/frame.test.mjs`), ported; jump, wall-run, rail,
+  water, collision, and determinism behavior.
+- `test/wedges.test.ts` — wedge distance and orientation checks, plus ramp
+  standing, climbing, sliding, jumping, and collision behavior.
 - WALLRUN's course (the autopilot over 200 seeds, beside the proof of
   concept's `sim.js`) is the example's own test now: `examples/wallrun/test/`.
 

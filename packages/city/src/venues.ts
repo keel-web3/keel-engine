@@ -11,7 +11,7 @@
 // Pure data on the seed (drawsFor), core's deterministic maths and keel/road's paths: a race could run on a course
 // later (its samples bake to a track profile the way a street loop's do), nothing here depends on a frame or a screen.
 
-import { dcos, dhypot, dsin } from "@keel-engine/core";
+import { dacos, datan2, dcos, dhypot, dsin, dtan } from "@keel-engine/core";
 import { nearsItself, pathThrough, tightest } from "@keel-engine/road";
 import type { Draws } from "./site.ts";
 
@@ -272,14 +272,14 @@ export function filletPath(xs: readonly number[], zs: readonly number[], rs: rea
   const leg = (i: number): number => dhypot(xs[i + 1]! - xs[i]!, zs[i + 1]! - zs[i]!);
   for (let i = 1; i < n - 1; i += 1) {
     const l0 = leg(i - 1), l1 = leg(i), ax = (xs[i]! - xs[i - 1]!) / (l0 || 1), az = (zs[i]! - zs[i - 1]!) / (l0 || 1), bx = (xs[i + 1]! - xs[i]!) / (l1 || 1), bz = (zs[i + 1]! - zs[i]!) / (l1 || 1);
-    const cross = ax * bz - az * bx, dot = Math.max(-1, Math.min(1, ax * bx + az * bz)), th = Math.acos(dot);
+    const cross = ax * bz - az * bx, dot = Math.max(-1, Math.min(1, ax * bx + az * bz)), th = dacos(dot);
     if (th < 1e-3 || l0 < 1e-6 || l1 < 1e-6) { px.push(xs[i]!); pz.push(zs[i]!); continue; }
     // (Each leg shared by two bends: a bend takes at most half of it -- all of it at the ends.)
-    const tan = Math.tan(th / 2), T = Math.min(rs[i]! * tan, (i === 1 ? l0 : l0 / 2), (i === n - 2 ? l1 : l1 / 2)), r = T / tan;
+    const tan = dtan(th / 2), T = Math.min(rs[i]! * tan, (i === 1 ? l0 : l0 / 2), (i === n - 2 ? l1 : l1 / 2)), r = T / tan;
     rmin = Math.min(rmin, r);
     const x0 = xs[i]! - ax * T, z0 = zs[i]! - az * T, s = cross > 0 ? 1 : -1;
     // (The centre: r off the incoming leg, on the side it turns to.)
-    const cx = x0 - az * r * s, cz = z0 + ax * r * s, a0 = Math.atan2(x0 - cx, z0 - cz), steps = Math.max(2, Math.ceil((th * r) / 2));
+    const cx = x0 - az * r * s, cz = z0 + ax * r * s, a0 = datan2(x0 - cx, z0 - cz), steps = Math.max(2, Math.ceil((th * r) / 2));
     for (let q = 0; q <= steps; q += 1) { const a = a0 - s * (th * q) / steps; px.push(cx + dsin(a) * r); pz.push(cz + dcos(a) * r); }
   }
   px.push(xs[n - 1]!); pz.push(zs[n - 1]!);
@@ -293,7 +293,7 @@ export function rallyProfile(D: Draws, x: Float64Array, z: Float64Array, y: Floa
   const ph = D.u("rallyWash") * TAU;
   for (let i = 0; i < n; i += 1) crest[i] = 0.08 + 0.05 * dsin(i * 1.3 + ph) * dsin(i * 0.17);
   // Hairpins: where it turns more than 100 degrees within 40 m.
-  const head = (i: number): number => Math.atan2(x[Math.min(n - 1, i + 1)]! - x[Math.max(0, i - 1)]!, z[Math.min(n - 1, i + 1)]! - z[Math.max(0, i - 1)]!);
+  const head = (i: number): number => datan2(x[Math.min(n - 1, i + 1)]! - x[Math.max(0, i - 1)]!, z[Math.min(n - 1, i + 1)]! - z[Math.max(0, i - 1)]!);
   for (let i = 20; i < n - 20; i += 2) {
     let d = head(i + 20) - head(i - 20);
     while (d > Math.PI) d -= TAU;

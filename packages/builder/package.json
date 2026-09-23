@@ -1,6 +1,6 @@
 {
   "name": "@keel-engine/builder",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "The builder: voxel models palette-indexed by role, edited by ops, converted to objects, attributes and rigged entities, animated, varied and exported as pack code.",

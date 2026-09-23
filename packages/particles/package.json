@@ -1,6 +1,6 @@
 {
   "name": "@keel-engine/particles",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "Pooled, seeded particle emitters: the proof of concept's pool, and the engine's smart pool -- budgets, LOD, recipes, sub-emitters, sockets, one instanced draw.",

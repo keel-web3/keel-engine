@@ -1,7 +1,7 @@
 {
   "protocol": "keel-module-manifest@1",
   "name": "keel-engine-road",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Roads as data: sampled paths, a road graph with width rules, and a sparse per-chunk road field.",
   "entry": "keel/entry.ts",
   "license": "MIT",

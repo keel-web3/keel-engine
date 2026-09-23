@@ -51,7 +51,7 @@ test("glyphs: t/l, G/B, G/C, G/6, t/f, t/+, 8/B, 0/O, 0/D, 5/S, 1/l, 1/I, 3/E (a
 test("the classic console's group fills its selection panel: the biggest empty rectangle is under 18% of it, at 720p..4K, every culture", () => {
   let worst = 0, at = "";
   for (const [W, H] of SCREENS) for (const culture of CULTURES) for (const seed of [1, 7]) for (const summary of [SUMMARY_ONE, SUMMARY_TWO]) {
-    const ui = classicWithGroup(culture, seed, W, H, summary);
+    const ui = classicWithGroup({ culture, seed, screenW: W, screenH: H, summary });
     const e = emptyShare(ui);
     if (e.share > worst) { worst = e.share; at = `${culture}/${seed} ${W}x${H} (${ui.width}x${ui.height}): ${e.rect.w}x${e.rect.h} of ${e.panel.w}x${e.panel.h}`; }
     assert.ok(e.share <= 0.18, `${culture}/${seed} ${W}x${H}: an empty ${e.rect.w}x${e.rect.h} is ${(e.share * 100).toFixed(1)}% of the panel`);
@@ -62,7 +62,7 @@ test("the classic console's group fills its selection panel: the biggest empty r
   }
   console.log(`selection panel with a 12-unit group: largest empty rectangle ${(worst * 100).toFixed(1)}% of the panel (${at})`);
   // Nothing to say: hiding the summary gives its column to the cells.
-  const ui = classicWithGroup("clean", 3, 1920, 1080, "");
+  const ui = classicWithGroup({ culture: "clean", seed: 3, screenW: 1920, screenH: 1080, summary: "" });
   const w0 = ui.node("group.0")!.rect.w;
   ui.set("group.summary", { hidden: true });
   ui.render();
@@ -71,7 +71,7 @@ test("the classic console's group fills its selection panel: the biggest empty r
 
 test("the console's silhouette differs by culture (12%+ of its alpha pairwise), its hit areas identical", () => {
   for (const [W, H] of [...SCREENS, [1440, 810]] as const) {
-    const uis = CULTURES.map((c) => classicPlain(c, 3, W, H));
+    const uis = CULTURES.map((culture) => classicPlain({ culture, seed: 3, screenW: W, screenH: H }));
     let top = Infinity;
     for (const ui of uis) for (const n of ui.root.walk()) if (n.id.startsWith("trim.")) top = Math.min(top, n.rect.y);
     const masks = uis.map((ui) => consoleMask(ui, top).mask);
@@ -204,7 +204,7 @@ test("small selections fill the panel too: 1, 2, 3, 4, 6 and 12 units leave 15% 
   for (const [W, H] of SCREENS) for (const count of [1, 2, 3, 4, 6, 12]) {
     let worst = 0, first: string | null = null;
     for (const culture of CULTURES) for (const summary of [SUMMARY_ONE, SUMMARY_TWO]) {
-      const ui = classicWithGroup(culture, 1, W, H, summary);
+      const ui = classicWithGroup({ culture, seed: 1, screenW: W, screenH: H, summary });
       for (let k = 0; k < 12; k += 1) ui.set(`group.${k}`, k < count ? { hp: 1 - k / 12 } : { hidden: true });
       ui.render();
       const e = emptyShare(ui);
@@ -219,13 +219,13 @@ test("small selections fill the panel too: 1, 2, 3, 4, 6 and 12 units leave 15% 
       first ??= rects;
       assert.equal(rects, first, `${culture}: the same cells for ${count} units`);
     }
-    if (W === 1920) { const ui = classicWithGroup("clean", 1, W, H, SUMMARY_ONE); for (let k = 0; k < 12; k += 1) ui.set(`group.${k}`, k < count ? { hp: 1 } : { hidden: true }); const r = ui.node("group.0")!.rect; report.push(`${count}: ${(worst * 100).toFixed(1)}% (cells ${r.w}x${r.h}, icon ${ui.iconSizeOf("group.0")} px)`); }
+    if (W === 1920) { const ui = classicWithGroup({ culture: "clean", seed: 1, screenW: W, screenH: H, summary: SUMMARY_ONE }); for (let k = 0; k < 12; k += 1) ui.set(`group.${k}`, k < count ? { hp: 1 } : { hidden: true }); const r = ui.node("group.0")!.rect; report.push(`${count}: ${(worst * 100).toFixed(1)}% (cells ${r.w}x${r.h}, icon ${ui.iconSizeOf("group.0")} px)`); }
   }
   console.log(`selection panel, largest empty share by count at 1920x1080: ${report.join(", ")}`);
 });
 
 test("a group cell's health strip: 2+ px under its icon, good over 66%, warn over 33%, bad under", () => {
-  const ui = classicWithGroup("industrial", 2, 1920, 1080, SUMMARY_ONE);
+  const ui = classicWithGroup({ culture: "industrial", seed: 2, screenW: 1920, screenH: 1080, summary: SUMMARY_ONE });
   const theme = ui.theme;
   for (const [hp, tone] of [[0.9, "good"], [0.5, "warn"], [0.2, "bad"]] as const) {
     ui.set("group.0", { hp });

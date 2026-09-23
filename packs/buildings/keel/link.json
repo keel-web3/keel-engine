@@ -3,7 +3,7 @@
   "manifest": {
     "schema": "keel-engine-module@1",
     "id": "packs/buildings",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "kind": "pack",
     "needs": [
       "keel/core@^0.1",

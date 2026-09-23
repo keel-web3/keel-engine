@@ -5,7 +5,7 @@ import { defineManifest } from "@keel-engine/runtime";
 // needs to be loaded.)
 export const manifest = defineManifest({
   id: "keel/particles",
-  version: "0.1.0",
+  version: "0.1.1",
   kind: "runtime",
   needs: ["keel/core@^0.1", "keel/codec@^0.1"],
   title: "KEEL Engine particles",

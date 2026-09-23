@@ -1,7 +1,7 @@
 {
   "protocol": "keel-module-manifest@1",
   "name": "keel-engine-codec",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Typed schemas, canonical bit-packed encoding, self-describing documents with a schema registry, a JSON view and a bit inspector; the engine's packed formats for objects, looks, worlds, particles, sounds and scripts.",
   "entry": "keel/entry.ts",
   "license": "MIT",

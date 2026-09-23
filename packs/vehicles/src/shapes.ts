@@ -430,7 +430,7 @@ function bodySolids(car: Car): Solids {
     const hr = Math.min(0.11, (gTop - g.belt) * 0.3);
     // (Each glass's outer face as a line with its normal facing OUT of the cabin: inside is n.p < d.)
     const outward = (nz: number, ny: number, za: number, ya: number) => {
-      const l = Math.hypot(nz, ny) || 1;
+      const l = dhypot(nz, ny) || 1;
       return { nz: nz / l, ny: ny / l, d: (nz * za + ny * ya) / l };
     };
     const yFoot = g.belt - 0.01 + 0.02 * (g.roof - g.belt), rise = g.roof - 0.01 - yFoot;

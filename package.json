@@ -1,6 +1,6 @@
 {
   "name": "keel-engine",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "KEEL Engine: the pixel-art game engine for KEEL onchain games. Every part, pack and AI is a KEEL verified module: readable TypeScript here, reproducible on-chain bytes there.",
   "license": "MIT",
@@ -21,6 +21,8 @@
   "scripts": {
     "typecheck": "tsc -p tsconfig.json",
     "test": "node --test \"packages/*/test/*.test.ts\" \"packs/*/test/*.test.ts\" \"ai/*/test/*.test.ts\" \"systems/*/test/*.test.ts\"",
+    "quality": "node tools/quality-audit.mjs",
+    "quality:test": "node --test tools/test/quality-audit.test.mjs",
     "build": "node packages/keel/src/cli.ts build",
     "modules:prepare": "node packages/keel/src/cli.ts prepare",
     "modules:check": "node packages/keel/src/cli.ts prepare --check && node packages/keel/src/cli.ts index --check",
