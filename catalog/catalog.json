@@ -1302,7 +1302,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/city/test/vectors.mjs",
-        "sha256": "0x35e72b9d900e20cf424d2b715d9f313e28214f03422db61b178ae9b669f1ee8c"
+        "sha256": "0xba336c7720e3fd6611466866d6d504075aea0d4971da29198174c82f63629133"
       },
       "deployments": [],
       "deployed": false
@@ -3074,7 +3074,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/road/test/vectors.mjs",
-        "sha256": "0x03a5f222ff562d527b2766d432fca1ffc173194456ad6ae1ef49e4b0b6e45f81"
+        "sha256": "0x12ce5b518527ad01477df100358fdd19368a140f5de011d768e0ae74d092a836"
       },
       "deployments": [],
       "deployed": false
@@ -4306,7 +4306,7 @@
       "verified": true,
       "vectors": {
         "path": "packs/buildings/test/vectors.mjs",
-        "sha256": "0xefccdd93989ef6c91de5ffb40f9a29e3b0d8763f710525f2c3557ee0ec2c8063"
+        "sha256": "0xf58a081e0ea9711db50ddefa2459882388fec3cfa552786fbcb72c9931e0f532"
       },
       "deployments": [],
       "deployed": false
