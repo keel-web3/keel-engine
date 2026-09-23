@@ -1,6 +1,6 @@
 {
   "name": "@keel-engine/codec",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "The bit codec: typed schemas, canonical bit-packed encoding, self-describing documents, a JSON view and a bit inspector -- the engine's packed form for objects, looks, worlds, particles and scripts.",

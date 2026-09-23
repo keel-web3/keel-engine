@@ -1,6 +1,6 @@
 {
   "name": "keel-engine",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "KEEL Engine: the pixel-art game engine for KEEL onchain games. Every part, pack and AI is a KEEL verified module: readable TypeScript here, reproducible on-chain bytes there.",
   "license": "MIT",

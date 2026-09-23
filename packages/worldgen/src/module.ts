@@ -7,7 +7,7 @@ import { BIOME_TABLE, ROOM_TEMPLATES_SCHEMA, TILESET_RULES, WORLD_RECIPE } from 
 // embedded, so a tool resolves a recipe, a biome table, a tileset or a room list from the manifest alone.)
 export const manifest = defineManifest({
   id: "keel/worldgen",
-  version: "0.1.0",
+  version: "0.1.1",
   kind: "runtime",
   needs: ["keel/runtime@^0.1", "keel/core@^0.1", "keel/bake@^0.1", "keel/codec@^0.1", "keel/terrain@^0.1", "keel/world@^0.1", "keel/level@^0.1"],
   provides: ["worldgen/stage/overworld@1.0.0", "worldgen/stage/biome@1.0.0", "worldgen/stage/dungeon@1.0.0", "worldgen/stage/cave@1.0.0", "worldgen/stage/town@1.0.0", "worldgen/stage/level@1.0.0", "worldgen/stage/foliage@1.0.0"],

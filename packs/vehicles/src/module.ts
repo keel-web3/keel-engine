@@ -1,7 +1,7 @@
 import { defineManifest } from "@keel-engine/runtime";
 
 export const PACK_ID = "packs/vehicles";
-export const PACK_VERSION = "1.0.0";
+export const PACK_VERSION = "1.0.1";
 
 // (Cars are generated, not listed: the pack provides the generator, its bake shapes and its handling. Its bake shapes
 // are keel/bake's indexed designs and layer paints; its moving parts -- the engine cover, the convertible's roof --

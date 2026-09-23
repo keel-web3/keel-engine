@@ -1,7 +1,7 @@
 {
   "protocol": "keel-module-manifest@1",
   "name": "keel-engine-particles",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Particles for the pixel engine: a fixed pool with budgets, priorities and LOD, emitters as recipes (bursts, streams, trails; sockets; sub-emitters), a preset library, closed-form motion drawn on the GPU beside the sprites -- and the proof of concept's pool.",
   "entry": "keel/entry.ts",
   "license": "MIT",

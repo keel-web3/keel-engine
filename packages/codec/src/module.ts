@@ -4,7 +4,7 @@ import { defineManifest } from "@keel-engine/runtime";
 // data module can decode its contents before anything reads them.)
 export const manifest = defineManifest({
   id: "keel/codec",
-  version: "0.1.0",
+  version: "0.1.1",
   kind: "runtime",
   phase: "data",
   weight: -31000,

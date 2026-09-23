@@ -5,7 +5,7 @@ import { defineManifest } from "@keel-engine/runtime";
 // voxel asset converts itself.)
 export const manifest = defineManifest({
   id: "keel/builder",
-  version: "0.1.0",
+  version: "0.1.1",
   kind: "runtime",
   needs: ["keel/core@^0.1", "keel/runtime@^0.1", "keel/scene@^0.1", "keel/object@^0.1", "keel/entity@^0.1", "keel/codec@^0.1"],
   // (The voxel style for styled objects: registered with keel/object's styles when it loads.)

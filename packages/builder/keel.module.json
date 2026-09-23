@@ -1,7 +1,7 @@
 {
   "protocol": "keel-module-manifest@1",
   "name": "keel-engine-builder",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Voxel models palette-indexed by role, edited by ops, converted to objects, attributes and rigged entities, animated, varied by seed and exported as pack code.",
   "entry": "keel/entry.ts",
   "license": "MIT",

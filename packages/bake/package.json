@@ -1,6 +1,6 @@
 {
   "name": "@keel-engine/bake",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "Design once, draw fast: bake designs into sprite atlases at load, instanced sprites, spatial hashing and culling.",
