@@ -44,7 +44,13 @@ export interface Traced {
 export type Drive = (body: Character, i: number) => BodyInput;
 
 // Every step, to the bit: position, velocity, mode, events.
-export function trace(world: CharacterSpec, drive: Drive, steps: number, tuning?: Partial<Tuning>, make: (spec: CharacterSpec) => Traced = createCharacter) {
+export interface TraceOptions {
+  steps: number;
+  tuning?: Partial<Tuning>;
+  make?: (spec: CharacterSpec) => Traced;
+}
+
+export function trace(world: CharacterSpec, drive: Drive, { steps, tuning, make = createCharacter }: TraceOptions) {
   const body = make({ ...world, tuning });
   const h = createHash("sha256");
   const buf = new Float64Array(7);

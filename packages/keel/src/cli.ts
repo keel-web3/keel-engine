@@ -30,9 +30,8 @@
 
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { bundleModule } from "./bundle.ts";
 import { buildCatalog, catalogText, writeCatalog, ENGINE_CATALOG_FILE } from "./catalog.ts";
-import { buildGameDocument, closureOf, keelAudioScripts } from "./document.ts";
+import { formatKb as kb, parseCliArgs, runOutputCommand, takeCliFlag } from "./cli-commands.ts";
 import { buildVerifiedModule, dependencyOrder, prepareModule, staleFiles, testVerifiedModule, verifyFromGitHub, writeModuleFiles } from "./pipeline.ts";
 import type { VerifiedModule } from "./pipeline.ts";
 import { publishPlan, publishPlanText } from "./plan.ts";
@@ -41,18 +40,9 @@ import { ENGINE_ROOT, readWorkspace } from "./workspace.ts";
 export { ENGINE_ROOT };
 
 export async function run(argv: readonly string[], { engineRoot = ENGINE_ROOT, cwd = process.cwd() } = {}): Promise<void> {
-  const args = [...argv];
-  const flag = (name: string) => { const out: string[] = []; for (let i = args.indexOf(name); i >= 0; i = args.indexOf(name)) { out.push(args[i + 1] ?? ""); args.splice(i, 2); } return out; };
-  const projects = flag("--project").map((p) => resolve(cwd, p));
-  const outFlag = flag("--out")[0];
-  const revision = flag("--revision")[0] ?? null;
-  const chainId = Number(flag("--chain-id")[0] ?? 11155111);
-  const dev = args.includes("--dev");
-  const check = args.includes("--check");
-  const minify = !args.includes("--readable");
-  const [command, id] = args.filter((a) => !a.startsWith("--"));
-  const out = outFlag ? resolve(cwd, outFlag) : join(projects[0] ?? engineRoot, "out");
-  const kb = (n: number) => `${(n / 1024).toFixed(1)} KB`;
+  const {
+    args, projects, revision, chainId, dev, check, minify, command, id, out,
+  } = parseCliArgs(argv, { engineRoot, cwd });
   const workspace = await readWorkspace(engineRoot, { projects });
   const engineModules = () => dependencyOrder(workspace.filter((w) => w.origin === "engine"));
   const buildAll = async (): Promise<VerifiedModule[]> => {
@@ -64,6 +54,7 @@ export async function run(argv: readonly string[], { engineRoot = ENGINE_ROOT, c
     }
     return done;
   };
+  if (await runOutputCommand(command, id, { args, workspace, engineRoot, out, dev, minify })) return;
   switch (command) {
     case "prepare": {
       let stale = 0;
@@ -121,7 +112,7 @@ export async function run(argv: readonly string[], { engineRoot = ENGINE_ROOT, c
     case "verify-origin": {
       // (keel module verify, for every module in the committed catalog: fetch keel-web3/keel-engine at the commit,
       // rebuild each module at its path, compare with the catalog's digest. Needs the commit to be public.)
-      const commit = flag("--commit")[0] ?? revision;
+      const commit = takeCliFlag(args, "--commit")[0] ?? revision;
       if (!commit || !/^[0-9a-f]{40}$/.test(commit)) throw new Error("verify-origin --commit <full 40-hex sha>");
       const { readFileSync } = await import("node:fs");
       const catalog = JSON.parse(readFileSync(join(engineRoot, ENGINE_CATALOG_FILE), "utf8")) as { modules: Parameters<typeof verifyFromGitHub>[0][] };
@@ -143,32 +134,6 @@ export async function run(argv: readonly string[], { engineRoot = ENGINE_ROOT, c
       mkdirSync(out, { recursive: true });
       writeFileSync(join(out, "publish-plan.json"), `${JSON.stringify(plan, null, 2)}\n`);
       console.log(publishPlanText(plan));
-      break;
-    }
-    case "modules":
-      for (const w of workspace) console.log(`${w.manifest.id}@${w.manifest.version}  ${w.manifest.kind}  ${w.origin}  needs [${w.manifest.needs.join(", ")}]${w.manifest.provides.length ? `  provides [${w.manifest.provides.join(", ")}]` : ""}`);
-      break;
-    case "module": {
-      const mod = workspace.find((w) => w.manifest.id === id);
-      if (!mod) throw new Error(`No module ${id}.`);
-      const b = dev ? await bundleModule(mod, workspace, { minify }) : await buildVerifiedModule(mod, workspace, engineRoot);
-      const dir = join(out, "modules", mod.manifest.id, mod.manifest.version);
-      mkdirSync(dir, { recursive: true });
-      writeFileSync(join(dir, "module.js"), b.bytes);
-      writeFileSync(join(dir, "manifest.json"), `${JSON.stringify(mod.manifest, null, 2)}\n`);
-      console.log(`${mod.manifest.id}@${mod.manifest.version} ${kb(b.bytes.byteLength)}${"outputDigest" in b ? ` ${b.outputDigest} (${b.disposition})` : " (dev bundle)"} -> ${dir}`);
-      break;
-    }
-    case "document": {
-      if (!id) throw new Error("document <game-id>");
-      const audio = !args.includes("--no-audio") && closureOf(id, workspace).some((m) => m.manifest.id === "keel/audio") && existsSync(join(engineRoot, "vendor"));
-      const doc = await buildGameDocument(id, workspace, { minify, engineRoot, modules: dev ? "dev" : "verified", ...(audio ? { pageScripts: await keelAudioScripts(join(engineRoot, "vendor")) } : {}) });
-      const dir = join(out, "documents", id);
-      mkdirSync(dir, { recursive: true });
-      writeFileSync(join(dir, "index.html"), doc.html);
-      writeFileSync(join(dir, "report.json"), `${JSON.stringify({ game: id, bytes: dev ? "dev" : "verified", order: doc.resolution.order, modules: doc.modules, document: doc.html.byteLength }, null, 2)}\n`);
-      for (const m of doc.modules) console.log(`  ${m.id}@${m.version}  ${m.kind}/${m.phase}@${m.weight}  ${kb(m.bytes)} (${kb(m.stored)} stored)${m.digest ? `  ${m.digest}` : ""}`);
-      console.log(`${id}: ${doc.modules.length} modules (${dev ? "dev bundles" : "verified bytes"}), document ${kb(doc.html.byteLength)} -> ${join(dir, "index.html")}`);
       break;
     }
     default:

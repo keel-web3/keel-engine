@@ -79,11 +79,23 @@ export const SUMMARY_TWO = "{bright}8 x Hauler{/}\n{dim}Worker • health 90%{/}
 export const SUMMARY_ONE = "{bright}12 x Warden{/}\n{dim}Soldier • health 100%{/}";
 
 /** The classic console at a screen size (the default whole UI scale), showing a 12-unit group. */
-export function classicWithGroup(culture: Culture | string, seed: number, screenW: number, screenH: number, summary: string): Ui {
+export interface ClassicView {
+  culture: Culture | string;
+  seed: number;
+  screenW: number;
+  screenH: number;
+}
+
+function classicUi({ culture, seed, screenW, screenH }: ClassicView, group = false): Ui {
   const probe = createUi({ theme: generateTheme({ seed, culture }), width: screenW, height: screenH });
-  const hud = generateHud({ seed, culture, width: probe.width, height: probe.height, layout: { preset: "classic" }, slots: { selection: { group: 12 } } });
+  const hud = generateHud({ seed, culture, width: probe.width, height: probe.height, layout: { preset: "classic" }, ...(group ? { slots: { selection: { group: 12 } } } : {}) });
   const ui = createUi({ theme: hud.theme, width: screenW, height: screenH });
   ui.load(hud.screen);
+  return ui;
+}
+
+export function classicWithGroup({ summary, ...view }: ClassicView & { summary: string }): Ui {
+  const ui = classicUi(view, true);
   ui.set("unit", { hidden: true });
   ui.set("group", { hidden: false });
   ui.set("group.summary", { text: summary });
@@ -136,11 +148,8 @@ export function consoleMask(ui: Ui, top: number): { mask: Uint8Array; n: number 
 }
 
 /** The classic console alone (no group shown), for the silhouette. */
-export function classicPlain(culture: Culture | string, seed: number, screenW: number, screenH: number): Ui {
-  const probe = createUi({ theme: generateTheme({ seed, culture }), width: screenW, height: screenH });
-  const hud = generateHud({ seed, culture, width: probe.width, height: probe.height, layout: { preset: "classic" } });
-  const ui = createUi({ theme: hud.theme, width: screenW, height: screenH });
-  ui.load(hud.screen);
+export function classicPlain(view: ClassicView): Ui {
+  const ui = classicUi(view);
   ui.render();
   return ui;
 }
@@ -156,7 +165,7 @@ export function maskDiff(a: Uint8Array, b: Uint8Array): number {
 export const COMMAND_ICONS = ["attack", "move", "stop", "hold", "patrol", "build", "gather", "cancel", "rally", "train", "upgrade", "repair", "research", "ability", "cloak"] as const;
 
 /** An icon's solid mask: the family's shape (iconMask), or every pixel the drawn icon paints (outline included). */
-export function solidOf(name: string, size: number, theme: Theme, what: "shape" | "painted" = "shape", seed: string | number = 7): Uint8Array {
+export function solidOf({ name, size, theme, what = "shape", seed = 7 }: { name: string; size: number; theme: Theme; what?: "shape" | "painted"; seed?: string | number }): Uint8Array {
   if (what === "shape") return iconMask(name, size - 2, seed, 0, 1, theme.culture);
   const b = iconBitmap(name, size, theme, { seed, variant: 0 });
   return Uint8Array.from(b.px, (c) => (c !== 0 ? 1 : 0));
@@ -179,7 +188,7 @@ export function iconOverlap(sizes: readonly number[] = [16, 24], what: "shape" |
   for (let i = 0; i < CULTURES.length; i += 1) for (let j = i + 1; j < CULTURES.length; j += 1) {
     const a = CULTURES[i]!, b = CULTURES[j]!;
     let sum = 0, n = 0;
-    for (const size of sizes) for (const name of COMMAND_ICONS) { sum += iou(solidOf(name, size, themes[a], what), solidOf(name, size, themes[b], what)); n += 1; }
+    for (const size of sizes) for (const name of COMMAND_ICONS) { sum += iou(solidOf({ name, size, theme: themes[a], what }), solidOf({ name, size, theme: themes[b], what })); n += 1; }
     const m = sum / n;
     table[`${a}/${b}`] = Math.round(m * 1000) / 1000;
     if (m > worst) { worst = m; pair = `${a}/${b}`; }
