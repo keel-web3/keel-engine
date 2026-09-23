@@ -72,7 +72,7 @@ save("glyphs.png", glyphSheet(CULTURES), 3);
 
 // --- The console with a 12-unit group, per culture, at 1920x1080 (a 640x360 layer).
 for (const c of CULTURES) {
-  const ui = classicWithGroup(c, 1, 1920, 1080, SUMMARY_TWO);
+  const ui = classicWithGroup({ culture: c, seed: 1, screenW: 1920, screenH: 1080, summary: SUMMARY_TWO });
   ui.set("unit.name", { text: "{bright}Warden{/}" });
   ui.render();
   const e = emptyShare(ui);
@@ -84,7 +84,7 @@ for (const c of CULTURES) {
 
 // --- The six silhouettes, stacked: the console's top band and the trims above it, over the world.
 {
-  const uis = CULTURES.map((c) => classicPlain(c, 3, 1920, 1080));
+  const uis = CULTURES.map((culture) => classicPlain({ culture, seed: 3, screenW: 1920, screenH: 1080 }));
   let top = Infinity;
   for (const ui of uis) for (const n of ui.root.walk()) if (n.id.startsWith("trim.")) top = Math.min(top, n.rect.y);
   const masks = uis.map((ui) => consoleMask(ui, top).mask);
@@ -175,7 +175,7 @@ for (const c of CULTURES) {
 {
   const rows: Array<{ ui: Ui; r: { x: number; y: number; w: number; h: number } }> = [];
   for (const culture of ["industrial", "organic"]) for (const count of [1, 2, 3, 4, 6, 12]) {
-    const ui = classicWithGroup(culture, 1, 1920, 1080, count > 1 ? SUMMARY_TWO : "{bright}Warden{/}\n{dim}Soldier • health 40%{/}");
+    const ui = classicWithGroup({ culture, seed: 1, screenW: 1920, screenH: 1080, summary: count > 1 ? SUMMARY_TWO : "{bright}Warden{/}\n{dim}Soldier • health 40%{/}" });
     for (let k = 0; k < 12; k += 1) ui.set(`group.${k}`, k < count ? { hp: [1, 0.8, 0.55, 0.3, 0.9, 0.15][k % 6]!, icon: k % 3 ? "worker" : "attack", tone: "ink" } : { hidden: true });
     ui.render();
     const e = emptyShare(ui);
