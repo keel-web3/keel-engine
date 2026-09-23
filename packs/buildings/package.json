@@ -1,10 +1,14 @@
 {
   "name": "@keel-engine/buildings",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "description": "packs/buildings: the modular building generator and its variants, bridges, ramps, stairs, cliff steps, walls, fences, gates, path pieces and docks as styled objects.",
-  "exports": { ".": "./src/index.ts", "./module": "./src/module.ts", "./codec": "./src/codec.ts" },
+  "exports": {
+    ".": "./src/index.ts",
+    "./module": "./src/module.ts",
+    "./codec": "./src/codec.ts"
+  },
   "dependencies": {
     "@keel-engine/runtime": "workspace:*",
     "@keel-engine/core": "workspace:*",

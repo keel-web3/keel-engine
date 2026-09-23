@@ -23,7 +23,7 @@
 // palette -- through the year (autumn colour, blossom seasons, bare broadleaf in a temperate winter) and under snow --
 // in two lights: the night, and under a street lamp.
 
-import { dcos, dsin, hash2 } from "@keel-engine/core";
+import { dcos, dhypot, dsin, hash2 } from "@keel-engine/core";
 import type { BakeBox, BakeCapsule, BakeWorld, LayerPaint, SlotPaint } from "@keel-engine/bake";
 import type { RoleLook } from "@keel-engine/core";
 import type { PlantKind } from "@keel-engine/architecture";
@@ -69,8 +69,8 @@ class Kit {
   /** Its extent: the height of its top and the reach of its widest part from the foot. */
   extent(): { height: number; radius: number } {
     let height = 0, radius = 0;
-    for (const c of this.capsules) for (const p of [c.a, c.b]) { height = Math.max(height, p[1]! + c.r); radius = Math.max(radius, Math.hypot(p[0]!, p[2]!) + c.r); }
-    for (const b of this.boxes) { height = Math.max(height, b.c[1]! + b.h[1]!); radius = Math.max(radius, Math.hypot(b.c[0]!, b.c[2]!) + Math.hypot(b.h[0]!, b.h[2]!)); }
+    for (const c of this.capsules) for (const p of [c.a, c.b]) { height = Math.max(height, p[1]! + c.r); radius = Math.max(radius, dhypot(p[0]!, p[2]!) + c.r); }
+    for (const b of this.boxes) { height = Math.max(height, b.c[1]! + b.h[1]!); radius = Math.max(radius, dhypot(b.c[0]!, b.c[2]!) + dhypot(b.h[0]!, b.h[2]!)); }
     return { height, radius };
   }
   world(): BakeWorld { return { boxes: this.boxes, capsules: this.capsules }; }
@@ -85,7 +85,7 @@ class Kit {
       if (!WOOD.has(c.mat ?? -1)) continue;
       const a = c.a, b = c.b, ab = [b[0]! - a[0]!, b[1]! - a[1]!, b[2]! - a[2]!], l2 = ab[0]! ** 2 + ab[1]! ** 2 + ab[2]! ** 2 || 1;
       const t = Math.max(0, Math.min(1, ((p[0] - a[0]!) * ab[0]! + (p[1] - a[1]!) * ab[1]! + (p[2] - a[2]!) * ab[2]!) / l2));
-      const q: V3 = [a[0]! + ab[0]! * t, a[1]! + ab[1]! * t, a[2]! + ab[2]! * t], d = Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) - c.r;
+      const q: V3 = [a[0]! + ab[0]! * t, a[1]! + ab[1]! * t, a[2]! + ab[2]! * t], d = dhypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]) - c.r;
       if (d < best.d) best = { at: q, d };
     }
     return best;
@@ -134,8 +134,8 @@ function clump(K: Kit, r: Draw, k0: number, cx: number, cy: number, cz: number, 
     const bx = cx + dcos(a) * d, by = cy + el * s * 0.8 * flat, bz = cz + dsin(a) * d, br = s * (0.38 + 0.14 * r(k0 + 60 + i));
     K.ball(bx, by, bz, br, slot);
     // (A sprig on its outer face, mostly up and out -- a ragged, leafy outline -- sitting in the ball it grows from.)
-    const sa = a + (r(k0 + 100 + i) - 0.5) * 1.2, se = 0.2 + r(k0 + 120 + i) * 0.6, ce = Math.cos(se);
-    K.ball(bx + dcos(sa) * ce * br * 0.85, by + Math.sin(se) * br * 0.85 * flat, bz + dsin(sa) * ce * br * 0.85, s * (0.16 + 0.1 * r(k0 + 160 + i)), slot);
+    const sa = a + (r(k0 + 100 + i) - 0.5) * 1.2, se = 0.2 + r(k0 + 120 + i) * 0.6, ce = dcos(se);
+    K.ball(bx + dcos(sa) * ce * br * 0.85, by + dsin(se) * br * 0.85 * flat, bz + dsin(sa) * ce * br * 0.85, s * (0.16 + 0.1 * r(k0 + 160 + i)), slot);
   }
 }
 

@@ -25,7 +25,7 @@ import workshop from "./objects/workshop.ts";
 import { PROFILES } from "./profiles.ts";
 
 export const PACK_ID = "packs/buildings";
-export const PACK_VERSION = "1.0.0";
+export const PACK_VERSION = "1.0.1";
 
 export const pack = defineContentPack({
   id: PACK_ID,

@@ -9,6 +9,7 @@
 // round a camera are a few MB. A chunk depends only on the graph, never on which
 // chunks came before it: any order, the same bytes.
 
+import { dacos, dhypot } from "@keel-engine/core";
 import type { RoadGraph } from "./graph.ts";
 
 /** A chunk's side (m), and texels a metre. */
@@ -190,8 +191,8 @@ export function* fieldWindowSteps(graph: RoadGraph, x0: number, z0: number, widt
       if (!p.closed && (i <= 0 || i >= L - 1)) return Infinity;
       const a = (i - 1 + L) % L, b = i % L, c = (i + 1) % L;
       const ux = p.x[b]! - p.x[a]!, uz = p.z[b]! - p.z[a]!, vx = p.x[c]! - p.x[b]!, vz = p.z[c]! - p.z[b]!;
-      const lu = Math.hypot(ux, uz) || 1, lv = Math.hypot(vx, vz) || 1;
-      return Math.acos(Math.max(-1, Math.min(1, (ux * vx + uz * vz) / (lu * lv))));
+      const lu = dhypot(ux, uz) || 1, lv = dhypot(vx, vz) || 1;
+      return dacos(Math.max(-1, Math.min(1, (ux * vx + uz * vz) / (lu * lv))));
     };
     for (let i = 0; i < segs; i += 1) {
       const j = (i + 1) % L;

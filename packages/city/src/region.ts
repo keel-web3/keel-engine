@@ -14,7 +14,7 @@
 // In a world of cities (site.cell), the land is keyed by the WORLD's seed and world coordinates, so two neighbours'
 // regions are one land; their towns and roads are still each city's own.
 
-import { dcos, dhypot, dsin, fbm2, hash2 } from "@keel-engine/core";
+import { datan2, dcos, dexp, dhypot, dpow, dsin, fbm2, hash2 } from "@keel-engine/core";
 import { blockCentre } from "./districts.ts";
 import { drawsFor } from "./site.ts";
 import { SEA_LEVEL, groundAt } from "./terrain.ts";
@@ -37,7 +37,7 @@ const fnv = (text: string): number => {
   for (let i = 0; i < text.length; i += 1) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
   return h | 0;
 };
-const bearingOf = (x: number, z: number): number => Math.atan2(x, z);
+const bearingOf = (x: number, z: number): number => datan2(x, z);
 const at = (a: number, d: number): [number, number] => [dsin(a) * d, dcos(a) * d];
 
 /** Per edge trait, the land it becomes out in the region. */
@@ -120,7 +120,7 @@ export function cityRegion(city: City): Region {
   const weights = (x: number, z: number, out: number[]): void => {
     const a = bearingOf(x, z) + (N(11, x, z, 2200, 3) - 0.5) * 0.9;
     let s = 0;
-    for (let i = 0; i < count; i += 1) { const d = apart(a, sectors[i]!.bearing) / sigma; const w = Math.exp(-d * d); out[i] = w; s += w; }
+    for (let i = 0; i < count; i += 1) { const d = apart(a, sectors[i]!.bearing) / sigma; const w = dexp(-d * d); out[i] = w; s += w; }
     for (let i = 0; i < count; i += 1) out[i] = out[i]! / (s || 1);
   };
 
@@ -148,8 +148,8 @@ export function cityRegion(city: City): Region {
       case "plains": return 1.5 + 6 * N(1, x, z, 700);
       case "farmland": return 1 + 3.5 * N(2, x, z, 900);
       case "sprawl": return 1 + 5 * N(3, x, z, 800);
-      case "hills": return 2 + ramp(e, 0, 900) * (8 + 85 * N(4, x, z, 1000) ** 1.6);
-      case "forest": return 2 + ramp(e, 0, 700) * (6 + 45 * N(5, x, z, 850) ** 1.3);
+      case "hills": return 2 + ramp(e, 0, 900) * (8 + 85 * dpow(N(4, x, z, 1000), 1.6));
+      case "forest": return 2 + ramp(e, 0, 700) * (6 + 45 * dpow(N(5, x, z, 850), 1.3));
       case "mountains": return ramp(e, 0, 1300) * (20 + 90 * N(6, x, z, 900)) + ramp(e, 500, 3200) * 560 * ridged(7, x, z, 1700);
       case "desert": {
         const dunes = 5 * Math.abs(dsin((x + z) / 90 + 6 * N(8, x, z, 400))) * N(9, x, z, 600);
@@ -521,7 +521,7 @@ export function cityRegion(city: City): Region {
       const [gx, gz] = gate;
       venueList.push({
         kind, seed, x, z, y, yaw, hw, hd, surface: surfaceOf[kind],
-        gate: { x: gx, z: gz, yaw: Math.atan2(x - gx, z - gz) },
+        gate: { x: gx, z: gz, yaw: datan2(x - gx, z - gz) },
         courses: layout.courses.map((c) => placeCourse(c.name, c.surface, c.local, x, z, yaw)),
         bowl: layout.bowl,
       });
@@ -853,7 +853,7 @@ export function cityRegion(city: City): Region {
   roads.filter((r) => r.kind === "freeway").forEach((r, k) => {
     const side = (i: number, s: number, off: number): [number, number, number] => {
       const j = Math.min(r.x.length - 1, i + 1), dx = r.x[j]! - r.x[i]!, dz = r.z[j]! - r.z[i]!, l = dhypot(dx, dz) || 1;
-      return [r.x[i]! + (dz / l) * s * off, r.z[i]! - (dx / l) * s * off, Math.atan2(-dz / l * s, dx / l * s) + Math.PI / 2];
+      return [r.x[i]! + (dz / l) * s * off, r.z[i]! - (dx / l) * s * off, datan2(-dz / l * s, dx / l * s) + Math.PI / 2];
     };
     for (let i = 20; i < Math.min(r.x.length - 1, 180); i += 18) {
       if (r.pier[i]) continue;
@@ -904,7 +904,7 @@ export function cityRegion(city: City): Region {
     const prof = rallyProfile(RD, x, z, y, (i) => ford(x[i]!, z[i]!));
     let length = 0;
     for (let i = 0; i + 1 < n; i += 1) length += dhypot(x[i + 1]! - x[i]!, z[i + 1]! - z[i]!);
-    const line = (i: number): { x: number; z: number; yaw: number } => ({ x: x[i]!, z: z[i]!, yaw: Math.atan2(x[i + 1]! - x[i - 1]!, z[i + 1]! - z[i - 1]!) });
+    const line = (i: number): { x: number; z: number; yaw: number } => ({ x: x[i]!, z: z[i]!, yaw: datan2(x[i + 1]! - x[i - 1]!, z[i + 1]! - z[i - 1]!) });
     return { name: "stage", seed: `${site.seed}|rally`, surface: "dirt", closed: false, x, z, y, half: new Float64Array(n).fill(4), ...prof, length, start: line(Math.min(40, n - 2)), finish: line(Math.max(1, n - 41)), road: stageRoad };
   })();
 

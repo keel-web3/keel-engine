@@ -4,7 +4,7 @@ import { defineManifest } from "@keel-engine/runtime";
 // pack reads its lots through the building:lot contract, not the other way round.)
 export const manifest = defineManifest({
   id: "keel/city",
-  version: "0.1.0",
+  version: "0.1.1",
   kind: "runtime",
   needs: ["keel/core@^0.1", "keel/elevation@^0.1", "keel/road@^0.1", "keel/runtime@^0.1"],
   title: "KEEL Engine city",

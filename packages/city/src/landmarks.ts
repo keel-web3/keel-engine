@@ -12,6 +12,7 @@
 //
 // The choice is a pure function of the city's seed, so every machine claims the same block for the same landmark.
 
+import { datan2, dcos, dhypot, dsin } from "@keel-engine/core";
 import type { RoadClass, RoadGraph } from "@keel-engine/road";
 import type { Block, CitySite, District, Landmark, LandmarkWant } from "./types.ts";
 
@@ -48,11 +49,11 @@ function boxOf(corners: readonly (readonly [number, number])[]): { x: number; z:
   let longest = 0, yaw = 0;
   for (let i = 0; i < corners.length; i += 1) {
     const a = corners[i]!, b = corners[(i + 1) % corners.length]!;
-    const d = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    if (d > longest) { longest = d; yaw = Math.atan2(b[0] - a[0], b[1] - a[1]); }
+    const d = dhypot(b[0] - a[0], b[1] - a[1]);
+    if (d > longest) { longest = d; yaw = datan2(b[0] - a[0], b[1] - a[1]); }
   }
   let hw = 0, hd = 0;
-  const fx = Math.sin(yaw), fz = Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw);
+  const fx = dsin(yaw), fz = dcos(yaw), rx = dcos(yaw), rz = -dsin(yaw);
   for (const [cx, cz] of corners) {
     const dx = cx - x, dz = cz - z;
     hw = Math.max(hw, Math.abs(dx * fx + dz * fz));
@@ -70,7 +71,7 @@ function nearestOn(g: RoadGraph, edge: number, x: number, z: number): { x: numbe
   const dx = b.x - a.x, dz = b.z - a.z, len2 = dx * dx + dz * dz || 1;
   const t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / len2));
   const px = a.x + dx * t, pz = a.z + dz * t;
-  return { x: px, z: pz, yaw: Math.atan2(dx, dz), d: Math.hypot(x - px, z - pz) };
+  return { x: px, z: pz, yaw: datan2(dx, dz), d: dhypot(x - px, z - pz) };
 }
 
 /**
@@ -123,7 +124,7 @@ export function claimLandmarks(
         if (gate.d > box.hw + box.hd) continue;
         // Room to spare, out of the middle, and a nudge off the seed so identical cities differ.
         const room = Math.min(3, (box.hw * box.hd) / Math.max(1, want.halfL * want.halfD));
-        const out2 = Math.hypot(box.x, box.z) / Math.max(1, site.core);
+        const out2 = dhypot(box.x, box.z) / Math.max(1, site.core);
         const score = room * 240 + Math.min(1, out2) * 300 - gate.d * 0.6 + (hashOf(`${site.seed}:${want.kind}:${block.id}`) % 40);
         if (best && score <= best.score) continue;
         best = {

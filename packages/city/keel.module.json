@@ -1,7 +1,7 @@
 {
   "protocol": "keel-module-manifest@1",
   "name": "keel-engine-city",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cities from a seed: a site, arterials, a ring road, streets, blocks and lots -- a road graph and the lots to build on.",
   "entry": "keel/entry.ts",
   "license": "MIT",
