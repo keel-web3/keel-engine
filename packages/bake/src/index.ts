@@ -1,3 +1,4 @@
+export { createSizeCache } from "./size-cache.ts";
 export { createGrid } from "./grid.ts";
 export type { Grid, GridOptions } from "./grid.ts";
 export { packAtlas } from "./atlas.ts";
@@ -7,13 +8,37 @@ export type { BakeOptions, BakePlan, ClipSpec, DesignSpec, SpriteJob } from "./p
 export { pixelView } from "./view.ts";
 export type { PixelView, PixelViewSpec, Vec3 } from "./view.ts";
 export { INSTANCE_FLOATS, LAYER_INSTANCE_FLOATS, LayerInstances, SpriteInstances, createSpriteRenderer } from "./sprites.ts";
-export type { AtlasPage, BillboardCamera, BillboardStyle, LayerStyle, LookTextures, SpriteRenderer } from "./sprites.ts";
+export type { AtlasPage, BillboardCamera, BillboardStyle, LayerStyle, LookTextures, MeshDraw, MeshFog, MeshGBuffer, MeshLight, MeshStyle, MeshWeather, SpriteRenderer } from "./sprites.ts";
+// Live meshes: the default for a 3D game -- a design as a real 3D object drawn every frame through its looks (bakes stay for stills, NFTs, far LODs).
+export { MESH_LIGHTS, lookMesh, meshBounds, mergeMeshes, meshMatrix, mulMatrix, poseMatrices, worldsBounds } from "./mesh.ts";
+export type { LookMesh, LookMeshOptions } from "./mesh.ts";
+// Crossed cards: thousands of grass tufts, bushes and reeds as one mesh, cut to leafy silhouettes in the G-buffer pass.
+export { CARD_KINDS, cardsMesh } from "./cards.ts";
+export type { CardKind, CardSpot, CardsOptions } from "./cards.ts";
+// The projection contract every pass shares, and the culling that rides on it.
+export { DEPTH_RANGE, NEAR, axesOf, defaultMeshSun, orthoDepthRange, projectionOf, shotOfView } from "./project.ts";
+export type { ClipPlanes, OrthoShot, PerspShot, Projection, Shot } from "./project.ts";
+// Levels of detail as one mesh: nested prefixes a draw picks by index range (keel/lod chooses which).
+export { layeredMesh, prefixMesh, solidSize, worldError, prepareMeshDetail } from "./lod-mesh.ts";
+export type { LayeredMesh, MeshLayer, MeshDetail, MeshHolder } from "./lod-mesh.ts";
+export { boundsOf, boxCorners, frustumOf, visible } from "./cull.ts";
+export type { Planes } from "./cull.ts";
+export { shadowView } from "./shadow-view.ts";
+export type { ShadowBox } from "./shadow-view.ts";
+export type { MeshPass, MeshPassDeps, MeshStats } from "./draw-mesh.ts";
+// Paint filters on the live mesh pass: the cel (hard light bands, a highlight, a rim, a thicker ink line) and the
+// ghost (a silhouette that holds while its middle dithers away -- a thing that is there but not yet known).
+export { FILTERS, FILTER_KIND, FILTER_OFF, filterUniforms, resolveFilter } from "./filters.ts";
+export type { CelParams, FilterKind, FilterName, FilterUniforms, GhostParams, MeshFilter, MeshFilterInput } from "./filters.ts";
+// Volumes: smoke, fire, dust and nitro as shader volumes on the palette (no sprites).
+export { VOLUME_FLOATS, VOLUME_KIND, VolumeInstances } from "./volumes.ts";
+export type { VolumeKind, VolumeStyle } from "./volumes.ts";
 export { SWAY_INSTANCE_FLOATS, SwayInstances, packSway, swayShiftPacked, swaySignalOf, unpackSway } from "./sway.ts";
 export type { SwayLike, WindStyle } from "./sway.ts";
 export { atlasOf, bakeCamera, bakeDistance, bakeSize, bakeSprites, bakeStyleKey, keyColourFor, renderSprites, thinned, trimSprite } from "./bake.ts";
 export type {
   BakeAtlas, BakeBox, BakeCamera, BakeCapsule, BakedSprite, BakeMaterial, BakePalette, BakeRenderer, BakeResult, BakeSource, BakeSources, BakeSpriteOptions, BakeStats,
-  BakeWorld, SpriteRect,
+  BakeWorld, FacadeGrid, SpriteRect,
 } from "./bake.ts";
 export { BAKE_FORMAT, createSpriteCache, decodeBake, encodeBake, rectsOf, spritesOf } from "./cache.ts";
 export type { SavedBake, SpriteCache } from "./cache.ts";
@@ -26,8 +51,8 @@ export { OCCLUSION_LAYERS, SPRITE_DEPTH_GLSL, anchorB, applyLayer, layerOf, over
 export type { DepthAxis, OcclusionLayer, PickSprite } from "./depth.ts";
 export { placeWorld, rayBox, rayCapsule, raycastWorld, rayWedge } from "./raycast.ts";
 export type { IndexedBakeRenderer, IndexedSource, IndexedSources, Texel } from "./indexed.ts";
-export { LOOKS_PER_ROW, LOOK_TEXELS, PAINTS_PER_ROW, PALETTE_ROW, createLookTable, paintRoles, paintSlots } from "./looks.ts";
-export type { LayerPaint, LookTable, SlotPaint } from "./looks.ts";
+export { DECAL_ATLAS, LOOKS_PER_ROW, LOOK_TEXELS, PAINTS_PER_ROW, PAINT_SCREENS, PAINT_SHEENS, PALETTE_ROW, PLACES_PER_ROW, WALL_DETAILS, createLookTable, paintRoles, paintSlots, wallDetailBits } from "./looks.ts";
+export type { Decal, LayerPaint, LookTable, PaintScreen, PaintSheen, SlotDecal, SlotPaint, WallDetail, WallMaterial } from "./looks.ts";
 export { BODY_SLOTS, SIZE_STEP, WORN_ROLES, WORN_SLOT, attributeShape, bodyShape, directionAxes, slotOfPart, slotOfRole, socketClass, wornSlotOf } from "./shapes.ts";
 export type { AttributeShapeDesign, BodyShape, BodyShapeOptions, BodySlot, BodyWear, ExplicitSkin, SocketClass, SocketRecords } from "./shapes.ts";
 export { IDLE_PERIOD, IDLE_STYLES, bakeCost, dressPopulation, layerStream, populate, populateShapes, populationUnit, unitFrame } from "./population.ts";
@@ -50,6 +75,8 @@ export { createFrameBudget } from "./budget.ts";
 export type { FrameBudget, FrameBudgetOptions } from "./budget.ts";
 export { bakeSlice, bakeWorkerSource, createBakeWorkers, serveBakes } from "./worker.ts";
 export type { BakeWorkerEntry, BakeWorkers, BakeWorkersOptions, ServeBakesOptions, SliceSources, WorkerBatch, WorkerCanvas } from "./worker.ts";
+export { createStreamPump } from "./pump.ts";
+export type { StreamPump, StreamPumpOptions } from "./pump.ts";
 
 // Per-instance effects for layers (drawLayersFx): a hit's flash, a death's or a warp-in's dissolve.
 export { FLASH_WHITE, fxDropped, fxIndex, packFx, unpackFx } from "./fx.ts";
@@ -60,3 +87,5 @@ export type { BuildMechanic, FallOptions, StageOptions } from "./stages.ts";
 export { HEAD_SHARE, HEAD_SLOTS, PORTRAIT_H, PORTRAIT_W, createPortraits, drawPortrait, headOf, paintIndexed, portraitDistance, portraitMask, portraitPlan } from "./portrait.ts";
 export type { PortraitPlan, PortraitSheet, PortraitSprite, PortraitState, PortraitSubject, PortraitView, Portraits, PosedBody } from "./portrait.ts";
 export { softBake, softMask, type SoftMask, type SoftMaskOptions, type SoftSprite } from "./soft.ts";
+export { BLOOM_REACH, createBloomPass } from "./bloom.ts";
+export type { BloomPass } from "./bloom.ts";

@@ -66,7 +66,8 @@ void main() {`;
 
 /** Pass 1 for a bake: WORLD_FS, writing the hit's surface coordinate into data2's .zw (and, split, behind-or-not as its ramp). */
 export const BAKE_WORLD_FS = [
-  ["void main() {", `uniform vec4 uSplit;      // a point (xyz) the hits are split at, seen from the camera; w 1 on, 0 off\n${SURFACE_UV}`],
+  ["void main() {", `uniform vec4 uSplit;      // a point (xyz) the hits are split at, seen from the camera; w 1 on, 0 off\nuniform float uOrthoH;    // > 0: an ORTHOGRAPHIC bake -- parallel rays over a picture this many metres half-high (the game's own view: nothing nearer the camera drawn bigger)\n${SURFACE_UV}`],
+  ["vec3 rd = normalize(uFwd + uv.x * uTan * aspect * uRight + uv.y * uTan * uUp);\n  vec3 ro = uEye;", "vec3 rd = uOrthoH > 0.0 ? uFwd : normalize(uFwd + uv.x * uTan * aspect * uRight + uv.y * uTan * uUp);\n  vec3 ro = uOrthoH > 0.0 ? uEye + (uv.x * aspect * uRight + uv.y * uUp) * uOrthoH : uEye;"],
   ["float L; float ramp; float id; float depth; float mat; float glow = 0.0; float facing = 1.0;", "float L; float ramp; float id; float depth; float mat; float glow = 0.0; float facing = 1.0; vec2 surf = vec2(0.0);"],
   ["glow = clamp(mr.w, 0.0, 1.0); facing = clamp(dot(n, -rd), 0.0, 1.0);", "glow = clamp(mr.w, 0.0, 1.0); facing = clamp(dot(n, -rd), 0.0, 1.0); surf = surfaceUv(p, int(hit.z + 0.5)); ramp = uSplit.w > 0.5 && dot(p - uSplit.xyz, uFwd) > 0.0 ? 1.0 : 0.0;"],
   ["outData2 = vec4(glow, facing, 0.0, 0.0);", "outData2 = vec4(glow, facing, surf);"],
@@ -117,24 +118,26 @@ uniform sampler2D uData;
 uniform sampler2D uDepth;
 uniform float uScale;       // texels a metre (the bake's pixels per metre)
 uniform float uEps;         // how far the bake thinned each solid (metres)
+uniform float uOrthoH;      // > 0: an orthographic bake (as pass 1's)
 void main() {
   ivec2 px = ivec2(gl_FragCoord.xy);
   int id = int(texelFetch(uData, px, 0).a * 255.0 + 0.5);
   if (id >= 253) { outData = vec4(0.0); outData2 = vec4(0.0); return; }
   float t = texelFetch(uDepth, px, 0).r * FAR;
   vec2 uv = (gl_FragCoord.xy / uRes) * 2.0 - 1.0;
-  vec3 rd = normalize(uFwd + uv.x * uTan * (uRes.x / uRes.y) * uRight + uv.y * uTan * uUp);
+  vec3 rd = uOrthoH > 0.0 ? uFwd : normalize(uFwd + uv.x * uTan * (uRes.x / uRes.y) * uRight + uv.y * uTan * uUp);
+  vec3 ro = uOrthoH > 0.0 ? uEye + (uv.x * (uRes.x / uRes.y) * uRight + uv.y * uUp) * uOrthoH : uEye;
   // (Back off past where the march could have overshot, then march onto the shell pass 1 calls a hit -- the thinned
   // field within its hit tolerance, 0.0015 x the ray's length: at the bake's distance, uEps, the design's own
   // surface -- the first point along the ray the colours were drawn from, never past it.)
   float s = max(0.0, t - 3.0 * max(uEps, 0.0015 * t) - 0.002);
   for (int i = 0; i < 48; i++) {
-    float d = map(uEye + rd * s).x - 0.0015 * s;
+    float d = map(ro + rd * s).x - 0.0015 * s;
     if (d < 0.0002) break;
     s += d;
     if (s > t) { s = t; break; }
   }
-  float y = max(uEye.y + rd.y * s, 0.0);
+  float y = max(ro.y + rd.y * s, 0.0);
   uint v = uint(clamp(floor(y * uScale * 16.0 + 1.5), 1.0, 65535.0));
   outData = vec4(float(v >> 8u) / 255.0, float(v & 255u) / 255.0, 0.0, 1.0);
   outData2 = vec4(0.0);

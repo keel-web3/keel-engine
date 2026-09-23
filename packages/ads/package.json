@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/ads",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Advertising slots for any game with a wall: what an ad slot is, where a creative comes from (house ads from a seed, a curated list, a chain registry -- composed, first answer wins), safe links (http and https only), and picking the slot under a pointer with a ray from the camera. No renderer, no city: a game declares its slots.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

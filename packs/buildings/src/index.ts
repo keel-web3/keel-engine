@@ -3,13 +3,20 @@
 // hive; the factory), bridges, ramps, stairs and cliff steps, walls, fences
 // and gates, path pieces and a dock -- styled objects drawn in any style,
 // with the design's colliders, sockets and fronts, and building cultures as
-// look profiles.
+// look profiles. And the default city catalogue keel/architecture builds a
+// city's lots from: archetypes, facade styles, materials and district looks.
 export { PACK_ID, PACK_VERSION, pack } from "./pack.ts";
 export { PROFILES } from "./profiles.ts";
 export { ROLES, sagLine, spanBetween } from "./kit.ts";
 export { DEFAULT_PARAMS, buildingDesign, wingsOf } from "./generator.ts";
 export type { BuildingParams, Door, Footprint, Frame, Roof, Windows } from "./generator.ts";
 export { buildingObject } from "./building-object.ts";
+export { CITY_CATALOGUE } from "./city/index.ts";
+export { CITY_ARCHETYPES, CITY_FACADES } from "./city/archetypes.ts";
+export { CITY_MATERIALS } from "./city/materials.ts";
+export { CITY_STREETS } from "./city/street.ts";
+export type { TreeClimate, TreeDesign } from "./city/trees.ts";
+export { PLANT_CROWNS, TREE_CLIMATES, TREE_FLORA, TREE_SLOT, TREE_VARIANTS, cityTreeDesigns, climateSpecies, treeBare, treeFit, treePaint, treeSeasonPaint, treeSpecies } from "./city/trees.ts";
 export type { BuildingVariant } from "./building-object.ts";
 export { alongPath, bridgeFor, gateSpan, gateWidthFor } from "./paths.ts";
 export type { AlongOptions } from "./paths.ts";

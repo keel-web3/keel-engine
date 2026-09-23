@@ -37,11 +37,20 @@ const SIM = [
   "packages/scene/src", // the kit, front detection, bounds
   "packages/builder/src", // generated voxel things, rigs, conversions
   "packages/codec/src", // the canonical bytes: fixed-point and decimal numbers
+  "packages/elevation/src", // the ground's height every system reads: hills, graded roads, pads, the raycast
   "packages/terrain/src", // flow fields, paths, colliders, the palette, the view axes the ground and sprites share
   "packages/worldgen/src", // noise and climate, overworlds, WFC, dungeons and their dressing, structures, the pipeline
   "packages/replay/src", // tapes, checksums, transcripts: what a run is verified by
+  "packages/proof/src", // packed bytes, the portable roll, the public-values envelope: what a chain settles on
+  "packages/arena/src", // match inputs, entrant chains, settlement trees: what a staked match commits to
   "packages/alchemy/src", // the element matrix: programs read through a contract, laid on a sheet a sim reads
+  "packages/vehicle/src", // car dynamics: bodies, tyres, powertrains, contacts
+  "packages/road/src", // roads as data: paths, graphs, the road field
+  "packages/city/src", // cities from a seed: sites, roads, blocks, lots
+  "packages/architecture/src", // buildings from a lot: envelopes, massing, crowns, signs, district looks
+  "packages/driver/src", // AI drivers: lines, pursuit, speed planning
   "packages/bake/src", // what a bake is keyed and sized by, populations, atlases, the pixel view, depth and picking
+  "packages/lod/src", // level of detail: tiles and the work queue are generation's (a pick is presentation, and uses no Math either)
   "packs", // every pack's generators (src/ only: see below)
   "ai", // brains and steering
   "systems",
@@ -72,6 +81,9 @@ const PRESENTATION: Record<string, string> = {
   "packages/bake/src/portrait.ts": "a portrait's pixels and animation (blinks, talk, signal noise, pulsing lights), and its timings",
   "packages/bake/src/sprites.ts": "WebGL: the sprite renderer's uniforms (the lens, the wind)",
   "packages/bake/src/sway.ts": "wind in the sprite shader: a per-frame bend, drawn and never stored",
+  "packages/bake/src/draw-mesh.ts": "WebGL: the mesh pass's lens, sun and light uniforms",
+  "packages/bake/src/project.ts": "the view: a camera's lens (perspective or orthographic) onto the screen",
+  "packages/bake/src/cull.ts": "the view: which meshes a frame's frustum can see, drawn and never stored",
   "packages/terrain/src/ground.ts": "the ground's raster: per-texel relief, sun and normals, a bake sliced by the clock over frames (its view axes and footprints are dmath, as bake's pixelView)",
   "packages/terrain/src/ground-bake.ts": "streams the ground's baked layers: which chunk next, a frame's slice, the nearest baked scale",
   "packages/terrain/src/ground-gl.ts": "WebGL: the ground layers' draw",

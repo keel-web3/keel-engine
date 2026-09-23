@@ -1,0 +1,13 @@
+[package]
+name = "keel-proof"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "The Rust twin of @keel-engine/proof and @keel-engine/arena: packed bytes, the portable roll, the public-values envelope and the generic staked match, bit for bit, for zkVM guests."
+
+[dependencies]
+# Open range on purpose: a guest pins and patches it (SP1's accelerated SHA-256); hosts resolve freely.
+sha2 = { version = "0.10", default-features = false }
+
+[dev-dependencies]
+hex = "0.4"

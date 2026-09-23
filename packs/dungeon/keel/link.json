@@ -335,6 +335,44 @@
             "shield",
             "hero"
           ]
+        },
+        {
+          "id": "bow",
+          "slot": "hand.L",
+          "tags": [
+            "weapon",
+            "bow",
+            "ranged",
+            "hero"
+          ]
+        },
+        {
+          "id": "staff",
+          "slot": "hand.R",
+          "tags": [
+            "weapon",
+            "staff",
+            "magic",
+            "hero"
+          ]
+        },
+        {
+          "id": "club",
+          "slot": "hand.R",
+          "tags": [
+            "weapon",
+            "melee",
+            "hero"
+          ]
+        },
+        {
+          "id": "focus",
+          "slot": "hand.L",
+          "tags": [
+            "magic",
+            "focus",
+            "hero"
+          ]
         }
       ]
     },

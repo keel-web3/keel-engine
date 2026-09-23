@@ -1,0 +1,17 @@
+{
+  "name": "@keel-engine/proof",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Provable simulations: canonical packed input and result bytes, a portable integer roll, the public-values envelope a zkVM guest commits and a contract checks, and parity vectors that pin the TypeScript sim to its Rust twin.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/replay": "workspace:*"
+  }
+}

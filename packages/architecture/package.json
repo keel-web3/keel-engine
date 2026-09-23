@@ -1,0 +1,19 @@
+{
+  "name": "@keel-engine/architecture",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The built city on a city's lots and streets: zoning envelopes, massing (podium and tower, wedding-cake setbacks, L and U wings, crowns), metric facade grids, rooftop kit, neon and LED signs; parks, plazas and public art; street lamps, furniture, traffic lights and signposts along every road -- plans a lot, worlds a block, painted through a district's looks. Pure functions of (city seed, lot key / road id); the catalogues are data a pack provides. Deterministic dmath, no GL, no packs.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/city": "workspace:*",
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/road": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/bake": "workspace:*"
+  }
+}

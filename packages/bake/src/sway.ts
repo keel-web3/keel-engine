@@ -107,10 +107,12 @@ flat out vec4 vSway;                          // shift at the top (texels), bend
 flat out vec4 vRect;
 flat out vec4 vDS;                            // depth sprites (sprites.ts LAYER_VS)
 flat out int vId;
+flat out vec2 vAnchor;
 void main() {
   vId = gl_InstanceID;
   vec3 d = aPos - uCenter;
   vec2 anchor = floor(vec2(uSize.x * 0.5 + dot(d, uRight) * uK, uSize.y * 0.5 - dot(d, uUp) * uK) + 0.5);
+  vAnchor = anchor;
   float s = aExtra.w;
   float p = aSway.x;
   float ampPx = mod(p, 256.0) / 4.0;

@@ -96,6 +96,35 @@ and CI runs both on x64 Linux. On x64 they equal V8's own Math.
   `footprintToward` are dmath, like bake's `pixelView`, because the ground's
   depth and a sprite's must agree to the bit.
 
+### Colour is a slot, never a texture coordinate
+
+**A generator gives a thing its colours by NAMING ITS PARTS.** It never emits
+texture coordinates, never packs an atlas, and never hands the renderer an RGB.
+
+`shapes.ts`' `slotOfPart` reads the slot off the part's name (the part up to its
+first dot: `"legUpper"`, `"tail.tip"`, `"collar.band3"`), which becomes the
+solid's `mat`. From there both draw paths carry the same two numbers — the baker
+writes `r = slot+1 | behind<<6 | edge<<7, g = shade, b = u, a = v` per texel, and
+`lookMesh` writes `[slot, u, v, part]` per vertex — and `u, v` is **where you are
+on the part** (around a capsule and along it, across a box's face), not where you
+are in an atlas. The look is resolved at draw time out of the look table: a ramp,
+a finish, a pattern, an ink, a decal rect, per slot.
+
+What this buys, and what it costs you if you break it: one baked shape wears
+every colourway, so a new look is a row of texels instead of a bake; patterns and
+decals ride the part through every frame, direction and zoom instead of sliding
+across the sprite; and there is no mip chain, no filtering and no atlas bleed, so
+the pixels stay exact at any zoom. A generator that reaches for an RGB or a UV
+gives all of that up at once. See `@keel-engine/bake`'s README ("Shapes, looks and
+layers"), and `packs/vehicles` for the fullest worked example.
+
+**Bake at load, across the scale ladder.** The generator runs once at load; the
+baker turns its output into indexed pixels per rung of an ascending px/m ladder,
+and `createSpriteStream` keeps the rungs the camera is near (`view(scale)` moves
+the target, `upscale` stands in from a smaller rung while the target bakes,
+`maxScale` caps what is not worth baking huge). Zoom is a rung change, not a
+re-generate.
+
 ### Baked pixels
 
 **A bake's pixels are presentation. What decides a bake is simulation.**

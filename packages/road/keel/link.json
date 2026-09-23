@@ -1,0 +1,24 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/road",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/core@^0.1",
+      "keel/runtime@^0.1"
+    ],
+    "title": "KEEL Engine road",
+    "description": "Roads as data: sampled paths, a road graph with width rules, and a sparse per-chunk road field.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

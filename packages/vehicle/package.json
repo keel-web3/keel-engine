@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/vehicle",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic car dynamics: a 6-DOF rigid body on four raycast wheels, tyre curves, powertrain, brakes, handbrake, aero and contacts -- cars that grip, slide, drift, roll and flip.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

@@ -433,3 +433,17 @@ The tests are `test/*.test.ts` (43 tests):
   panel with icons 55%+ of their cells; the health strip; 3 never a mirrored
   E and organic advance 1.3x or less; icon shapes 3:1 off their cells and
   bar numbers 4.5:1 off their outline.
+
+## The front end: flows, menus, toasts, stores, chrome
+
+A game's menus and screens are built from pure pieces, and each one has tests in `test/frontend.test.ts`:
+
+- `createFlow()` is a screen stack (push, pop, popTo, replace, reset). Each change starts a transition (from, to, kind, `t` 0..1) that the screens draw.
+- `createMenu(entries, { columns })` is a menu model: lists and grids of actions, toggles, choices and ranges, skipping disabled entries and wrapping at the ends. `createRepeater()` makes a held direction repeat.
+- `createToasts()` holds call-outs. Each has a life and a priority, a matching key coalesces repeats, and a full queue drops the lowest priority first. Views report the slide and alpha to draw.
+- `createStore(defaults, { key, storage, version, migrate, sanitize })` covers settings and saves. It sanitises what it loads, and a failing storage never throws. `settingsSchema(specs)` gives the defaults, the sanitiser, the menu entries for each tab and the display strings.
+- Chrome is drawn into a bitmap: `panelInto` (see-through, bevelled, lit edge, glow), `slantRect`, `segmentsInto`, `statBarInto` (a change shows as green gain or red loss), `fadeInto` and `wipeInto` (dithered transitions), `anchorRect`, `blend` and `mix`.
+- `promptInto` / `promptBarInto` draw device glyphs: keycaps, face buttons in their colours, PlayStation shapes, bumpers, triggers, sticks and the d-pad.
+- `columnLayout`, `fitText` and `tableInto` draw scoreboards and results tables, with a highlighted row, paint chips and per-cell colours.
+
+REDLINE (`keel-games/redline/game/src/ui/`) uses all of them for its whole front end and race HUD.

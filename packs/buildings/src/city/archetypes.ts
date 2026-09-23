@@ -1,0 +1,386 @@
+// The city's archetypes: what can stand on a lot, as data -- the lot it
+// needs, its storeys and setbacks, its massing ops in order, its facade
+// styles, its walls by weight, its signs and its rooftop kit (keel/architecture
+// runs them). Eras from the brick walk-up to the glass tower.
+
+import type { Archetype, FacadeStyle } from "@keel-engine/architecture";
+
+const style = (id: string, bay: [number, number], storey: [number, number], groundH: [number, number]): FacadeStyle => ({ id, bay, storey, groundH });
+
+export const CITY_FACADES: Readonly<Record<string, FacadeStyle>> = {
+  walkup: style("walkup", [2.6, 3.2], [2.9, 3.2], [4, 5]),
+  loft: style("loft", [4, 5], [4, 4.5], [4.5, 5.5]),
+  deco: style("deco", [2.2, 2.8], [3.4, 3.8], [5, 6]),
+  office: style("office", [3, 3.6], [3.6, 4.2], [5, 6]),
+  curtain: style("curtain", [1.5, 1.8], [3.8, 4.2], [5, 7]),
+  brutal: style("brutal", [3.6, 4.4], [3.4, 3.8], [4, 5]),
+  hotel: style("hotel", [3.2, 4], [3, 3.3], [5, 6]),
+  church: style("church", [3.2, 4], [6, 7.5], [0, 0]),
+  warehouse: style("warehouse", [5, 7], [5, 6], [0, 0]),
+  shop: style("shop", [3, 4], [4, 4.5], [3.5, 4]),
+  house: style("house", [3, 4], [2.8, 3], [0, 0]),
+  garage: style("garage", [3, 3], [3, 3], [0, 0]),
+  showroom: style("showroom", [4, 5], [6, 7], [0, 0]),
+  bigbox: style("bigbox", [6, 8], [7, 8.5], [0, 0]),
+  service: style("service", [4, 5], [5, 6], [0, 0]),
+  civic: style("civic", [3.4, 4], [4.5, 5.2], [5, 6]),
+  school: style("school", [3.2, 3.8], [3.6, 4], [0, 0]),
+  stadium: style("stadium", [4, 5], [4, 4.5], [0, 0]),
+  utility: style("utility", [3, 3], [3, 3], [0, 0]),
+};
+
+/** Car businesses: likelier on the arterial and the highway, rare on a side street, never next door to their own kind. */
+const ROADSIDE = { roads: { highway: 2, arterial: 1.5, street: 0.45, alley: 0 } } as const;
+
+export const CITY_ARCHETYPES: readonly Archetype[] = [
+  {
+    id: "walkup", fits: { minFront: 8, minDepth: 10 }, storeys: [3, 6], setbacks: [0, 0, 3],
+    massing: [{ op: "extrude" }, { op: "cornice" }, { op: "roof", kinds: { flat: 1 } }],
+    facades: ["walkup"], materials: { redBrick: 5, brownBrick: 3, buffBrick: 1.5, limestone: 0.5, stucco: 0.5 },
+    signs: [{ kind: "storefront", chance: 0.85 }, { kind: "blade", chance: 0.45 }, { kind: "awning", chance: 0.35 }],
+    roof: [{ kind: "waterTower", chance: 0.45 }, { kind: "bulkhead", chance: 0.5 }, { kind: "chimney", chance: 0.3, count: [1, 2] }],
+  },
+  {
+    id: "rowhouse", fits: { minFront: 12, minDepth: 10 }, storeys: [2, 4], setbacks: [2, 0, 3],
+    massing: [{ op: "rows", units: [2, 4] }],
+    facades: ["walkup"], materials: { redBrick: 4, brownBrick: 3, buffBrick: 2 },
+    signs: [], roof: [{ kind: "chimney", chance: 0.7, count: [1, 3] }],
+  },
+  {
+    id: "loft", fits: { minFront: 16, minDepth: 16 }, storeys: [5, 10], setbacks: [0, 0, 0],
+    massing: [{ op: "extrude" }, { op: "bands", every: [2, 3] }, { op: "cornice" }, { op: "roof", kinds: { flat: 1 } }],
+    facades: ["loft"], materials: { redBrick: 3, brownBrick: 4, buffBrick: 1, concreteLight: 1 },
+    signs: [{ kind: "storefront", chance: 0.6 }, { kind: "rooftop", chance: 0.25 }, { kind: "billboard", chance: 0.25 }, { kind: "floodlight", chance: 0.2 }],
+    roof: [{ kind: "waterTower", chance: 0.55 }, { kind: "bulkhead", chance: 0.5 }, { kind: "hvac", chance: 0.4, count: [1, 3] }],
+  },
+  {
+    id: "deco_tower", fits: { minFront: 22, minDepth: 22 }, storeys: [14, 50], setbacks: [0, 0, 0],
+    massing: [{ op: "setbacks", tiers: [2, 4], step: [2.5, 5] }, { op: "crown", kinds: { stepped: 5, spire: 3, pyramid: 2, mast: 1 } }],
+    facades: ["deco"], materials: { limestone: 5, buffBrick: 3, brownBrick: 1, concreteLight: 1 },
+    signs: [{ kind: "storefront", chance: 0.8 }, { kind: "ledCrown", chance: 0.4 }, { kind: "blade", chance: 0.25 }],
+    roof: [{ kind: "antenna", chance: 0.3 }],
+  },
+  {
+    id: "intl_box", fits: { minFront: 18, minDepth: 18 }, storeys: [6, 30], setbacks: [6, 0, 0],
+    massing: [{ op: "podium", storeys: [1, 2] }, { op: "tower", inset: [0, 2] }, { op: "crown", kinds: { flat: 3, parapet: 2, mast: 1 } }],
+    facades: ["office"], materials: { concreteLight: 3, officeGrid: 4, darkGlass: 2, glassGreen: 1 },
+    signs: [{ kind: "storefront", chance: 0.6 }, { kind: "rooftop", chance: 0.35 }, { kind: "billboard", chance: 0.15 }],
+    roof: [{ kind: "hvac", chance: 0.8, count: [2, 6] }, { kind: "antenna", chance: 0.4 }, { kind: "bulkhead", chance: 0.5 }],
+  },
+  {
+    id: "brutalist", fits: { minFront: 20, minDepth: 20 }, storeys: [6, 18], setbacks: [3, 0, 0],
+    massing: [{ op: "cantilever", out: [2, 4] }, { op: "crown", kinds: { flat: 2, parapet: 2 } }],
+    facades: ["brutal"], materials: { concreteDark: 5, concreteLight: 2 },
+    signs: [{ kind: "storefront", chance: 0.4 }, { kind: "ledCrown", chance: 0.15 }],
+    roof: [{ kind: "bulkhead", chance: 0.9 }, { kind: "hvac", chance: 0.5, count: [1, 3] }],
+  },
+  {
+    id: "glass_tower", fits: { minFront: 24, minDepth: 24 }, storeys: [20, 70], setbacks: [0, 0, 0],
+    massing: [{ op: "podium", storeys: [2, 5] }, { op: "tower", inset: [3, 8], tiers: [1, 3] }, { op: "crown", kinds: { fins: 3, mast: 3, helipad: 2, slant: 2, spire: 1 } }],
+    facades: ["curtain"], materials: { glassBlue: 4, glassGreen: 2, glassBronze: 2, darkGlass: 2, officeGrid: 1 },
+    signs: [{ kind: "storefront", chance: 0.9 }, { kind: "ledCrown", chance: 0.55 }, { kind: "ledEdges", chance: 0.35 }],
+    roof: [{ kind: "antenna", chance: 0.3 }],
+  },
+  {
+    id: "hotel", fits: { minFront: 20, minDepth: 20 }, storeys: [8, 30], setbacks: [0, 0, 0],
+    massing: [{ op: "podium", storeys: [1, 3] }, { op: "tower", inset: [2, 5], slab: true }, { op: "crown", kinds: { flat: 2, parapet: 2, fins: 1 } }],
+    facades: ["hotel"], materials: { stucco: 2, concreteLight: 2, buffBrick: 1, glassBronze: 1 },
+    signs: [{ kind: "storefront", chance: 0.8 }, { kind: "marquee", chance: 0.6 }, { kind: "blade", chance: 0.9 }, { kind: "rooftop", chance: 0.6 }],
+    roof: [{ kind: "hvac", chance: 0.5, count: [1, 3] }],
+  },
+  {
+    id: "church", fits: { minFront: 24, minDepth: 30 }, storeys: [2, 3], setbacks: [4, 2, 2], solo: true,
+    massing: [{ op: "nave" }],
+    facades: ["church"], materials: { stoneArched: 6, redBrick: 1 },
+    signs: [], roof: [],
+  },
+  {
+    id: "warehouse", fits: { minFront: 24, minDepth: 24 }, storeys: [1, 3], setbacks: [2, 0, 0],
+    massing: [{ op: "extrude" }, { op: "roof", kinds: { flat: 2, sawtooth: 2, gable: 1 } }],
+    facades: ["warehouse"], materials: { corrugated: 4, redBrick: 3, brownBrick: 2, concreteDark: 1 },
+    signs: [{ kind: "floodlight", chance: 0.7 }, { kind: "rooftop", chance: 0.15 }, { kind: "billboard", chance: 0.3 }],
+    roof: [{ kind: "hvac", chance: 0.3, count: [1, 2] }],
+  },
+  {
+    id: "strip_mall", fits: { minFront: 20, minDepth: 24 }, storeys: [1, 1], setbacks: [16, 0, 2],
+    massing: [{ op: "extrude" }, { op: "roof", kinds: { flat: 1 } }],
+    facades: ["shop"], materials: { stucco: 4, concreteLight: 2, buffBrick: 1 },
+    signs: [{ kind: "storefront", chance: 0.95 }, { kind: "fascia", chance: 0.95 }, { kind: "pole", chance: 0.8 }, { kind: "billboard", chance: 0.35 }],
+    roof: [{ kind: "hvac", chance: 0.9, count: [2, 5] }],
+  },
+  {
+    id: "gas_station", fits: { minFront: 22, minDepth: 22 }, storeys: [1, 1], setbacks: [2, 2, 2], solo: true, affinity: { ...ROADSIDE, corner: 2 },
+    massing: [{ op: "canopy" }],
+    facades: ["shop"], materials: { stucco: 2, concreteLight: 1 },
+    signs: [{ kind: "storefront", chance: 0.9 }, { kind: "pole", chance: 0.95 }], roof: [],
+  },
+  {
+    id: "motel", fits: { minFront: 26, minDepth: 24 }, storeys: [2, 2], setbacks: [4, 1, 1], solo: true, affinity: ROADSIDE,
+    massing: [{ op: "wings", shapes: ["L", "U"], depth: [7, 9] }, { op: "roof", kinds: { flat: 1 } }],
+    facades: ["hotel"], materials: { stucco: 4, redBrick: 1, siding: 1 },
+    signs: [{ kind: "pole", chance: 0.9 }, { kind: "billboard", chance: 0.3 }], roof: [{ kind: "hvac", chance: 0.6, count: [2, 4] }],
+  },
+  {
+    id: "suburban", fits: { minFront: 12, minDepth: 12 }, storeys: [1, 2], setbacks: [6, 2, 6],
+    massing: [{ op: "extrude" }, { op: "roof", kinds: { gable: 5, flat: 1 } }],
+    facades: ["house"], materials: { siding: 5, redBrick: 2, stucco: 2, buffBrick: 1 },
+    signs: [], roof: [{ kind: "chimney", chance: 0.5 }],
+  },
+  {
+    id: "parking_garage", fits: { minFront: 24, minDepth: 28 }, storeys: [3, 6], setbacks: [0, 0, 0],
+    massing: [{ op: "decks" }],
+    facades: ["garage"], materials: { concreteLight: 1 },
+    signs: [{ kind: "rooftop", chance: 0.3 }], roof: [],
+  },
+  {
+    id: "park", fits: { minFront: 18, minDepth: 18 }, storeys: [1, 1], setbacks: [0, 0, 0],
+    massing: [{ op: "park", art: { fountain: 3, pond: 3, statue: 2, sculpture: 1, none: 2 } }],
+    facades: ["house"], materials: { concreteLight: 1 }, signs: [], roof: [],
+  },
+  {
+    id: "plaza", fits: { minFront: 16, minDepth: 16 }, storeys: [1, 1], setbacks: [0, 0, 0],
+    massing: [{ op: "plaza", art: { fountain: 3, sculpture: 3, statue: 2, none: 1 } }],
+    facades: ["house"], materials: { concreteLight: 1 }, signs: [], roof: [],
+  },
+  {
+    id: "landmark", fits: { minFront: 20, minDepth: 20 }, storeys: [1, 1], setbacks: [0, 0, 0],
+    massing: [{ op: "plaza", art: { obelisk: 2, neonRing: 2, giantStatue: 2 } }],
+    facades: ["house"], materials: { concreteLight: 1 }, signs: [], roof: [],
+  },
+  {
+    id: "diner", fits: { minFront: 22, minDepth: 14 }, storeys: [1, 1], setbacks: [4, 2, 2], solo: true, affinity: ROADSIDE,
+    massing: [{ op: "diner" }],
+    facades: ["shop"], materials: { metal: 1 },
+    signs: [{ kind: "rooftop", chance: 0.9 }, { kind: "pole", chance: 0.5 }], roof: [],
+  },
+  // ---- The roadside and car culture (keel/architecture business.ts).
+  {
+    id: "car_dealership", fits: { minFront: 18, minDepth: 28 }, storeys: [1, 1], setbacks: [1, 0, 1], solo: true,
+    massing: [{ op: "showroom" }, { op: "roof", kinds: { flat: 1 } }],
+    facades: ["showroom"], materials: { glassBlue: 3, darkGlass: 2, concreteLight: 2, glassGreen: 1 },
+    signs: [{ kind: "pole", chance: 0.9 }, { kind: "flags", chance: 0.5 }], roof: [{ kind: "hvac", chance: 0.6, count: [1, 3] }],
+    affinity: { ...ROADSIDE, corner: 1.3 },
+  },
+  {
+    id: "big_box", fits: { minFront: 30, minDepth: 40 }, storeys: [1, 1], setbacks: [1, 0, 0], solo: true,
+    massing: [{ op: "bigbox" }, { op: "roof", kinds: { flat: 1 } }],
+    facades: ["bigbox"], materials: { concreteLight: 3, stucco: 2, corrugated: 2, buffBrick: 1 },
+    signs: [{ kind: "pole", chance: 0.7 }, { kind: "billboard", chance: 0.15 }], roof: [{ kind: "hvac", chance: 0.9, count: [3, 8] }],
+    affinity: ROADSIDE,
+  },
+  {
+    id: "mall", fits: { minFront: 44, minDepth: 56 }, storeys: [2, 2], setbacks: [1, 0, 0], solo: true,
+    massing: [{ op: "bigbox", mall: true }, { op: "roof", kinds: { flat: 1 } }],
+    facades: ["bigbox"], materials: { stucco: 3, concreteLight: 2, buffBrick: 1 },
+    signs: [{ kind: "pole", chance: 0.9 }, { kind: "rooftop", chance: 0.3 }], roof: [{ kind: "hvac", chance: 1, count: [4, 10] }],
+    affinity: ROADSIDE,
+  },
+  {
+    id: "fast_food", fits: { minFront: 16, minDepth: 24 }, storeys: [1, 1], setbacks: [1, 0, 1], solo: true,
+    massing: [{ op: "drivethru" }],
+    facades: ["shop"], materials: { stucco: 3, redBrick: 2, buffBrick: 1, siding: 1 },
+    signs: [{ kind: "pole", chance: 0.95 }], roof: [{ kind: "hvac", chance: 0.7, count: [1, 2] }],
+    affinity: { ...ROADSIDE, corner: 1.4 },
+  },
+  {
+    id: "auto_shop", fits: { minFront: 16, minDepth: 16 }, storeys: [1, 1], setbacks: [0, 0, 1], solo: true,
+    massing: [{ op: "bays", doors: [2, 4], kind: "garage" }, { op: "roof", kinds: { flat: 3, gable: 1 } }],
+    facades: ["service"], materials: { corrugated: 3, concreteDark: 2, buffBrick: 2, redBrick: 1 },
+    signs: [{ kind: "fascia", chance: 0.6 }, { kind: "pole", chance: 0.4 }, { kind: "rooftop", chance: 0.15 }], roof: [{ kind: "hvac", chance: 0.4 }],
+    affinity: { roads: { highway: 1.5, arterial: 1.3, street: 0.8 } },
+  },
+  {
+    id: "tuning_shop", fits: { minFront: 14, minDepth: 14 }, storeys: [1, 1], setbacks: [0, 0, 1], solo: true,
+    massing: [{ op: "bays", doors: [1, 3], kind: "tuning" }, { op: "roof", kinds: { flat: 1 } }],
+    facades: ["service"], materials: { concreteDark: 3, corrugated: 2, darkGlass: 1 },
+    signs: [{ kind: "blade", chance: 0.7 }, { kind: "rooftop", chance: 0.5 }, { kind: "pole", chance: 0.3 }, { kind: "billboard", chance: 0.2 }], roof: [],
+    affinity: { roads: { highway: 1.6, arterial: 1.3, street: 0.7 } },
+  },
+  {
+    id: "parts_store", fits: { minFront: 14, minDepth: 18 }, storeys: [1, 1], setbacks: [8, 0, 1], solo: true,
+    massing: [{ op: "extrude" }, { op: "roof", kinds: { flat: 1 } }, { op: "forecourt", vehicle: "car", fill: [0.2, 0.6] }],
+    facades: ["shop"], materials: { stucco: 2, concreteLight: 2, buffBrick: 1 },
+    signs: [{ kind: "storefront", chance: 1 }, { kind: "fascia", chance: 0.9 }, { kind: "pole", chance: 0.7 }], roof: [{ kind: "hvac", chance: 0.8, count: [1, 3] }],
+    affinity: ROADSIDE,
+  },
+  {
+    id: "car_wash", fits: { minFront: 14, minDepth: 26 }, storeys: [1, 1], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "carwash" }],
+    facades: ["service"], materials: { stucco: 3, concreteLight: 2, siding: 1 },
+    signs: [{ kind: "rooftop", chance: 0.7 }, { kind: "pole", chance: 0.8 }], roof: [],
+    affinity: ROADSIDE,
+  },
+  {
+    id: "parking_lot", fits: { minFront: 16, minDepth: 20 }, storeys: [1, 1], setbacks: [0, 0, 0],
+    massing: [{ op: "parking" }],
+    facades: ["garage"], materials: { concreteLight: 1, buffBrick: 1 },
+    signs: [{ kind: "pole", chance: 0.4 }], roof: [],
+  },
+  {
+    id: "trailer_park", fits: { minFront: 26, minDepth: 30 }, storeys: [1, 1], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "trailers" }],
+    facades: ["house"], materials: { siding: 2, stucco: 1 },
+    signs: [{ kind: "pole", chance: 0.8 }], roof: [],
+  },
+  {
+    id: "truck_depot", fits: { minFront: 30, minDepth: 36 }, storeys: [1, 2], setbacks: [18, 0, 0],
+    massing: [{ op: "extrude" }, { op: "roof", kinds: { flat: 2, sawtooth: 1 } }, { op: "forecourt", vehicle: "truck", fill: [0.3, 0.8] }],
+    facades: ["warehouse"], materials: { corrugated: 4, concreteDark: 2, buffBrick: 1 },
+    signs: [{ kind: "floodlight", chance: 0.8 }, { kind: "fascia", chance: 0.3 }], roof: [{ kind: "hvac", chance: 0.3 }],
+    affinity: ROADSIDE,
+  },
+  // ---- Shops and nights out.
+  {
+    id: "corner_store", fits: { minFront: 10, minDepth: 10 }, storeys: [1, 2], setbacks: [0, 0, 2], solo: true,
+    massing: [{ op: "extrude" }, { op: "cornice" }, { op: "roof", kinds: { flat: 1 } }],
+    facades: ["shop"], materials: { redBrick: 2, buffBrick: 2, stucco: 2, siding: 1 },
+    signs: [{ kind: "storefront", chance: 1 }, { kind: "awning", chance: 0.6 }, { kind: "blade", chance: 0.3 }], roof: [{ kind: "hvac", chance: 0.5 }],
+    affinity: { corner: 2 },
+  },
+  {
+    id: "laundromat", fits: { minFront: 10, minDepth: 12 }, storeys: [1, 2], setbacks: [0, 0, 2], solo: true,
+    massing: [{ op: "extrude" }, { op: "roof", kinds: { flat: 1 } }],
+    facades: ["shop"], materials: { stucco: 2, buffBrick: 2, concreteLight: 1 },
+    signs: [{ kind: "storefront", chance: 1 }, { kind: "fascia", chance: 0.9 }], roof: [{ kind: "hvac", chance: 0.8, count: [1, 3] }],
+  },
+  {
+    id: "bar", fits: { minFront: 10, minDepth: 14 }, storeys: [2, 4], setbacks: [0, 0, 2], solo: true,
+    massing: [{ op: "extrude" }, { op: "cornice" }, { op: "roof", kinds: { flat: 1 } }],
+    facades: ["walkup"], materials: { redBrick: 3, brownBrick: 2, concreteDark: 1, darkGlass: 1 },
+    signs: [{ kind: "storefront", chance: 0.9 }, { kind: "blade", chance: 1 }, { kind: "blade", chance: 0.6 }, { kind: "marquee", chance: 0.3 }, { kind: "rooftop", chance: 0.3 }],
+    roof: [{ kind: "waterTower", chance: 0.2 }, { kind: "chimney", chance: 0.3 }],
+  },
+  {
+    id: "nightclub", fits: { minFront: 18, minDepth: 20 }, storeys: [1, 3], setbacks: [2, 0, 0], solo: true,
+    massing: [{ op: "extrude" }, { op: "roof", kinds: { flat: 2, sawtooth: 1 } }],
+    facades: ["warehouse"], materials: { concreteDark: 2, corrugated: 2, redBrick: 1 },
+    signs: [{ kind: "marquee", chance: 0.9 }, { kind: "blade", chance: 0.8 }, { kind: "ledCrown", chance: 0.6 }, { kind: "ledEdges", chance: 0.4 }, { kind: "billboard", chance: 0.3 }], roof: [],
+  },
+  {
+    id: "cinema", fits: { minFront: 20, minDepth: 28 }, storeys: [2, 4], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "extrude" }, { op: "cornice" }, { op: "roof", kinds: { flat: 1 } }],
+    facades: ["deco"], materials: { limestone: 2, stucco: 2, buffBrick: 1 },
+    signs: [{ kind: "marquee", chance: 1 }, { kind: "blade", chance: 1 }, { kind: "storefront", chance: 0.8 }, { kind: "rooftop", chance: 0.3 }], roof: [{ kind: "hvac", chance: 0.6, count: [1, 3] }],
+  },
+  {
+    id: "apartments", fits: { minFront: 26, minDepth: 26 }, storeys: [3, 8], setbacks: [2, 0, 0],
+    massing: [{ op: "wings", shapes: ["U", "U", "L"], depth: [8, 11] }, { op: "cornice" }, { op: "roof", kinds: { flat: 3, gable: 1 } }],
+    facades: ["walkup", "hotel"], materials: { buffBrick: 2, redBrick: 2, stucco: 1, concreteLight: 1 },
+    signs: [], roof: [{ kind: "waterTower", chance: 0.3 }, { kind: "hvac", chance: 0.5, count: [1, 3] }, { kind: "bulkhead", chance: 0.5 }],
+  },
+  // ---- Churches, the city's own buildings, its utilities (keel/architecture civic.ts).
+  {
+    id: "chapel", fits: { minFront: 16, minDepth: 24 }, storeys: [2, 2], setbacks: [4, 2, 2], solo: true,
+    massing: [{ op: "nave" }],
+    facades: ["church"], materials: { siding: 3, stucco: 2, stoneArched: 1 },
+    signs: [], roof: [],
+  },
+  {
+    id: "school", fits: { minFront: 30, minDepth: 40 }, storeys: [2, 2], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "campus", kind: "school" }, { op: "roof", kinds: { flat: 2, gable: 1 } }],
+    facades: ["school"], materials: { buffBrick: 3, redBrick: 2, concreteLight: 1 },
+    signs: [{ kind: "flags", chance: 1 }], roof: [{ kind: "hvac", chance: 0.7, count: [1, 4] }],
+  },
+  {
+    id: "college", fits: { minFront: 44, minDepth: 50 }, storeys: [3, 5], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "campus", kind: "college" }],
+    facades: ["civic"], materials: { redBrick: 3, limestone: 2, brownBrick: 1 },
+    signs: [], roof: [],
+  },
+  {
+    id: "hospital", fits: { minFront: 30, minDepth: 32 }, storeys: [6, 14], setbacks: [9, 0, 0], solo: true,
+    massing: [{ op: "podium", storeys: [2, 3] }, { op: "tower", inset: [2, 4], slab: true }, { op: "crown", kinds: { helipad: 1 } }, { op: "forecourt", vehicle: "ambulance", fill: [0.3, 0.7] }],
+    facades: ["office"], materials: { concreteLight: 3, officeGrid: 2, buffBrick: 1 },
+    signs: [{ kind: "storefront", chance: 0.8 }, { kind: "cross", chance: 1 }, { kind: "flags", chance: 0.3 }], roof: [{ kind: "hvac", chance: 0.8, count: [2, 5] }],
+  },
+  {
+    id: "fire_station", fits: { minFront: 18, minDepth: 18 }, storeys: [2, 2], setbacks: [0, 0, 1], solo: true,
+    massing: [{ op: "bays", doors: [2, 3], kind: "fire" }, { op: "roof", kinds: { flat: 1 } }],
+    facades: ["service"], materials: { redBrick: 4, buffBrick: 1, concreteLight: 1 },
+    signs: [{ kind: "flags", chance: 0.8 }], roof: [{ kind: "hvac", chance: 0.4 }],
+  },
+  {
+    id: "police_station", fits: { minFront: 18, minDepth: 26 }, storeys: [2, 4], setbacks: [8, 0, 1], solo: true,
+    massing: [{ op: "extrude" }, { op: "cornice" }, { op: "roof", kinds: { flat: 1 } }, { op: "forecourt", vehicle: "patrol", fill: [0.4, 0.9] }],
+    facades: ["office"], materials: { concreteLight: 2, buffBrick: 2, limestone: 1, darkGlass: 1 },
+    signs: [{ kind: "storefront", chance: 0.8 }, { kind: "flags", chance: 1 }, { kind: "ledCrown", chance: 0.2 }], roof: [{ kind: "antenna", chance: 0.8 }, { kind: "hvac", chance: 0.6, count: [1, 3] }],
+  },
+  {
+    id: "city_hall", fits: { minFront: 30, minDepth: 34 }, storeys: [3, 5], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "hall", tops: { dome: 2, clock: 1 } }],
+    facades: ["civic"], materials: { limestone: 4, stoneArched: 1 },
+    signs: [{ kind: "flags", chance: 1 }], roof: [],
+  },
+  {
+    id: "library", fits: { minFront: 24, minDepth: 30 }, storeys: [2, 3], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "hall", tops: { dome: 1, clock: 1 } }],
+    facades: ["civic"], materials: { limestone: 2, redBrick: 2, buffBrick: 1 },
+    signs: [{ kind: "flags", chance: 0.4 }], roof: [],
+  },
+  {
+    id: "stadium", fits: { minFront: 56, minDepth: 60 }, storeys: [4, 6], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "stadium" }],
+    facades: ["stadium"], materials: { concreteLight: 2, concreteDark: 1, glassBlue: 1 },
+    signs: [{ kind: "billboard", chance: 0.5 }], roof: [],
+  },
+  {
+    id: "cemetery", fits: { minFront: 28, minDepth: 36 }, storeys: [1, 1], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "cemetery" }],
+    facades: ["church"], materials: { stoneArched: 2, redBrick: 1, limestone: 1 },
+    signs: [], roof: [],
+  },
+  {
+    id: "train_station", fits: { minFront: 30, minDepth: 28 }, storeys: [2, 3], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "station" }, { op: "roof", kinds: { flat: 2, gable: 1 } }],
+    facades: ["civic"], materials: { limestone: 2, redBrick: 2, buffBrick: 1 },
+    signs: [{ kind: "flags", chance: 0.3 }], roof: [],
+  },
+  {
+    id: "bus_depot", fits: { minFront: 36, minDepth: 40 }, storeys: [1, 2], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "bays", doors: [3, 5], kind: "bus" }, { op: "roof", kinds: { flat: 2, sawtooth: 1 } }],
+    facades: ["service"], materials: { corrugated: 2, concreteLight: 2, buffBrick: 1 },
+    signs: [{ kind: "fascia", chance: 0.5 }, { kind: "floodlight", chance: 0.6 }], roof: [],
+  },
+  {
+    id: "freight_yard", fits: { minFront: 36, minDepth: 40 }, storeys: [1, 1], setbacks: [0, 0, 0],
+    massing: [{ op: "containers" }],
+    facades: ["utility"], materials: { concreteDark: 1 },
+    signs: [], roof: [],
+  },
+  {
+    id: "substation", fits: { minFront: 20, minDepth: 22 }, storeys: [1, 1], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "substation" }],
+    facades: ["utility"], materials: { concreteLight: 1, buffBrick: 1 },
+    signs: [], roof: [],
+  },
+  {
+    id: "water_tower", fits: { minFront: 14, minDepth: 14 }, storeys: [1, 1], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "waterTower" }],
+    facades: ["utility"], materials: { concreteLight: 1 },
+    signs: [], roof: [],
+  },
+  {
+    id: "tank_farm", fits: { minFront: 28, minDepth: 28 }, storeys: [1, 1], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "tanks", kind: "farm" }],
+    facades: ["utility"], materials: { concreteDark: 1 },
+    signs: [], roof: [],
+  },
+  {
+    id: "gasometer", fits: { minFront: 24, minDepth: 24 }, storeys: [1, 1], setbacks: [0, 0, 0], solo: true,
+    massing: [{ op: "tanks", kind: "gasometer" }],
+    facades: ["utility"], materials: { concreteDark: 1 },
+    signs: [], roof: [],
+  },
+  {
+    id: "factory", fits: { minFront: 30, minDepth: 30 }, storeys: [2, 4], setbacks: [2, 0, 0],
+    massing: [{ op: "extrude" }, { op: "roof", kinds: { sawtooth: 3, flat: 2 } }, { op: "stacks", count: [1, 3] }],
+    facades: ["warehouse"], materials: { redBrick: 3, brownBrick: 2, concreteDark: 2, corrugated: 1 },
+    signs: [{ kind: "floodlight", chance: 0.7 }, { kind: "rooftop", chance: 0.1 }], roof: [{ kind: "hvac", chance: 0.3, count: [1, 2] }],
+  },
+  // ---- A block kept whole as a park or a lake (the zoning's, never a district's weight).
+  {
+    id: "commons", fits: { minFront: 0, minDepth: 0 }, storeys: [1, 1], setbacks: [0, 0, 0],
+    massing: [{ op: "commons" }],
+    facades: ["house"], materials: { concreteLight: 1 }, signs: [], roof: [],
+  },
+];

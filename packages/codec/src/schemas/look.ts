@@ -14,7 +14,7 @@ import { oklch, seedText } from "./common.ts";
 /** core's LOOK_ROLES, PROFILES, PATTERNS, FINISHES (test/schemas.test.ts checks they still match). */
 export const LOOK_ROLES = ["skin", "fur", "furAlt", "hair", "cloth", "clothAlt", "accent", "dark", "blush", "eye", "primary", "secondary", "trim", "detail", "glow", "metal"] as const;
 export const PROFILES = ["analogous", "complementary", "triad", "team", "earthy", "neon", "pastel", "metallic"] as const;
-export const PATTERNS = ["none", "stripes", "bands", "spots", "checks", "camo", "gradient", "trim"] as const;
+export const PATTERNS = ["none", "stripes", "bands", "spots", "checks", "camo", "gradient", "trim", "windows"] as const;
 export const FINISHES = ["matte", "cloth", "leather", "metal", "glow"] as const;
 
 const role = enumOf(LOOK_ROLES, { capacity: 32 });

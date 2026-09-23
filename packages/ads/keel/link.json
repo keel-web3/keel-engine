@@ -1,0 +1,24 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/ads",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/core@^0.1",
+      "keel/runtime@^0.1"
+    ],
+    "title": "KEEL Engine ads",
+    "description": "Ad slots, sources (house, list, chain -- first answer wins), safe links, and picking the slot under a pointer.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

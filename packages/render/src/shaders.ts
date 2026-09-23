@@ -113,6 +113,12 @@ vec3 map(vec3 p) {
     float c = cos(B.w), s = sin(B.w);
     q.xz = mat2(c, s, -s, c) * q.xz; // (the same turn as a box)
     float d = sdWedge(q, B.xyz, lo);
+    float skin = uWedge[3 * i + 2].y;
+    if (skin > 0.0) {
+      float slope = -B.y * (1.0 - lo) / max(0.0001, B.z);
+      float top = B.y + slope * (q.z + B.z);
+      d = max(d, (top - skin - q.y) / sqrt(1.0 + slope * slope));
+    }
     if (d < best.x) best = vec3(d, A.w, float(200 + i));
   }
   for (int i = 0; i < MAXC; i++) {

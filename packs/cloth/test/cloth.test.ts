@@ -40,6 +40,7 @@ test("the manifest: attributes only, the wearable contract, and packs/humans and
   assert.deepEqual(manifest.contents?.entities, []);
   assert.deepEqual(manifest.contents?.attributes?.map((a) => `${a.id}:${a.slot}`), [
     "beanie:head", "cap:head", "top-hat:head", "hood:head", "horned-helmet:head", "backpack-round:back", "backpack-tall:back", "flag:back", "cape:back", "scarf:neck", "glasses:face", "boots-l:foot.L", "boots-r:foot.R",
+    "wizard-hat:head", "circlet:head", "horns:head", "mask:face", "pauldrons:chest", "breastplate:chest", "belt:waist", "quiver:back", "beard:face",
   ]);
   assert.ok(lists(manifest.compatible, humansManifest) && lists(manifest.compatible, animalsManifest));
   assert.ok(lists(humansManifest.compatible, manifest) && lists(animalsManifest.compatible, manifest));
@@ -55,7 +56,9 @@ test("the fits() matrix (cloth x humans and animals) is what the manifests decla
     }
   }
   // 8 characters on two legs, 7 animals on four.
-  assert.deepEqual(counts, { beanie: 15, cap: 15, "top-hat": 15, hood: 8, "horned-helmet": 15, "backpack-round": 15, "backpack-tall": 15, flag: 15, cape: 15, scarf: 15, glasses: 15, "boots-l": 8, "boots-r": 8 });
+  assert.deepEqual(counts, { beanie: 15, cap: 15, "top-hat": 15, hood: 8, "horned-helmet": 15, "backpack-round": 15, "backpack-tall": 15, flag: 15, cape: 15, scarf: 15, glasses: 15, "boots-l": 8, "boots-r": 8,
+    // (The fantasy trappings are built to two legs.)
+    "wizard-hat": 8, circlet: 8, horns: 8, mask: 8, pauldrons: 8, breastplate: 8, belt: 8, quiver: 8, beard: 8 });
 });
 
 test("a cloth hat fits packs/animals' dog -- but not a dog from a pack that hasn't agreed", () => {
@@ -85,7 +88,7 @@ function furthest(d: AttributeShape, dir: readonly number[]): number {
   return far;
 }
 
-const REACH: Readonly<Record<string, number>> = { flag: 5.5, cape: 3 };
+const REACH: Readonly<Record<string, number>> = { flag: 5.5, cape: 3, breastplate: 2.2, quiver: 2.4, belt: 2.4, beard: 3.2 };
 
 test("every cloth attribute builds on every entity it fits x 20 seeds: lean, inside its socket's reach, out the socket's side, riding a pose", () => {
   for (const a of pack.attributes) {

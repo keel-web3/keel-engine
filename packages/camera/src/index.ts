@@ -12,3 +12,6 @@ export type {
   FirstOptions, FirstRig, FirstState, FixedOptions, FrameOptions, FrameRig, FrameState, FrameViewOptions, FrameViewResult, LookInput, OrbitOptions, OrbitRig,
   OrbitState, RailKey, RailOptions, RailRig, RailState, Rig, RigView, Rigs, ShakeOptions, Subject, View,
 } from "./camera.ts";
+// Car cameras: chase (lagging through corners, pulling back with speed), hood and bumper.
+export { BONNET_LEAST, BONNET_MOST, bonnetCrest, createCarCamera, createCrest, mirrorShot } from "./car.ts";
+export type { CarCamera, CarCameraMode, CarCameraOptions, CarLens, CarPose, CarShot, CrestBuilder, CrestMesh } from "./car.ts";

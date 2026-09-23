@@ -1,0 +1,15 @@
+{
+  "name": "@keel-engine/decal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "On-chain decals: the KEEL alphabet (text stored as glyph codes, typed text converted into it), the KDCL doc a contract validates (four-ink pixel images and styled text), and the rasterizer to bake-ready decal texels.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/proof": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

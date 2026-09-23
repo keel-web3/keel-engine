@@ -132,6 +132,83 @@
             "shoes",
             "pair"
           ]
+        },
+        {
+          "id": "wizard-hat",
+          "slot": "head",
+          "tags": [
+            "hat",
+            "wizard",
+            "magic"
+          ]
+        },
+        {
+          "id": "circlet",
+          "slot": "head",
+          "tags": [
+            "crown",
+            "circlet",
+            "holy",
+            "magic"
+          ]
+        },
+        {
+          "id": "horns",
+          "slot": "head",
+          "tags": [
+            "horns",
+            "demonic"
+          ]
+        },
+        {
+          "id": "mask",
+          "slot": "face",
+          "tags": [
+            "mask",
+            "face",
+            "sinister"
+          ]
+        },
+        {
+          "id": "pauldrons",
+          "slot": "chest",
+          "tags": [
+            "armour",
+            "shoulders"
+          ]
+        },
+        {
+          "id": "breastplate",
+          "slot": "chest",
+          "tags": [
+            "armour",
+            "chest"
+          ]
+        },
+        {
+          "id": "belt",
+          "slot": "waist",
+          "tags": [
+            "belt",
+            "waist"
+          ]
+        },
+        {
+          "id": "quiver",
+          "slot": "back",
+          "tags": [
+            "quiver",
+            "archer"
+          ]
+        },
+        {
+          "id": "beard",
+          "slot": "face",
+          "tags": [
+            "beard",
+            "face",
+            "wizard"
+          ]
         }
       ]
     },

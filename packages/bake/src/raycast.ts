@@ -43,7 +43,8 @@ export function rayWedge(b: BakeBox, o: V3, d: V3): number {
   if (Math.abs(r.d[0]) < 1e-12) { if (Math.abs(r.o[0]) > hx) return Infinity; }
   else { let a = (-hx - r.o[0]) / r.d[0], c = (hx - r.o[0]) / r.d[0]; if (a > c) { const t = a; a = c; c = t; } t0 = Math.max(t0, a); t1 = Math.min(t1, c); }
   // (The section: four edges, inside where the cross product is <= 0 -- the renderer's sdSection.)
-  const v: Array<[number, number]> = [[-hz, -hy], [hz, -hy], [hz, -hy + 2 * hy * lo], [-hz, hy]];
+  const foot = -hy + 2 * hy * lo;
+  const v: Array<[number, number]> = [[-hz, b.skin ? Math.max(-hy, hy - b.skin) : -hy], [hz, b.skin ? Math.max(-hy, foot - b.skin) : -hy], [hz, foot], [-hz, hy]];
   for (let i = 0; i < 4; i += 1) {
     const a = v[i]!, bb = v[(i + 1) & 3]!, ez = bb[0] - a[0], ey = bb[1] - a[1];
     if (ez * ez + ey * ey < 1e-12) continue;
@@ -102,7 +103,7 @@ export function placeWorld(world: BakeWorld, at: V3, yaw = 0, scale = 1): BakeWo
     return [at[0] + x * c + z * s, at[1] + y, at[2] - x * s + z * c];
   };
   // (A box's turn is the frame convention's too -- the renderer's x' = c x - s z is its inverse -- so turns add.)
-  const box = (b: BakeBox): BakeBox => ({ ...b, c: P(b.c), h: [(b.h[0] ?? 0) * scale, (b.h[1] ?? 0) * scale, (b.h[2] ?? 0) * scale], yaw: (b.yaw ?? 0) + yaw });
+  const box = (b: BakeBox): BakeBox => ({ ...b, c: P(b.c), h: [(b.h[0] ?? 0) * scale, (b.h[1] ?? 0) * scale, (b.h[2] ?? 0) * scale], yaw: (b.yaw ?? 0) + yaw, ...(b.skin ? { skin: b.skin * scale } : {}) });
   return {
     capsules: (world.capsules ?? []).map((cp) => ({ ...cp, a: P(cp.a), b: P(cp.b), r: cp.r * scale })),
     boxes: (world.boxes ?? []).map(box),

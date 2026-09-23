@@ -107,9 +107,9 @@ export type IndexedSources = ReadonlyMap<string, IndexedSource> | ((design: stri
 
 /** The renderer the indexed bake draws through (`createPixelRenderer` from @keel-engine/render has it). */
 export interface IndexedBakeRenderer extends BakeRenderer {
-  renderIndexed(options: { eye: readonly [number, number, number]; target: readonly [number, number, number]; fov?: number; time?: number; sun?: readonly [number, number, number]; waterY?: number; fogNear?: number; fogFar?: number; gap?: number; split?: readonly [number, number, number] | undefined }): WebGLFramebuffer | null;
+  renderIndexed(options: { eye: readonly [number, number, number]; target: readonly [number, number, number]; fov?: number; time?: number; sun?: readonly [number, number, number]; waterY?: number; fogNear?: number; fogFar?: number; gap?: number; split?: readonly [number, number, number] | undefined; ortho?: number }): WebGLFramebuffer | null;
   /** Depth sprites: after renderIndexed, each pixel's height in sixteenths of a texel + 1 over R (high) and G (low) (keel/render HEIGHT_FS). */
-  renderIndexedHeights?(options: { eye: readonly [number, number, number]; target: readonly [number, number, number]; fov?: number; pixelsPerMetre: number; eps?: number }): WebGLFramebuffer | null;
+  renderIndexedHeights?(options: { eye: readonly [number, number, number]; target: readonly [number, number, number]; fov?: number; pixelsPerMetre: number; eps?: number; ortho?: number }): WebGLFramebuffer | null;
 }
 
 // Every slot's material is the same grey ramp at full light: the shade is the renderer's own lightness.
@@ -263,7 +263,10 @@ export function renderIndexedSprites(renderer: IndexedBakeRenderer, jobs: readon
       const cam = bakeCamera(job, options);
       const world = slotWorld(src.pose(job.clip, job.frame));
       dropped += renderer.setWorld(compensate ? thinned(world, cam.eps) : world).dropped;
-      const from = renderer.renderIndexed({ eye: cam.eye, target: cam.target, fov: cam.fov, time, sun: cam.sun, waterY: -1e4, fogNear: 1e5, fogFar: 2e5, gap, split: src.split });
+      // (Orthographic: parallel rays over the picture's half height at the bake's scale -- the pixel view's own projection,
+      // so every part of a sprite lands where the game puts it: a wheel under its well, a hat on its head, at any size.)
+      const ortho = cam.height / 2 / job.pixelsPerMetre;
+      const from = renderer.renderIndexed({ eye: cam.eye, target: cam.target, fov: cam.fov, time, sun: cam.sun, waterY: -1e4, fogNear: 1e5, fogFar: 2e5, gap, split: src.split, ortho });
       if (cx + cam.width > S) { cx = 0; cy += rowH; rowH = 0; }
       if (cy + cam.height > S) flush();
       gl.activeTexture(gl.TEXTURE0 + 7);
@@ -272,7 +275,7 @@ export function renderIndexedSprites(renderer: IndexedBakeRenderer, jobs: readon
       gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, cx, cy, 0, 0, cam.width, cam.height);
       gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
       if (hStaging) {
-        const hf = renderer.renderIndexedHeights!({ eye: cam.eye, target: cam.target, fov: cam.fov, pixelsPerMetre: job.pixelsPerMetre, eps: compensate ? cam.eps : 0 });
+        const hf = renderer.renderIndexedHeights!({ eye: cam.eye, target: cam.target, fov: cam.fov, pixelsPerMetre: job.pixelsPerMetre, eps: compensate ? cam.eps : 0, ortho });
         gl.activeTexture(gl.TEXTURE0 + 7);
         gl.bindTexture(gl.TEXTURE_2D, hStaging);
         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, hf);

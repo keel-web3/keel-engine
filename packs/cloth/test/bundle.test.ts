@@ -49,5 +49,5 @@ test(`${ID} bundles to a module that reaches only what it needs, and starts on a
   await engine.start();
   const api = engine.get(ID);
   const pack = api["pack"] as { attributes: Array<{ id: string }> };
-  assert.equal(pack.attributes.length, 13);
+  assert.equal(pack.attributes.length, 22);
 });

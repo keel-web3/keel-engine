@@ -11,12 +11,12 @@ export default await engineVectors(import.meta.url, [
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "f5b2f1db6065a7cd81a97c1a7bb831c638a2bb8175978cf9d530cdc22c61c142",
+    expect: "6c9f506fbd56d26bad79a76ffc37466c5f852b1b7d9ed5573f5f2fce9fda37a5",
   },
   {
     name: "an entity's choices for a species",
     run: ({ choicesFor }) => choicesFor("quadruped", "dog"),
-    expect: {"accessory":["none","scarf","cap","goggles","headband","collar"],"antlers":[true,false],"arms":{"range":[0.92,1.08]},"coat":["plain","muzzle","socks"],"earSize":{"range":[0.85,1.15]},"ears":["flop","point"],"eyes":{"range":[0.85,1.2]},"girth":{"range":[0.85,1.15]},"hair":["none","short","long","bun","spiky","pony"],"head":{"range":[0.88,1.12]},"height":{"range":[0.9,1.1]},"hood":[true,false],"legs":{"range":[0.92,1.08]},"pack":["round","tall","small","none"],"pants":["long","shorts","none"],"shoes":["sneakers","boots","bare"],"snout":{"range":[0.85,1.2]},"stride":{"range":[0.9,1.1]},"tail":{"range":[0.8,1.2]},"top":["jacket","hoodie","tee","vest","none"]},
+    expect: {"accessory":["none","scarf","cap","goggles","headband","collar"],"antlers":[true,false],"arms":{"range":[0.92,1.08]},"coat":["plain","muzzle","socks"],"earSize":{"range":[0.85,1.15]},"ears":["flop","point"],"eyes":{"range":[0.85,1.2]},"girth":{"range":[0.85,1.15]},"hair":["none","short","long","bun","spiky","pony"],"head":{"range":[0.88,1.12]},"height":{"range":[0.9,1.1]},"hood":[true,false],"legs":{"range":[0.92,1.08]},"pack":["round","tall","small","none"],"pants":["long","shorts","none","robe","hover"],"shoes":["sneakers","boots","bare"],"snout":{"range":[0.85,1.2]},"stride":{"range":[0.9,1.1]},"tail":{"range":[0.8,1.2]},"toon":{"range":[0,1]},"top":["jacket","hoodie","tee","vest","none"]},
   },
   {
     name: "rotation matrices",

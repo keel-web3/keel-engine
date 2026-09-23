@@ -96,18 +96,27 @@ that socket* — so one design yields variants that sit right on a mouse, a dog
 or a bear. Attributes can be generative (variants from a seed), pinned, or
 minted as NFTs (an attribute id + variant + seed is what a token names).
 
-## The loader: design once, then draw sprites
+## Drawing things: live 3D meshes by default, bakes for stills
 
-Designing a thing (building its SDF/capsule model and posing it) is expensive;
-drawing a sprite is not. When a game loads, the **baker** turns every design
-the game uses into cached pixel art at the target size:
+A thing's design (its boxes, wedges and capsules) is turned into **one mesh,
+once**, and kept on the GPU (`lookMesh` → `SpriteRenderer.setMesh`). Every
+frame it is drawn **live** (`drawMeshes`) at its exact position, heading and
+pose. Its parts (a car's wheels, a door, a turret) are separate meshes with
+their own transforms (`meshMatrix`, `mulMatrix`), so they steer, spin and open
+smoothly. Nothing is baked per angle. Meshes are lit live by the sun and up to
+16 point or spot lights (headlights, flames, explosions), then painted by the
+same look shader as indexed sprites: palette, dither screens, finishes,
+liveries, decals, sheen, outlines between parts. They use the same depth
+convention as sprites, ground and particles, so everything sorts together.
+**This is the default for a 3D game.**
 
-- entities → sprite sheets: N directions (8 or 16) × each animation clip's
-  frames, rendered once through the pixel pipeline (palette, dither, outline);
-- objects and props → sprites or static meshes;
-- attributes → their own layers: a rigid wearable is baked once per shape and
-  socket size, drawn on its wearer's socket for the frame shown (what bends,
-  boots, is baked into the body).
+Baking is the other path, for when a flat picture is the product or the
+budget: NFT stills and portraits, thumbnails, far-LOD crowds of thousands, and
+low-end targets. The **baker** turns designs into cached indexed pixel art:
+
+- entities → sprite sheets: N directions × each animation clip's frames;
+- objects and props → sprites;
+- attributes → their own layers, drawn on the wearer's socket.
 
 Only SHAPES are baked. A thing's choices are shape (geometry: the cache key) or
 look (colour profile per role, pattern, finish, an outfit's coverage): sprites
@@ -116,7 +125,7 @@ look is painted by the sprite shader at draw time, palette-true, dithered,
 outlined. One baked shape wears any number of looks (`@keel-engine/bake`'s
 README: shapes, looks and layers).
 
-Frames then draw **instanced sprites** (one draw call per atlas), with a
+Baked frames draw **instanced sprites** (one draw call per atlas). Both paths use a
 **spatial hash grid** for culling, picking and neighbour queries, and a
 **BVH** for static geometry. The simulation runs on a **fixed step**,
 separate from drawing (deterministic — which is also what lockstep networking

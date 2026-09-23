@@ -4,15 +4,18 @@ import { engineVectors, surface, digest, dataDigest } from "../../keel/src/vecto
 
 export default await engineVectors(import.meta.url, [
   {
+    // (Re-pinned for live meshes and volumes: 13 exports added -- mesh.ts (lookMesh, mergeMeshes, meshMatrix,
+    // mulMatrix, poseMatrices, MESH_LIGHTS) and volumes.ts (VolumeInstances, VOLUME_KIND, VOLUME_FLOATS). Nothing that
+    // was there changed.)
     // (Re-pinned for the depth sprites (7a5fb59): 27 exports added -- depth.ts (HEIGHT_STEPS, OCCLUSION_LAYERS, SPRITE_DEPTH_GLSL and its functions) and raycast.ts (rayBox/Wedge/Capsule, raycastWorld, placeWorld). Nothing that was there changed.)
     name: "the export surface is intact",
     run: async (api) => { const names = surface(api); return { count: names.length, digest: await digest(names) }; },
-    expect: {"count":153,"digest":"c4e87f1398c6cff7a0f59f9b05e3b8d297b020ebe66937892baa7727c8079228"},
+    expect: {"count":184,"digest":"5e9e7bc313e2db7467da72869851b7216da0d7ea8b5c05b9a19a0bb300555dc5"},
   },
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "17ffb077fd9ce262d42b660daa631d0634f5b778262e52e15e6abd0a8384fdc7",
+    expect: "0f707881da5b078d53e67420b849b28d75c60d42084bfcee1aace395a341f27e",
   },
   {
     name: "texels encode and decode",

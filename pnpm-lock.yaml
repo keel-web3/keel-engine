@@ -56,6 +56,15 @@ importers:
         specifier: workspace:*
         version: link:../../packages/keel
 
+  packages/ads:
+    dependencies:
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../core
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
   packages/alchemy:
     dependencies:
       '@keel-engine/codec':
@@ -64,6 +73,37 @@ importers:
       '@keel-engine/replay':
         specifier: workspace:*
         version: link:../replay
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
+  packages/architecture:
+    dependencies:
+      '@keel-engine/city':
+        specifier: workspace:*
+        version: link:../city
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../core
+      '@keel-engine/road':
+        specifier: workspace:*
+        version: link:../road
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+    devDependencies:
+      '@keel-engine/bake':
+        specifier: workspace:*
+        version: link:../bake
+
+  packages/arena:
+    dependencies:
+      '@keel-engine/codec':
+        specifier: workspace:*
+        version: link:../codec
+      '@keel-engine/proof':
+        specifier: workspace:*
+        version: link:../proof
       '@keel-engine/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -161,6 +201,21 @@ importers:
         specifier: workspace:*
         version: link:../runtime
 
+  packages/city:
+    dependencies:
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../core
+      '@keel-engine/elevation':
+        specifier: workspace:*
+        version: link:../elevation
+      '@keel-engine/road':
+        specifier: workspace:*
+        version: link:../road
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
   packages/codec:
     dependencies:
       '@keel-engine/runtime':
@@ -186,8 +241,50 @@ importers:
         specifier: workspace:*
         version: link:../world
 
+  packages/controls:
+    dependencies:
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
   packages/core:
     dependencies:
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
+  packages/decal:
+    dependencies:
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../core
+      '@keel-engine/proof':
+        specifier: workspace:*
+        version: link:../proof
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
+  packages/driver:
+    dependencies:
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../core
+      '@keel-engine/road':
+        specifier: workspace:*
+        version: link:../road
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      '@keel-engine/vehicle':
+        specifier: workspace:*
+        version: link:../vehicle
+
+  packages/elevation:
+    dependencies:
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../core
       '@keel-engine/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -284,6 +381,12 @@ importers:
         specifier: workspace:*
         version: link:../world
 
+  packages/lod:
+    dependencies:
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
   packages/object:
     dependencies:
       '@keel-engine/core':
@@ -324,6 +427,19 @@ importers:
         specifier: workspace:*
         version: link:../runtime
 
+  packages/proof:
+    dependencies:
+      '@keel-engine/codec':
+        specifier: workspace:*
+        version: link:../codec
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+    devDependencies:
+      '@keel-engine/replay':
+        specifier: workspace:*
+        version: link:../replay
+
   packages/render:
     dependencies:
       '@keel-engine/core':
@@ -338,6 +454,15 @@ importers:
       '@keel-engine/codec':
         specifier: workspace:*
         version: link:../codec
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
+  packages/road:
+    dependencies:
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../core
       '@keel-engine/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -373,6 +498,15 @@ importers:
       '@keel-engine/codec':
         specifier: workspace:*
         version: link:../codec
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../core
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
+  packages/vehicle:
+    dependencies:
       '@keel-engine/core':
         specifier: workspace:*
         version: link:../core
@@ -503,6 +637,12 @@ importers:
         specifier: workspace:*
         version: link:../../packages/runtime
     devDependencies:
+      '@keel-engine/architecture':
+        specifier: workspace:*
+        version: link:../../packages/architecture
+      '@keel-engine/bake':
+        specifier: workspace:*
+        version: link:../../packages/bake
       '@keel-engine/builder':
         specifier: workspace:*
         version: link:../../packages/builder
@@ -643,6 +783,21 @@ importers:
       '@keel-engine/keel':
         specifier: workspace:*
         version: link:../../packages/keel
+
+  packs/vehicles:
+    dependencies:
+      '@keel-engine/bake':
+        specifier: workspace:*
+        version: link:../../packages/bake
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../../packages/runtime
+      '@keel-engine/vehicle':
+        specifier: workspace:*
+        version: link:../../packages/vehicle
 
 packages:
 

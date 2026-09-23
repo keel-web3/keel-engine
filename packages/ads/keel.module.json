@@ -1,0 +1,20 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-ads",
+  "version": "0.1.0",
+  "description": "Ad slots, sources (house, list, chain -- first answer wins), safe links, and picking the slot under a pointer.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/ads"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/core",
+      "@keel-engine/runtime"
+    ]
+  }
+}

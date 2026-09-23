@@ -1,0 +1,20 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-decal",
+  "version": "0.1.0",
+  "description": "On-chain decals: the KEEL alphabet and text conversion, the KDCL doc (four-ink pixel images, styled text) a contract validates, and the rasterizer to bake decal texels.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/decal"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/core",
+      "@keel-engine/proof"
+    ]
+  }
+}
