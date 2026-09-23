@@ -259,7 +259,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/ads/test/vectors.mjs",
-        "sha256": "0xe927a5b59980310876c05598b2c8216358f26f0a0324be98b8c0770fc3f40e23"
+        "sha256": "0xbb8d2368f9b97843d90b8a1d38dae02a549ab18e17102f01da1b99c3a6a32a7c"
       },
       "deployments": [],
       "deployed": false
@@ -478,7 +478,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/architecture/test/vectors.mjs",
-        "sha256": "0x9324ed1fd53ef761d5390617cd08f534551c996d047a3b858d16130aba71f6e3"
+        "sha256": "0xb67f1451924f5f327541e699c2bf6c7a0ca21b8a23434c2d002831b0e7ebba74"
       },
       "deployments": [],
       "deployed": false
@@ -668,7 +668,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/audio/test/vectors.mjs",
-        "sha256": "0xe151d3a273e99c34fa4dc9ad84b229dbbd02e14de9b99a4b5e66efa5d50fbbf3"
+        "sha256": "0x4ae342f005a17506317c5a27419b208054c4b72113bbe35fa15d03238238a38b"
       },
       "deployments": [],
       "deployed": false
@@ -894,7 +894,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/bake/test/vectors.mjs",
-        "sha256": "0xff10dc1a2997bb279b51f89fb3515f199c61b5a3e0446e29b076a6657689cf12"
+        "sha256": "0xa5abcba8c755661132fd11ab8c3927b68f8efbe641c0b42f3f3c8282dbefd1cd"
       },
       "deployments": [],
       "deployed": false
@@ -1104,7 +1104,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/camera/test/vectors.mjs",
-        "sha256": "0x5e27007dbd5f4937f0bebf3544aa05673f4ad06186fd70e46151187070b7404e"
+        "sha256": "0xcebaa0be273f385e53ed1e722b82ead6eecf4a55ba0e4b51de6d318c96ea1676"
       },
       "deployments": [],
       "deployed": false
@@ -1290,7 +1290,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/city/test/vectors.mjs",
-        "sha256": "0x83a980bd3605b89d2b16aabeb9510414fac3fc884681a2f32e0b2662172c2cb3"
+        "sha256": "0x35e72b9d900e20cf424d2b715d9f313e28214f03422db61b178ae9b669f1ee8c"
       },
       "deployments": [],
       "deployed": false
@@ -1828,7 +1828,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/elevation/test/vectors.mjs",
-        "sha256": "0x0e80661c5776136b8f9abc76361ca71771e490edf8109b1f15c115ea19188e5c"
+        "sha256": "0x6ed30db1b8c2eb115e43a2fb1c68249bc211294d0e5f37d28136e1b569dba8f3"
       },
       "deployments": [],
       "deployed": false
@@ -2815,7 +2815,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/proof/test/vectors.mjs",
-        "sha256": "0x5fbd80b2b849baf864a4e0fbe365ab1de43d31cf2c18859f18ba420eea1f553b"
+        "sha256": "0x4c7834b2071ce86bb667038d4bc51dbae578bf1ddeaca0d6b9502ca82824921e"
       },
       "deployments": [],
       "deployed": false
@@ -2896,7 +2896,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/render/test/vectors.mjs",
-        "sha256": "0x5ea2d8aedf80bda214176668d45c094ff91257e694cbd8858a38b293fb26816f"
+        "sha256": "0xb20f3c400ab590cac10a1e49f2f882c481f2534f16991c2a9821ca7f9e714b28"
       },
       "deployments": [],
       "deployed": false
@@ -3038,7 +3038,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/road/test/vectors.mjs",
-        "sha256": "0x13fa4f6844b66da9321189115bbf59806334219e8329d08e7bc4ed70bd28a342"
+        "sha256": "0x03a5f222ff562d527b2766d432fca1ffc173194456ad6ae1ef49e4b0b6e45f81"
       },
       "deployments": [],
       "deployed": false
@@ -3630,7 +3630,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/vehicle/test/vectors.mjs",
-        "sha256": "0xa8f6c7a91735c3418e9938cb4e774fa5f35ba29be3dc5edef17e4bf623aaf86f"
+        "sha256": "0x6788a0dd1afc52c2df36040bae6304b835e5bd384d5cc61dbe3c9b2f0ff01e26"
       },
       "deployments": [],
       "deployed": false
@@ -4262,7 +4262,7 @@
       "verified": true,
       "vectors": {
         "path": "packs/buildings/test/vectors.mjs",
-        "sha256": "0xfa8f8839d677a57522b37872e557b64bf3da40f42c01e69e1e55086ce070c698"
+        "sha256": "0xefccdd93989ef6c91de5ffb40f9a29e3b0d8763f710525f2c3557ee0ec2c8063"
       },
       "deployments": [],
       "deployed": false
@@ -5110,7 +5110,7 @@
       "verified": true,
       "vectors": {
         "path": "packs/vehicles/test/vectors.mjs",
-        "sha256": "0x60407a0f0457458972ca8f8a811a8f5c627c33eb5bfae48d26a39517b8176b05"
+        "sha256": "0xaae78e2be86fa8d12fbdb281ad7a1261edd32f4d598105f2673d42b2b6bf19c0"
       },
       "deployments": [],
       "deployed": false

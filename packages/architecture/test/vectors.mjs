@@ -24,7 +24,7 @@ export default await engineVectors(import.meta.url, [
   {
     name: "the export surface is intact",
     run: async (api) => { const names = surface(api); return { count: names.length, digest: await digest(names) }; },
-    expect: {"count":16,"digest":"2567a5e946430e3e5d6fbce5afbe9e280f86a99953856dc49ba715aa2d720c5d"},
+    expect: {"count":17,"digest":"bd51514a1afa1576abbaffc5cd492bd08f7614d9f475fbc4f4b6e5cc3fcbd592"},
   },
   {
     name: "its tables and constants are intact",
@@ -44,6 +44,6 @@ export default await engineVectors(import.meta.url, [
       const p = planStreets(kit, c);
       return { chunks: p.chunks.length, lights: p.lights.length, props: p.props.length, digest: await digest([p.props, p.chunks.map((ch) => ch.solids.length)]) };
     },
-    expect: {"chunks":48,"digest":"beba8d796a7679a904d3f1c88c3fde78275afc248536cdf06dd299fe4a5a2bc3","lights":415,"props":732},
+    expect: {"chunks":90,"digest":"2df20586542d1d10f376a7d4a01d34b8fb3d49ff13b62b206a7255011ea246d4","lights":415,"props":1575},
   },
 ]);

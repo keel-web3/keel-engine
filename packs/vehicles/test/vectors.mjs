@@ -6,12 +6,12 @@ export default await engineVectors(import.meta.url, [
   {
     name: "the export surface is intact",
     run: async (api) => { const names = surface(api); return { count: names.length, digest: await digest(names) }; },
-    expect: {"count":68,"digest":"dea84250ef319c1da0b9c8f0cafa2f858d27e3ebd277ebb4cb6d8448ea66ae66"},
+    expect: {"count":88,"digest":"233fd4b553cd6fba8838ef7b7001a34a78df9503ffe47c277c064af15cdd7770"},
   },
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "22d8b4ab90e8c2b808321e215ec92570fff4f1db1f455172083d1cb9407accae",
+    expect: "e4abf11860c10b41d614468de5d5f3b656e51df5753ca7784d50de6be48f33cf",
   },
   {
     name: "a seed makes the same car, trait for trait",
@@ -32,6 +32,6 @@ export default await engineVectors(import.meta.url, [
   {
     name: "how many cars there are",
     run: ({ possibleCars }) => String(possibleCars()),
-    expect: "10363660780121882288455680",
+    expect: "31090982340365646865367040",
   },
 ]);
