@@ -159,13 +159,6 @@ export function plateFit(car: Car, text: string): PlateFit | null {
   const side = Math.min(rounded ? back.half : hw * 0.97, hw) - GAP;
   const top = Math.max(py + PLATE_HEIGHT, back.top - 0.015), floor = g.ride + 0.01;
   const blockers = blockersOf(car);
-  const centerTip = car.parts.exhaust === "center" ? exhaustTips(car)[0]! : null;
-  const centerStemCrosses = (y: number, h: number, half: number): boolean => {
-    if (!centerTip) return false;
-    const pipeY = Math.max(0.09, g.ride - 0.035);
-    const r = Math.max(centerTip.r * 1.2, Math.min(0.048, Math.max(0.023, car.parts.pipe * 0.65)));
-    return half > r && y < Math.max(pipeY, centerTip.y) + r && y + h > Math.min(pipeY, centerTip.y) - r;
-  };
   /** The widest a plate of height h may be with its bottom at y (0: something straddles the middle). */
   const halfAt = (y: number, h: number): number => {
     if (y < floor - 1e-6 || y + h > top + 1e-6) return 0;
@@ -194,11 +187,7 @@ export function plateFit(car: Car, text: string): PlateFit | null {
   const cover = car.archetype === "buggy" ? undefined : { y0: recessY - 0.004, y1: recessY + 0.154, z: recessZ, slot: rounded ? P.paint : P.bumperR };
   const at = (rows: string[], letter: number, half: number, y: number, h = plateHeight(rows.length, letter)): PlateFit => {
     const moved = Math.abs(y - py) > 1e-6;
-    // A centre exhaust's stem can rise through the recess while its tip itself clears the lettering. Keep the plate at
-    // its proper height and put it on a small proud bracket past that stem.
-    const proud = centerStemCrosses(y, h, half);
-    const z = proud ? Math.min(zR, centerTip!.z - Math.max(centerTip!.r * 1.2, 0.08) - 0.002) : zR;
-    return { text, rows, half, y0: y, y1: y + h, z0: z - 0.016, z1: z + 0.01, letter, grown: half > PLATE_HALF + 1e-6 || h > PLATE_HEIGHT + 1e-6, moved, ...(proud ? { proud: true } : {}), ...(moved && cover ? { cover } : {}) };
+    return { text, rows, half, y0: y, y1: y + h, z0: zR - 0.016, z1: zR + 0.01, letter, grown: half > PLATE_HALF + 1e-6 || h > PLATE_HEIGHT + 1e-6, moved, ...(moved && cover ? { cover } : {}) };
   };
   const clean = text.trim().toUpperCase();
   const widest = (rows: readonly string[]) => Math.max(...rows.map((r) => r.length));

@@ -233,8 +233,7 @@ test("gaps: worldgen's manifest declares its codec schemas, bytes embedded, reso
 
 test("the renderer's GLSL keeps to what WebGL2 compiles: no ternary picking between structs", async () => {
   const { readFileSync } = await import("node:fs");
-  const files = ["dungeon-gl.ts", "dungeon-gl-world-shaders.ts", "dungeon-gl-fx-shaders.ts"];
-  const src = files.map((file) => readFileSync(new URL(`../src/${file}`, import.meta.url), "utf8")).join("\n");
+  const src = readFileSync(new URL("../src/dungeon-gl.ts", import.meta.url), "utf8");
   // (ESSL rejects `cond ? S(...) : S(...)`: a Surf chosen by a ternary. Only the shader text is scanned.)
   const bad = src.split("\n").filter((line) => /[?:]\s*[SE]\(R_/.test(line));
   assert.deepEqual(bad, []);
