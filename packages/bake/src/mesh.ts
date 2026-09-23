@@ -11,6 +11,7 @@
 //   sprites.setMesh(design.key, mesh);
 //   sprites.drawMeshes(view, [{ mesh: design.key, x, y: 0, z, yaw, look }], style);
 
+import { cleanTriangles } from "./clean-triangles.ts";
 import { dcos, dhypot, dsin } from "@keel-engine/core";
 import type { BakeBox, BakeCapsule, BakeWorld } from "./bake.ts";
 
@@ -91,12 +92,15 @@ const gridUv = (axis: 0 | 1 | 2, l: readonly number[], h: readonly number[], g: 
 /** A convex polygon face (local corners, counter-clockwise from outside) with a flat normal. */
 function face(B: Builder, box: BakeBox, corners: readonly (readonly number[])[], localNormal: readonly number[], axis: 0 | 1 | 2, rotation: readonly [number, number]): void {
   const slot = box.mat ?? 0, c = box.c, h = [box.h[0] ?? 0, box.h[1] ?? 0, box.h[2] ?? 0];
-  const n = turn(rotation, localNormal[0]!, localNormal[1]!, localNormal[2]!);
+  const n = B.boundsOnly ? [] : turn(rotation, localNormal[0]!, localNormal[1]!, localNormal[2]!);
   const grid = box.grid && axis !== 1 && box.kind !== "wedge" ? box.grid : null;
   const ids = corners.map((l) => {
     const w = turn(rotation, l[0]!, l[1]!, l[2]!);
+    const p = [w[0] + (c[0] ?? 0), w[1] + (c[1] ?? 0), w[2] + (c[2] ?? 0)];
+    // Bounds consume only the exact Float32 positions; UVs and normals do not affect them.
+    if (B.boundsOnly) return B.vert(p, n, slot, 0, 0);
     const [u, v] = grid ? gridUv(axis, l, h, grid) : faceUv(axis, l, h);
-    return B.vert([w[0] + (c[0] ?? 0), w[1] + (c[1] ?? 0), w[2] + (c[2] ?? 0)], n, slot, u, v, grid ? Math.max(0, l[1]! + h[1]!) : -1);
+    return B.vert(p, n, slot, u, v, grid ? Math.max(0, l[1]! + h[1]!) : -1);
   });
   if (!B.boundsOnly) for (let k = 1; k + 1 < ids.length; k += 1) B.i.push(ids[0]!, ids[k]!, ids[k + 1]!);
 }
@@ -173,11 +177,13 @@ function capsuleMesh(B: Builder, cap: BakeCapsule, around: number, rings: number
     const [na, rad, nr] = template.profile[k]!, h = (k > rings ? len : 0) + r * na;
     for (let i = 0; i <= around; i++) {
       const dir = directions[i]!;
-      const n = [dir[0]! * nr + ax[0]! * na, dir[1]! * nr + ax[1]! * na, dir[2]! * nr + ax[2]! * na];
       const p = [A[0]! + ax[0]! * h + dir[0]! * r * rad, A[1]! + ax[1]! * h + dir[1]! * r * rad, A[2]! + ax[2]! * h + dir[2]! * r * rad];
+      if (B.boundsOnly) { B.vert(p, [], slot, 0, 0); continue; }
+      const n = [dir[0]! * nr + ax[0]! * na, dir[1]! * nr + ax[1]! * na, dir[2]! * nr + ax[2]! * na];
       B.vert(p, n, slot, i / around, Math.max(0, Math.min(1, (h + r) / (len + 2 * r))));
     }
   }
+  if (B.boundsOnly) return;
   const row = around + 1;
   for (let k = 0; k + 1 < template.profile.length; k += 1) for (let i = 0; i < around; i += 1) {
     const a = start + k * row + i, b = a + 1, c = a + row + 1, d = a + row;
@@ -260,8 +266,8 @@ function appendWorld(B: Builder, world: BakeWorld, around: number, rings: number
 export function lookMesh(world: BakeWorld, { around = 12, rings = 3, bounds, chordError }: LookMeshOptions = {}): LookMesh {
   const B = new Builder();
   appendWorld(B, world, around, rings, chordError);
-  const positions = Float32Array.from(B.p);
-  const mesh = { positions, normals: Float32Array.from(B.n), attrs: Float32Array.from(B.a), bodies: bodySpace(positions, bounds ?? meshBounds(positions)), indices: Uint32Array.from(B.i) };
+  const positions = Float32Array.from(B.p), attrs = Float32Array.from(B.a);
+  const mesh = { positions, normals: Float32Array.from(B.n), attrs, bodies: bodySpace(positions, bounds ?? meshBounds(positions)), indices: cleanTriangles(positions, Uint32Array.from(B.i), attrs) };
   return B.grid ? { ...mesh, facade: Float32Array.from(B.f) } : mesh;
 }
 
