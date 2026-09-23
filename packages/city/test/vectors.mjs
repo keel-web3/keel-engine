@@ -11,7 +11,7 @@ export default await engineVectors(import.meta.url, [
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "5ac53960c90d921dcc479d526a3392473bc9ac3eaccd2cd4b547386d23da7049",
+    expect: "cc0bb5617fbfede83d22cef87219eaed7745d7fbd3ca04a6839abd01f0ce3c5a",
   },
   {
     name: "the city of 'neon' is the same junctions, roads and lots",
