@@ -35,20 +35,21 @@
 // whatever else was dropped or spawned. (Particles are for the eye: a view
 // that culls or LODs changes them, which no game state may read.)
 
-import type { Stream } from "@keel-engine/core";
-import { PARTICLE_POOL, decode, encode } from "@keel-engine/codec";
-import type { ParticlePoolRecord } from "@keel-engine/codec";
-import type { PixelView } from "@keel-engine/bake";
+import { PARTICLE_POOL, encode } from "@keel-engine/codec";
 import { sampleCurve } from "./recipe.ts";
-import type { EmitterRecipe, ParticleSprite, Span, Vec3In } from "./recipe.ts";
+import type { EmitterRecipe, ParticleSprite, Span } from "./recipe.ts";
 import { PARTICLE_SPRITES } from "./recipe.ts";
+import { PoolState } from "./pool-state.ts";
+import { poolRecordOf, poolSnapshotOf } from "./pool-codec.ts";
+import { frameFromYaw, frameToWorld } from "./pool-frame.ts";
+import { CURVE_SAMPLES, h30, MAX_STYLES, STYLE_WIDTH } from "./pool-internal.ts";
+import type { Compiled } from "./pool-internal.ts";
+export { poolRecordOf, poolSnapshotOf } from "./pool-codec.ts";
+export { frameFromYaw, frameToWorld } from "./pool-frame.ts";
+export { CURVE_SAMPLES, MAX_STYLES, STYLE_WIDTH } from "./pool-internal.ts";
+import type { ParticleEmitOptions, ParticleHost, ParticlePool, ParticlePoolOptions, ParticlePoolSnapshot, ParticleSlots, ParticleStats, ParticleStyles, PoolParticleView } from "./pool-types.ts";
+export type { ParticleEmitOptions, ParticleHost, ParticlePool, ParticlePoolOptions, ParticlePoolSnapshot, ParticleSlots, ParticleStats, ParticleStyles, PoolParticleView } from "./pool-types.ts";
 
-/** Samples per life curve in the style table. */
-export const CURVE_SAMPLES = 32;
-/** Texels per style row: the curves (size, light, alpha), then four of constants. */
-export const STYLE_WIDTH = CURVE_SAMPLES + 4;
-/** Recipes (and so styles) a pool can hold: a particle names its style in one byte. */
-export const MAX_STYLES = 256;
 /** A particle with no emitter (a sub-emit's). */
 export const NO_EMITTER = 0xffff;
 /** A segment that never freezes. */
@@ -60,199 +61,6 @@ const SHAPE = { point: 0, sphere: 1, disc: 2, ring: 3, cone: 4, area: 5 } as con
 const TRIG = { death: 0, ground: 1, live: 2 } as const;
 const ALIVE = 1;
 const GROUNDED = 2;
-
-/** Where attached emitters are: the game's world, asked once a step for each. */
-export interface ParticleHost {
-  /**
-   * Where `unit` is (or its `socket`, when one is named): fill `out` with its position (0..2) and its frame
-   * (3..11: a row-major 3×3, local -> world; for a unit that only turns, `frameFromYaw`). False when it's gone:
-   * the emitter stops (its particles live on).
-   */
-  locate(unit: number, socket: string | null, out: Float64Array): boolean;
-}
-
-export interface ParticlePoolOptions {
-  /** Live particles at most (default 65536). */
-  readonly capacity?: number;
-  /** Emitters at most (default 4096; up to 65535). */
-  readonly emitters?: number;
-  /** The seed: a number, or a seeded stream (core's Stream) to draw one from. */
-  readonly seed?: number | Pick<Stream, "f">;
-  /** Recipes by name (default: none -- pass PRESETS, or define() them). */
-  readonly recipes?: Readonly<Record<string, EmitterRecipe>>;
-  readonly host?: ParticleHost;
-  /** Fill fractions at which importance 0, 1, 2, 3 stop spawning (default [0.55, 0.8, 0.95, 1]). */
-  readonly reserve?: readonly [number, number, number, number];
-  /** LOD: the fewest pixels a particle should span before it's thinned and grown (default 1.5; 0: off). */
-  readonly minPixels?: number;
-  /** LOD: the most a particle grows (and 1/m² thins; default 4). */
-  readonly maxLod?: number;
-  /** LOD under pressure: thin (and grow) as the pool fills toward an importance's reserve (default true). */
-  readonly pressure?: boolean;
-}
-
-/** What emit takes beyond the recipe and the point. */
-export interface ParticleEmitOptions {
-  /** Follow this unit (the host locates it each step; the point is ignored). */
-  readonly unit?: number;
-  /** ...at this socket of it ("hand.R": a torch, a gun). */
-  readonly socket?: string;
-  /** The anchor's heading for a world point (frame convention: 0 faces +z). */
-  readonly yaw?: number;
-  /** A cone's axis instead of the recipe's (in the anchor's frame). */
-  readonly dir?: Vec3In;
-  /** A velocity every particle starts with (world, m/s: a shot's recoil, a moving vehicle not told to the host). */
-  readonly velocity?: Vec3In;
-  /** Overrides the recipe's priority. */
-  readonly priority?: 0 | 1 | 2 | 3;
-  /** Scales size, speed and spread (a bigger explosion; default 1). */
-  readonly scale?: number;
-  /** A burst's count instead of the recipe's draw. */
-  readonly count?: number;
-  /** Seconds a continuous or trail emitter runs, instead of the recipe's. */
-  readonly duration?: number;
-}
-
-/** Counters since the pool was made (or resetStats): what was spawned, and why the rest wasn't. */
-export interface ParticleStats {
-  spawned: number;
-  /** Sub-emitted (of spawned). */
-  sub: number;
-  died: number;
-  /** Bounces (a new birth state each). */
-  bounced: number;
-  /** Not spawned: the emitter was off the picture. */
-  culled: number;
-  /** Not spawned: thinned by LOD (the rest grew to cover). */
-  lod: number;
-  /** Not spawned: the pool past the reserve for its importance. */
-  budget: number;
-  /** Not spawned: the emitter at its own budget. */
-  emitterBudget: number;
-  /** emit() found no free emitter slot. */
-  noEmitter: number;
-  /** Typed arrays the pool has made (all at creation: it never grows). */
-  growths: number;
-}
-
-/** A pool as data (typed-array copies of the live slots; load() also takes plain number arrays, e.g. after JSON). */
-export interface ParticlePoolSnapshot {
-  readonly format: "keel-particles-pool@2";
-  readonly recipes: readonly string[];
-  readonly key: number;
-  readonly time: number;
-  readonly tick: number;
-  readonly serial: number;
-  readonly wind: readonly number[];
-  /** The live slots' indices, and each per-slot array for just those slots (in that order). */
-  readonly slots: ArrayLike<number>;
-  readonly particles: Readonly<Record<string, ArrayLike<number>>>;
-  readonly emitters: Readonly<Record<string, ArrayLike<number>>>;
-  /** Each emitter slot's socket name. */
-  readonly sockets: readonly (string | null)[];
-}
-
-/** The style table the renderer uploads: per style a row of STYLE_WIDTH RGBA texels. */
-export interface ParticleStyles {
-  /** Bumps whenever a recipe is defined. */
-  readonly version: number;
-  readonly count: number;
-  /**
-   * MAX_STYLES × STYLE_WIDTH × 4 floats: texels 0..31 (size, light, alpha, 0) over the life; 32 (size lo, size
-   * hi, light lo, light hi); 33 (0, 0, sprite, shade) -- the renderer fills in the ramp; 34 (streak, depth bias,
-   * soft rim, 0); 35 (drag, curl, gravity, 0).
-   */
-  readonly data: Float32Array;
-  /** Each style's ramp name. */
-  readonly ramps: readonly string[];
-}
-
-/**
- * Every slot's birth state -- what the renderer copies to the GPU (its vertex shader evaluates it). A segment is the
- * motion since the last birth or bounce: at segment time τ = t - tSeg (frozen past tStop) it's at
- * motion(p0, v0, vinf, style, τ); its life curves run on age = t - tBirth, over `life` seconds.
- */
-export interface ParticleSlots {
-  readonly p0: Float64Array;
-  readonly v0: Float64Array;
-  /** The velocity its drag tends to (the air's, with gravity): x, y, z. */
-  readonly vinf: Float64Array;
-  readonly tSeg: Float64Array;
-  readonly tStop: Float64Array;
-  readonly tBirth: Float64Array;
-  /** Seconds it lives (0: a free slot). */
-  readonly life: Float64Array;
-  readonly style: Uint8Array;
-  /** A random byte (its size and lightness within the style's spans). */
-  readonly rnd: Uint8Array;
-  /** Size scale ×16 (LOD and the emit's scale). */
-  readonly lod: Uint8Array;
-  readonly owner: Uint16Array;
-}
-
-/** What the pixel (raymarch) renderer draws: @keel-engine/render's RenderParticle. */
-export interface PoolParticleView {
-  p: [number, number, number];
-  size: number;
-  ramp: string;
-  light: number;
-}
-
-export interface ParticlePool {
-  readonly capacity: number;
-  readonly emitterCapacity: number;
-  /** Live particles. */
-  readonly count: number;
-  /** Slots in use are all below this (the renderer draws this many). */
-  readonly highWater: number;
-  /** Live emitters (running or draining). */
-  readonly emitters: number;
-  /** Seconds simulated (the sum of every step's dt). */
-  readonly time: number;
-  /** Every slot's birth state (read-only: the renderer's source). */
-  readonly slots: ParticleSlots;
-  readonly styles: ParticleStyles;
-  readonly stats: ParticleStats;
-  /** The wind (m/s, world); a particle drifts with `wind` of it -- the wind when it was thrown (or last bounced). */
-  readonly wind: Float64Array;
-  /** Add a recipe (setup time: it allocates). Returns its index. */
-  define(name: string, recipe: EmitterRecipe): number;
-  /** A recipe's index by name (-1 if none). */
-  recipeId(name: string): number;
-  /** The recipe names in index order. */
-  readonly recipeNames: readonly string[];
-  /** Start an effect at (x, y, z) -- or on a unit / socket. Returns a handle, or -1 when no emitter slot is free. */
-  emit(recipe: string | number, x: number, y: number, z: number, options?: ParticleEmitOptions): number;
-  /** Move a world-point emitter (and turn it). */
-  move(handle: number, x: number, y: number, z: number, yaw?: number): void;
-  /** Stop an emitter spawning (its particles live on). */
-  stop(handle: number): void;
-  /** Is this handle's emitter still running? */
-  alive(handle: number): boolean;
-  /** Cull and LOD by this view from the next step (null: everything on, full detail). */
-  setView(view: Pick<PixelView, "center" | "axes" | "pixelsPerMetre" | "width" | "height"> | null): void;
-  /** The same by a ground rectangle and a pixel scale. */
-  setViewRect(x0: number, z0: number, x1: number, z1: number, pixelsPerMetre: number): void;
-  step(dt: number): void;
-  clear(): void;
-  save(): ParticlePoolSnapshot;
-  load(snapshot: ParticlePoolSnapshot): void;
-  /** save() as codec bytes (keel/particles/pool): every number exact, Infinity included. */
-  saveBytes(): Uint8Array;
-  /** Put saveBytes() back (another document, or another pool's, is refused as load() refuses). */
-  loadBytes(bytes: Uint8Array): void;
-  resetStats(): void;
-  /** Is this slot a live particle? */
-  isLive(slot: number): boolean;
-  /** The live slots, ascending, into `out` (from 0); returns how many. */
-  liveSlots(out: Int32Array | number[]): number;
-  /** Where a slot's particle is at time `at` (default: now), into out[o..o+2]; its velocity into out[o+3..o+5]. */
-  sample(slot: number, out: Float64Array | number[], o?: number, at?: number): void;
-  /** Slots whose birth state changed since the last call (births, bounces), into `out`; -1: all of them (a load or clear). */
-  takeChanges(out: Int32Array): number;
-  /** The live particles for the pixel renderer (it allocates: hero shots, previews). */
-  list(sizeScale?: number): PoolParticleView[];
-}
 
 // ---------------------------------------------------------------- hashing
 
@@ -272,37 +80,11 @@ export function mix32(x: number): number {
 // hash keys are 30 bits (small integers to V8) and a draw is an integer, scaled to [0, 1) where it's used.
 // And the functions live at module level over one state object, so every pool shares one optimized copy.
 
-/** A 30-bit hash of an integer. */
-function h30(x: number): number {
-  x ^= x >>> 16;
-  x = Math.imul(x, 0x7feb352d);
-  x ^= x >>> 15;
-  x = Math.imul(x, 0x846ca68b);
-  x ^= x >>> 16;
-  return x >>> 2;
-}
 const INV30 = 1 / 1073741824;
 /** Draw `d` of key `key`: 0 .. 2^30-1 (times INV30 for [0, 1)). */
 const draw = (key: number, d: number): number => h30((key + Math.imul(d, 0x9e3779b9)) | 0);
 
 /** A frame for a unit that only turns: position and rotY(yaw) into `out` (as ParticleHost.locate fills it). */
-export function frameFromYaw(x: number, y: number, z: number, yaw: number, out: Float64Array, o = 0): Float64Array {
-  const c = Math.cos(yaw);
-  const s = Math.sin(yaw);
-  out[o] = x; out[o + 1] = y; out[o + 2] = z;
-  out[o + 3] = c; out[o + 4] = 0; out[o + 5] = s;
-  out[o + 6] = 0; out[o + 7] = 1; out[o + 8] = 0;
-  out[o + 9] = -s; out[o + 10] = 0; out[o + 11] = c;
-  return out;
-}
-
-/** A point in a located frame (position + 3×3 as the host fills it) -> world, into `out`. */
-export function frameToWorld(f: ArrayLike<number>, lx: number, ly: number, lz: number, out: Float64Array | number[], o = 0): void {
-  out[o] = f[0]! + f[3]! * lx + f[4]! * ly + f[5]! * lz;
-  out[o + 1] = f[1]! + f[6]! * lx + f[7]! * ly + f[8]! * lz;
-  out[o + 2] = f[2]! + f[9]! * lx + f[10]! * ly + f[11]! * lz;
-}
-
 // ---------------------------------------------------------------- the motion (gpu.ts has its GLSL twin)
 
 // The closed form: drag d toward the drift velocity vinf, gravity g (in vinf.y when d > 0), and the horizontal
@@ -362,21 +144,6 @@ export function motionAt(
 
 // ---------------------------------------------------------------- compiled recipes
 
-interface Compiled {
-  readonly name: string;
-  readonly index: number;
-  readonly src: EmitterRecipe;
-  mode: number; shape: number;
-  count0: number; count1: number; rate: number; density: number; perMetre: number; duration: number; delay: number;
-  radius: number; areaView: boolean; ax: number; ay: number; az: number;
-  dx: number; dy: number; dz: number; oneMinusCos: number;
-  speed0: number; speed1: number; up0: number; up1: number; vx: number; vy: number; vz: number; inherit: number;
-  ox: number; oy: number; oz: number; priority: number; budget: number; reach: number;
-  also: number[];
-  alsoRefs: readonly (string | EmitterRecipe)[];
-  life0: number; life1: number; meanSize: number;
-}
-
 const span = (s: Span | undefined, d: number): [number, number] => (s ? [s[0], s[1]] : [d, d]);
 
 // F (doubles between functions):
@@ -384,196 +151,6 @@ const span = (s: Span | undefined, d: number): [number, number] => (s ? [s[0], s
 //   11 LOD, 12 the emit's scale, 13 dt, 14 minPixels, 15 maxLod, 16 now, 17 a spawn's birth time,
 //   18 a sample's time, 20..25 a sample's position and velocity, 26 a ground hit (segment time; NEVER: none), 27..29 its scratch,
 //   32..45 motion's inputs (see motionCore).
-const F_SIZE = 48;
-
-/** Everything a pool is: typed arrays, a few counters, the recipes. */
-class PoolState {
-  readonly N: number;
-  readonly E: number;
-  readonly stats: ParticleStats;
-  // Particles, by slot.
-  readonly p0: Float64Array;
-  readonly v0: Float64Array;
-  readonly vinf: Float64Array;
-  readonly tSeg: Float64Array;
-  readonly tStop: Float64Array;
-  readonly tBirth: Float64Array;
-  readonly life: Float64Array;
-  readonly tGround: Float64Array; // absolute time of its next ground event (Infinity: none)
-  readonly tLive: Float64Array; // absolute time of its next live sub-emit (Infinity: none)
-  readonly tEvent: Float64Array; // the soonest of its death, ground and live events (Infinity: a free slot)
-  readonly style: Uint8Array;
-  readonly rnd: Uint8Array;
-  readonly lod: Uint8Array;
-  readonly pseed: Uint32Array;
-  readonly owner: Uint16Array;
-  readonly flags: Uint8Array;
-  readonly liveN: Uint16Array; // live sub-emits so far (keys the next one)
-  count = 0;
-  highWater = 0;
-  readonly heap: Int32Array; // free slots, a min-heap: the lowest free slot comes out first
-  heapSize: number;
-  readonly changed: Uint8Array;
-  readonly changes: Int32Array;
-  changeCount = 0;
-  allChanged = true;
-  // Emitters: slots, a free stack, the running list.
-  readonly eState: Uint8Array; // 0 free, 1 running, 2 draining (waiting for its particles to die)
-  readonly eGen: Uint16Array;
-  readonly eRecipe: Int32Array;
-  readonly eUnit: Int32Array;
-  readonly eSocket: (string | null)[];
-  readonly eP: Float64Array;
-  readonly ePrev: Float64Array;
-  readonly eV: Float64Array;
-  readonly eBaseV: Float64Array;
-  readonly eF: Float64Array; // the located frame: position + 3×3
-  readonly eDir: Float64Array;
-  readonly eHasDir: Uint8Array;
-  readonly eAge: Float64Array;
-  readonly eDur: Float64Array; // (-1: until stopped)
-  readonly eAcc: Float64Array;
-  readonly eLodAcc: Float64Array;
-  readonly eSpawn: Float64Array;
-  readonly eKey: Uint32Array;
-  readonly ePri: Uint8Array;
-  readonly eScale: Float32Array;
-  readonly eCount: Int32Array;
-  readonly eLive: Int32Array;
-  readonly eFresh: Uint8Array;
-  readonly eFired: Uint8Array;
-  readonly active: Int32Array;
-  readonly activeAt: Int32Array;
-  readonly free: Int32Array;
-  activeCount = 0;
-  freeTop: number;
-  serial = 0;
-  tick = 0;
-  readonly key0: number;
-  readonly wind: Float64Array;
-  readonly scratch: Float64Array;
-  readonly F: Float64Array;
-  // The view: 0..3 its ground rectangle (x0, z0, x1, z1), 4..5 its centre, 6 "far" squared, 7 pixels per metre.
-  readonly V: Float64Array;
-  hasView = false;
-  readonly limit: Int32Array; // live particles past which importance 0..3 stop spawning
-  readonly usePressure: boolean;
-  readonly host: ParticleHost | null;
-  // Styles (one per recipe): the renderer's table and what the step reads.
-  readonly styleData: Float32Array;
-  readonly styleRamps: string[] = [];
-  readonly sGrav: Float64Array;
-  readonly sDrag: Float64Array;
-  readonly sWind: Float64Array;
-  readonly sCurl: Float64Array;
-  readonly sGround: Uint8Array;
-  readonly sBounce: Float64Array;
-  readonly sFric: Float64Array;
-  readonly sSub: Int32Array; // per trigger (death, ground, live): the recipe thrown, or -1
-  readonly sSubC0: Float64Array;
-  readonly sSubC1: Float64Array;
-  readonly sSubRate: Float64Array;
-  readonly sSubChance: Float64Array;
-  readonly sSubInherit: Float64Array;
-  readonly sSubRefs: (string | EmitterRecipe | null)[];
-  readonly recipes: Compiled[] = [];
-  readonly byName = new Map<string, number>();
-  readonly names: string[] = [];
-  readonly styles: { version: number; count: number; data: Float32Array; ramps: readonly string[] } = { version: 0, count: 0, data: new Float32Array(0), ramps: [] };
-  readonly slots: ParticleSlots;
-
-  constructor(N: number, E: number, o: ParticlePoolOptions) {
-    this.N = N;
-    this.E = E;
-    const stats: ParticleStats = { spawned: 0, sub: 0, died: 0, bounced: 0, culled: 0, lod: 0, budget: 0, emitterBudget: 0, noEmitter: 0, growths: 0 };
-    this.stats = stats;
-    // (Every typed array the pool will ever have, counted: the tests hold this still.)
-    const T = <A>(a: A): A => { stats.growths += 1; return a; };
-    this.p0 = T(new Float64Array(N * 3));
-    this.v0 = T(new Float64Array(N * 3));
-    this.vinf = T(new Float64Array(N * 3));
-    this.tSeg = T(new Float64Array(N));
-    this.tStop = T(new Float64Array(N));
-    this.tBirth = T(new Float64Array(N));
-    this.life = T(new Float64Array(N));
-    this.tGround = T(new Float64Array(N).fill(Infinity));
-    this.tLive = T(new Float64Array(N).fill(Infinity));
-    this.tEvent = T(new Float64Array(N).fill(Infinity));
-    this.style = T(new Uint8Array(N));
-    this.rnd = T(new Uint8Array(N));
-    this.lod = T(new Uint8Array(N));
-    this.pseed = T(new Uint32Array(N));
-    this.owner = T(new Uint16Array(N));
-    this.flags = T(new Uint8Array(N));
-    this.liveN = T(new Uint16Array(N));
-    this.heap = T(new Int32Array(N));
-    for (let i = 0; i < N; i += 1) this.heap[i] = i; // (ascending: already a min-heap)
-    this.heapSize = N;
-    this.changed = T(new Uint8Array(N));
-    this.changes = T(new Int32Array(N));
-    this.eState = T(new Uint8Array(E));
-    this.eGen = T(new Uint16Array(E));
-    this.eRecipe = T(new Int32Array(E));
-    this.eUnit = T(new Int32Array(E));
-    this.eSocket = new Array<string | null>(E).fill(null);
-    this.eP = T(new Float64Array(E * 3));
-    this.ePrev = T(new Float64Array(E * 3));
-    this.eV = T(new Float64Array(E * 3));
-    this.eBaseV = T(new Float64Array(E * 3));
-    this.eF = T(new Float64Array(E * 12));
-    this.eDir = T(new Float64Array(E * 3));
-    this.eHasDir = T(new Uint8Array(E));
-    this.eAge = T(new Float64Array(E));
-    this.eDur = T(new Float64Array(E));
-    this.eAcc = T(new Float64Array(E));
-    this.eLodAcc = T(new Float64Array(E));
-    this.eSpawn = T(new Float64Array(E));
-    this.eKey = T(new Uint32Array(E));
-    this.ePri = T(new Uint8Array(E));
-    this.eScale = T(new Float32Array(E));
-    this.eCount = T(new Int32Array(E));
-    this.eLive = T(new Int32Array(E));
-    this.eFresh = T(new Uint8Array(E));
-    this.eFired = T(new Uint8Array(E));
-    this.active = T(new Int32Array(E));
-    this.activeAt = T(new Int32Array(E));
-    this.free = T(new Int32Array(E));
-    for (let i = 0; i < E; i += 1) this.free[i] = E - 1 - i; // (slot 0 comes off first)
-    this.freeTop = E;
-    const seed = o.seed ?? 1;
-    this.key0 = typeof seed === "number" ? h30((seed >>> 0) ^ 0x5eed) : (((Math.floor(seed.f() * 65536) << 14) ^ Math.floor(seed.f() * 65536)) & 0x3fffffff);
-    this.wind = T(new Float64Array(3));
-    this.scratch = T(new Float64Array(12));
-    this.F = T(new Float64Array(F_SIZE));
-    this.F[14] = o.minPixels ?? 1.5;
-    this.F[15] = o.maxLod ?? 4;
-    this.V = T(new Float64Array(8));
-    const reserve = o.reserve ?? [0.55, 0.8, 0.95, 1];
-    this.limit = T(new Int32Array(4));
-    for (let q = 0; q < 4; q += 1) this.limit[q] = Math.floor(N * reserve[q]!);
-    this.usePressure = o.pressure ?? true;
-    this.host = o.host ?? null;
-    this.styleData = T(new Float32Array(MAX_STYLES * STYLE_WIDTH * 4));
-    this.styles.data = this.styleData;
-    this.styles.ramps = this.styleRamps;
-    this.sGrav = T(new Float64Array(MAX_STYLES));
-    this.sDrag = T(new Float64Array(MAX_STYLES));
-    this.sWind = T(new Float64Array(MAX_STYLES));
-    this.sCurl = T(new Float64Array(MAX_STYLES));
-    this.sGround = T(new Uint8Array(MAX_STYLES));
-    this.sBounce = T(new Float64Array(MAX_STYLES));
-    this.sFric = T(new Float64Array(MAX_STYLES));
-    this.sSub = T(new Int32Array(MAX_STYLES * 3).fill(-1));
-    this.sSubC0 = T(new Float64Array(MAX_STYLES * 3));
-    this.sSubC1 = T(new Float64Array(MAX_STYLES * 3));
-    this.sSubRate = T(new Float64Array(MAX_STYLES * 3));
-    this.sSubChance = T(new Float64Array(MAX_STYLES * 3));
-    this.sSubInherit = T(new Float64Array(MAX_STYLES * 3));
-    this.sSubRefs = new Array<string | EmitterRecipe | null>(MAX_STYLES * 3).fill(null);
-    this.slots = { p0: this.p0, v0: this.v0, vinf: this.vinf, tSeg: this.tSeg, tStop: this.tStop, tBirth: this.tBirth, life: this.life, style: this.style, rnd: this.rnd, lod: this.lod, owner: this.owner };
-  }
-}
-
 // ---------------------------------------------------------------- recipes -> styles
 
 function writeStyle(S: PoolState, c: Compiled) {
@@ -1186,28 +763,6 @@ function setViewRect(S: PoolState, x0: number, z0: number, x1: number, z1: numbe
   const w = V[2] - V[0], d = V[3] - V[1];
   V[6] = 0.09 * (w * w + d * d);
   V[7] = k;
-}
-
-// ---------------------------------------------------------------- the pool as bytes
-
-/** A snapshot as the codec's record: its typed arrays as plain number arrays (the codec keeps each element exact). */
-export function poolRecordOf(s: ParticlePoolSnapshot): ParticlePoolRecord {
-  const plain = (r: Readonly<Record<string, ArrayLike<number>>>): Record<string, number[]> => Object.fromEntries(Object.entries(r).map(([k, a]) => [k, Array.from(a)]));
-  return {
-    format: s.format, recipes: [...s.recipes], key: s.key, time: s.time, tick: s.tick, serial: s.serial, wind: [...s.wind],
-    slots: Array.from(s.slots), particles: plain(s.particles), emitters: plain(s.emitters), sockets: [...s.sockets],
-  };
-}
-
-/** Codec bytes back to a snapshot load() takes (plain arrays). Bytes that aren't a pool snapshot are a TypeError saying why. */
-export function poolSnapshotOf(bytes: Uint8Array): ParticlePoolSnapshot {
-  let r: ParticlePoolRecord;
-  try {
-    r = decode(PARTICLE_POOL, bytes);
-  } catch (e) {
-    throw new TypeError(`These bytes aren't a particle pool snapshot (keel/particles/pool): ${(e as Error).message}`, { cause: e });
-  }
-  return { ...r, format: r.format as ParticlePoolSnapshot["format"] };
 }
 
 // ---------------------------------------------------------------- the pool
