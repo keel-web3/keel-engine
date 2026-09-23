@@ -15,6 +15,7 @@ interface CliArgs {
   readonly dev: boolean;
   readonly check: boolean;
   readonly minify: boolean;
+  readonly entryExport: string;
   readonly command: string | undefined;
   readonly id: string | undefined;
   readonly out: string;
@@ -34,6 +35,7 @@ export function parseCliArgs(argv: readonly string[], { engineRoot, cwd }: { eng
   const args = [...argv];
   const projects = takeCliFlag(args, "--project").map((p) => resolve(cwd, p));
   const outFlag = takeCliFlag(args, "--out")[0];
+  const entryExport = takeCliFlag(args, "--entry")[0] ?? "main";
   const revision = takeCliFlag(args, "--revision")[0] ?? null;
   const chainId = Number(takeCliFlag(args, "--chain-id")[0] ?? 11155111);
   const dev = args.includes("--dev");
@@ -41,7 +43,7 @@ export function parseCliArgs(argv: readonly string[], { engineRoot, cwd }: { eng
   const minify = !args.includes("--readable");
   const [command, id] = args.filter((a) => !a.startsWith("--"));
   const out = outFlag ? resolve(cwd, outFlag) : join(projects[0] ?? engineRoot, "out");
-  return { args, projects, revision, chainId, dev, check, minify, command, id, out };
+  return { args, projects, revision, chainId, dev, check, minify, entryExport, command, id, out };
 }
 
 export const formatKb = (n: number): string => `${(n / 1024).toFixed(1)} KB`;
@@ -53,11 +55,12 @@ interface OutputCommandOptions {
   readonly out: string;
   readonly dev: boolean;
   readonly minify: boolean;
+  readonly entryExport: string;
 }
 
 /** Handle module listing and local module/document output; build commands stay in cli.ts. */
 export async function runOutputCommand(command: string | undefined, id: string | undefined, options: OutputCommandOptions): Promise<boolean> {
-  const { args, workspace, engineRoot, out, dev, minify } = options;
+  const { args, workspace, engineRoot, out, dev, minify, entryExport } = options;
   const kb = formatKb;
   switch (command) {
     case "modules":
@@ -76,12 +79,12 @@ export async function runOutputCommand(command: string | undefined, id: string |
     }
     case "document": {
       if (!id) throw new Error("document <game-id>");
-      const audio = !args.includes("--no-audio") && closureOf(id, workspace).some((m) => m.manifest.id === "keel/audio") && existsSync(join(engineRoot, "vendor"));
-      const doc = await buildGameDocument(id, workspace, { minify, engineRoot, modules: dev ? "dev" : "verified", ...(audio ? { pageScripts: await keelAudioScripts(join(engineRoot, "vendor")) } : {}) });
-      const dir = join(out, "documents", id);
+      const audio = (entryExport === "main" || args.includes("--audio")) && !args.includes("--no-audio") && closureOf(id, workspace).some((m) => m.manifest.id === "keel/audio") && existsSync(join(engineRoot, "vendor"));
+      const doc = await buildGameDocument(id, workspace, { minify, engineRoot, modules: dev ? "dev" : "verified", entryExport, ...(audio ? { pageScripts: await keelAudioScripts(join(engineRoot, "vendor")) } : {}) });
+      const dir = join(out, "documents", id, ...(entryExport === "main" ? [] : [entryExport]));
       mkdirSync(dir, { recursive: true });
       writeFileSync(join(dir, "index.html"), doc.html);
-      writeFileSync(join(dir, "report.json"), `${JSON.stringify({ game: id, bytes: dev ? "dev" : "verified", order: doc.resolution.order, modules: doc.modules, document: doc.html.byteLength }, null, 2)}\n`);
+      writeFileSync(join(dir, "report.json"), `${JSON.stringify({ game: id, ...(entryExport === "main" ? {} : { entryExport }), bytes: dev ? "dev" : "verified", order: doc.resolution.order, modules: doc.modules, document: doc.html.byteLength }, null, 2)}\n`);
       for (const m of doc.modules) console.log(`  ${m.id}@${m.version}  ${m.kind}/${m.phase}@${m.weight}  ${kb(m.bytes)} (${kb(m.stored)} stored)${m.digest ? `  ${m.digest}` : ""}`);
       console.log(`${id}: ${doc.modules.length} modules (${dev ? "dev bundles" : "verified bytes"}), document ${kb(doc.html.byteLength)} -> ${join(dir, "index.html")}`);
       return true;

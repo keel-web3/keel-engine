@@ -15,6 +15,7 @@
 //   modules                   every module the build can see: id, version, kind, needs, where from
 //   module <id>               one module's bytes -> <out>/modules/<id>/<version>/module.js (+ manifest.json)
 //   document <game-id>        a game as a KEEL local document -> <out>/documents/<game>/index.html (+ report.json)
+//                             --entry <export> selects another entry using the same verified modules
 //
 // `module` and `document` use the verified bytes by default; --dev uses the fast
 // in-memory bundle instead (same behaviour, no receipt; --readable unminifies it).
@@ -41,7 +42,7 @@ export { ENGINE_ROOT };
 
 export async function run(argv: readonly string[], { engineRoot = ENGINE_ROOT, cwd = process.cwd() } = {}): Promise<void> {
   const {
-    args, projects, revision, chainId, dev, check, minify, command, id, out,
+    args, projects, revision, chainId, dev, check, minify, entryExport, command, id, out,
   } = parseCliArgs(argv, { engineRoot, cwd });
   const workspace = await readWorkspace(engineRoot, { projects });
   const engineModules = () => dependencyOrder(workspace.filter((w) => w.origin === "engine"));
@@ -54,7 +55,7 @@ export async function run(argv: readonly string[], { engineRoot = ENGINE_ROOT, c
     }
     return done;
   };
-  if (await runOutputCommand(command, id, { args, workspace, engineRoot, out, dev, minify })) return;
+  if (await runOutputCommand(command, id, { args, workspace, engineRoot, out, dev, minify, entryExport })) return;
   switch (command) {
     case "prepare": {
       let stale = 0;
@@ -137,7 +138,7 @@ export async function run(argv: readonly string[], { engineRoot = ENGINE_ROOT, c
       break;
     }
     default:
-      console.log("commands: prepare [--check] | build [--check] | test | index [--revision <sha>] [--check] | reproduce | verify-origin --commit <sha> | plan [--chain-id <id>] | modules | module <id> | document <game-id>   [--project <dir>]... [--out <dir>] [--dev] [--readable] [--no-audio]");
+      console.log("commands: prepare [--check] | build [--check] | test | index [--revision <sha>] [--check] | reproduce | verify-origin --commit <sha> | plan [--chain-id <id>] | modules | module <id> | document <game-id>   [--project <dir>]... [--out <dir>] [--entry <export>] [--dev] [--readable] [--audio|--no-audio]");
   }
 }
 
