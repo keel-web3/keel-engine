@@ -2926,8 +2926,8 @@
         "byteLength": 63281
       },
       "sourceDigest": "0x026c53d1994e4d9b83d29fb83f24016074f1f6a5766201678a55fe6d0399e4a9",
-      "recipeDigest": "0x0c41e29181a115609ce60ebcab84e118a5c9c2bc8c5c6de45fd1fc7575689855",
-      "receiptDigest": "0x0ee41c26e0699e60711e66be0c49bd3c361cc26cb88c69bcd5a9f6c2af12d6ad",
+      "recipeDigest": "0x620798f792aa5a61865a064734e405dd036e4d9f6e8c2c13de0e5ca211cb3abe",
+      "receiptDigest": "0x474f1ecc137e7d696689d0b50731f1b502cb122408fe635ec39200399a3833f8",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
