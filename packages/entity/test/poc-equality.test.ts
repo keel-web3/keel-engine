@@ -38,12 +38,17 @@ const r3 = (r: () => number, s = 1): Vec3 => [(r() * 2 - 1) * s, (r() * 2 - 1) *
 
 // Random valid pins for a seed: some choices pinned to one of their options (or a nudged number),
 // each option read off the entity as pinned so far (ears come in the pinned species' shapes).
+const ENGINE_ONLY: ReadonlySet<unknown> = new Set(["robe", "hover"]);
+// (And whole choices the engine added -- a person's toon build: left out of the comparison, at its default.)
+const ENGINE_CHOICES: ReadonlySet<string> = new Set(["toon"]);
+const pocOf = <E extends { choices: object }>(e: E): E => ({ ...e, choices: Object.fromEntries(Object.entries(e.choices).filter(([k]) => !ENGINE_CHOICES.has(k))) });
 function randomPins(r: () => number, seed: string, kind: Kind): EntityPins {
   const pins: Record<string, unknown> = {};
   for (const ch of T.CHOICES) {
-    if (ch.name === "kind" || r() > 0.25) continue;
+    if (ch.name === "kind" || ENGINE_CHOICES.has(ch.name) || r() > 0.25) continue;
     const made = T.entityOf(seed, { kind, pins: pins as EntityPins }).choices;
-    const opts = T.optionsOf(ch.name, made) as readonly unknown[] | undefined;
+    // (The engine's own additions -- robes -- the proof of concept never had: pinned only to what both know.)
+    const opts = (T.optionsOf(ch.name, made) as readonly unknown[] | undefined)?.filter((o) => !ENGINE_ONLY.has(o));
     if (opts) pins[ch.name] = opts[Math.floor(r() * opts.length)];
     else if (ch.range) pins[ch.name] = ch.range[0] + (ch.range[1] - ch.range[0]) * r();
   }
@@ -53,7 +58,7 @@ function randomPins(r: () => number, seed: string, kind: Kind): EntityPins {
 test("specs: every seed x kind, pins, species and sizes", { skip }, () => {
   for (let i = 0; i < 300; i += 1) {
     const seed = i % 7 === 0 ? `0x${(i * 2654435761 >>> 0).toString(16)}` : String(i);
-    for (const kind of [...KINDS, undefined]) same("specs (seed x kind)", T.entityOf(seed, { kind }), J.entityOf(seed, { kind }));
+    for (const kind of [...KINDS, undefined]) same("specs (seed x kind)", pocOf(T.entityOf(seed, { kind })), J.entityOf(seed, { kind }));
   }
   const r = rand(11);
   for (let i = 0; i < 400; i += 1) {
@@ -61,27 +66,27 @@ test("specs: every seed x kind, pins, species and sizes", { skip }, () => {
     const seed = String(1000 + i);
     const pins = randomPins(r, seed, kind);
     const size = i % 5 === 0 ? 0.2 + r() * 1.8 : undefined;
-    same("specs (pinned)", T.entityOf(seed, { kind, pins, size }), J.entityOf(seed, { kind, pins, size }));
+    same("specs (pinned)", pocOf(T.entityOf(seed, { kind, pins, size })), J.entityOf(seed, { kind, pins, size }));
   }
   for (const kind of KINDS) {
     for (const [species] of T.SPECIES[kind]) {
-      for (let s = 0; s < 20; s += 1) same("specs (species)", T.entityOf(String(s), { kind, species }), J.entityOf(String(s), { kind, species }));
+      for (let s = 0; s < 20; s += 1) same("specs (species)", pocOf(T.entityOf(String(s), { kind, species })), J.entityOf(String(s), { kind, species }));
     }
   }
   // (Aliases, and the errors, word for word.)
-  same("specs (species)", T.entityOf("1", { kind: "animal", species: "bunny" }), J.entityOf("1", { kind: "animal", species: "bunny" }));
+  same("specs (species)", pocOf(T.entityOf("1", { kind: "animal", species: "bunny" })), J.entityOf("1", { kind: "animal", species: "bunny" }));
   const err = (f: () => unknown): string => { try { f(); return "no error"; } catch (e) { return `${(e as Error).name}: ${(e as Error).message}`; } };
   for (const bad of [{ kind: "animal", species: "frog" }, { pins: { wings: 2 } }, { kind: "anthro", pins: { ears: "side" } }, { kind: "humanoid", pins: { top: "cape" } }]) {
-    same("errors", err(() => T.entityOf("1", bad as T.EntityOptions)), err(() => J.entityOf("1", bad as T.EntityOptions)));
+    same("errors", err(() => T.entityOf("1", bad as T.EntityOptions)).replace(", toon", ""), err(() => J.entityOf("1", bad as T.EntityOptions)));
   }
   // The catalogue itself.
-  for (const ch of T.CHOICES) {
+  for (const ch of T.CHOICES.filter((c) => !ENGINE_CHOICES.has(c.name))) {
     const j = J.CHOICES.find((c) => c.name === ch.name)!;
-    same("catalogue", [ch.name, ch.reads, ch.options], [j.name, j.reads, j.options]);
+    same("catalogue", [ch.name, ch.reads, ch.options?.filter((o) => !ENGINE_ONLY.has(o))], [j.name, j.reads, j.options]);
     same("catalogue", [...T.readsOf(ch.name)], [...J.readsOf(ch.name)]);
     for (let s = 0; s < 5; s += 1) { const a = T.choiceStream(s, ch.name); const b = J.choiceStream(s, ch.name); for (let k = 0; k < 4; k += 1) exact("catalogue", a.f(), b.f()); }
   }
-  same("catalogue", T.CHOICES.map((c) => c.name), J.CHOICES.map((c) => c.name));
+  same("catalogue", T.CHOICES.map((c) => c.name).filter((n) => !ENGINE_CHOICES.has(n)), J.CHOICES.map((c) => c.name));
   same("catalogue", [T.SPECIES, T.EARS, T.KINDS], [J.SPECIES, J.EARS, J.KINDS]);
 });
 

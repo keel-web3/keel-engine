@@ -17,6 +17,8 @@
     "@keel-engine/keel": "workspace:*",
     "@keel-engine/render": "workspace:*",
     "@keel-engine/codec": "workspace:*",
-    "@keel-engine/foliage": "workspace:*"
+    "@keel-engine/foliage": "workspace:*",
+    "@keel-engine/architecture": "workspace:*",
+    "@keel-engine/bake": "workspace:*"
   }
 }

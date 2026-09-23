@@ -1,5 +1,6 @@
 // Convertible hardware, in the same boxes, sheets, tubes and finish slots as the car. Pieces stay rigid as their
 // hinges move: hard roof panels nest in the rear well; fabric folds over several articulated bows.
+import { dsin, dcos, datan2, dhypot } from "@keel-engine/core";
 import { meshMatrix } from "@keel-engine/bake";
 import type { BakeWorld } from "@keel-engine/bake";
 import type { Car, Colour } from "./car.ts";
@@ -55,7 +56,7 @@ export function convertiblePose(car: Car, open: number): readonly RoofPiece[] {
   // Unlatch and lift the leading panels UP first; only then rotate the folded stack behind the seats.
   // A positive local fold sends the leading hard panel down through the cabin.
   const root = -Math.PI * ease(0.38, 0.84, p), fold = -Math.PI * ease(0.12, 0.4, p), sink = ease(0.84, 1, p);
-  let y = r.top + Math.sin(Math.PI * ease(0, 0.85, p)) * 0.13 - (r.top - r.stow) * sink, z = r.rear - sink * 0.08;
+  let y = r.top + dsin(Math.PI * ease(0, 0.85, p)) * 0.13 - (r.top - r.stow) * sink, z = r.rear - sink * 0.08;
   const rootY = y, rootZ = z;
   for (let i = 0; i < n; i++) {
     const angle = root + (i % 2 ? fold : 0), id = `panel:${i}`;
@@ -71,7 +72,7 @@ export function convertiblePose(car: Car, open: number): readonly RoofPiece[] {
       return S;
     });
     out.push({ id, world, matrix: meshMatrix({ y: y + i * 0.014 * ease(0.7, 1, p), z, pitch: angle }) });
-    y -= Math.sin(angle) * len; z += Math.cos(angle) * len;
+    y -= dsin(angle) * len; z += dcos(angle) * len;
   }
   // The small rear window and its surround move with the rear bow. At full stow it lies in the rear well.
   const rear = worldOf(car, "rear", () => {
@@ -82,7 +83,7 @@ export function convertiblePose(car: Car, open: number): readonly RoofPiece[] {
   const rearHeight = r.top - car.body.belt, rearRun = Math.min(0.22, rearHeight * 0.7);
   // This hinge goes the OTHER way: lift the rear glass outward over the deck. Its angle is independent of
   // the main stack, so the last fold never swings the window and its frame forward across the headrests.
-  const rearPitch = (Math.PI / 2 - Math.atan2(rearRun, rearHeight)) * ease(0.02, 0.3, p);
+  const rearPitch = (Math.PI / 2 - datan2(rearRun, rearHeight)) * ease(0.02, 0.3, p);
   out.push({ id: "rear", pane: "rear", world: rear, matrix: meshMatrix({ y: rootY, z: rootZ, pitch: rearPitch }) });
   const surround = worldOf(car, "rear-frame", () => {
     const S = solids(), h = r.top - car.body.belt, run = Math.min(0.22, h * 0.7);
@@ -95,11 +96,11 @@ export function convertiblePose(car: Car, open: number): readonly RoofPiece[] {
   const link = worldOf(car, "link", () => { const S = solids(); cap(S, P.metal, [0, 0, 0], [0, 0, 1], 0.012); return S; });
   for (const side of [-1, 1]) {
     const baseY = car.body.belt + 0.01, baseZ = r.rear - 0.1;
-    const jointY = (baseY + rootY) / 2 + 0.05, jointZ = (baseZ + rootZ) / 2 - 0.12 * Math.sin(p * Math.PI);
+    const jointY = (baseY + rootY) / 2 + 0.05, jointZ = (baseZ + rootZ) / 2 - 0.12 * dsin(p * Math.PI);
     const ends = [[baseY, baseZ, jointY, jointZ], [jointY, jointZ, rootY - 0.025, rootZ]] as const;
     ends.forEach(([ay, az, by, bz], i) => {
-      const dy = by - ay, dz = bz - az, len = Math.max(0.01, Math.hypot(dy, dz));
-      const matrix = meshMatrix({ x: side * r.halfWidth * 0.93, y: ay, z: az, pitch: -Math.atan2(dy, dz) });
+      const dy = by - ay, dz = bz - az, len = Math.max(0.01, dhypot(dy, dz));
+      const matrix = meshMatrix({ x: side * r.halfWidth * 0.93, y: ay, z: az, pitch: -datan2(dy, dz) });
       for (let k = 8; k < 11; k++) matrix[k] = matrix[k]! * len;
       out.push({ id: `link:${side}:${i}`, world: link, matrix });
     });

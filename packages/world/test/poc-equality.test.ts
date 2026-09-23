@@ -12,6 +12,10 @@
 //      a camera blend in progress (and the fov kick); here they are loaded.
 //   3. Snapshots are v2: the camera's own saved state (not v1's field copy),
 //      each entity's animator. Everything v1 carried is the same.
+//   4. A person carries a `toon` choice (keel/entity species.ts: chibi
+//      proportions). The proof of concept has no such choice, so the checks
+//      below compare the choices it knows -- every other choice, and every roll
+//      that makes one, still has to match exactly.
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -31,8 +35,15 @@ const pocRules = hasPoc ? await poc<{ targetRules: typeof targetRules }>("src/wo
 function shared(w: World): Record<string, unknown> {
   const s = JSON.parse(JSON.stringify(w.snapshot())) as Record<string, unknown> & { entities: Record<string, unknown>[] };
   const { v: _v, camera: _camera, ...rest } = s;
-  return { ...rest, entities: s.entities.map(({ anim: _anim, heldKey: _held, ...e }) => e) };
+  return { ...rest, entities: s.entities.map(({ anim: _anim, heldKey: _held, ...e }) => ("choices" in e ? { ...e, choices: pocChoices(e.choices) } : e)) };
 }
+// An entity's choices as the proof of concept knows them (difference 4: `toon` is this engine's own).
+const pocChoices = (choices: unknown): unknown => {
+  if (!choices || typeof choices !== "object") return choices;
+  const { toon: _toon, ...rest } = choices as Record<string, unknown>;
+  return rest;
+};
+
 // A frame, as JSON (the renderer's inputs, minus the rules object's own identity).
 const frameOf = (w: World): Frame => JSON.parse(JSON.stringify(w.frame())) as Frame;
 
@@ -198,7 +209,7 @@ test("generation under locks beside the proof of concept's: the same items kept,
     const b = makeWorld({ config: { locks } }, pocWorld!);
     c.same("settings", a.settings.toJSON(), b.settings.toJSON());
     c.same("warnings", a.warnings, b.warnings);
-    c.same("entities", [...a.entities.values()].map((e) => [e.id, e.make, e.spec.choices, e.size]), [...b.entities.values()].map((e) => [e.id, e.make, e.spec.choices, e.size]));
+    c.same("entities", [...a.entities.values()].map((e) => [e.id, e.make, pocChoices(e.spec.choices), e.size]), [...b.entities.values()].map((e) => [e.id, e.make, pocChoices(e.spec.choices), e.size]));
     c.same("explain", a.explain("species", "animal-1"), b.explain("species", "animal-1"));
     a.generate(level);
     b.generate(level);

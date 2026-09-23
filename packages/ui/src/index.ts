@@ -67,3 +67,23 @@ export type { BrowserFontOptions } from "./import/browser.ts";
 // Presenting the layer: a 2D canvas over the game's, or the game's own WebGL2 context.
 export { createCanvasPresenter, createGlPresenter } from "./present.ts";
 export type { GlPresenter, Presenter } from "./present.ts";
+export { dialInto, discInto, radarInto, textInto, textWidth } from "./gauges.ts";
+export type { DialStyle, RadarStyle, RadarView } from "./gauges.ts";
+
+// The front end: a screen stack with transitions, menus as data (lists, grids, toggles, choices, ranges, held-key
+// repeat), toasts, stores that outlive a session (settings with a schema, saves), and chrome drawn into a bitmap --
+// see-through bevelled panels, slanted bars, meters and stat bars, dithered fades and wipes, device prompts, tables.
+export { createFlow } from "./flow.ts";
+export type { Flow, FlowEntry, FlowKind, FlowOptions, FlowTransition } from "./flow.ts";
+export { createMenu, createRepeater } from "./menu.ts";
+export type { MenuEntry, MenuKind, MenuModel, MenuModelOptions, Repeater } from "./menu.ts";
+export { createToasts } from "./toasts.ts";
+export type { Toast, ToastInput, ToastOptions, ToastView, Toasts } from "./toasts.ts";
+export { browserStorage, createStore, memoryStorage, mergeDefaults, settingsSchema } from "./store.ts";
+export type { SettingSpec, SettingValues, SettingsSchema, StorageLike, Store, StoreOptions } from "./store.ts";
+export { anchorRect, blend, blendRect, dither, ditherRect, easeInOut, easeOut, fade, fadeInto, gradientRect, mix, panelInto, segmentsInto, slantRect, statBarInto, wipeInto } from "./chrome.ts";
+export type { PanelStyle, SegmentStyle, StatBarStyle } from "./chrome.ts";
+export { promptBarInto, promptInto, promptWidth } from "./prompts.ts";
+export type { PromptGlyph, PromptStyle } from "./prompts.ts";
+export { columnLayout, fitText, tableInto } from "./table.ts";
+export type { TableColumn, TableRow, TableStyle } from "./table.ts";

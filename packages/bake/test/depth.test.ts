@@ -159,6 +159,15 @@ function march(world: BakeWorld, o: readonly [number, number, number], d: readon
   return Infinity;
 }
 
+test("thin sloping panels leave the bay open and retain thickness when placed at scale", () => {
+  const panel = { c: [0, 1, 0], h: [1, 1, 1], lo: 0.5, skin: 0.1 } as const;
+  assert.equal(rayWedge(panel, [0, 1, 0], [1, 0, 0]), Infinity, "ray through the empty bay");
+  assert.ok(Math.abs(rayWedge(panel, [0, -1, 0], [0, 1, 0]) - 2.4) < 1e-9, "underside is just below the slope");
+  assert.ok(Math.abs(rayWedge(panel, [0, 5, 0], [0, -1, 0]) - 3.5) < 1e-9, "top surface unchanged");
+  const scaled = placeWorld({ wedges: [panel] }, [0, 0, 0], 0, 2);
+  assert.ok(Math.abs(raycastWorld(scaled, [0, -2, 0], [0, 1, 0]) - 4.8) < 1e-9);
+});
+
 test("the analytic ray against a design's solids agrees with the distance-field march", () => {
   const f = rng(5);
   for (let n = 0; n < 300; n += 1) {

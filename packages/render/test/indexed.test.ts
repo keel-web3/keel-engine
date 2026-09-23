@@ -12,14 +12,15 @@ import { standIn } from "./gl-stand-in.ts";
 
 const uniforms = (src: string): string[] => [...src.matchAll(/^uniform\s+\w+\s+(\w+)/gm)].map((m) => m[1]!).sort();
 
-test("BAKE_WORLD_FS is WORLD_FS plus the surface coordinate and the split: the same march, data2's .zw filled", () => {
-  assert.deepEqual(uniforms(BAKE_WORLD_FS), [...uniforms(WORLD_FS), "uSplit"].sort());
+test("BAKE_WORLD_FS is WORLD_FS plus the surface coordinate, the split and the orthographic rays: the same march, data2's .zw filled", () => {
+  assert.deepEqual(uniforms(BAKE_WORLD_FS), [...uniforms(WORLD_FS), "uOrthoH", "uSplit"].sort());
   assert.ok(BAKE_WORLD_FS.includes("vec2 surfaceUv(vec3 p, int k)"));
   assert.ok(BAKE_WORLD_FS.includes("outData2 = vec4(glow, facing, surf);"));
   assert.ok(!BAKE_WORLD_FS.includes("outData2 = vec4(glow, facing, 0.0, 0.0);"));
   // Everything else is WORLD_FS's: take the additions out and the rest is character for character.
   const back = BAKE_WORLD_FS
-    .replace(/uniform vec4 uSplit;[^\n]*\n\/\/ Where on its part[\s\S]*?\n}\n\nvoid main\(\) \{/, "void main() {")
+    .replace(/uniform vec4 uSplit;[^\n]*\nuniform float uOrthoH;[^\n]*\n\/\/ Where on its part[\s\S]*?\n}\n\nvoid main\(\) \{/, "void main() {")
+    .replace("vec3 rd = uOrthoH > 0.0 ? uFwd : normalize(", "vec3 rd = normalize(").replace("vec3 ro = uOrthoH > 0.0 ? uEye + (uv.x * aspect * uRight + uv.y * uUp) * uOrthoH : uEye;", "vec3 ro = uEye;")
     .replace(" vec2 surf = vec2(0.0);", "").replace(" surf = surfaceUv(p, int(hit.z + 0.5)); ramp = uSplit.w > 0.5 && dot(p - uSplit.xyz, uFwd) > 0.0 ? 1.0 : 0.0;", "")
     .replace("vec4(glow, facing, surf)", "vec4(glow, facing, 0.0, 0.0)");
   assert.equal(back, WORLD_FS);

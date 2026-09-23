@@ -47,8 +47,11 @@ export interface UiOptions {
   /** The screen, in device pixels. */
   readonly width: number;
   readonly height: number;
-  /** A whole UI scale (default: uiScaleFor). */
-  readonly scale?: number;
+  /**
+   * A whole UI scale (default: uiScaleFor) -- or a function of the screen's size, asked again on every resize (a phone
+   * turned, a window moved to a denser monitor).
+   */
+  readonly scale?: number | ((width: number, height: number) => number);
   /** The design size the default scale aims for (default 640 x 360: 1080p is x3, 1440p x4, 4K x6). */
   readonly reference?: readonly [number, number];
   /** Insets in device pixels (notches, TV overscan). */
@@ -115,7 +118,7 @@ export class Ui implements LayoutContext {
   private screenW: number;
   private screenH: number;
   private readonly reference: readonly [number, number];
-  private readonly scaleFixed: number | undefined;
+  private readonly scaleFixed: number | ((width: number, height: number) => number) | undefined;
   private safe: SafeArea;
   private fontOverrides: Partial<Record<FontRole, PixelFont>>;
   private fonts = new Map<string, PixelFont>();
@@ -149,7 +152,7 @@ export class Ui implements LayoutContext {
     this.screenH = o.height;
     this.reference = o.reference ?? [640, 360];
     this.scaleFixed = o.scale;
-    this.scale = o.scale ?? uiScaleFor(o.width, o.height, this.reference);
+    this.scale = this.scaleAt(o.width, o.height);
     this.safe = o.safe ?? {};
     this.fontOverrides = { ...(o.fonts ?? {}) };
     this.atlas = o.atlas ?? createAtlas(1024);
@@ -283,10 +286,15 @@ export class Ui implements LayoutContext {
     this.needsLayout = true;
     this.dirtyAll();
   }
+  private scaleAt(width: number, height: number): number {
+    const f = this.scaleFixed;
+    return Math.max(1, Math.round(typeof f === "function" ? f(width, height) : f ?? uiScaleFor(width, height, this.reference)));
+  }
+
   resize(width: number, height: number, safe?: SafeArea): void {
     this.screenW = width; this.screenH = height;
     if (safe) this.safe = safe;
-    this.scale = this.scaleFixed ?? uiScaleFor(width, height, this.reference);
+    this.scale = this.scaleAt(width, height);
     this.layer = createBitmap(Math.ceil(width / this.scale), Math.ceil(height / this.scale));
     this.needsLayout = true;
     this.dirtyAll();

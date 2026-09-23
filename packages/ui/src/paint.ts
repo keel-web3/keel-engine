@@ -45,7 +45,9 @@ const inset = (n: UiNode, ctx: PaintContext) => {
   return { x: n.rect.x + p.l, y: n.rect.y + p.t, w: Math.max(0, n.rect.w - p.l - p.r), h: Math.max(0, n.rect.h - p.t - p.b) };
 };
 
-function frameRect(n: UiNode, ctx: PaintContext, kind: FrameKind, state: FrameState, opts: { mesh?: boolean } = {}) {
+function frameRect(n: UiNode, ctx: PaintContext, kind: FrameKind | "none", state: FrameState, opts: { mesh?: boolean } = {}) {
+  // (A frameless node -- a HUD's bare picture -- draws no frame, but still answers with the panel's colours.)
+  if (kind === "none") return ctx.frame("panel", state);
   const f = ctx.frame(kind, state);
   drawFrame(ctx.layer, n.rect.x, n.rect.y, n.rect.w, n.rect.h, f.t, f.c, ctx.clip, opts.mesh ? { mesh: true } : {});
   return f;

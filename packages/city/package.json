@@ -1,0 +1,16 @@
+{
+  "name": "@keel-engine/city",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cities from a seed: a site with its edges (ocean, mountains, river, desert, forest), arterials wide enough to race, a ring road, streets, blocks and lots -- a road graph (keel/road) and the lots a buildings pack fills. Deterministic dmath, no GL, no packs.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/elevation": "workspace:*",
+    "@keel-engine/road": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

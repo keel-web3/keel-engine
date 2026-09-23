@@ -1,0 +1,13 @@
+{
+  "name": "@keel-engine/lod",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Level of detail for generated worlds: nested prefix chains, screen-space-error selection with hysteresis and dithered fades, tiles for a far pass, and a generation work queue.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

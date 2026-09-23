@@ -8,6 +8,7 @@
     "needs": [
       "keel/runtime@^0.1",
       "keel/core@^0.1",
+      "keel/bake@^0.1",
       "keel/vehicle@^0.1"
     ],
     "provides": [
@@ -20,6 +21,7 @@
     "weight": -500
   },
   "imports": {
+    "@keel-engine/bake": "keel/bake",
     "@keel-engine/core": "keel/core"
   },
   "manifests": {}

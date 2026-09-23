@@ -6,10 +6,17 @@
   "order": [
     "keel/runtime",
     "keel/codec",
+    "keel/core",
+    "keel/ads",
     "keel/replay",
     "keel/alchemy",
+    "keel/elevation",
+    "keel/road",
+    "keel/city",
+    "keel/architecture",
+    "keel/proof",
+    "keel/arena",
     "keel/audio",
-    "keel/core",
     "keel/scene",
     "keel/entity",
     "keel/bake",
@@ -18,12 +25,17 @@
     "keel/builder",
     "keel/camera",
     "keel/capture",
+    "keel/controls",
+    "keel/decal",
+    "keel/vehicle",
+    "keel/driver",
     "keel/import",
     "keel/input",
     "keel/particles",
     "keel/world",
     "keel/terrain",
     "keel/level",
+    "keel/lod",
     "keel/render",
     "keel/ui",
     "keel/view",
@@ -35,6 +47,7 @@
     "packs/dungeon",
     "packs/foliage",
     "packs/humans",
+    "packs/vehicles",
     "ai/herd",
     "ai/wander"
   ],
@@ -174,6 +187,84 @@
       "deployed": false
     },
     {
+      "id": "keel/ads",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/core@^0.1",
+        "keel/runtime@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-ads",
+      "license": "MIT",
+      "summary": "Ad slots, sources (house, list, chain -- first answer wins), safe links, and picking the slot under a pointer.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/ads"
+      },
+      "githubPath": "packages/ads/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/ads/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/ads/keel/link.json",
+          "sha256": "0xafc99d88ecd5eb36e84841b37a2bdd49c1763e2b69dd0618f71a49aeeff0573a"
+        },
+        {
+          "path": "packages/ads/src/feed.ts",
+          "sha256": "0x810868ede4983affd9d4e1eea7753c3944ff75f094c8ffa4ea243f9296869f12"
+        },
+        {
+          "path": "packages/ads/src/href.ts",
+          "sha256": "0x4dccb4d2434d74c4bc0c60148a10cc8a7bf02884dbf2e97d5f00644441a348a2"
+        },
+        {
+          "path": "packages/ads/src/index.ts",
+          "sha256": "0x68fb5bce846be05301fefa9f5d6855a7b54d8ca238e4e9d9f6668d7514678b92"
+        },
+        {
+          "path": "packages/ads/src/module.ts",
+          "sha256": "0xbfab8c0b41ac5d78f2dadac6cb6a768d12dddd191feca5a974404ce7c05501c4"
+        },
+        {
+          "path": "packages/ads/src/pick.ts",
+          "sha256": "0xca4e7388853ef0b9c5b8283ddbe481e07bcea3705c5b7290b3d7b44c1fe48a02"
+        },
+        {
+          "path": "packages/ads/src/sources.ts",
+          "sha256": "0x9b1e008f20cc1bec0b5021cebf4390e0d1816bc701f77a92e5454d00c82058e1"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/core",
+          "@keel-engine/runtime"
+        ]
+      },
+      "output": {
+        "digest": "0xaee72125031bebcd0e22044b12235f0b64b9acff9dc02a94b8b635367d0e1d99",
+        "byteLength": 8723
+      },
+      "sourceDigest": "0x560f6af2a1b7df25922964f9a966eef37132a8888c3c6a5beae2130dcda18b9f",
+      "recipeDigest": "0x522bbfbfdf64f8cc7daf72f3100ddd70aba7f26a2161a78cf7c55870090dbcf4",
+      "receiptDigest": "0x09e6e84ade1f44cf7353c99d7237ee3f6a10786eaed8e7144ef42edbd30b637c",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packages/ads/test/vectors.mjs",
+        "sha256": "0xe927a5b59980310876c05598b2c8216358f26f0a0324be98b8c0770fc3f40e23"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
       "id": "keel/alchemy",
       "version": "0.1.0",
       "kind": "runtime",
@@ -252,6 +343,217 @@
       "deployed": false
     },
     {
+      "id": "keel/architecture",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/city@^0.1",
+        "keel/core@^0.1",
+        "keel/road@^0.1",
+        "keel/runtime@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-architecture",
+      "license": "MIT",
+      "summary": "The built city: buildings (envelopes, massing, facade grids, crowns, rooftop kit, neon), parks, plazas, art, street lamps and furniture -- a plan a lot, a world a block, a look a district.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/architecture"
+      },
+      "githubPath": "packages/architecture/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/architecture/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/architecture/keel/link.json",
+          "sha256": "0xcd37d496c1898652f16ed43fdf2f94c61e33d7815e53786bf0a23937ec5767a0"
+        },
+        {
+          "path": "packages/architecture/src/business.ts",
+          "sha256": "0xa115865d41f0b3b51d46129f0b839f0adc79dba0e4fbff384f1eec5c4b2e3a4d"
+        },
+        {
+          "path": "packages/architecture/src/city.ts",
+          "sha256": "0xd485d6e9effc9bf2636188ad24c37dfe569de883931a61cdd397997a910895f6"
+        },
+        {
+          "path": "packages/architecture/src/civic.ts",
+          "sha256": "0x62dce97da91dd9e0867ab701045003e89874a1e9d857848149abf82a8206f1a2"
+        },
+        {
+          "path": "packages/architecture/src/commons.ts",
+          "sha256": "0xc462272f97b0736586a4c4ff23ee4c7e3be0833c9948089f673b325a8f7b070a"
+        },
+        {
+          "path": "packages/architecture/src/frame.ts",
+          "sha256": "0xb741df1efc965120b5c8bfe406a6daf116811700efc611262ec4d4006eb5b81c"
+        },
+        {
+          "path": "packages/architecture/src/index.ts",
+          "sha256": "0xc083dd02bd1c59debc2613922cd822cdbd82e6bf0af9177da5d94c3aed76cb1c"
+        },
+        {
+          "path": "packages/architecture/src/massing.ts",
+          "sha256": "0x72c73e55800cde4e62085ffa9214630e030fff9ea2bfd949f2952c4682e58aa8"
+        },
+        {
+          "path": "packages/architecture/src/module.ts",
+          "sha256": "0xeedbed3fcb0b81b9cd9ecb65360cb308793fda8b73fc861d5e68219002e9f34c"
+        },
+        {
+          "path": "packages/architecture/src/paint.ts",
+          "sha256": "0xb19ae99fd8f05cf4449cd78bac1ad67679c829a148644971776785b7b5208c3a"
+        },
+        {
+          "path": "packages/architecture/src/plan.ts",
+          "sha256": "0xfd854fbe0e9ce0eb8e3e65e813b3dfa83505e41a487ae56f7a63ec3aa4d91c86"
+        },
+        {
+          "path": "packages/architecture/src/roofs.ts",
+          "sha256": "0x0d977bdaf576b74597bd20216bc5da465978eab946b5cb80e11f7fb66d95e88a"
+        },
+        {
+          "path": "packages/architecture/src/signs.ts",
+          "sha256": "0xe7232718b9d965f67b91f0e6cc49dd5bdeb8a070992b9c8a52db2131ea2618d1"
+        },
+        {
+          "path": "packages/architecture/src/slots.ts",
+          "sha256": "0x9cfefb2236ecd584146e34a1575c53753cd3713224a885cb28586b8cdbb6bb0e"
+        },
+        {
+          "path": "packages/architecture/src/street/art.ts",
+          "sha256": "0xb0ca9e178426626111d053d69f39155691b96d75403d167b131069442aec6e22"
+        },
+        {
+          "path": "packages/architecture/src/street/furniture.ts",
+          "sha256": "0xf59a4c701a83af6195993f3cf597c89a9bf1fb4fcc7489cfacf622bc4e04a0f2"
+        },
+        {
+          "path": "packages/architecture/src/street/infra.ts",
+          "sha256": "0x146bb0f106990634e521d34ba69e5b36846b76246bdf4138144e823d62ff2a84"
+        },
+        {
+          "path": "packages/architecture/src/street/parks.ts",
+          "sha256": "0x0e4e5d1018862830093e7bc7bbc97ab46d5963f1620c7f3d665cf15d51f2c21a"
+        },
+        {
+          "path": "packages/architecture/src/street/plan.ts",
+          "sha256": "0xf2d03e6b7f5e139e3870137eb3500687f59d56860da24acedb50e0b327a9b3eb"
+        },
+        {
+          "path": "packages/architecture/src/street/roadside.ts",
+          "sha256": "0x83352082c8572937628e8f4a8f1299b87a5e0a02746fe2bdf38d2e2a9a197187"
+        },
+        {
+          "path": "packages/architecture/src/world.ts",
+          "sha256": "0x52de144808c1d4015d53ddfdfa9e26c0c1d9859c7f1fa7d826b3ef6c6b966896"
+        },
+        {
+          "path": "packages/architecture/src/zoning.ts",
+          "sha256": "0xdd8a39a232da2f9d825ac71dc59d490e8015f56363114779a487ab2a0ffe493b"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/city",
+          "@keel-engine/core",
+          "@keel-engine/runtime"
+        ]
+      },
+      "output": {
+        "digest": "0x30ee2160e0a56c67c3297591166d3a6fcfc407128a7f5048bdbd31e4564d381f",
+        "byteLength": 95935
+      },
+      "sourceDigest": "0x2e254db7ab14f1acc6807a5173743f5ce835e0c100bf3dbf2d0aae8498e5ef44",
+      "recipeDigest": "0xcabdbc38a7920944568792e1e9b1f63e12472e17b3679dfc3b95af530c57396c",
+      "receiptDigest": "0x2dca16060d15778f0eab58c1301ed579ae67ab8ec57902e607e9884e747c6df0",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packages/architecture/test/vectors.mjs",
+        "sha256": "0x9324ed1fd53ef761d5390617cd08f534551c996d047a3b858d16130aba71f6e3"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "keel/arena",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/codec@^0.1",
+        "keel/proof@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-arena",
+      "license": "MIT",
+      "summary": "Staked matches settled from a proof: the generic match input and entrant chain, placings with inline or Merkle settlement, and match formats that plug in without touching the contract.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/arena"
+      },
+      "githubPath": "packages/arena/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/arena/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/arena/keel/link.json",
+          "sha256": "0x7b8dc9aa8f7dd3c59896190a62f0087c1181b98790dde09c9f0526f285fbc138"
+        },
+        {
+          "path": "packages/arena/src/format.ts",
+          "sha256": "0xb9233a78c8e7729dedc793e2e378534ae3ffc3bbf0d083b53f76c6744b22d2ea"
+        },
+        {
+          "path": "packages/arena/src/index.ts",
+          "sha256": "0x3d1deb781b77b5aaf75aaed3131988ec17ca300e29c884617202d825ad0b9494"
+        },
+        {
+          "path": "packages/arena/src/match.ts",
+          "sha256": "0x0b65e379aae78d2f19506d6d99d49eae1310279215affb967ec8cdf7e9dcacef"
+        },
+        {
+          "path": "packages/arena/src/merkle.ts",
+          "sha256": "0xdadf68c1e5b7fd973d1ab510971b0ff33019425211ed956fc11db0e7dc9e840b"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/codec",
+          "@keel-engine/proof"
+        ]
+      },
+      "output": {
+        "digest": "0xf3675c73842866a9e48506261caaf1628f99d72ceb6e1266ec90579a1970d037",
+        "byteLength": 7336
+      },
+      "sourceDigest": "0x852b0b71bb60bfb4d19b6156c89b8fb70f2c914d77015c44c821fd9b80008b8a",
+      "recipeDigest": "0xc89c1b78a778a32e9af4cec0421ad7611856ba0a03d4a8f67cd9572885fa236c",
+      "receiptDigest": "0x80137bbeb1450666f3580f35369219224ac6ce998f26d28b4f92137bca0734a7",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packages/arena/test/vectors.mjs",
+        "sha256": "0x14df353c6805d2c35f8fcb34d09cdaa700097af1c7c763d9f10dedb1a7780f03"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
       "id": "keel/audio",
       "version": "0.1.0",
       "kind": "runtime",
@@ -289,12 +591,20 @@
           "sha256": "0x0981917c108a1cfdae1b9e879e148a4340d272000b186fb9e0dd280f0ee3e1dc"
         },
         {
+          "path": "packages/audio/src/car-player.ts",
+          "sha256": "0xd22985e869f5e1a1f0506f49cdbdc1964e5183c662722208db04bbb1b0a4e52f"
+        },
+        {
+          "path": "packages/audio/src/car.ts",
+          "sha256": "0xe350140b59e7d55d7e0552ce48611bd4adcd536dc3db7bff9ac47a912b1d2ddc"
+        },
+        {
           "path": "packages/audio/src/features.ts",
           "sha256": "0x47ae195ec0d5f9c93e2ecb8d9e87340fa7f5c641e9138a769879a75d855a4fe7"
         },
         {
           "path": "packages/audio/src/index.ts",
-          "sha256": "0x711a79d6bbd5efc1b392327f8b9217059d94018cbdf1b9e2cfb007f1e2354b50"
+          "sha256": "0xe21549dbe59dba57335759ae40eeaf17028071d9e9b2cea245bbad2db4f210c0"
         },
         {
           "path": "packages/audio/src/nocturnes.ts",
@@ -348,12 +658,12 @@
         ]
       },
       "output": {
-        "digest": "0xb33f3b28eb20013f88e06ffd5ea5955c1289736996ba4e8b0de474289e3be487",
-        "byteLength": 87861
+        "digest": "0x8b2e6aef7371777e7b43683163c349f962b53cd77d6905107251286c13415ddf",
+        "byteLength": 98330
       },
-      "sourceDigest": "0x80cda3ffcc96205dd6deb1c5d5148c67c44c7b2e624867c8f6d0208f0cbda85d",
-      "recipeDigest": "0x511a0bf7aa094ae5965fee2458b04bf57061b45961f710c829fcfb9a586c7f3d",
-      "receiptDigest": "0x70c022d44b3fa3cdca3f171826a9c232d72c033fc463807ce74ddf612ccf83fc",
+      "sourceDigest": "0x7a719a85bbc83354f16c0f487e1cc51cf78d9762373f9b707da3cf374cc8e270",
+      "recipeDigest": "0xfb75486576b23f3c7008ab4f933a30039774940365f7c6036878e7a8008163b2",
+      "receiptDigest": "0x0cd961ebe97a6c3727c8332f5af4b7eb14256191f910d35a0efdfd4b7e6bfaa1",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -401,7 +711,11 @@
         },
         {
           "path": "packages/bake/src/bake.ts",
-          "sha256": "0x658582435b02ff0cc5b9ad0c0c437167312ddf017a757663a0de26712e9dc7ca"
+          "sha256": "0x85ba6b7b876d00031a2b7601e84b0e88f07d8506b5dc30346d6c0173e90c6c4e"
+        },
+        {
+          "path": "packages/bake/src/bloom.ts",
+          "sha256": "0xf6d923ce716fd0c3e00b1168cc789722894bc05e5d4ad60d2d75098b76737103"
         },
         {
           "path": "packages/bake/src/budget.ts",
@@ -412,12 +726,32 @@
           "sha256": "0xa38caff48f2b80272bb06d0b30ed62c6d8f4b704a3ba41fdd0268c417ed5fb09"
         },
         {
+          "path": "packages/bake/src/cards.ts",
+          "sha256": "0x087623d2e259f5d034601d377695a9277b8fef3dbb99dbf7c6a1637f9a1070c2"
+        },
+        {
+          "path": "packages/bake/src/cull.ts",
+          "sha256": "0xe19610d8e4597eefc18977ad72a33fed56a2d77f28b7b2ffc8c162bc61a22eda"
+        },
+        {
           "path": "packages/bake/src/depth.ts",
           "sha256": "0xfa7c28660d11967835141bbb4f9be83ed7827eccb460006865e39edb62ce371d"
         },
         {
+          "path": "packages/bake/src/draw-bounds.ts",
+          "sha256": "0x42142aff67aa1c347e209c9b33ecf7ec582dc863a358b1b2be4b39256b3e32f6"
+        },
+        {
+          "path": "packages/bake/src/draw-mesh.ts",
+          "sha256": "0xf2f03da067595ffa0b6e5f22ae3cbe2fab1481e156cc89bd049c808dd7f4eb60"
+        },
+        {
           "path": "packages/bake/src/entity-design.ts",
           "sha256": "0xe67e3cab077f2072b68cddedcc2641416267ca800a917e673ad6109b8ddcb16c"
+        },
+        {
+          "path": "packages/bake/src/filters.ts",
+          "sha256": "0x3f8282dd43d9776bceb3cb8737a9e5106d4a7d0ec011c184e875be0f10c03bf1"
         },
         {
           "path": "packages/bake/src/fx.ts",
@@ -433,15 +767,31 @@
         },
         {
           "path": "packages/bake/src/index.ts",
-          "sha256": "0x234b80c2f24e6ba9861576d558e043e245559344554055e4f68897b97eebba79"
+          "sha256": "0x4302497e26d7210fc80e865331da068b86df6a2e739c89c601f5f6dd75ac2ec6"
         },
         {
           "path": "packages/bake/src/indexed.ts",
-          "sha256": "0x4e19e75c7abf9f99f3f5572ceafe282647f0f75ef32d1d6cf854a7f6977a955b"
+          "sha256": "0xef4bce634ef116a346bbc3f5d43c188e9dd9ab403d83a10b32981d112807fcc9"
+        },
+        {
+          "path": "packages/bake/src/lod-mesh.ts",
+          "sha256": "0x5ec02f4f5b6fb583e60c20aae5d4382b88c6bcda63b4057d2dfcc1d161ffc7b4"
         },
         {
           "path": "packages/bake/src/looks.ts",
-          "sha256": "0x3ab6c016936338b1e57067f467b8dfe58093cac299e953dd3885272870f54ba1"
+          "sha256": "0x0fdde9a0da1795dae2648dd3bc4f9f49015525244c0ced2cb84f30fa98361fe1"
+        },
+        {
+          "path": "packages/bake/src/mesh-lod.ts",
+          "sha256": "0x2b066ef95f99bcb20110cf01bc5b68c183dc9893fa7f24cd162d339026f2660c"
+        },
+        {
+          "path": "packages/bake/src/mesh.ts",
+          "sha256": "0xdd490be661f44291aa6375b2bcaa524020d417cbcdc4661f925942dc642bf595"
+        },
+        {
+          "path": "packages/bake/src/paint-shader.ts",
+          "sha256": "0xadbad777af588738f5581872067a91fd8e921d0d2d3ce1ea2faebfdf08d3fe5a"
         },
         {
           "path": "packages/bake/src/plan.ts",
@@ -456,12 +806,28 @@
           "sha256": "0x9a3c0b01365deef351f792ccb0141bfec19e216591fae0bdfc67cdb950656277"
         },
         {
+          "path": "packages/bake/src/project.ts",
+          "sha256": "0x5b3266503be837307c44bb7d6e037e3ccf301f1685d74e5ba088f6bfe600131c"
+        },
+        {
+          "path": "packages/bake/src/pump.ts",
+          "sha256": "0xfc8481515c214bf50c17a8695dd5f6bff532f8d88ad3fe82219503bb5122c62d"
+        },
+        {
           "path": "packages/bake/src/queue.ts",
           "sha256": "0xff5f1c52d55838a6106d05012fc3e55bbc926e9755a7342975ff997c4b498734"
         },
         {
           "path": "packages/bake/src/raycast.ts",
-          "sha256": "0x4424cd365e3b630c7de3a12be3a811b3eac394ba96a27eefc76cd41fb33671ff"
+          "sha256": "0x82d8956fbd87301a4b22dfe268358af07e716a3f8897e2c917127412ef58240a"
+        },
+        {
+          "path": "packages/bake/src/screen-bounds.ts",
+          "sha256": "0xc1dfdcb0084ef2db601ce211a079266973e4fb823d7daed9188acacc0216dbf5"
+        },
+        {
+          "path": "packages/bake/src/shadow-view.ts",
+          "sha256": "0x36b48d88badaf1ffedeb3003886477e7a2a0b5676586e06501216fea76154ff3"
         },
         {
           "path": "packages/bake/src/shapes.ts",
@@ -472,12 +838,16 @@
           "sha256": "0xe002184159e67b22cc64190eb3c5460cf36075a67f6fdd7693ef91d81329227a"
         },
         {
+          "path": "packages/bake/src/size-cache.ts",
+          "sha256": "0xadb7cd77b6bc0072a0ea542ebe29ea6d9a95888a0f926d1928676035bbb5aa4b"
+        },
+        {
           "path": "packages/bake/src/soft.ts",
           "sha256": "0x5f2e3464556feb973d2276dd555ffa313c41f8d085894f4f83e250f9541b95cb"
         },
         {
           "path": "packages/bake/src/sprites.ts",
-          "sha256": "0x3c247acca4bd06ba8f11a1a084400d41384e92fc3631a953781a8104a76fd2e2"
+          "sha256": "0x3fe653fa0fcbf8c5bcced3ad664fd9f3027da7e1e727b9b5e3a7e683cb599d28"
         },
         {
           "path": "packages/bake/src/stages.ts",
@@ -489,11 +859,15 @@
         },
         {
           "path": "packages/bake/src/sway.ts",
-          "sha256": "0x2e240c3ee9facca3df2405fb6e0e018022b7d5cf7cdbb463d01bd1a305a588ac"
+          "sha256": "0x456ba7eab8dbcbc962f8bd1712aa4b0789cb63eecdd532470a4999f79fff6af8"
         },
         {
           "path": "packages/bake/src/view.ts",
           "sha256": "0x24f27178ebf70c6d7fe15ce1c221b94758c4deb88419090f537806b4a1519190"
+        },
+        {
+          "path": "packages/bake/src/volumes.ts",
+          "sha256": "0xe53dc8b653b0674e26165d14b52abcc4170439fb1fe0632ced34fe21e442d959"
         },
         {
           "path": "packages/bake/src/worker.ts",
@@ -510,17 +884,17 @@
         ]
       },
       "output": {
-        "digest": "0x6aa7e99e062d8ec8f51e161447abb758f893f0e6cc1c2c1886e6937df1848ff6",
-        "byteLength": 142709
+        "digest": "0x4670874205d9055e90961b1a026807aee00263b8d392356e5f6cdf34e838998b",
+        "byteLength": 254225
       },
-      "sourceDigest": "0x289c6887b820581ff8ea38598b3a57a0248942cdadf8dd221512ef4be32d9e46",
-      "recipeDigest": "0xdeb54dc1f2a994029ea881bb2dfe8507fe2283aa87c7c25e78508980295a9fdc",
-      "receiptDigest": "0x5a05278b23cf50f92ad5f0b02eaaf0a9f4fc4ca83ecd88b8ebfc4906fa861ad6",
+      "sourceDigest": "0x979add19c56a545afe27b735cb285b85829a57673a1c1b4eff920e7d265010c5",
+      "recipeDigest": "0xe32c5a44e8fd7bdc10dd6538af5a4034c83ee01af3ccb1314fbd344b063bcb11",
+      "receiptDigest": "0xf2939acdfbdd31d306a8bb929ff6bd82ce526f918b512a60736b6bda4aa532ac",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/bake/test/vectors.mjs",
-        "sha256": "0x8d9ca4aa3851e072cbca04cfce7091a3cf59b12c211712649711a2d8175f77e6"
+        "sha256": "0xff10dc1a2997bb279b51f89fb3515f199c61b5a3e0446e29b076a6657689cf12"
       },
       "deployments": [],
       "deployed": false
@@ -704,8 +1078,12 @@
           "sha256": "0xdb67c42b3c37a564d42ea62dcb5bde5e9471da573e175cc616433e27a01336a8"
         },
         {
+          "path": "packages/camera/src/car.ts",
+          "sha256": "0xaacb7431d7f3549956a5b78bd61a4505a635479f04b7b83bbf8af29f9369d258"
+        },
+        {
           "path": "packages/camera/src/index.ts",
-          "sha256": "0xf218640960ab88f5c56fdb060ce5d7a36149c9edfef3678614615e6a993b8c29"
+          "sha256": "0x0a127e81337f90ac5133299811be3df090cb572b3bb816e1f12ef523b37c36d2"
         }
       ],
       "build": {
@@ -716,17 +1094,17 @@
         ]
       },
       "output": {
-        "digest": "0xf94410e3ab5df13b1b24e4ff2a7af209a921797c29d356abdd8e187a18cb1e5c",
-        "byteLength": 14325
+        "digest": "0xd8792e0b3dce565ce9f18f900bcaa622105f03f87ba193590a3cfd62af3b8b40",
+        "byteLength": 17838
       },
-      "sourceDigest": "0xf146373aea0cd7ee2e5483d670309376c430031eeb0808e2ccb2659e6ce2a3ff",
-      "recipeDigest": "0xa67561f1b3f456deda1fcbcf96fe2a6f9080aa87e7291594485a9eec4719bdf7",
-      "receiptDigest": "0x3d858b876683f38d3967d10f36c8bee074eebd87be71f3ae6c2a666c9e7ae9a7",
+      "sourceDigest": "0x3a91e46607ef75b157b5ba989dc85ef3df00e2bf3791050285abf0b226afde5b",
+      "recipeDigest": "0x59a4cd403580f4e3f183d005d10b5c2b164853996391b0a7d28e5cc39488ac34",
+      "receiptDigest": "0x94a0e37be3395260bcc1e972b2f11d5f0cec66e263efee76b7ab43bc86c7b621",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/camera/test/vectors.mjs",
-        "sha256": "0x5131992992e2f7fdb5ce27cad71aec4fc03bc2a73170c5a334203762c66facbc"
+        "sha256": "0x5e27007dbd5f4937f0bebf3544aa05673f4ad06186fd70e46151187070b7404e"
       },
       "deployments": [],
       "deployed": false
@@ -787,6 +1165,132 @@
       "vectors": {
         "path": "packages/capture/test/vectors.mjs",
         "sha256": "0x475aae1284c1f964a8f728e805452af5c09ba9f3b6789a9757c9c69d3be38e75"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "keel/city",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/core@^0.1",
+        "keel/elevation@^0.1",
+        "keel/road@^0.1",
+        "keel/runtime@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-city",
+      "license": "MIT",
+      "summary": "Cities from a seed: a site, arterials, a ring road, streets, blocks and lots -- a road graph and the lots to build on.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/city"
+      },
+      "githubPath": "packages/city/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/city/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/city/keel/link.json",
+          "sha256": "0x3feed6b8f3c2b56dc185519ed659fb6d08cd9cf2c9317f27a03092da0882bf67"
+        },
+        {
+          "path": "packages/city/src/arterials.ts",
+          "sha256": "0x372df4484a352afc8fa8e7c7c62e9daa557c3d5bb352a1f69dc66cf7aa028a88"
+        },
+        {
+          "path": "packages/city/src/blocks.ts",
+          "sha256": "0x9d0382fc97124a8316052dd63b31c42a8fc78205c388cacde39f9c2c6e8aaeba"
+        },
+        {
+          "path": "packages/city/src/city.ts",
+          "sha256": "0x194bf09bfac3b94b51d9bceb34e7a425508b38c9dd4ac39a81e3a7e5b35489c5"
+        },
+        {
+          "path": "packages/city/src/climate.ts",
+          "sha256": "0x25e3bfed6669bc5714239bb19f6ced3cdd43d754547eac445f4935becae21bfc"
+        },
+        {
+          "path": "packages/city/src/districts.ts",
+          "sha256": "0xc35d8dbb64b74e71092ca51f3c5d4df624cf398d9d3cdf4a3dfe83cd79ee14d6"
+        },
+        {
+          "path": "packages/city/src/height.ts",
+          "sha256": "0x25f76a8797c87d924fd01f2fcfb8c869fa027bbf187472a97f32ccf106e2d46c"
+        },
+        {
+          "path": "packages/city/src/index.ts",
+          "sha256": "0x609288937353d64e0e4f084adcc89e578a05872b5ab6face9a544a267ed2ccbd"
+        },
+        {
+          "path": "packages/city/src/junctions.ts",
+          "sha256": "0x99df2937d94fde9890d60ca6ce824743daa3941dd1f71c1eca85dd61864dda29"
+        },
+        {
+          "path": "packages/city/src/landmarks.ts",
+          "sha256": "0xe08b716351b8dd5ae2b10bdb2484daccd54a1885669055636fff9724789de4e0"
+        },
+        {
+          "path": "packages/city/src/module.ts",
+          "sha256": "0xc27d915640ff81dec473b46e829c1524990b2fca4923001344dbe35493cac0d6"
+        },
+        {
+          "path": "packages/city/src/plows.ts",
+          "sha256": "0x05d79faf8923e4ddbdbff201ca6450338bb2740774fd7319d6fa7185f25de5aa"
+        },
+        {
+          "path": "packages/city/src/region.ts",
+          "sha256": "0x3f03801eed0beab5c16aa6ba60fc98ae04eadcc94413bcb3f9241ecad0a0a300"
+        },
+        {
+          "path": "packages/city/src/sidewalks.ts",
+          "sha256": "0x2208bb61bcb1910c221e4029138f120e4bf282b778b24d7cf9e2dff4ece4513f"
+        },
+        {
+          "path": "packages/city/src/site.ts",
+          "sha256": "0xe157e4665aaaf96b55acdfb2a5ce305305821c5d085f4206ac27adcb4f9cac89"
+        },
+        {
+          "path": "packages/city/src/terrain.ts",
+          "sha256": "0x5f5b6195dca76190bc52d78cbb4d263b5457689c6132106a4a65f0a1a4e9b920"
+        },
+        {
+          "path": "packages/city/src/venues.ts",
+          "sha256": "0x9d3a2e9d4cc313b1d1a43246bd07308a414ea45f1f0896713faa0747cd84a721"
+        },
+        {
+          "path": "packages/city/src/weather.ts",
+          "sha256": "0x4fffae21d269073b79f442773db2b5e95652e8842d946e9774e7207d3d884b25"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/core",
+          "@keel-engine/elevation",
+          "@keel-engine/road",
+          "@keel-engine/runtime"
+        ]
+      },
+      "output": {
+        "digest": "0xaaab0aba6f4dcb84216bda551d2885a9a01a3cfb2d61891e01cc82c24970a1b9",
+        "byteLength": 77756
+      },
+      "sourceDigest": "0xf88966264b260d1808ac1b20f9924a4ff676ac1fa7c827aba6b6d5979652c585",
+      "recipeDigest": "0x59731dc09651ac6eeddc0a3ce4fbb7cf51850f7146e779ad348b949cfee4efc0",
+      "receiptDigest": "0x7a26db4125da355d0c41e4d020b4794c69584c48079676fa57cbfa4a0095708f",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packages/city/test/vectors.mjs",
+        "sha256": "0x83a980bd3605b89d2b16aabeb9510414fac3fc884681a2f32e0b2662172c2cb3"
       },
       "deployments": [],
       "deployed": false
@@ -876,7 +1380,7 @@
         },
         {
           "path": "packages/codec/src/schemas/look.ts",
-          "sha256": "0x207c486f703c92f22edbe15ae82230b6d0e10bfb6dcb4436f82bacbf7b2d73cf"
+          "sha256": "0xd0900df8db17ad46acd24270cf2f407c8c3450f1c557b5e26f71f9349fef99cd"
         },
         {
           "path": "packages/codec/src/schemas/object.ts",
@@ -912,17 +1416,105 @@
         "external": []
       },
       "output": {
-        "digest": "0xcd3dcdfda6e603fbdd37856f435a7d67846ae91a8548c85d85713c3b338a3c51",
-        "byteLength": 106983
+        "digest": "0xc72eff120f9588beae9b370a6b3ab4aefa39736f4debd15ce8ebe29595edb817",
+        "byteLength": 106993
       },
-      "sourceDigest": "0x05cc5bb1b6cfe3197a90417a7123d49d1c06041e0426aae37c4bedb4f40acff7",
-      "recipeDigest": "0x58970f103b07a501d5728433612d88d7d81001553365b6a3fb2d6f98d1544d84",
-      "receiptDigest": "0xa3271da8625fb188ece63b9f93444680796fb2c70e089d90525f96de11b21b1f",
+      "sourceDigest": "0x4c54c7e65ca3ebb555ceb194c0992b162f4e4c400dbf6dd8780610ba2f2e35fc",
+      "recipeDigest": "0x44cbacd79fe99f17926b118952a9f3e89dfb31f0c3ecbdc70395ec9e805c564c",
+      "receiptDigest": "0x055d5202a2b63049f85b19f3fab122fe0b011d6b4807d55c30580d4920e1dff0",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/codec/test/vectors.mjs",
-        "sha256": "0xccd41104936c10f438909ba6aa4a8a651da830fc9874009c8e484285403cd271"
+        "sha256": "0x979b6408751a16db6beaf4d781d73e830a4020fbec3191b7bc28545d8673d411"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "keel/controls",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/runtime@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-controls",
+      "license": "MIT",
+      "summary": "An action map over keyboard, gamepads and touch; device detection; on-screen mobile control schemes styled by CSS.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/controls"
+      },
+      "githubPath": "packages/controls/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/controls/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/controls/keel/link.json",
+          "sha256": "0x47fbef57fe0398caf14ffac006e0d04b750f078629f91258b81f91a9e1463eb8"
+        },
+        {
+          "path": "packages/controls/src/actions.ts",
+          "sha256": "0x2e9691d705c7562b44b9a228a09bdb4374740448532eb067c77160eb6012409d"
+        },
+        {
+          "path": "packages/controls/src/device.ts",
+          "sha256": "0xe6a0e944745ac7df78d2c8b0ed02febe19a8698aeb5acada731b457db19674cb"
+        },
+        {
+          "path": "packages/controls/src/index.ts",
+          "sha256": "0x83a7c1fa29156c8f052065c677d1a93b090b47db655455acd94e4b2369762f93"
+        },
+        {
+          "path": "packages/controls/src/module.ts",
+          "sha256": "0x0ef5486daf05d80f2a606720f665cc6562f527c745b82c0fcbe9668840e26eb0"
+        },
+        {
+          "path": "packages/controls/src/pads.ts",
+          "sha256": "0xd536b66099f9382a8e1fe6f85e2dc948161a19b8de246503c08adb4f16d421b8"
+        },
+        {
+          "path": "packages/controls/src/touch/layout.ts",
+          "sha256": "0xc69f496f2531be69f08238cf70c1110d8c06722b2372cab28e31e4066cd2bb86"
+        },
+        {
+          "path": "packages/controls/src/touch/math.ts",
+          "sha256": "0xe656ed78f03fc09691bee99e8546c9b2c4c68f34d88cac083a34c1be9b5fae8c"
+        },
+        {
+          "path": "packages/controls/src/touch/overlay.ts",
+          "sha256": "0x6e647a2fb6bced84f3f72f691e77d7681b9c307473dd6b20df8559c654435de9"
+        },
+        {
+          "path": "packages/controls/src/touch/styles.ts",
+          "sha256": "0x495300db0ba2b5a13cc5c1e6ba7ca071d79fa6afc2e76150df57e38b5ba06c4e"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/runtime"
+        ]
+      },
+      "output": {
+        "digest": "0x386bb4dc5bf69a2bc2143c33e08ddde5bac85ed40d7b42b6747edcb0ad0cd580",
+        "byteLength": 23200
+      },
+      "sourceDigest": "0x327eb1d72f4212a9f3e5567cc2ce34c4a42683d8888f67961e2841e8aebc20ca",
+      "recipeDigest": "0x5860a4190627683d35bf2dba3b0c2ba7874a82020b0c150249ea5979d4c5030c",
+      "receiptDigest": "0xac9bb2353e384355d8f58965edf31748f352f0232192124477d305bc62626e35",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packages/controls/test/vectors.mjs",
+        "sha256": "0xb3e1e2097bc2394197e50b2eaf5bb4d1259692d7f7710ea70feb6509a45a8d93"
       },
       "deployments": [],
       "deployed": false
@@ -976,7 +1568,7 @@
         },
         {
           "path": "packages/core/src/look.ts",
-          "sha256": "0x604b4c303bccfb94c4ba70fc845c56fdcfdc0550e03feece6fdcbe6b6df5b3ef"
+          "sha256": "0xea488d06d2956023e405a464846350d5d0ba9dc76737431ce390d74a8b82de38"
         },
         {
           "path": "packages/core/src/math.ts",
@@ -1004,17 +1596,239 @@
         "external": []
       },
       "output": {
-        "digest": "0x343440072b24ed6d064419ea3b304362a0f9b05a7fc9f2a44b54b4843ead6bec",
-        "byteLength": 57240
+        "digest": "0x3b45c98d4df36667bd12e501effec63e46b8342804be3542ccae88be8a4e5192",
+        "byteLength": 57250
       },
-      "sourceDigest": "0x31589f36b7e5ddecdc59400e78a1efe79ca96d9e187abb2dbbe96bcc7f4bd371",
-      "recipeDigest": "0xc945baf5b610e72b7170d684666153d8a64c1b0ae720f4307bbd0d17c857541b",
-      "receiptDigest": "0xe1aeb5f5dc4147c969dac8621b69dcc53b2791ad5b79867f36fe8a509de47e65",
+      "sourceDigest": "0x6565b250404be4afffa5a40fe411b5839467b9e1f9334541dce1dcf9821dbd5c",
+      "recipeDigest": "0x9c678555203ba2f60fda533004a2b46f6cc54b970d0c822ab6cbf8a9b46c997d",
+      "receiptDigest": "0x809a4d58ccd68652071cad585d6f42c2c7946685a9d1375841c43030f7e449d0",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/core/test/vectors.mjs",
-        "sha256": "0x2baa5c13b18f42e30a82320556702902d0046e74008cf731f66f5e36e4b83f94"
+        "sha256": "0x9ad9b5a8e516574d1875faf360cd94c901e1fa87c5e76106a046bdb33278d27e"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "keel/decal",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/core@^0.1",
+        "keel/proof@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-decal",
+      "license": "MIT",
+      "summary": "On-chain decals: the KEEL alphabet and text conversion, the KDCL doc (four-ink pixel images, styled text) a contract validates, and the rasterizer to bake decal texels.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/decal"
+      },
+      "githubPath": "packages/decal/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/decal/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/decal/keel/link.json",
+          "sha256": "0x404ace1661170a57b0c09028f6d6eecf4291b161f775952f70e920a6a502c39d"
+        },
+        {
+          "path": "packages/decal/src/alphabet.ts",
+          "sha256": "0x5cff96e0b8b0f4556218b5d83551d9ace4076489bca826e1ae3ddbe05c760095"
+        },
+        {
+          "path": "packages/decal/src/doc.ts",
+          "sha256": "0x3291dd01d87131dcacb666178d1bf98b4e300cbbc46f26ed5616715a024dbdb7"
+        },
+        {
+          "path": "packages/decal/src/index.ts",
+          "sha256": "0x9989e3e1b950b2fb0451fec260378d50871cbb4799b205d67227604792046042"
+        },
+        {
+          "path": "packages/decal/src/raster.ts",
+          "sha256": "0x48ce5359ff5726dbd14fe8a1d9b514ed6a5a960807ab03d65efe58696841c264"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/core",
+          "@keel-engine/proof"
+        ]
+      },
+      "output": {
+        "digest": "0x102afe25792220b0a295c2facc3f71fc7fc422e45d55fc9c1c7af4609ba29972",
+        "byteLength": 9564
+      },
+      "sourceDigest": "0xa360decd2408a564ef4e17bff3c90247b60e7ac4852686297c8a7d20efa93dac",
+      "recipeDigest": "0xc628f6a4010921fec4259c5198a94ea5528babec838d382c68c5d11b3303bfeb",
+      "receiptDigest": "0xa19d218cd2e475f5f83d4625291148c5457080550f83ba1c578bd6131fbd08d9",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packages/decal/test/vectors.mjs",
+        "sha256": "0xe54721179771919595109b56a433361ea4e9aa70de14b2ad3144b5f3dc8b552c"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "keel/driver",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/core@^0.1",
+        "keel/road@^0.1",
+        "keel/runtime@^0.1",
+        "keel/vehicle@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-driver",
+      "license": "MIT",
+      "summary": "AI drivers: racing line, pure-pursuit steering, speed planning, overtaking -- pedals for any car on any road.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/driver"
+      },
+      "githubPath": "packages/driver/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/driver/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/driver/keel/link.json",
+          "sha256": "0x84a5158a5241f79548f4d7a91accda8da4db0fafe76e421f67c302dc4bcfc7f6"
+        },
+        {
+          "path": "packages/driver/src/driver.ts",
+          "sha256": "0x0523714d7ecf116ca7264fcbb44c628fe6c5389ba4712233a7fb3b69413106c2"
+        },
+        {
+          "path": "packages/driver/src/index.ts",
+          "sha256": "0x7cecd6c843e2d9f41479161d3b8509943dded0d163eafd96932faaad68c83cee"
+        },
+        {
+          "path": "packages/driver/src/mind.ts",
+          "sha256": "0x88f6ea78e5b32cea7d8bc4b0003f972e08b787f3ee49abecec800f8ab474f7e5"
+        },
+        {
+          "path": "packages/driver/src/module.ts",
+          "sha256": "0x872c5e23d035a790d41fe44976164cb19097e888998a9980570c5ee75c4aed7f"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/core",
+          "@keel-engine/road",
+          "@keel-engine/runtime",
+          "@keel-engine/vehicle"
+        ]
+      },
+      "output": {
+        "digest": "0xe52702ecbcbbc71d70e894fa5f8d180480d51dc2aaa412269eab90a6c7e04953",
+        "byteLength": 7577
+      },
+      "sourceDigest": "0x48eb66bb31c30b88e40f5c8f1c315f429d85ae998e00548e3d341ddc33c226e5",
+      "recipeDigest": "0x3f72946d97e39dafb720121dda05e65583f189538e26123b86a62065308442b7",
+      "receiptDigest": "0x27ee60aa12d4aa4945b50e51c04a97a75117e910c006cc7c4ccdc9cfbfe6a82e",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packages/driver/test/vectors.mjs",
+        "sha256": "0x9794bfa929adbabfeeccc44a0f6e42dfc7bec9518ab2bc245b75bbff439e3e18"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "keel/elevation",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/core@^0.1",
+        "keel/runtime@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-elevation",
+      "license": "MIT",
+      "summary": "Continuous ground elevation: hills from a seed, graded roads, level junctions and pads, a raycast, and the GLSL to march it.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/elevation"
+      },
+      "githubPath": "packages/elevation/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/elevation/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/elevation/keel/link.json",
+          "sha256": "0x642117e6aa196787ad37eaff69d31fc9cf6503ad8b6043161e85ca008dcc1f65"
+        },
+        {
+          "path": "packages/elevation/src/glsl.ts",
+          "sha256": "0xf3f53cbe409a524685ffaf52df4f360aa0f1e7d3c45e72c2a3e657e6d09eee81"
+        },
+        {
+          "path": "packages/elevation/src/grid.ts",
+          "sha256": "0x7f4f57d7411ff20f46de2b26953b2d2d494e685903a62b1c94cf3a6b5bafb2e9"
+        },
+        {
+          "path": "packages/elevation/src/index.ts",
+          "sha256": "0xdf327daebe1d6dd573367eec01da710ea437940799695d1f823cd3cc12644c6e"
+        },
+        {
+          "path": "packages/elevation/src/module.ts",
+          "sha256": "0x99eac23af76b4d4cf5d7f439fbfca9a066a5ac959f741400889382283c22d79e"
+        },
+        {
+          "path": "packages/elevation/src/raycast.ts",
+          "sha256": "0x2b556b5e5362f141cb8df0c378c10be496ec65b61cfe96a8fa02007406073a1b"
+        },
+        {
+          "path": "packages/elevation/src/shape.ts",
+          "sha256": "0xd6346a1ed29a6350aa6a263f253615660dcef4428967fd5d2707ef58f3c660af"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/core",
+          "@keel-engine/runtime"
+        ]
+      },
+      "output": {
+        "digest": "0x7cead7b7f6ffb602b2c24667eafb7a17ea7e75445d37a06847c0772208658b77",
+        "byteLength": 12150
+      },
+      "sourceDigest": "0xf47bb4e8cee6e6e2fcd563efdd40911a1434cb1f3dd11c184d7e6e32de1fd7d2",
+      "recipeDigest": "0x8423894487523c5f9b0768f249da122983e9e16f8e475dbe8581100b5e948913",
+      "receiptDigest": "0x49e44361d2fe05a4d69740dc72b2c428406775851ee95987ab0a26c5618fc11e",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packages/elevation/test/vectors.mjs",
+        "sha256": "0x0e80661c5776136b8f9abc76361ca71771e490edf8109b1f15c115ea19188e5c"
       },
       "deployments": [],
       "deployed": false
@@ -1088,11 +1902,11 @@
         },
         {
           "path": "packages/entity/src/skin.ts",
-          "sha256": "0x3698cbf721760949de722e98c97da305062871bdd9a821e34cd36c783736e74b"
+          "sha256": "0x2eaef27042da4fd44da4af474dd12f401b63be3763c831d4dae8481b8fb53ccd"
         },
         {
           "path": "packages/entity/src/species.ts",
-          "sha256": "0x1bfc8a8f7b9a7992f1df97ea99f937dde7bf03f4b1607ab59ad4e255fc054bfc"
+          "sha256": "0xb6cfeaea0eae668b8ed0354850434c4011621e4ce417309a048d24a73d64fff3"
         }
       ],
       "build": {
@@ -1104,17 +1918,17 @@
         ]
       },
       "output": {
-        "digest": "0xd589eeb66cd9d93e97a19ae1663025ec4e1507d553cd5887171e5a00ea1cfdf4",
-        "byteLength": 56266
+        "digest": "0x2bafda5c13de4c9b9a314f8e2e7c6ce2f0bb8cade3bbd31cf0153d8c61707d73",
+        "byteLength": 57278
       },
-      "sourceDigest": "0x2a533280153ec9a8da97609c5d370908a5a63944353db07f8752d5384281d9f2",
-      "recipeDigest": "0xb5ca111cc0e054ac7a4dfe471ec31c424a342dc7e64881677191fce66eefd6b4",
-      "receiptDigest": "0xbe09219382c552a64f4ccaf91f52a26e029483e508f1d3fe28ba19449b9e595d",
+      "sourceDigest": "0xaf57a0b814b9022eb9d0785f1616e7d57feca7f41877a5abaa648f38154e7315",
+      "recipeDigest": "0xd61de2a1f2d9938988c1b166c54ba59532a3785794a6530ea0498ac47d2bc339",
+      "receiptDigest": "0xbad56171e078657fdadff20941116741584e427bc3bb12d86f93a5ee5e5ee32d",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/entity/test/vectors.mjs",
-        "sha256": "0x10fa4dbe899b62dac19ea280ed6b826d8954352c0769970305428c89411b3e5b"
+        "sha256": "0x79471ca0a6766d44de609729e0815e87d0179dd34dce9942fe6d7b2e0490ff8e"
       },
       "deployments": [],
       "deployed": false
@@ -1419,6 +2233,74 @@
       "deployed": false
     },
     {
+      "id": "keel/lod",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-lod",
+      "license": "MIT",
+      "summary": "Level of detail for generated worlds: nested prefix chains, screen-space-error selection with hysteresis and dithered fades, tiles for a far pass, and a generation work queue.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/lod"
+      },
+      "githubPath": "packages/lod/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/lod/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/lod/keel/link.json",
+          "sha256": "0x1f65bb8de3da52eedc487caa21b62da1fa58df015773c7d31326edffaeac4d59"
+        },
+        {
+          "path": "packages/lod/src/error.ts",
+          "sha256": "0x94f96d351ddaf96e2732282e4b4ef91bf5bdfdbcee1447f7fd95c15be906218b"
+        },
+        {
+          "path": "packages/lod/src/grid.ts",
+          "sha256": "0x5fcf3250f08dcc1f09a9e7771303fee087a5cc15a89d750cb79e8a2a43b824ad"
+        },
+        {
+          "path": "packages/lod/src/index.ts",
+          "sha256": "0x45d1af32e24caf6db6e05d911476bb6417104fa60690544278bce54d83216c8e"
+        },
+        {
+          "path": "packages/lod/src/queue.ts",
+          "sha256": "0x5adc87d41f5faacc8bbb7e28311200b552e7ba8259f2045640aba6169584e71e"
+        },
+        {
+          "path": "packages/lod/src/select.ts",
+          "sha256": "0x3e66b96a2007e169fc9052e97bb2bcd704ad34e2d0e9f18f559b9b69d997fccc"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": []
+      },
+      "output": {
+        "digest": "0xf71c77c1e904ecb1bcb16639dcdb61cc733570c9ba372f919509a9de33d70f8c",
+        "byteLength": 6014
+      },
+      "sourceDigest": "0x4c5497f9a196cb9e54dd8f578d8f4ba3bbdfda1b7362dd9f17d18f0d0a9069d3",
+      "recipeDigest": "0x9f4e504d9dcf2d22db4963a76d37e80444a004dad89b8a2d8596dcff7bcf4ed3",
+      "receiptDigest": "0x8c3530d15256521cbd82923bf3cde8980357f903a43b6f2c34a76641beb1b35a",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packages/lod/test/vectors.mjs",
+        "sha256": "0xe9840e4d303b8306e80dccee83394f38c7d672a6727276409afa75a3c0c2fe45"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
       "id": "keel/object",
       "version": "0.1.0",
       "kind": "runtime",
@@ -1552,7 +2434,7 @@
         },
         {
           "path": "packages/particles/src/gpu.ts",
-          "sha256": "0x5a7298de753db19627084e58a1a982653bed6ba2a966217a04465282ad679991"
+          "sha256": "0x4107aac694bde611e8605f79969cfffea0cb4eb9e605a59b55004c78d3338f3c"
         },
         {
           "path": "packages/particles/src/index.ts",
@@ -1771,17 +2653,17 @@
         ]
       },
       "output": {
-        "digest": "0xbb19bf358f187d505b1b270136cf4f48b0790a68b3824c3e51eb10f2349d5ad0",
-        "byteLength": 78822
+        "digest": "0xf57412f4c6ee7de2b95806dc1b5f07ceb4a9d582af4ea03a5b80f8275eecd48e",
+        "byteLength": 79329
       },
-      "sourceDigest": "0x5ccb033fc41aea88c323e4e052a03dc686d7fcb3a835197719097d2ab9aa132e",
-      "recipeDigest": "0xef3f23a70de128245166b3744d968d4582c74f24dc00fe1c5ff746a02a657532",
-      "receiptDigest": "0x7fb52b519c9093362b47e8129eefe15b2bad21f0704e6f15672afe09bc60f92b",
+      "sourceDigest": "0x93378f969fded1b479158608de3bfceb1a57605b8c8368a943597c68311fa8fe",
+      "recipeDigest": "0x246cd22b4c2707c84c99140eb079d0300e58a5a508363c2d1c8075d04928a610",
+      "receiptDigest": "0xe8b614ab664995a270cb35b1afe587b6a7191841f68713b210faf250f30d6245",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/particles/test/vectors.mjs",
-        "sha256": "0xb0547a79652448de85371be1c52235fbf3d3a5b2b3b725607c4f0eae8a409c00"
+        "sha256": "0xb4c25117a6fc197d57be6e52fbb986c9e722de9f0e3bfc2f53fbc3e45a010109"
       },
       "deployments": [],
       "deployed": false
@@ -1851,6 +2733,94 @@
       "deployed": false
     },
     {
+      "id": "keel/proof",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/codec@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-proof",
+      "license": "MIT",
+      "summary": "Provable simulations: packed canonical inputs and results, a portable integer roll, the public-values envelope a zkVM guest commits, parity vectors for the Rust twin.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/proof"
+      },
+      "githubPath": "packages/proof/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/proof/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/proof/keel/link.json",
+          "sha256": "0xb467125959900b09963cdfa98f0c8202592d1486bab8778a7440fbf7f288ad27"
+        },
+        {
+          "path": "packages/proof/src/bytes.ts",
+          "sha256": "0xd60e39e9b5088ee65f77ed670f344be9673f588895997575ad22cf5f8f332ba9"
+        },
+        {
+          "path": "packages/proof/src/guard.ts",
+          "sha256": "0x2f0b546afa782ad931bf9059bd4884189b8fb8f7f3db931c1a011a8d936ee8ec"
+        },
+        {
+          "path": "packages/proof/src/index.ts",
+          "sha256": "0x0c8dc798773984057583d837ef2403834cc973c0cb0c4080453016bb104c922f"
+        },
+        {
+          "path": "packages/proof/src/int.ts",
+          "sha256": "0x98633d87741eb018970e68b11140a6d4be3ec95ed1e6ea85e83a36a436ea2854"
+        },
+        {
+          "path": "packages/proof/src/keccak.ts",
+          "sha256": "0xa5ba0aecb2eac47883507ce677e5aa8c7969be7d18a700e9843b4c6c3df66a15"
+        },
+        {
+          "path": "packages/proof/src/provable.ts",
+          "sha256": "0x0477dab85704cdee70bdaeda384d59ae2e4fc6d103c3482cc8fea2c0c46175d4"
+        },
+        {
+          "path": "packages/proof/src/roll.ts",
+          "sha256": "0x3b991de6b78261f15ad75173e83362a4461584c859d17ee6e803a393ab57d7c9"
+        },
+        {
+          "path": "packages/proof/src/stepped.ts",
+          "sha256": "0x75fea0d00395e8851ad86c7c0c1914ec2419ae8b6c20b2879dce35eacd536487"
+        },
+        {
+          "path": "packages/proof/src/vectors.ts",
+          "sha256": "0xbdc9b5f2d8b9382283a923dc39585d4ea6230a34ccf38e3a9d888617844dd005"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/codec"
+        ]
+      },
+      "output": {
+        "digest": "0xebff7a04ff515d5980208e775772c4adbde58e33ffa4b3ed09e17ce0b20d2eaa",
+        "byteLength": 13665
+      },
+      "sourceDigest": "0x1a98cbf1e2a96c8f2682b05715f47fbb372aaaf8ee94fedec705221d0a16bc42",
+      "recipeDigest": "0x61fdd94b7b4ba41883a55bfd749cd91529fcabda630fbde97b691fe2a2866f71",
+      "receiptDigest": "0x4546fd4bcd9b425bc2eb435a4bb2c7775b924c56ff15faee01072ea6840325a3",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packages/proof/test/vectors.mjs",
+        "sha256": "0x5fbd80b2b849baf864a4e0fbe365ab1de43d31cf2c18859f18ba420eea1f553b"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
       "id": "keel/render",
       "version": "0.1.0",
       "kind": "runtime",
@@ -1889,11 +2859,11 @@
         },
         {
           "path": "packages/render/src/indexed.ts",
-          "sha256": "0x9f6457132d04e4a0becd1438edf067afb5a8e94d924f87fe5af09d6d73863b42"
+          "sha256": "0x291be2744419eb04cb058befe93409494592e77e594b04a1033111b0b45f3868"
         },
         {
           "path": "packages/render/src/pixel-renderer.ts",
-          "sha256": "0xc90f13df287df26319f5423e6661fc44a2102e3959bce9f35b035b4b5afea09d"
+          "sha256": "0x5bad708567810eb9f0d3cecdcb38fa3c4e27ad15682a4ceffdef67c95282d643"
         },
         {
           "path": "packages/render/src/raster.ts",
@@ -1901,7 +2871,7 @@
         },
         {
           "path": "packages/render/src/shaders.ts",
-          "sha256": "0x58607092ce0e041fcf4baab5f9984c4892ca6c166e9a46fefa4553631c37f8de"
+          "sha256": "0x90949520efe252780ba569e2cd274584121d4443681625078a0372ad7fdf43b0"
         },
         {
           "path": "packages/render/src/sky.ts",
@@ -1916,17 +2886,17 @@
         "compactSelection": "gzip-9"
       },
       "output": {
-        "digest": "0xd8e3e4daa302f4c9a83af0418b4aa89487ed339f0fc2b8a678806d2cbce2e9a5",
-        "byteLength": 62281
+        "digest": "0x5cd9f0f2866c5c9f2586c805b53ba52c57b9ed87ba002a46319fed15d83d8d0e",
+        "byteLength": 63281
       },
-      "sourceDigest": "0x8632b8517d5ec7b9fa652a17ddce9fe719134a296122e943702ffda30868f323",
-      "recipeDigest": "0xc233f268b16918affad0e1ae01c8d8e40e0c6b659b9e25e81e743087e580e0e6",
-      "receiptDigest": "0xed5b4ae4dd2926377ec6e19f8bd2f179f1a32d3a6d944506dec7be44481a02c4",
+      "sourceDigest": "0x026c53d1994e4d9b83d29fb83f24016074f1f6a5766201678a55fe6d0399e4a9",
+      "recipeDigest": "0x620798f792aa5a61865a064734e405dd036e4d9f6e8c2c13de0e5ca211cb3abe",
+      "receiptDigest": "0x474f1ecc137e7d696689d0b50731f1b502cb122408fe635ec39200399a3833f8",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/render/test/vectors.mjs",
-        "sha256": "0xfd32c8e4bd9d2ca81de39266318c2e64e0f4bf7147268b4b06e33149da77f356"
+        "sha256": "0x5ea2d8aedf80bda214176668d45c094ff91257e694cbd8858a38b293fb26816f"
       },
       "deployments": [],
       "deployed": false
@@ -1995,6 +2965,80 @@
       "vectors": {
         "path": "packages/replay/test/vectors.mjs",
         "sha256": "0xd4c01098040567b13d5134747860b808fc67523ce9b6c5be5c189a2c6525417e"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "keel/road",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/core@^0.1",
+        "keel/runtime@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-road",
+      "license": "MIT",
+      "summary": "Roads as data: sampled paths, a road graph with width rules, and a sparse per-chunk road field.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/road"
+      },
+      "githubPath": "packages/road/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/road/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/road/keel/link.json",
+          "sha256": "0x7f3722d9450eeddcd51de21e9981f725fb85b863b83d55e5bf0d41542d3f4115"
+        },
+        {
+          "path": "packages/road/src/field.ts",
+          "sha256": "0x694ae01bdf7b44af7548a6da9baf89205eac4de865dac449886b0cfca5d3539f"
+        },
+        {
+          "path": "packages/road/src/graph.ts",
+          "sha256": "0x50373e9ced63f22af056a0a511561f989ab301e4a8f8db1b57e156dd169b7dfc"
+        },
+        {
+          "path": "packages/road/src/index.ts",
+          "sha256": "0xe38f7659af26f722b74eeace803c3d77820003c6d84c342405fec0cb7d08082e"
+        },
+        {
+          "path": "packages/road/src/module.ts",
+          "sha256": "0x2973bbc4711d4bebe898b9b4ae91f7d38b8af5e6305b93c17372450c0da66bbf"
+        },
+        {
+          "path": "packages/road/src/path.ts",
+          "sha256": "0xac8be5bc5a2fbbda4b3a7bfe7acb6805d017b7be3d59d15541e8ec65f8ffcd68"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/core",
+          "@keel-engine/runtime"
+        ]
+      },
+      "output": {
+        "digest": "0x6333a43f5588aa46b707f10c53f948b2586d465693f601539308f1b588479ffa",
+        "byteLength": 10007
+      },
+      "sourceDigest": "0xa991a133959afc71e8d64ead7ffdebb0d456f8b514e0cb40854b8c641c7120ce",
+      "recipeDigest": "0x95c7b57ede6809f0749d795a618de0fde1215eab80dc5913bd42115bd621a9d0",
+      "receiptDigest": "0x8ed7810f78969184ddccd4857e84d16c047ae7ac1b515fa4399df6794f1857a7",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packages/road/test/vectors.mjs",
+        "sha256": "0x13fa4f6844b66da9321189115bbf59806334219e8329d08e7bc4ed70bd28a342"
       },
       "deployments": [],
       "deployed": false
@@ -2322,6 +3366,10 @@
           "sha256": "0x9fd97a579c989b4272714aa3fa89c6a75c5baa633c64a51697dc4698f984cd74"
         },
         {
+          "path": "packages/ui/src/chrome.ts",
+          "sha256": "0xb32b63d817ea8eafe3286b794687e41130e4837d163bdafedb0301c4c7324868"
+        },
+        {
           "path": "packages/ui/src/color.ts",
           "sha256": "0x23af8222f30ce8ffe0900130904a4c8eb4cc234b4698fcb83b28474f9ad949a5"
         },
@@ -2334,12 +3382,20 @@
           "sha256": "0x5bff8a36b5d16848af2ef7d23d46997872f5bc3e00107c769ee56d7f95f71fe5"
         },
         {
+          "path": "packages/ui/src/flow.ts",
+          "sha256": "0x44fa3e83ac923d4ad348e403796f8d974086537400e78a808971da624dab5b93"
+        },
+        {
           "path": "packages/ui/src/font.ts",
           "sha256": "0xfcc8c7c29474e3e9b2d31c7300aa2b1ca768bc68a58257c4ab562537b65f3030"
         },
         {
           "path": "packages/ui/src/frames.ts",
           "sha256": "0x14bd32c288a1fe668d7e779255a904284ceeb06226368db797ad3dc51b5aab73"
+        },
+        {
+          "path": "packages/ui/src/gauges.ts",
+          "sha256": "0xdc55f17a11fa5b5a7f7c9dda7095ba169e0cf71e2f313c6ede562b5ce17e7e60"
         },
         {
           "path": "packages/ui/src/generate.ts",
@@ -2383,11 +3439,15 @@
         },
         {
           "path": "packages/ui/src/index.ts",
-          "sha256": "0xede79bd8caa675343764a9091f9d56eaffd41c2e484253dcfbc2a84779aa2aa5"
+          "sha256": "0x59ca9169e6cf83571a7f9239270010a3ee2fe82675bff9afcbf4d2d13371453a"
         },
         {
           "path": "packages/ui/src/layout.ts",
           "sha256": "0xc12b7de4bc1764947fd5c0d51d07bb23fe5f0d90acb67d7c47d358cbed28ec6b"
+        },
+        {
+          "path": "packages/ui/src/menu.ts",
+          "sha256": "0x69299a67ed50867c67015cff75500e3aae20f90c1443d5911b8cea000af47e83"
         },
         {
           "path": "packages/ui/src/node.ts",
@@ -2395,11 +3455,15 @@
         },
         {
           "path": "packages/ui/src/paint.ts",
-          "sha256": "0xbe7d708c75661183d9e4769929c0ee8a0babab6a0b301406739f3ca20025d877"
+          "sha256": "0xacbe01ab971c5581f58ac65b111aad5bdffc5671f95c9f88ef170e8e5e0aef6a"
         },
         {
           "path": "packages/ui/src/present.ts",
           "sha256": "0x8b6dd4ab187448c2aadb1fc6ff43b0ba59716aa11878f62ec088315df5515b11"
+        },
+        {
+          "path": "packages/ui/src/prompts.ts",
+          "sha256": "0xb18cbfb4f54c17658dd16b0d07df206ed747f7b4f5f9d21c565dd1fe31ad6039"
         },
         {
           "path": "packages/ui/src/raster.ts",
@@ -2418,6 +3482,14 @@
           "sha256": "0x63377027c9a95d25f430d39f2c0ec56b23bb75f72dedfb43626f961cda5edec9"
         },
         {
+          "path": "packages/ui/src/store.ts",
+          "sha256": "0x02a406a2ca7a742a650040589f1d8553fbce64ceec18021a9362e0e4b70914d1"
+        },
+        {
+          "path": "packages/ui/src/table.ts",
+          "sha256": "0xb2c077a73aa233be2e994760eaaab4089ea8baa6808c8b646dbcc3f9abf758d4"
+        },
+        {
           "path": "packages/ui/src/text.ts",
           "sha256": "0x7203d264dfece91d73fe0a9c2b1b6bc41ff07ada7271fe1e9e656e5a0a4071ac"
         },
@@ -2426,8 +3498,12 @@
           "sha256": "0x9391dba611bdb8cdd8d2667a16dfaecc27d226ddb627d3e32abb929fdaecfd42"
         },
         {
+          "path": "packages/ui/src/toasts.ts",
+          "sha256": "0x185cb7ba571fbcb1bfbc0db8761378b2493b275f2faab48289b9b4b8bdf3d808"
+        },
+        {
           "path": "packages/ui/src/ui.ts",
-          "sha256": "0xa353d3c2071a5f38c369da999d279dda62401d33845a8fee6b0c1d13c3489c72"
+          "sha256": "0xd90e757fdeb472f3a776eae6f06b70a71186949ed700fc63848a97f9ffce8b67"
         },
         {
           "path": "packages/ui/src/wireframe.ts",
@@ -2442,17 +3518,119 @@
         ]
       },
       "output": {
-        "digest": "0x5e51cd9807dabfccfef9d90c0eafe94d06f620622bb599271bf0dbb9465dc566",
-        "byteLength": 155997
+        "digest": "0x0e0c3f404dd769ec465fb23393145182d67ec2848fa2bc8bd5a1a7ff621ac211",
+        "byteLength": 174390
       },
-      "sourceDigest": "0x0ab937d144ada23852415d5040997a7a6f370a86a308f8e603259a8aaac4db5d",
-      "recipeDigest": "0x74cdf37620e29dadbcc654a4dc306872446927a1ec4ba8c7491a5254c0219183",
-      "receiptDigest": "0x5e28c12bcd289483047e9212179f41b37ab97d34f541268a3f3880cace3c4f4d",
+      "sourceDigest": "0x49eb04a1b96d4b232d6972f69cacf55d04e1e1d7ecf6e4f863798ef15335175b",
+      "recipeDigest": "0x500fd9ade0dd2ee8a3c1c5b829b84285ff8c5097895a490b306f41601f0970c9",
+      "receiptDigest": "0x3f5aba3f798c11ae67485325bee76dcd94e02c94f69c76d8642fbdb4b3082d83",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/ui/test/vectors.mjs",
-        "sha256": "0x49222cb593bc999caa99d5727c0cb93a8374cd17c1b1194b550ccc7c90925ad5"
+        "sha256": "0x0e2ccda3d0acb02252e504173d83fd40595a3e57f791607f3e52d8b1714055d6"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "keel/vehicle",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/core@^0.1",
+        "keel/runtime@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-vehicle",
+      "license": "MIT",
+      "summary": "Deterministic car dynamics: a rigid body on raycast wheels, tyre curves, powertrain, brakes, handbrake, aero and contacts.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/vehicle"
+      },
+      "githubPath": "packages/vehicle/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/vehicle/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/vehicle/keel/link.json",
+          "sha256": "0x189602e8aa7c8d39cdd083f956deac918d720f7d1c415e05fd774e04948c6b6f"
+        },
+        {
+          "path": "packages/vehicle/src/assist.ts",
+          "sha256": "0xc971683d7160227f1caee797771f7a43f0f8e663357b438c391a71452e43c3df"
+        },
+        {
+          "path": "packages/vehicle/src/collide.ts",
+          "sha256": "0x845c85db9e6ad9de21c33d898b358c995e0d0efc63fbc3062e0e36fa22d800f0"
+        },
+        {
+          "path": "packages/vehicle/src/ground.ts",
+          "sha256": "0xc72454f83bd820b200f7d2366f61458a27449c51fe68fdf46faccf03d02177b4"
+        },
+        {
+          "path": "packages/vehicle/src/index.ts",
+          "sha256": "0xbbf1606ae306fe953c13f9ace971e9eb43fce3521d0be83db788a98b29049fbb"
+        },
+        {
+          "path": "packages/vehicle/src/math.ts",
+          "sha256": "0xb195ba4077da2df8124d60d8750b9e832b56c539f2d10988c2f436098212377d"
+        },
+        {
+          "path": "packages/vehicle/src/module.ts",
+          "sha256": "0xc250f263091b442a1c5b42fac7de9468ac8952bf5d13c5756a3a3dc2b0905de9"
+        },
+        {
+          "path": "packages/vehicle/src/powertrain.ts",
+          "sha256": "0x54f463af9a339efc2d586bd053186ab9c55a62e5d9a1567cb64710544b094ab5"
+        },
+        {
+          "path": "packages/vehicle/src/spec.ts",
+          "sha256": "0xf6a6af1e3392500e219be0f7a961e8d64424393f7a9e2d32992329309c7a781f"
+        },
+        {
+          "path": "packages/vehicle/src/static.ts",
+          "sha256": "0x9c1b6b1f9e55f6f039cb20c41c3fe550bfa6d417d87cb607ae262c7689b61698"
+        },
+        {
+          "path": "packages/vehicle/src/surface.ts",
+          "sha256": "0xe64460163892cb9ea7991c29c9168950389e929d65d0eab7a537a460fffcd135"
+        },
+        {
+          "path": "packages/vehicle/src/tyre.ts",
+          "sha256": "0xe0ddcf1d772abd86c7be31b6a6dec7d3b96a3d4b725ad16b29e49dabc00f385c"
+        },
+        {
+          "path": "packages/vehicle/src/vehicle.ts",
+          "sha256": "0xca38ba598be5d761a30e3956ea75ea747a32a3ae83280759a6b87f7ea401f00c"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/core",
+          "@keel-engine/runtime"
+        ]
+      },
+      "output": {
+        "digest": "0x825fc33ba0b1e14bea26930c51304c1c2da470f7ecb9b44132920c2cae109c9b",
+        "byteLength": 22924
+      },
+      "sourceDigest": "0x81776a03a7adf8a45da41fa6ac8275aed5787bb4c42f266a66894203f4e55cf2",
+      "recipeDigest": "0xb169e296259e61a23727309e28a3c760074e59e3ab4592aa9c9029e1e97dc5fa",
+      "receiptDigest": "0x38bf466faf2c7237c39a0f6bc04d11641ed13062caab2c939b1e41c3dda4aa7b",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packages/vehicle/test/vectors.mjs",
+        "sha256": "0xa8f6c7a91735c3418e9938cb4e774fa5f35ba29be3dc5edef17e4bf623aaf86f"
       },
       "deployments": [],
       "deployed": false
@@ -2787,7 +3965,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/worldgen/test/vectors.mjs",
-        "sha256": "0x9b0cd206544c3a55cb075a79719afeade4562c4bf42727daafc5afcd56724708"
+        "sha256": "0x98dcf47c83b67745299515d79a04d51442c2122733358aa2a1e0b9bb488bd7cc"
       },
       "deployments": [],
       "deployed": false
@@ -2900,7 +4078,7 @@
       "verified": true,
       "vectors": {
         "path": "packs/animals/test/vectors.mjs",
-        "sha256": "0x7a15f2e36524b6c4fc1ef292ad114fd9f308eb58ffdd7d820f1062bfb46ebbab"
+        "sha256": "0xac631622da45acab99ea0109c44a854c59c2fa249ce5b46f7379d2b00e231cf8"
       },
       "deployments": [],
       "deployed": false
@@ -2942,12 +4120,32 @@
           "sha256": "0x57f388ad06d19c465e3b7b147c55106854d2ce946e41e3729f2e14c734fc3884"
         },
         {
+          "path": "packs/buildings/src/city/archetypes.ts",
+          "sha256": "0x499625377ab0c84139643a613b4d727ad36ec2a692316575f51d44e6d655f6a9"
+        },
+        {
+          "path": "packs/buildings/src/city/index.ts",
+          "sha256": "0x9edb1f0b5cfae6d1adc74373c609f6e9743c606950654d066307036c8e0a7f52"
+        },
+        {
+          "path": "packs/buildings/src/city/materials.ts",
+          "sha256": "0xc0de48eede8dfbd7a00a58f435940a211501b2b8c6719c5ec36d28d408b7e99f"
+        },
+        {
+          "path": "packs/buildings/src/city/street.ts",
+          "sha256": "0xc6eb1c9302397448da15da6728690c88864c3182a3be76832dc8149b8620f19b"
+        },
+        {
+          "path": "packs/buildings/src/city/trees.ts",
+          "sha256": "0x8f4279eb7dd1a2a8c4d4dfbe08123f22970dbd9d0b5675f944c79401a989aad6"
+        },
+        {
           "path": "packs/buildings/src/generator.ts",
           "sha256": "0x3be8faee06b909b2cfaba59eeb4543d916a94db7c720c7b7caccac9291fdc23f"
         },
         {
           "path": "packs/buildings/src/index.ts",
-          "sha256": "0xc51017f136253cdf0027f07734ebeaacd0d743ad093cfc2d6dbad7c46620f63e"
+          "sha256": "0xc73546df4510278ae17df36720cab2d9e45caa282e2ff1bdbc50506c201b01a9"
         },
         {
           "path": "packs/buildings/src/kit.ts",
@@ -3054,17 +4252,17 @@
         ]
       },
       "output": {
-        "digest": "0x8765d5ac4dd0569841ce663b07a56cfd537309df8e01c606a303a5dab5eb19c0",
-        "byteLength": 51106
+        "digest": "0xf8818528893a44b439702553a211e985787b054eddfe95304b55c977ec6ff3b5",
+        "byteLength": 102958
       },
-      "sourceDigest": "0x89952bae501fddb80e15a9b2fa8a3bb0d7b6c3a6ada4b4ff1274dbbb38369b70",
-      "recipeDigest": "0x93e64eea3b09f4308e621c29b5296731b7e24e54d22e5294457d9338612fe911",
-      "receiptDigest": "0x243d132cb58208f116566e4e567a56e393fd2f89de33a639fb3504cbcbf4f567",
+      "sourceDigest": "0xdf24d4d9d900996f9bcdeec62af7cddbeed77fee422c269e3e027ffaf9d85388",
+      "recipeDigest": "0xdc58e2e8a2837888c3e1e3783be7b959b852a7c6024d75410ce2d9ac01722051",
+      "receiptDigest": "0xa86859125eb0202f5d95679ac295539240245d4f34d1e728e9e2deb6b5e2d1b0",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packs/buildings/test/vectors.mjs",
-        "sha256": "0xe95ebedb4cdb96fadb895e41858a900ec6e4eff9eb44fcda64037aa478bbbb4c"
+        "sha256": "0xfa8f8839d677a57522b37872e557b64bf3da40f42c01e69e1e55086ce070c698"
       },
       "deployments": [],
       "deployed": false
@@ -3102,7 +4300,7 @@
         },
         {
           "path": "packs/cloth/keel/link.json",
-          "sha256": "0x9f805b062dfbb488588cd6abd8a2367e6434d9ee6963e7f93b68a4590ba017be"
+          "sha256": "0x16362aacc9357b721da20449b83d091377d47c7bf4eefe61a1eee5e5ffaac177"
         },
         {
           "path": "packs/cloth/src/attributes/backpack-round.ts",
@@ -3117,8 +4315,20 @@
           "sha256": "0xec91330139301bf0b87bdd309e1c3d54903864fed5c8125b047f99309ca79dca"
         },
         {
+          "path": "packs/cloth/src/attributes/beard.ts",
+          "sha256": "0x5ef649eeb88fdcdf65040f3aebd82b76d1f04dbbec3373632b67139a096ee740"
+        },
+        {
+          "path": "packs/cloth/src/attributes/belt.ts",
+          "sha256": "0x800f6e9f155cd5b377dd39ca80a97fa99218889155ecc346e6fc53fce46c4dbc"
+        },
+        {
           "path": "packs/cloth/src/attributes/boots.ts",
           "sha256": "0x27b2f4033bec9e19e371cd458ed617e6c01653d0cf93aa6b225d060c3776dace"
+        },
+        {
+          "path": "packs/cloth/src/attributes/breastplate.ts",
+          "sha256": "0x063420005fad21d686661d420a1ea0489a33e8f981efef05e6d92f14cbad4177"
         },
         {
           "path": "packs/cloth/src/attributes/cap.ts",
@@ -3127,6 +4337,10 @@
         {
           "path": "packs/cloth/src/attributes/cape.ts",
           "sha256": "0xc1fca9e0ede7b818c9e7511520981ea9863fde487ef1781efe3a7a0d066458de"
+        },
+        {
+          "path": "packs/cloth/src/attributes/circlet.ts",
+          "sha256": "0x6a251a649b245c976df0f9e97d6456b7092c1ec9df32bb23e65dd9263e8949be"
         },
         {
           "path": "packs/cloth/src/attributes/flag.ts",
@@ -3138,11 +4352,27 @@
         },
         {
           "path": "packs/cloth/src/attributes/hood.ts",
-          "sha256": "0x3f83140f8c4f6aea3d8cec68294fdf0c62a871116607a5132d57b121583adf49"
+          "sha256": "0x54ab61f05376ce45da6ef3274fe2d204882807f9aa717841ae50badae323526e"
         },
         {
           "path": "packs/cloth/src/attributes/horned-helmet.ts",
           "sha256": "0x07ea4759f209e937fc230723d7624fac65d38226541f07a10d5eef19835197bb"
+        },
+        {
+          "path": "packs/cloth/src/attributes/horns.ts",
+          "sha256": "0xb7aa4b0e50dc87e6f9a61e9bb20fcaad0bfa1cc952d8db04e8ccba6a436aefeb"
+        },
+        {
+          "path": "packs/cloth/src/attributes/mask.ts",
+          "sha256": "0x1c9ae79ebe000ca2b1963d84517feaa2eed6c5ab872f334e4e2b50e4010ff116"
+        },
+        {
+          "path": "packs/cloth/src/attributes/pauldrons.ts",
+          "sha256": "0x7167e963a941542916b8eeff72995fdfe1d1faa5659ad385626320c46bc0187a"
+        },
+        {
+          "path": "packs/cloth/src/attributes/quiver.ts",
+          "sha256": "0x09fcf6e1edeeb7f16d6e611263112b0973e3f21ba67919469942c15c9b3c5c94"
         },
         {
           "path": "packs/cloth/src/attributes/scarf.ts",
@@ -3153,8 +4383,12 @@
           "sha256": "0x61d42c5f9171c8d83dded8251f4de3c4b29bd995dfa4b60ffa4aa09f3f36487b"
         },
         {
+          "path": "packs/cloth/src/attributes/wizard-hat.ts",
+          "sha256": "0x33792040362a5d495946a5ea99d5659898dde8bf50f4851209ff447efaaa051d"
+        },
+        {
           "path": "packs/cloth/src/index.ts",
-          "sha256": "0x261adffe6924010f8985f6082bde088051a15d6b59f0f7d5c85b2f4b241a7f5c"
+          "sha256": "0x709d8cb800ad96cf3e25172dc197fe575e63ffd99a208f9d671007cf28349e68"
         },
         {
           "path": "packs/cloth/src/kit.ts",
@@ -3162,7 +4396,7 @@
         },
         {
           "path": "packs/cloth/src/pack.ts",
-          "sha256": "0x3cf4b23a769cdad48246855d355ad5ab1716f069fd1620ba8471ec5e2a3b3e15"
+          "sha256": "0xe5802eefcfa9fe2b1c41227a184e87d51ab61848f420efb3555f4395a9c81ac7"
         }
       ],
       "build": {
@@ -3173,17 +4407,17 @@
         ]
       },
       "output": {
-        "digest": "0xdcdaed056cc70daa66636a72b945f1253d50f492d6f93af33c30326ae5f74c57",
-        "byteLength": 20397
+        "digest": "0x35e5e06707c3b7fc67e8c109ad1d600468062250f25c5a242e6dec1640f3b75a",
+        "byteLength": 30476
       },
-      "sourceDigest": "0xd604d7e3a86fb5c242baa0f70d048205fd77f3940588d204c3e781d90cb9662e",
-      "recipeDigest": "0x802c234873f92863ca079b7e1b80209478f2b8dc063c33cb6fb78989934e75dc",
-      "receiptDigest": "0x5067d701b2c41cb1921d6326c3d300e94e9d4f81f8dcae5d5e2b96eb5bed941e",
+      "sourceDigest": "0xf2f0ba552b1faff2f7707db0e69e139c467d1decc1e364703c38a695ec4460c8",
+      "recipeDigest": "0xfa8c4a22b1d899553cec23cf857be3bc165aba50faf8b1ccf35ca08df99138e7",
+      "receiptDigest": "0x664f7b0707140aef754d1d4abad21ddc2a338670a7fb8cd7b2a2e5b5c55a4b67",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packs/cloth/test/vectors.mjs",
-        "sha256": "0x61a3641e001fcd07bb4f98f9538c58c0132edf8f0ea1810b60a2832343c8d467"
+        "sha256": "0x5520ae093c8249c581a972e6104d383dc8f47d794823ed632f6a7df68de10dd1"
       },
       "deployments": [],
       "deployed": false
@@ -3326,15 +4560,15 @@
         },
         {
           "path": "packs/dungeon/keel/link.json",
-          "sha256": "0x5d48dcee988a72a2750525bbdf5c203ad8a11f6e3e9c6c991d70102400408b0f"
+          "sha256": "0x9119eea342a40efd655037aeae11366861186baee4e7cfa290f447606c35ea31"
         },
         {
           "path": "packs/dungeon/src/gear.ts",
-          "sha256": "0x3e5f146b7bbd9ecf3d3d16e2ab1176719e7a74f17474fa4281e9a1b3543d77bf"
+          "sha256": "0xd287d8f247fe4685159edfdaf2862310a6dd92b024f2206e9624dfdc089d68be"
         },
         {
           "path": "packs/dungeon/src/index.ts",
-          "sha256": "0x5b07b5b36c3822ed1d077099beb42b1a1f1ffe98cbf5c6df4697e9436c7ffbbf"
+          "sha256": "0xdd1417c5e62a79832c584aff6808c60fa59ee82106aa2b689d8597e50e7d962c"
         },
         {
           "path": "packs/dungeon/src/kit.ts",
@@ -3490,17 +4724,17 @@
         ]
       },
       "output": {
-        "digest": "0xcd8aaebc4c7897bdf9104a9c80a7f6708f56f6e13b747009de954f16f78e7143",
-        "byteLength": 61981
+        "digest": "0x36629505cfa0b0c55068e97362feae5977957ac0c97b98a07dc7d916f619b75d",
+        "byteLength": 67420
       },
-      "sourceDigest": "0x36ecec0b08b99dca2ea5beb6e9909c70291f6c8140c224bf8a79f250e8ec2ca2",
-      "recipeDigest": "0xe39c40387fb560c408638d506fbd095aacf4942ecf1f34c25a7705bbb8ee211e",
-      "receiptDigest": "0x349bbc3eaac3e83253f184d0a40fd025963c8c93da29e09a7c757ebfd6d5c390",
+      "sourceDigest": "0xbff7b46600ebf646585a386ddc756ba4533d13bac70253415b8599057c63bad5",
+      "recipeDigest": "0xbf8c2a6156e1b7742e67e5fe42a8b06a6fdad0262c925abb41edb7015fd8a3aa",
+      "receiptDigest": "0x988a61f64f4df2ca2174e6ab054cfda903e6a371e28caa8b87656eb0e11451ab",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packs/dungeon/test/vectors.mjs",
-        "sha256": "0x9ffed44a65ed78b0391658919863ade28f676c4bd29051c1c0672d7608efbd41"
+        "sha256": "0x0ca97ca3bdac07a2c7e14db89597550963bdd5ad4a09ea382784935f2264c660"
       },
       "deployments": [],
       "deployed": false
@@ -3717,7 +4951,7 @@
         },
         {
           "path": "packs/humans/src/species.ts",
-          "sha256": "0x745d1974866a34a7e90d4f4f16dd68f5c5dcee4ad162db0fb2a7327108b53ef9"
+          "sha256": "0x98d9c29c4898808fbc1c289450d8e3eefa00ae0f69b60fa00d198f0426ece98f"
         }
       ],
       "build": {
@@ -3728,17 +4962,155 @@
         ]
       },
       "output": {
-        "digest": "0xd02931ece11ce763b46cfee4626e4733e404aa26ea2e006d54a657ca5c150867",
-        "byteLength": 4488
+        "digest": "0x0eedc0141f2833a32d3510a86b001dd863334535756a2fb8fcec5abe3e391506",
+        "byteLength": 4495
       },
-      "sourceDigest": "0xf721c56f2222c603b777a86370b305eeb7bd9ad99b4ba7fa71f9730214cdeb65",
-      "recipeDigest": "0x1bd938e2147e2fa2a7781b26ded039c98a3a4288e4cc7ae1b5a98513746ec8a7",
-      "receiptDigest": "0xd9f4423938966357ab1bd5a9ed17810b953ff2554939b16683230af03a503355",
+      "sourceDigest": "0xc4cd3cd2510fb88ea4c9a517dda001ce5c669cf1b4280240e8bdb68186c36587",
+      "recipeDigest": "0x433c104bb841b7b8afc24d7ab6b79b81f45805e31ecea9c9231a57c75d7d8b01",
+      "receiptDigest": "0xe18209f74f543c67fa78e38be362e90fdef9a90df8a08461ba08282a87c4c8c6",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packs/humans/test/vectors.mjs",
-        "sha256": "0x4cb8573e4bef766da6a8fc08f459b2c47d52e1e40cd7dc77e9d93414c8f67462"
+        "sha256": "0xada26aac56a5c05cc29635286f4398d272fc0a3c390c40f8b54fd3e6f8c28d69"
+      },
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "packs/vehicles",
+      "version": "1.0.0",
+      "kind": "pack",
+      "phase": "runtime",
+      "weight": -500,
+      "needs": [
+        "keel/runtime@^0.1",
+        "keel/core@^0.1",
+        "keel/bake@^0.1",
+        "keel/vehicle@^0.1"
+      ],
+      "provides": [
+        "vehicles/car@1.0.0"
+      ],
+      "compatible": [],
+      "name": "keel-engine-packs-vehicles",
+      "license": "MIT",
+      "summary": "Generative cars: every seed its own -- continuous dials on curves (length, width, stance, cabin, glass rake, fastback, wheels and stagger, aero, flares, ride, power, mass), eight archetypes as biases (hyper, GT, muscle, rally, kei, pickup, buggy, prototype), gated parts and weighted forms (lights, spoilers, scoops, splitters, cages, beds, exhausts, rims, livery), colours as curves, a rarity and a tier -- built as indexed bake shapes: a body, and wheels as their own layers that spin and steer; every part ...",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packs/vehicles"
+      },
+      "githubPath": "packs/vehicles/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packs/vehicles/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packs/vehicles/keel/link.json",
+          "sha256": "0x75b148a07ae1aeb9fecc3ff28b44b14116e740c978336776df13626a2589ef5c"
+        },
+        {
+          "path": "packs/vehicles/src/bumpers.ts",
+          "sha256": "0x610eb0bf60617936cb1be58cd5366bfc958465f33c3af4fe427bf00b2c7a46c0"
+        },
+        {
+          "path": "packs/vehicles/src/car.ts",
+          "sha256": "0xffd54022329691c21f39a65ca84b948d39d8c4b172fba77315cc783913d74f4f"
+        },
+        {
+          "path": "packs/vehicles/src/decals.ts",
+          "sha256": "0xb64e5ba93e49829be7c7df028e098892ade51f4b7689b80f48e36a251ab1a93a"
+        },
+        {
+          "path": "packs/vehicles/src/draws.ts",
+          "sha256": "0x0ce68f460e2764d5dd2715c82a5fcefb4666ff7adbcd9eeb268bc32f56d7ad6d"
+        },
+        {
+          "path": "packs/vehicles/src/drive.ts",
+          "sha256": "0xc671ba527ffa9c8d4156430a62ebbd98f6941a90b64dae3e23dc91e309a66aaf"
+        },
+        {
+          "path": "packs/vehicles/src/engine-access.ts",
+          "sha256": "0x5bac3cdf89b666d380accdc660a5acfc028f31a3e4fde088176fe5bb1fb22304"
+        },
+        {
+          "path": "packs/vehicles/src/index.ts",
+          "sha256": "0xf7bac586c72e7da5bdf6e1880ceb852533ef3c9bc8249930581e2948bd5ad7c8"
+        },
+        {
+          "path": "packs/vehicles/src/lights.ts",
+          "sha256": "0xe80878f93743a0ad05be475f4630e5572afbcde641e1727e954cb356c1e4cc54"
+        },
+        {
+          "path": "packs/vehicles/src/mechanics.ts",
+          "sha256": "0xcf8a29a91de9a21504bd88d574f49fec8cb028c7f8ddd472cb667287f6a4c38d"
+        },
+        {
+          "path": "packs/vehicles/src/metadata.ts",
+          "sha256": "0x09f421a04fbae9c08a1b108805b4d5a02f5c1619bac3ca45f09c2815a8889f57"
+        },
+        {
+          "path": "packs/vehicles/src/paint.ts",
+          "sha256": "0x7ca7a1b8cb02634d62cbfb89fefc03abfde1169d83278c159d58161d5b97eb44"
+        },
+        {
+          "path": "packs/vehicles/src/physics.ts",
+          "sha256": "0x16c7f5f0b8360a0d9862ee8765091854ce4a1323449e8a27f1e454d20dc1485a"
+        },
+        {
+          "path": "packs/vehicles/src/plate.ts",
+          "sha256": "0xf662849f9ce141897a587970b4f5632b986d67562cdd41cfaeec83ace9b57524"
+        },
+        {
+          "path": "packs/vehicles/src/roof.ts",
+          "sha256": "0xe5326a6edfedf0c4b65716877127a692a634209ea3ec9ad1c075259028b7abbc"
+        },
+        {
+          "path": "packs/vehicles/src/semi.ts",
+          "sha256": "0xd059c149838d4f2d4838bbfa82afa9a2d7bbcc2c83d289c26987fbc685693adf"
+        },
+        {
+          "path": "packs/vehicles/src/shapes.ts",
+          "sha256": "0xdc16f4fd9ed832007caa519323abf93965684ad262468ecff1584dc33e5ae524"
+        },
+        {
+          "path": "packs/vehicles/src/slots.ts",
+          "sha256": "0xd988c3fa7a17601990a33c96e8d94fa7ef76cdef75ba00f1cbbddd6b841145f9"
+        },
+        {
+          "path": "packs/vehicles/src/solids.ts",
+          "sha256": "0xeb93624d01b999bb0035979a5bf6b80d89b33e1b2e3eb73a67abaf8a502650cc"
+        },
+        {
+          "path": "packs/vehicles/src/stance.ts",
+          "sha256": "0xf7d702ba81babc25d4ef224efea2ff3bc276ff0ef36b9fe865dfcd77ad3e8025"
+        },
+        {
+          "path": "packs/vehicles/src/traits.ts",
+          "sha256": "0x65dfb70f975347c604e9f9b3d90e7aa852ba84923bbd9168967034b68e46595d"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/bake",
+          "@keel-engine/core"
+        ]
+      },
+      "output": {
+        "digest": "0x9ca9cadc4a3070fffd482745954260189b95112a346ca47971851ad6b0d1b960",
+        "byteLength": 130293
+      },
+      "sourceDigest": "0x2ea3afd0a91e7787cae099c70180839e472f1751e3b4392499bdc755f61612ac",
+      "recipeDigest": "0xe30dce8642d2381e6a842ecbf6bf5128c6113f4368611730350e2a1a1b288314",
+      "receiptDigest": "0x60361aede6b676ef02c113b5be0f987a5bc748d37af2dd3f723902d189d66496",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": {
+        "path": "packs/vehicles/test/vectors.mjs",
+        "sha256": "0x60407a0f0457458972ca8f8a811a8f5c627c33eb5bfae48d26a39517b8176b05"
       },
       "deployments": [],
       "deployed": false

@@ -37,8 +37,14 @@ import type { AtlasPage } from "./sprites.ts";
 type V3 = readonly [number, number, number];
 /** A capsule in the world (what an entity's skin makes). */
 export interface BakeCapsule { readonly a: ArrayLike<number>; readonly b: ArrayLike<number>; readonly r: number; readonly mat?: number | undefined }
-/** A box turned about y (a wedge with `kind: "wedge"`). */
-export interface BakeBox { readonly c: ArrayLike<number>; readonly h: ArrayLike<number>; readonly yaw?: number | undefined; readonly mat?: number | undefined; readonly kind?: string | undefined; readonly lo?: number | undefined }
+/**
+ * A box turned about y (a wedge with `kind: "wedge"`). `grid` (a live mesh's box only: lookMesh) measures its four
+ * side faces in METRIC cells -- [bay width (m), storey height (m), u offset, v offset (cells)] -- for the "windows"
+ * pattern: a 40-storey tower shows 40 rows of windows and a 4-storey one 4. Its top and bottom keep the 0..1 coordinate.
+ */
+export interface BakeBox { readonly c: ArrayLike<number>; readonly h: ArrayLike<number>; readonly yaw?: number | undefined; readonly mat?: number | undefined; readonly kind?: string | undefined; readonly lo?: number | undefined; readonly skin?: number | undefined; readonly grid?: FacadeGrid | undefined }
+/** A box's facade grid: bay width and storey height (m), and where its first cell starts (cells; lines stacked boxes up). */
+export type FacadeGrid = readonly [number, number, number?, number?];
 /** A design posed at one frame: solids at the origin, facing +z (the frame convention). */
 export interface BakeWorld { readonly capsules?: readonly BakeCapsule[] | undefined; readonly boxes?: readonly BakeBox[] | undefined; readonly wedges?: readonly BakeBox[] | undefined }
 export interface BakeMaterial { readonly ramp: string; readonly light?: number | undefined; readonly pattern?: number | undefined; readonly glow?: number | undefined }

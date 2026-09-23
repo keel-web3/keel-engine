@@ -165,6 +165,75 @@ sprites.drawLayers(view, layers, { screen: 4, dither: 0.9, outline: 3 });
 - **Patterns ride the part.** The coordinate is the part's own -- round a capsule and along it, across a box's face --
   so stripes stay on a sleeve through a walk cycle (not sliding across the sprite, as sprite-space patterns would);
   they restart at each part's edge. 8 bits a way: 32 texel steps per pattern repeat at the 8 repeats we allow.
+- **The live mesh path carries the same two numbers** (`mesh.ts`). `lookMesh` writes `[slot, u, v, part]` a vertex
+  (`vert(p, n, slot, u, v)`), with the coordinate generated the same way the baker's is -- around a capsule and along
+  it (`i / around`, `(h + r) / (len + 2r)`), across a box's face -- and the slot from the solid's `mat`, which
+  `shapes.ts`' `slotOfPart` read off the part's NAME. The G-buffer keeps it (`gA = (slot+1, shade, u, v)`) and the
+  paint pass resolves it out of the same look table. **There are no texture UVs anywhere in the engine**: `u, v` is
+  where you are on the part, never where you are in an atlas. Nothing to pack, no mip chain, no filtering, no bleed
+  between neighbours -- which is why the pixels stay exact at any zoom, and why a new look costs a row of texels
+  rather than a re-bake. A generator therefore picks a thing's colours by NAMING ITS PARTS; it never emits texture
+  coordinates, and it never hands the renderer an RGB.
+- **Placement rides it too** (`looks.ts` `SlotDecal`). A decal is stamped at a RECT of a slot's surface coordinate,
+  so it is carried by the part through every frame, direction and zoom, lit by that part's own shade, and its inks
+  are ramp indices like everything else. Generators place decals in the same coordinate they paint in
+  (`packs/vehicles/src/decals.ts` scores panels and stamps into `panelFace`), so one placement serves the live mesh
+  and every baked rung.
+- **Wall material detail** (`looks.ts` `WallDetail`, drawn by `draw-mesh.ts` `wallDetail`). A box with a facade grid
+  (`BakeBox.grid`) already hands the paint pass metric cell coordinates; a slot whose paint names a `detail` has its
+  wall painted between the windows as `"brick"` (running bond), `"panel"` (precast seams, form-tie dots),
+  `"corrugated"` (ribs, laps), `"siding"` (lap boards), `"stucco"` (a blotchy render), `"glass"` (mullions and
+  transoms) or `"stone"` (ashlar), plus a lit sill and rain streaks under every window, a dark contact band at the
+  foot of the wall and grime rising off it, and a one-pixel lit coping where the wall meets its own roof:
+
+      table.add([{ look, ink, screen: "bayer4", detail: { material: "brick", grime: 0.4, foot: 0.6, edge: true, scale: 1 } }]);
+
+  It is sixteen bits in the high half of the paint's pattern word (`wallDetailBits`), so a paint without one packs
+  exactly as before, and it only runs on facade-grid faces. Every joint is ONE picture pixel wide: a line is drawn where
+  the lattice index changes between a pixel and its right or lower neighbour (so it never breaks up or doubles at any
+  distance), and a lattice finer than three pixels a line halves until it isn't -- a far tower reads as a quiet
+  texture, a near wall as bricks. The cell's 256ths come from the packed surface bytes (high nibbles) and the body
+  channel (low nibbles: MESH_GFS), and `lookMesh` gives a grid face's vertices `LookMesh.facade` -- metres above the
+  face's foot -- so the foot band sits at the bottom of every mass, on a hill or a podium (a mesh without a grid face
+  carries no such array; its attribute reads -1). Cost: only detail pixels pay -- around a dozen extra G-buffer
+  fetches (their right, lower and upper neighbours).
+- **Crossed cards** (`cards.ts`). `cardsMesh(spots, { cards: 2 | 3, kind, slot })` builds thousands of grass tufts,
+  bushes, leafy clumps or reeds as ONE mesh: each spot two or three upright quads crossed at its middle, its normals
+  leaning out and up so a tuft shades round. The G-buffer pass cuts each card to a silhouette (`CARD_GLSL`: blades,
+  a lumpy dome, overlapping clumps, stalks with seed heads) measured on the card and roughened on its own leaf texels,
+  so it never swims; what isn't leaf is discarded, so what's behind shows through, and the sun's pass casts the same
+  cutout. The cutout is carried by the mesh (a card's `v` is below 0, as a facade grid's `u` is), because pass 1 never
+  reads the paints; the paint is any ordinary `SlotPaint` on the spot's slot. A card is darker at its foot and lit at
+  its tips, each tuft a touch lighter or darker than the next, and its ink is one entry rather than the style's
+  outline, so a field of tufts reads as foliage rather than black lace:
+
+      sr.setMesh("verge:grass", cardsMesh(spots.map(([x, z]) => ({ x, y: groundY(x, z), z, height: 0.45, kind: "grass" })), { slot: 3 }));
+      sr.drawMeshes(view, [{ mesh: "verge:grass", matrix: meshMatrix(), look }], style);
+
+  12 vertices and 18 indices a spot (3 cards); `test/cards.test.ts` is the worked example.
+
+### One generator, baked at load, at every scale it will be seen
+
+The generator runs once, at load, and produces slots, surface coordinates and placements -- the math above. The
+baker turns that into indexed pixels for **each rung of a scale ladder**, and the stream keeps the rungs the camera
+is actually near:
+
+```ts
+const stream = createSpriteStream({ designs, ladder: [12, 24, 48, 96], upscale: 2, memory: 256 * 1048576 });
+stream.preload({ full: ["main"], scales: "neighbours" });   // at load: what the first frame needs
+stream.setScale(pixelsPerMetre, now);                       // a zoom moves the target rung; neighbours rank next
+// each frame: begin(now) → mark `seen`/`near` → update(now) → take(n) → bake → put(job, sprite)
+```
+
+- **The ladder** is ascending px/m rungs; `setScale` picks the target and the stream ranks that rung's slots
+  first, then its neighbours, then the rest (`RANK`), so a zoom is already half-baked when it arrives.
+- **`upscale`** lets a smaller rung's bake stand in while the target's bakes -- chunky for a moment, never missing.
+  **`maxScale`** caps a design that is not worth baking huge (a tree at 128 px/m is 1,000+ px tall); above it, its
+  top bake is blown up and ranked as the target's.
+- **Eviction is by memory budget and rank**, and a bake or an eviction re-resolves only the groups it touched
+  (`test/stream-view.test.ts`), which is what keeps `begin()` under a millisecond on a 17,000-slot stream.
+- Because only SHAPES bake, the ladder is shared by every look: ten thousand cars in ten thousand liveries bake the
+  same handful of shapes per rung, and the liveries are rows in the look table.
 - **The layer shader** (`sprites.ts` `drawLayers`): texel → the instance's look → the slot's PAINT (ramp base and
   length, finish, pattern, ink ramp) → the finish bends the shade onto the ramp (matte, cloth softer, leather, metal
   hard with a glint at the top, glow lifted) → the pattern (stripes at an angle, bands, spots, checks, camo, trim

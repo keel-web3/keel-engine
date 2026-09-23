@@ -39,8 +39,11 @@ export type LookRole = (typeof LOOK_ROLES)[number];
 /** Colour profiles: how a look's roles relate. */
 export const PROFILES = ["analogous", "complementary", "triad", "team", "earthy", "neon", "pastel", "metallic"] as const;
 export type LookProfile = (typeof PROFILES)[number];
-/** Patterns a role may wear (on the part's own surface coordinates). */
-export const PATTERNS = ["none", "stripes", "bands", "spots", "checks", "camo", "gradient", "trim"] as const;
+/**
+ * Patterns a role may wear (on the part's own surface coordinates). "windows" reads a METRIC facade grid (keel/bake
+ * BakeBox.grid: bays and storeys in cells): freq is the lit share (of 15), angle the window type, width the pane fill.
+ */
+export const PATTERNS = ["none", "stripes", "bands", "spots", "checks", "camo", "gradient", "trim", "windows"] as const;
 export type Pattern = (typeof PATTERNS)[number];
 /** Finishes: how the shade lands on the ramp, and how the ramp is built. */
 export const FINISHES = ["matte", "cloth", "leather", "metal", "glow"] as const;

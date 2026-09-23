@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/elevation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Continuous ground elevation for any world: one height field every system reads (renderers, physics, cameras, props, AI) -- rolling hills from a seed, and shaping that graded roads, level junctions and building pads are made of, a CPU raycast, and the GLSL a renderer marches it with. Deterministic.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

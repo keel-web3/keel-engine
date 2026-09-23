@@ -10,3 +10,6 @@ out/
 .env.*
 .DS_Store
 packages/*/tools/dist/
+
+# Rust build output (zk proofs)
+zk/**/target/

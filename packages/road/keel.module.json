@@ -1,0 +1,20 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-road",
+  "version": "0.1.0",
+  "description": "Roads as data: sampled paths, a road graph with width rules, and a sparse per-chunk road field.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/road"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/core",
+      "@keel-engine/runtime"
+    ]
+  }
+}

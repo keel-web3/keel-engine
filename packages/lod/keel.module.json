@@ -1,0 +1,16 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-lod",
+  "version": "0.1.0",
+  "description": "Level of detail for generated worlds: nested prefix chains, screen-space-error selection with hysteresis and dithered fades, tiles for a far pass, and a generation work queue.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/lod"
+  },
+  "build": {
+    "format": "iife"
+  }
+}

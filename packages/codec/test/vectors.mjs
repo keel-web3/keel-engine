@@ -11,7 +11,7 @@ export default await engineVectors(import.meta.url, [
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "d0231ab2ca9381b112a250de6d108e385d38da24e7455542e8b3dea9fe7078f5",
+    expect: "d91eaf58ec78f14a4495ff4c3a4bd76e337042d9c9ce04a7c6cbb0744b0541b7",
   },
   {
     name: "a struct round-trips through canonical bytes",

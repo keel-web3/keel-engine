@@ -44,4 +44,4 @@ export { default as oreCart } from "./objects/ore-cart.ts";
 export { default as key } from "./objects/key.ts";
 // A hero's gear: a sword and a shield for the hand sockets (runtime attributes). One entry per verified
 // module, so it rides here rather than on a subpath; it reaches keel/runtime, which every page loads first.
-export { gear, shield, sword } from "./gear.ts";
+export { bow, club, focus, gear, shield, staff, sword } from "./gear.ts";

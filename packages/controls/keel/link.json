@@ -1,0 +1,22 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/controls",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/runtime@^0.1"
+    ],
+    "title": "KEEL Engine controls",
+    "description": "An action map over keyboard, gamepads and touch; device detection; on-screen mobile control schemes styled by CSS.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

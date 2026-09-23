@@ -107,8 +107,29 @@ function skinHumanoid(spec: HumanoidSpec, skel: Skeleton, { cap, ball, W, P }: P
   if (human) cap("chest", bare ? "fur" : "cloth", W("chest", [-B.shoulderW * 0.42, T * 0.24, 0]), W("chest", [B.shoulderW * 0.42, T * 0.24, 0]), B.torsoR);
   else cap("chest", bare ? "fur" : "cloth", P("spine"), W("neck", [0, -B.torsoR * 0.35, 0]), B.torsoR);
 
-  // Legs: thigh, shin, a foot from heel to toe.
-  for (const s of ["L", "R"]) {
+  // A robe instead of legs: it hangs from the hips in rings that follow the legs' swing -- to the ankles over the
+  // feet, or (hovering) tapering to a trailing tail with nothing under it.
+  if (O.pants === "robe" || O.pants === "hover") {
+    const hover = O.pants === "hover";
+    const mid = (a: Vec3, b: Vec3, t = 0.5): Vec3 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+    const hip = P("hips");
+    const knee = mid(P("shin.L"), P("shin.R"));
+    const ankle = mid(P("foot.L"), P("foot.R"));
+    const w = B.torsoR;
+    // (A cartoon's robe flares to a bell: the toon build widens the knees and the hem; true to life, a straight fall.)
+    const t = spec.choices.kind === "humanoid" ? Math.max(0, Math.min(1, spec.choices.toon ?? 0)) : 0;
+    const flare = (a: number, b: number): number => a + (b - a) * t;
+    cap("robe", "cloth", hip, mid(hip, knee, 0.6), w * 1.05);
+    cap("robe", "cloth", mid(hip, knee, 0.6), hover ? mid(knee, ankle, 0.35) : knee, w * flare(1.2, 1.35));
+    if (hover) cap("robe.tail", "cloth", mid(knee, ankle, 0.35), [ankle[0] * 0.5 + knee[0] * 0.5, ankle[1] + (knee[1] - ankle[1]) * 0.25, ankle[2] * 0.5 + knee[2] * 0.5 - w * 0.5], w * flare(0.55, 0.8));
+    else {
+      cap("robe.hem", "clothAlt", knee, [ankle[0], ankle[1] + B.footR, ankle[2]], w * flare(1.35, 1.75));
+      for (const s of ["L", "R"]) {
+        const sole = -(B.ankleH - B.footR);
+        cap(`foot.${s}`, O.shoes === "bare" ? "fur" : "dark", W(`foot.${s}`, [0, sole, -B.footLen * 0.05]), W(`foot.${s}`, [0, sole, B.footLen * 0.78]), B.footR);
+      }
+    }
+  } else for (const s of ["L", "R"]) {
     cap(`thigh.${s}`, O.pants === "none" ? "fur" : "clothAlt", P(`thigh.${s}`), P(`shin.${s}`), B.legR);
     cap(`shin.${s}`, O.pants === "long" ? "clothAlt" : "fur", P(`shin.${s}`), P(`foot.${s}`), B.legR * 0.92);
     const sole = -(B.ankleH - B.footR);

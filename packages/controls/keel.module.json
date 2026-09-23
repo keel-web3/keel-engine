@@ -1,0 +1,19 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-controls",
+  "version": "0.1.0",
+  "description": "An action map over keyboard, gamepads and touch; device detection; on-screen mobile control schemes styled by CSS.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/controls"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/runtime"
+    ]
+  }
+}

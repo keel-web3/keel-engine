@@ -45,3 +45,7 @@ export { BATTLE_STYLES, wearOf } from "./synth.ts";
 export type { BattleStyleName, BattleWear } from "./synth.ts";
 export { featureDistance, featureVector, soundFeatures } from "./features.ts";
 export type { SoundFeatures } from "./features.ts";
+export { CAR_AUDIO_VERSION, CAR_LOOPS, CAR_MATERIALS, CAR_SHOTS, CAR_SOUNDS, CAR_UI, carSoundRecipe, carSoundSample, isCarLoop, isCarSound } from "./car.ts";
+export type { CarLoopName, CarMaterial, CarShotName, CarSoundName, CarSoundRecipe } from "./car.ts";
+export { createCarAudio } from "./car-player.ts";
+export type { CarAudio, CarAudioOptions, CarPlayParams, CarVoice } from "./car-player.ts";

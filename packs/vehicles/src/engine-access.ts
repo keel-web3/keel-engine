@@ -1,4 +1,5 @@
 // Engine access and moving hardware share the exact geometry used by the body and its damage parts.
+import { dsin } from "@keel-engine/core";
 import { meshMatrix, mulMatrix } from "@keel-engine/bake";
 import type { Car } from "./car.ts";
 import { mechanicsOf } from "./mechanics.ts";
@@ -21,8 +22,8 @@ export function enginePanelPose(car: Car, open: number): Float32Array {
 
 export function engineMotion(car: Car, phase: number, rpm: number) {
   const m = mechanicsOf(car), e = m.engine, g = car.body, strength = rpm > 0 ? .01 + Math.min(1, rpm / 6500) * .009 : 0;
-  const rock = enginePivot([0, e.y, e.z], 0, Math.sin(phase * m.cylinders / 2) * strength);
-  rock[13] = rock[13]! + Math.sin(phase * 2) * strength * .42;
+  const rock = enginePivot([0, e.y, e.z], 0, dsin(phase * m.cylinders / 2) * strength);
+  rock[13] = rock[13]! + dsin(phase * 2) * strength * .42;
   const pulley = enginePivot([0, e.y, e.z + e.length / 2 + .035], 0, phase);
   const ry0 = g.ride + .05, ry1 = Math.max(ry0 + .08, g.ride + (g.belt - g.ride) * g.noseLo - .05);
   const fan = enginePivot([0, (ry0 + ry1) / 2, m.radiatorZ - .08], 0, phase * .7);

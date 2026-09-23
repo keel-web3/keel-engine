@@ -1,0 +1,18 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/lod",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [],
+    "title": "KEEL Engine level of detail",
+    "description": "Level of detail for generated worlds: nested prefix chains, screen-space-error selection with hysteresis and dithered fades, tiles for a far pass, and a generation work queue.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {},
+  "manifests": {}
+}

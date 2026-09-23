@@ -43,7 +43,8 @@ export type TailShape = "none" | "long" | "bushy" | "puff" | "stub" | "thin";
 export type Coat = "plain" | "socks" | "muzzle" | "tipped";
 export type Hair = "none" | "short" | "long" | "bun" | "spiky" | "pony";
 export type Top = "jacket" | "hoodie" | "tee" | "vest" | "none";
-export type Pants = "long" | "shorts" | "none";
+/** What covers the legs: long or short trousers, none -- or a robe to the ankles, or a hovering robe (no legs, no feet: it trails). */
+export type Pants = "long" | "shorts" | "none" | "robe" | "hover";
 export type Shoes = "sneakers" | "boots" | "bare";
 export type PackStyle = "round" | "tall" | "small" | "none";
 export type Accessory = "none" | "scarf" | "cap" | "goggles" | "headband" | "collar";
@@ -123,6 +124,8 @@ export interface ChoiceValues {
   legs: number;
   arms: number;
   girth: number;
+  /** A person drawn as a cartoon, 0..1: 0 true to life; 1 a chibi (a big head, a short stout body, stubby legs, big hands and feet). */
+  toon: number;
   ears: EarShape;
   earSize: number;
   snout: number;
@@ -173,6 +176,7 @@ export const CHOICES: readonly AnyChoice[] = [
   ranged("legs", 0.92, 1.08),
   ranged("arms", 0.92, 1.08),
   ranged("girth", 0.85, 1.15),
+  choice({ name: "toon", reads: [], range: [0, 1], pick: () => 0 }),
   choice({ name: "ears", reads: ["species"], optionsOf: (c) => [...new Set(LOOK[c.species].ears)], pick: (S, c) => S.pick(LOOK[c.species].ears) }),
   ranged("earSize", 0.85, 1.15),
   ranged("snout", 0.85, 1.2),
@@ -182,7 +186,7 @@ export const CHOICES: readonly AnyChoice[] = [
   choice({ name: "hair", reads: ["species"], options: ["none", "short", "long", "bun", "spiky", "pony"], pick: (S, c) => (c.species === "human" ? S.weighted<Hair>([["short", 4], ["long", 2], ["bun", 2], ["spiky", 2], ["pony", 2], ["none", 1]]) : "none") }),
   choice({ name: "top", reads: ["kind"], options: ["jacket", "hoodie", "tee", "vest", "none"], pick: (S, c) => (isOutfitted(c.kind) ? S.weighted<Top>([["jacket", 4], ["hoodie", 3], ["tee", 2], ["vest", 1]]) : "none") }),
   choice({ name: "hood", reads: ["species", "top"], options: [true, false], pick: (S, c) => (c.species !== "frog" && (c.top === "jacket" || c.top === "hoodie") ? S.chance(c.top === "hoodie" ? 0.6 : 0.35) : false) }),
-  choice({ name: "pants", reads: ["kind"], options: ["long", "shorts", "none"], pick: (S, c) => (isOutfitted(c.kind) ? S.weighted<Pants>(c.kind === "humanoid" ? [["long", 3], ["shorts", 1]] : [["none", 3], ["long", 2], ["shorts", 2]]) : "none") }),
+  choice({ name: "pants", reads: ["kind"], options: ["long", "shorts", "none", "robe", "hover"], pick: (S, c) => (isOutfitted(c.kind) ? S.weighted<Pants>(c.kind === "humanoid" ? [["long", 3], ["shorts", 1]] : [["none", 3], ["long", 2], ["shorts", 2]]) : "none") }),
   choice({ name: "shoes", reads: ["kind", "species"], options: ["sneakers", "boots", "bare"], pick: (S, c) => (!isOutfitted(c.kind) || c.species === "frog" ? "bare" : S.weighted<Shoes>([["sneakers", 4], ["boots", 2], ["bare", c.kind === "anthro" ? 1 : 0.2]])) }),
   choice({ name: "pack", reads: ["kind"], options: ["round", "tall", "small", "none"], pick: (S, c) => (isOutfitted(c.kind) ? S.weighted<PackStyle>([["round", 4], ["tall", 2], ["small", 2], ["none", 2]]) : "none") }),
   choice({ name: "accessory", reads: ["kind", "species"], options: ["none", "scarf", "cap", "goggles", "headband", "collar"], pick: (S, c) => (isOutfitted(c.kind) ? S.weighted<Accessory>([["none", 5], ["scarf", 2], ["cap", 2], ["goggles", 1], ["headband", 1]]) : c.species === "cat" || c.species === "dog" ? S.weighted<Accessory>([["none", 1], ["collar", 1]]) : "none") }),
@@ -336,27 +340,30 @@ export function entityOf(seed: unknown, { kind, species, pins = {}, size }: Enti
 // (about 1, nearly two fifths of it head -- the runner's chibi build).
 function humanoidBody(c: ChoiceValues, size: number | undefined): HumanoidBody {
   const human = c.kind === "humanoid";
-  const H = size ?? (human ? 1.7 : ANTHRO_H[c.species] ?? 1) * c.height;
-  const headR = (H * (human ? 0.135 : 0.38) * c.head) / 2;
-  const hipH = H * (human ? 0.5 : 0.3) * c.legs;
-  const neck = H * (human ? 0.035 : 0.012);
+  // (A person's proportions, blended toward a chibi's by toon.)
+  const t = human ? Math.max(0, Math.min(1, c.toon ?? 0)) : 0;
+  const mix = (a: number, b: number): number => a + (b - a) * t;
+  const H = size ?? (human ? mix(1.7, 1.25) : ANTHRO_H[c.species] ?? 1) * c.height;
+  const headR = (H * (human ? mix(0.135, 0.36) : 0.38) * c.head) / 2;
+  const hipH = H * (human ? mix(0.5, 0.24) : 0.3) * c.legs;
+  const neck = H * (human ? mix(0.035, 0.01) : 0.012);
   const torso = H - hipH - neck - headR * 2;
-  const footR = H * (human ? 0.028 : 0.045);
+  const footR = H * (human ? mix(0.028, 0.05) : 0.045);
   const ankleH = Math.max(footR * 1.25, hipH * 0.08);
   const reach = hipH - ankleH;
-  const torsoR = H * (human ? 0.085 : 0.14) * c.girth;
+  const torsoR = H * (human ? mix(0.085, 0.15) : 0.14) * c.girth;
   const tail = LOOK[c.species].tail;
   return {
     H, hipH, ankleH, footR, neck, torso, headR, torsoR,
     thigh: reach * 0.5, shin: reach * 0.5,
-    footLen: H * (human ? 0.13 : 0.13),
-    hipW: human ? H * 0.055 * Math.sqrt(c.girth) : torsoR * 0.52,
-    shoulderW: human ? H * 0.115 * Math.sqrt(c.girth) : torsoR * 0.95,
-    upperArm: H * (human ? 0.17 : 0.11) * c.arms,
-    forearm: H * (human ? 0.145 : 0.095) * c.arms,
-    handLen: H * (human ? 0.055 : 0.04),
-    legR: H * (human ? 0.034 : 0.052) * Math.sqrt(c.girth),
-    armR: H * (human ? 0.028 : 0.038) * Math.sqrt(c.girth),
+    footLen: H * (human ? mix(0.13, 0.17) : 0.13),
+    hipW: human ? H * mix(0.055, 0.08) * Math.sqrt(c.girth) : torsoR * 0.52,
+    shoulderW: human ? H * mix(0.115, 0.15) * Math.sqrt(c.girth) : torsoR * 0.95,
+    upperArm: H * (human ? mix(0.17, 0.12) : 0.11) * c.arms,
+    forearm: H * (human ? mix(0.145, 0.1) : 0.095) * c.arms,
+    handLen: H * (human ? mix(0.055, 0.07) : 0.04),
+    legR: H * (human ? mix(0.034, 0.055) : 0.052) * Math.sqrt(c.girth),
+    armR: H * (human ? mix(0.028, 0.045) : 0.038) * Math.sqrt(c.girth),
     tailLen: tail[0] === "none" ? 0 : H * tail[1] * c.tail,
     stride: c.stride,
   };
@@ -404,7 +411,7 @@ function featuresOf(c: ChoiceValues, body: HumanoidBody | QuadrupedBody): Featur
     ears: { shape: c.ears, len: len * c.earSize, w: w * Math.sqrt(c.earSize), spread },
     snout: (quad ? quadLook(c.species).snout : LOOK[c.species].snout) * c.snout,
     tail: { shape: tail[0], len: body.tailLen },
-    eyes: { r: (c.kind === "humanoid" ? 0.1 : quad ? 0.16 : 0.14) * c.eyes, spread: c.species === "frog" ? 0.5 : c.kind === "humanoid" ? 0.36 : 0.4 },
+    eyes: { r: (c.kind === "humanoid" ? 0.1 + 0.08 * (c.toon ?? 0) : quad ? 0.16 : 0.14) * c.eyes, spread: c.species === "frog" ? 0.5 : c.kind === "humanoid" ? 0.36 : 0.4 },
     coat: c.coat,
     hair: c.hair,
     antlers: c.antlers,

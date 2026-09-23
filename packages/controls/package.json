@@ -1,0 +1,13 @@
+{
+  "name": "@keel-engine/controls",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Controllers for any game: an action map that folds the keyboard, any gamepad (Xbox, PlayStation, Switch glyphs) and touch into one value per action with whether it was digital or analog; device detection by capability, not screen size; and on-screen mobile control schemes -- buttons, a virtual stick, tilt, tap zones -- styled and animated through CSS.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

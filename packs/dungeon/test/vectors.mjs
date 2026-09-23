@@ -6,12 +6,12 @@ export default await engineVectors(import.meta.url, [
   {
     name: "the export surface is intact",
     run: async (api) => { const names = surface(api); return { count: names.length, digest: await digest(names) }; },
-    expect: {"count":43,"digest":"20e8823b864312927999a4d6b2e5380aa0a3689c421e8f2f413b54f1c40eb9dd"},
+    expect: {"count":47,"digest":"719e366ce01815d09a003729a0fe7ba2223423ee71ebf4e8ded350ea4d2fee47"},
   },
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "904bff2ef79c0ccd57b0bc97c5acf14fe6795ad3de5bbc20bed16b0f90f4607b",
+    expect: "be1de0a4ada04bbc8a146246e0786d74d910f51ec252d98c6d557c1cc74b83b1",
   },
   {
     name: "prop info",

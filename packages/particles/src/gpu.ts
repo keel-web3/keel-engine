@@ -70,6 +70,7 @@ uniform float uK;                             // pixels per metre
 uniform vec2 uSize;                           // picture size in pixels
 uniform float uDepthRange;                    // metres of depth mapped to 0..1 (the sprite renderer's)
 uniform float uPersp; uniform vec3 uEye; uniform float uTan; uniform vec2 uClip;   // a perspective view: on, eye, tan(fov/2), near far
+uniform float uContract;   // 1: perspective depth by keel/bake's contract (project.ts) instead of near..far
 uniform highp sampler2D uStyles;              // per style: ${CURVE_SAMPLES} curve texels, then constants
 flat out vec4 vLook;                          // ramp base, ramp length, lightness, alpha
 flat out vec4 vShape;                         // quad length (px), sprite, sprite scale, shade
@@ -139,7 +140,11 @@ void main() {
   // Depth from the ground point under it, as a sprite's from its anchor (nearer the camera: smaller).
   vec3 g = vec3(p.x, 0.0, p.z) - uCenter;
   float depth = clamp(0.5 + (dot(g, uForward) - k2.y) / uDepthRange, 0.0, 1.0);
-  float zc = uPersp > 0.5 ? clamp(2.0 * (pz - k2.y - uClip.x) / (uClip.y - uClip.x) - 1.0, -1.0, 1.0) : depth * 2.0 - 1.0;
+  // (Perspective: the dungeon renderer's near..far mapping -- or, asked for, keel/bake's one depth contract (project.ts):
+  // linear forward distance from the eye over the range, 0.5 at the eye, the same as the meshes and the ground write.)
+  float zc = uPersp > 0.5
+    ? (uContract > 0.5 ? clamp(0.5 + (pz - k2.y) / uClip.y, 0.0, 1.0) * 2.0 - 1.0 : clamp(2.0 * (pz - k2.y - uClip.x) / (uClip.y - uClip.x) - 1.0, -1.0, 1.0))
+    : depth * 2.0 - 1.0;
   gl_Position = vec4(ndc, zc, 1.0);
 }`;
 
@@ -225,7 +230,11 @@ export interface ParticleRenderer {
   setPalette(colours: readonly (readonly number[])[], ramps: Readonly<Record<string, readonly [number, number]>>): void;
   /** Draw the pool's live particles through `view` into what's bound (after the sprites: same depth buffer). */
   /** Through a pixel view -- or, with `eye` (keel/worldgen's DungeonDrawView perspective), through a perspective camera. */
-  draw(view: Pick<PixelView, "center" | "axes" | "pixelsPerMetre" | "width" | "height"> & { readonly eye?: readonly [number, number, number]; readonly fov?: number; readonly near?: number; readonly far?: number }, pool: ParticlePool, options?: ParticleDrawOptions): void;
+  /**
+   * `contract`: under perspective, write depth by keel/bake's one contract (project.ts: linear forward distance from the
+   * eye over `far`, 0.5 at the eye) -- so particles sort with a live mesh scene. Off, the dungeon renderer's near..far.
+   */
+  draw(view: Pick<PixelView, "center" | "axes" | "pixelsPerMetre" | "width" | "height"> & { readonly eye?: readonly [number, number, number]; readonly fov?: number; readonly near?: number; readonly far?: number; readonly contract?: boolean }, pool: ParticlePool, options?: ParticleDrawOptions): void;
   /** Ramps the pool's styles name that the palette hasn't got (drawn on ramp 0). */
   readonly missingRamps: readonly string[];
   /** Slots written to the GPU by the last draw, and bytes uploaded for them. */
@@ -255,7 +264,7 @@ export function createParticleRenderer(gl: WebGL2RenderingContext, { capacity }:
   const prog = link(PARTICLE_VS, PARTICLE_FS);
   const u = (name: string) => gl.getUniformLocation(prog, name);
   const U = {
-    persp: u("uPersp"), eye: u("uEye"), tan: u("uTan"), clip: u("uClip"),
+    persp: u("uPersp"), eye: u("uEye"), tan: u("uTan"), clip: u("uClip"), contract: u("uContract"),
     center: u("uCenter"), right: u("uRight"), up: u("uUp"), forward: u("uForward"), k: u("uK"), size: u("uSize"), depth: u("uDepthRange"), now: u("uNow"),
     styles: u("uStyles"), palette: u("uPalette"), sprites: u("uSprites"), t: [u("uT0"), u("uT1"), u("uT2"), u("uT3")],
   };
@@ -480,6 +489,7 @@ export function createParticleRenderer(gl: WebGL2RenderingContext, { capacity }:
       gl.uniform3f(U.eye, eye[0], eye[1], eye[2]);
       gl.uniform1f(U.tan, Math.tan((view.fov ?? 1.0) / 2));
       gl.uniform2f(U.clip, view.near ?? 0.3, view.far ?? 90);
+      gl.uniform1f(U.contract, view.contract ? 1 : 0);
       gl.uniform2f(U.size, W, H);
       gl.uniform1f(U.depth, Math.max(W, H) / view.pixelsPerMetre * 4); // (the sprite renderer's depth range: the two share a depth buffer)
       gl.uniform1f(U.now, pool.time + ahead - base);

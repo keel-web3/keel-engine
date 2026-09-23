@@ -20,7 +20,7 @@ export interface CharacterOptions {
 // (Pins every character takes besides its surfaced choices: a token's seed, and its colours -- not lists.)
 const ALWAYS = new Set(["seed", "size", "furColour", "outfitColour", "hairColour"]);
 const OUTFIT: readonly ChoiceName[] = ["top", "hood", "pants", "shoes", "pack", "accessory"];
-const BUILD: readonly ChoiceName[] = ["height", "head", "legs", "arms", "girth", "stride"];
+const BUILD: readonly ChoiceName[] = ["height", "head", "legs", "arms", "girth", "toon", "stride"];
 
 function character(kind: "humanoid" | "anthro", species: Species, opts: CharacterOptions): EntityDef<EntitySpec> {
   const base = speciesEntity(kind, species, { title: opts.title, tags: opts.tags ?? [kind, species] });

@@ -11,7 +11,7 @@ export default await engineVectors(import.meta.url, [
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "462e4c2e073789147c99d39aaac589556e9730a5de7c3753de5eb9026400ca58",
+    expect: "fd9bc6cca86e3ea31d01b90857248c5729bf6797ee9d01c8192beb489fd431af",
   },
   {
     name: "value noise and fbm are deterministic",

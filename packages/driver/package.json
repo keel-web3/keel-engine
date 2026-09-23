@@ -1,0 +1,16 @@
+{
+  "name": "@keel-engine/driver",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "AI drivers: a racing line through what's coming, pure-pursuit steering with yaw-rate feedback, speed planned from the road ahead and the car's own grip, and a way round the car in front -- pedals and a wheel for any keel/vehicle car on any keel/road path. Deterministic.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/road": "workspace:*",
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/vehicle": "workspace:*"
+  }
+}

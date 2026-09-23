@@ -1,0 +1,15 @@
+{
+  "name": "@keel-engine/arena",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Staked matches a chain settles from a proof: the generic match input (params, track, seed, the entrant chain), the generic result (placings plus inline or Merkle settlement), and defineMatchFormat to plug a new kind of match in.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/proof": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}
