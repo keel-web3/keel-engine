@@ -92,7 +92,8 @@ function valley(seed: string): Scene {
 }
 
 /** The demo's view: the centre snapped to the global pixel grid. */
-function viewOf(center: readonly [number, number, number], yaw: number, pitch: number, k: number, W: number, H: number) {
+interface ViewOptions { center: readonly [number, number, number]; yaw: number; pitch: number; k: number; width: number; height: number }
+function viewOf({ center, yaw, pitch, k, width: W, height: H }: ViewOptions) {
   const a = viewAxes({ yaw, pitch, pixelsPerMetre: k });
   const gx = Math.round((center[0] * a.right[0] + center[2] * a.right[2]) * k) / k;
   const gy = Math.round((center[0] * a.up[0] + center[1] * a.up[1] + center[2] * a.up[2]) * k) / k;
@@ -115,6 +116,32 @@ export interface RunOptions {
   readonly art?: ReadonlyArray<readonly [number, number]>;
 }
 
+interface ComparisonImages {
+  show: HTMLElement; width: number; height: number; scene: string; scale: number;
+  cpu: Uint8ClampedArray<ArrayBuffer>; gpu: Uint8Array; diff: Uint8ClampedArray<ArrayBuffer>;
+  cpuMs: number; gpuMs: number; differ: number; covered: number;
+}
+
+function appendComparisonImages({ show, width: W, height: H, scene, scale, cpu, gpu, diff, cpuMs, gpuMs, differ, covered }: ComparisonImages): void {
+  const row = document.createElement("div");
+  row.style.cssText = "display:flex;gap:6px;margin:6px 0;align-items:flex-start";
+  const pic = (data: Uint8ClampedArray<ArrayBuffer>, label: string) => {
+    const c = document.createElement("canvas");
+    c.width = W; c.height = H; c.title = label;
+    c.style.cssText = `width:${W * 2}px;image-rendering:pixelated`;
+    c.getContext("2d")!.putImageData(new ImageData(data, W, H), 0, 0);
+    const box = document.createElement("figure"); box.style.margin = "0";
+    const cap = document.createElement("figcaption"); cap.textContent = label; cap.style.font = "11px ui-monospace,monospace";
+    box.append(c, cap); row.append(box);
+  };
+  const flipped = new Uint8ClampedArray(W * H * 4);
+  for (let y = 0; y < H; y += 1) flipped.set(gpu.subarray((H - 1 - y) * W * 4, (H - y) * W * 4), y * W * 4);
+  pic(cpu, `${scene} ${scale} px/m -- CPU bake (${cpuMs.toFixed(0)} ms)`);
+  pic(flipped, `GPU (${gpuMs.toFixed(1)} ms incl. readback)`);
+  pic(diff, `diff: ${differ} of ${covered} (${((differ / Math.max(1, covered)) * 100).toFixed(3)}%)`);
+  show.append(row);
+}
+
 /** Draw each scene at each scale both ways and count the pixels that differ. */
 export async function run(canvas: HTMLCanvasElement, opts: RunOptions = {}): Promise<ParityResult[]> {
   const [W, H] = opts.size ?? [320, 200];
@@ -126,7 +153,7 @@ export async function run(canvas: HTMLCanvasElement, opts: RunOptions = {}): Pro
     const gpu = createGpuGround(gl, { palette: scene.palette, style, seed: 1 });
     for (const k of opts.scales ?? [4, 8, 16, 32]) {
       const pitch = opts.pitch ?? (k > 16 ? 0.5 : 0.72);
-      const view = viewOf(scene.center, 0, pitch, k, W, H);
+      const view = viewOf({ center: scene.center, yaw: 0, pitch, k, width: W, height: H });
       const rect = groundRectFor(view, scene.lo - 4, scene.hi + 40); // (generous: a peak past the picture's top edge still rises into it)
       // The CPU: every chunk the view reaches, only its tiles near the view (a 64 m chunk at 32 px/m is seconds).
       const layers: GroundLayer[] = [];
@@ -177,32 +204,14 @@ export async function run(canvas: HTMLCanvasElement, opts: RunOptions = {}): Pro
         diff[o] = same ? cr >> 2 : 255; diff[o + 1] = same ? cg >> 2 : 40; diff[o + 2] = same ? cb >> 2 : 40; diff[o + 3] = 255;
       }
       out.push({ scene: name, k, pitch, covered, differ, share: +(differ / Math.max(1, covered)).toFixed(5), nearOne, border, holes, cpuMs: +cpuMs.toFixed(1), gpuMs: +gpuMs.toFixed(2), chunks: keys.length });
-      if (opts.show) {
-        const row = document.createElement("div");
-        row.style.cssText = "display:flex;gap:6px;margin:6px 0;align-items:flex-start";
-        const pic = (data: Uint8ClampedArray<ArrayBuffer>, label: string) => {
-          const c = document.createElement("canvas");
-          c.width = W; c.height = H; c.title = label;
-          c.style.cssText = `width:${W * 2}px;image-rendering:pixelated`;
-          c.getContext("2d")!.putImageData(new ImageData(data, W, H), 0, 0);
-          const box = document.createElement("figure"); box.style.margin = "0";
-          const cap = document.createElement("figcaption"); cap.textContent = label; cap.style.font = "11px ui-monospace,monospace";
-          box.append(c, cap); row.append(box);
-        };
-        const flipped = new Uint8ClampedArray(W * H * 4);
-        for (let y = 0; y < H; y += 1) flipped.set(px.subarray((H - 1 - y) * W * 4, (H - y) * W * 4), y * W * 4);
-        pic(new Uint8ClampedArray(cpu.rgba), `${name} ${k} px/m -- CPU bake (${cpuMs.toFixed(0)} ms)`);
-        pic(flipped, `GPU (${gpuMs.toFixed(1)} ms incl. readback)`);
-        pic(diff, `diff: ${differ} of ${covered} (${((differ / Math.max(1, covered)) * 100).toFixed(3)}%)`);
-        opts.show.append(row);
-      }
+      if (opts.show) appendComparisonImages({ show: opts.show, width: W, height: H, scene: name, scale: k, cpu: new Uint8ClampedArray(cpu.rgba), gpu: px, diff, cpuMs, gpuMs, differ, covered });
       await new Promise((r) => setTimeout(r, 0));
     }
     for (const [kF, art] of opts.art ?? []) {
       // The GPU at kF with artScale `art`: its picture is the CPU's bake at kF / n, each texel an n x n block.
       const n = Math.max(1, Math.ceil(kF / art - 1e-9)), kA = kF / n;
       const pitch = opts.pitch ?? (kF > 16 ? 0.5 : 0.72);
-      const view = viewOf(scene.center, 0, pitch, kF, W, H);
+      const view = viewOf({ center: scene.center, yaw: 0, pitch, k: kF, width: W, height: H });
       const rect = groundRectFor(view, scene.lo - 4, scene.hi + 40);
       const layers: GroundLayer[] = [], keys: string[] = [];
       const c0 = performance.now();
@@ -249,7 +258,7 @@ export async function run(canvas: HTMLCanvasElement, opts: RunOptions = {}): Pro
 export function probe(sceneName: string, k: number, pitch: number, x: number, y: number, size: readonly [number, number] = [320, 200], seed = "parity-1"): unknown[] {
   const [W, H] = size;
   const scene = sceneOf(sceneName, seed);
-  const view = viewOf(scene.center, 0, pitch, k, W, H);
+  const view = viewOf({ center: scene.center, yaw: 0, pitch, k, width: W, height: H });
   const R = view.axes.right, U = view.axes.up, C = view.center;
   const offX = Math.floor(W / 2 - (C[0] * R[0] + C[1] * R[1] + C[2] * R[2]) * k + 0.5), offY = Math.floor(H / 2 + (C[0] * U[0] + C[1] * U[1] + C[2] * U[2]) * k + 0.5);
   const gx = x - offX, gy = y - offY;
