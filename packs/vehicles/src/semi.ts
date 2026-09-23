@@ -209,7 +209,8 @@ export function semiSolids(car: Car): Solids {
   });
   box(S, P.dark, -0.78, BELT + 0.18, zc - 0.66, -0.32, BELT + 0.24, zc - 0.56);
   box(S, P.dark, -0.72, BELT + 0.1, zB + 0.36, -0.38, BELT + 0.55, zB + 0.56);
-  cap(S, P.accent, [-0.55, BELT + 0.68, zB + 0.46], [-0.55, BELT + 0.68, zB + 0.46], 0.13);
+  // (The helmet under the headlining, not through it: its top 15 mm below gTop.)
+  cap(S, P.accent, [-0.55, Math.min(BELT + 0.68, gTop - 0.145), zB + 0.46], [-0.55, Math.min(BELT + 0.68, gTop - 0.145), zB + 0.46], 0.13);
 
   // ---- the sleeper (its sides are the rear quarters, its back the boot, as a car's), or a fairing on a day cab's roof.
   if (sp.sleeper > 0) {

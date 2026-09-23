@@ -29,8 +29,14 @@ export interface RunnerLeg {
   readonly to: readonly [number, number];
   readonly heading: Heading;
   readonly length: number;
-  /** What waits at its end: the way on turns "left" or "right" -- or "end" (the last leg). */
-  readonly turn: "left" | "right" | "end";
+  /**
+   * What waits at its end: the way on turns "left" or "right" -- or "end" (the last leg) -- or "split": a room where
+   * the way parts round a solid block, left and right (`split`), and meets again in a second room, going on the
+   * same way it came (the next leg).
+   */
+  readonly turn: "left" | "right" | "end" | "split";
+  /** At a split: the two ways round (each three legs, from the first room to the second). */
+  readonly split?: { readonly left: readonly RunnerLeg[]; readonly right: readonly RunnerLeg[] };
   /** At the end: the other way is open too (a passage that goes nowhere; take the wrong one and you're stopped). */
   readonly fork: boolean;
   /** The hall it runs through, if it widens (an index into the dungeon's rooms), or -1. */
@@ -55,6 +61,10 @@ export interface RunnerParams {
   readonly forks?: number;
   /** The grid (default: 120 x 120 cells, more for big halls). */
   readonly size?: readonly [number, number];
+  /** Chance a leg ends in a split: a room where the way parts, left and right, round a block, and meets again (default 0). */
+  readonly loops?: number;
+  /** A split's size in cells: how far out each way goes, how long the block is (default [5, 12..18]). */
+  readonly loop?: { readonly out?: number; readonly length?: readonly [number, number] };
 }
 
 export interface Runner {
@@ -105,6 +115,72 @@ export function generateRunner(seed: string, params: RunnerParams = {}): Runner 
     box(from, h, len, margin - width, (i, j) => { if (inside(i, j, 0)) claim[j * w + i] = 1; });
   };
 
+  // Where a leg from `from` heading `hd`, `len` long, hands on to one turning `nh` (the corner square's convention).
+  const cornerOf = (from: readonly [number, number], hd: Heading, len: number, nh: Heading): [number, number] => {
+    const [sx, sz] = STEP[hd]!;
+    const to: [number, number] = [from[0] + sx * len, from[1] + sz * len];
+    if (nh === (((hd + 1) & 3) as Heading)) return to;
+    const [px, pz] = STEP[((hd + 1) & 3) as Heading]!;
+    return [to[0] - sx * (width - 1) + px * (width - 1), to[1] - sz * (width - 1) + pz * (width - 1)];
+  };
+  const leftOf = (hd: Heading): Heading => ((hd + 1) & 3) as Heading;
+  const rightOf = (hd: Heading): Heading => ((hd + 3) & 3) as Heading;
+  /** The cells a leg covers. */
+  const cellsOf = (from: readonly [number, number], hd: Heading, len: number): Array<[number, number]> => {
+    const out: Array<[number, number]> = [];
+    box(from, hd, len, 0, (i, j) => { out.push([i, j]); });
+    return out;
+  };
+  const OUT = Math.max(width + 3, params.loop?.out ?? 5);
+  /** A split at the end of a leg: both ways round, the rooms, and where the way goes on -- or null if it doesn't fit. */
+  function split(from: readonly [number, number], hd: Heading, len: number, b: number): { split: { left: RunnerLeg[]; right: RunnerLeg[] }; on: [number, number] } | null {
+    const L = leftOf(hd), Rt = rightOf(hd);
+    const way = (first: Heading, second: Heading): { legs: RunnerLeg[]; on: [number, number]; cells: Array<[number, number]>; ends: Array<Array<[number, number]>> } => {
+      // (Out sideways, on along the way, back in -- three legs, turning so they come back to the middle.)
+      const a0 = cornerOf(from, hd, len, first);
+      const b0 = cornerOf(a0, first, OUT, hd);
+      const c0 = cornerOf(b0, hd, b, second);
+      const on = cornerOf(c0, second, OUT, hd);
+      const mk = (f: readonly [number, number], h2: Heading, l: number, turn: "left" | "right"): RunnerLeg => {
+        const [sx, sz] = STEP[h2]!;
+        return { from: [f[0], f[1]], to: [f[0] + sx * l, f[1] + sz * l], heading: h2, length: l, turn, fork: false, hall: -1, hallSpan: [0, 0], hallReach: 0 };
+      };
+      const toH = (x: Heading): "left" | "right" => (x === leftOf(first) ? "left" : "right");
+      const legsOut = [mk(a0, first, OUT, first === L ? "right" : "left"), mk(b0, hd, b, second === Rt ? "right" : "left"), mk(c0, second, OUT, toH(hd))];
+      const ca = cellsOf(a0, first, OUT), cb = cellsOf(b0, hd, b), cc = cellsOf(c0, second, OUT);
+      return { legs: legsOut, on, cells: [...ca, ...cb, ...cc], ends: [ca, cc] };
+    };
+    const lw = way(L, Rt), rw = way(Rt, L);
+    if (lw.on[0] !== rw.on[0] || lw.on[1] !== rw.on[1]) return null;
+    // (The rooms: the ways' first and last legs, and all between them -- open floor.)
+    const roomOf = (a: Array<[number, number]>, c: Array<[number, number]>): [number, number, number, number] => {
+      let i0 = w, j0 = d, i1 = -1, j1 = -1;
+      for (const [i, j] of [...a, ...c]) { i0 = Math.min(i0, i); j0 = Math.min(j0, j); i1 = Math.max(i1, i); j1 = Math.max(j1, j); }
+      return [i0, j0, i1, j1];
+    };
+    const r1 = roomOf(lw.ends[0]!, rw.ends[0]!), r2 = roomOf(lw.ends[1]!, rw.ends[1]!);
+    // (All of it, with its margin, must be free -- but for the leg it ends, which is already there.)
+    const all = [...lw.cells, ...rw.cells];
+    let i0 = Math.min(r1[0], r2[0]), j0 = Math.min(r1[1], r2[1]), i1 = Math.max(r1[2], r2[2]), j1 = Math.max(r1[3], r2[3]);
+    for (const [i, j] of all) { i0 = Math.min(i0, i); j0 = Math.min(j0, j); i1 = Math.max(i1, i); j1 = Math.max(j1, j); }
+    const pad = margin - width;
+    const own = new Set<number>();
+    box(from, hd, len, pad, (i, j) => { own.add(j * w + i); });
+    for (let j = j0 - pad; j <= j1 + pad; j += 1) for (let i = i0 - pad; i <= i1 + pad; i += 1) {
+      if (!inside(i, j)) return null;
+      if (claim[j * w + i] && !own.has(j * w + i)) return null;
+    }
+    // (And the way must go on from there.)
+    if (!free(lw.on, hd, lenLo)) return null;
+    for (const [i, j] of all) cells[j * w + i] = CELL.CORRIDOR;
+    for (const [a0, b0, a1, b1] of [r1, r2]) {
+      for (let j = b0; j <= b1; j += 1) for (let i = a0; i <= a1; i += 1) cells[j * w + i] = CELL.FLOOR;
+      rooms.push({ id: rooms.length, x: a0, y: b0, w: a1 - a0 + 1, h: b1 - b0 + 1, kind: "room", template: null });
+    }
+    for (let j = j0 - pad; j <= j1 + pad; j += 1) for (let i = i0 - pad; i <= i1 + pad; i += 1) claim[j * w + i] = 1;
+    return { split: { left: lw.legs, right: rw.legs }, on: lw.on };
+  }
+
   let at: [number, number] = [4, Math.floor(d / 2) - (width >> 1)];
   let h: Heading = 0;
   let lastTurn: "left" | "right" | null = null;
@@ -147,6 +223,16 @@ export function generateRunner(seed: string, params: RunnerParams = {}): Runner 
     };
     // (How far each way stays open -- a leg there and room to go on after it: the roomier way keeps the run going.)
     const reachOf = (nh: Heading): number => { let l = lenLo; if (!free(cornerFor(nh), nh, l)) return 0; while (l < lenHi * 3 && free(cornerFor(nh), nh, l + 2)) l += 2; return l; };
+    // A split: the way parts round a block and meets again (only where it all fits, and never the last legs).
+    if (n < legsWanted - 2 && R.chance(params.loops ?? 0)) {
+      const made = split(at, h, len, R.int(params.loop?.length?.[0] ?? 12, params.loop?.length?.[1] ?? 18));
+      if (made) {
+        legs.push({ from: [at[0], at[1]], to, heading: h, length: len, turn: "split", fork: false, hall, hallSpan, hallReach: hall >= 0 ? reach : 0, split: made.split });
+        at = made.on;
+        lastTurn = null;
+        continue;
+      }
+    }
     const roomL = reachOf(left);
     const roomR = reachOf(right);
     const canL = roomL > 0;
@@ -177,7 +263,7 @@ export function generateRunner(seed: string, params: RunnerParams = {}): Runner 
   cells[exit[1] * w + exit[0]] = CELL.FLOOR;
   const dungeon: Dungeon = {
     w, d, cells, rooms, start, exit, key: null, boss: null, props: [], lights: [], algorithm: "bsp", seed,
-    stats: { legs: legs.length, forks: legs.filter((l) => l.fork).length, halls: rooms.length },
+    stats: { legs: legs.length, forks: legs.filter((l) => l.fork).length, halls: rooms.length, splits: legs.filter((l) => l.split).length },
   };
   return { dungeon, legs, width };
 }

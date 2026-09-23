@@ -27,7 +27,7 @@ test("legs are open end to end, turn at their corners, and the route is long", (
         const i = L.from[0] + dx * t, j = L.from[1] + dz * t;
         assert.notEqual(D.cells[j * D.w + i], CELL.WALL, `seed ${n} leg ${k}: a wall at step ${t}`);
       }
-      if (k < r.legs.length - 1) assert.notEqual(r.legs[k + 1]!.heading, L.heading, "a corner turns");
+      if (k < r.legs.length - 1 && L.turn !== "split") assert.notEqual(r.legs[k + 1]!.heading, L.heading, "a corner turns");
       if (L.hall >= 0) assert.ok(L.hallSpan[1] > L.hallSpan[0] && L.hallReach > 0);
     }
     assert.equal(r.legs[r.legs.length - 1]!.turn, "end");
@@ -66,4 +66,27 @@ test("a runner built with every face (a perspective camera's): more wall faces, 
   const S = dressDungeon(r.dungeon, "crypt", { seed: "faces" });
   const one = buildDungeonScene(S), all = buildDungeonScene(S, { allFaces: true });
   assert.ok(all.count > one.count * 1.08, `${all.count} quads vs ${one.count}`);
+});
+
+test("splits: a room where the way parts round a block, both ways open, meeting again where the way goes on", () => {
+  let splits = 0;
+  for (let n = 0; n < 40; n += 1) {
+    const r = generateRunner(`split-${n}`, { legs: 8, length: [22, 36], width: 2, halls: 0, hallReach: 1, loops: 0.6, size: [170, 170] });
+    const D = r.dungeon;
+    const open = (L: { from: readonly number[]; heading: number; length: number }, what: string): void => {
+      const [dx, dz] = STEP[L.heading]!;
+      for (let t = 0; t <= L.length; t += 1) assert.notEqual(D.cells[(L.from[1]! + dz * t) * D.w + L.from[0]! + dx * t], CELL.WALL, `${what}: a wall at step ${t}`);
+    };
+    r.legs.forEach((L, k) => {
+      if (L.turn !== "split") return;
+      splits += 1;
+      assert.ok(L.split && L.split.left.length === 3 && L.split.right.length === 3);
+      for (const side of ["left", "right"] as const) L.split![side].forEach((b, q) => open(b, `seed ${n} leg ${k} ${side} ${q}`));
+      const next = r.legs[k + 1]!;
+      assert.equal(next.heading, L.heading, "the way goes on as it came");
+      const lastL = L.split!.left[2]!, lastR = L.split!.right[2]!;
+      assert.ok(Math.abs(lastL.to[0] - lastR.to[0]) + Math.abs(lastL.to[1] - lastR.to[1]) <= 2 * (r.width - 1) + 2, "both ways come back together");
+    });
+  }
+  assert.ok(splits > 10, `splits made: ${splits}`);
 });
