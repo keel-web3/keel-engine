@@ -110,6 +110,7 @@ export interface VerifiedModule {
   readonly inputs: ReadonlyArray<{ readonly path: string; readonly sha256: `0x${string}` }>;
   readonly format: string;
   readonly external: readonly string[];
+  readonly compactSelection?: "gzip-9";
 }
 
 const cache = new Map<string, { key: string; result: VerifiedModule }>();
@@ -150,7 +151,12 @@ export async function buildVerifiedModule(mod: WorkspaceModule, workspace: reado
   if (!options.fresh && hit?.key === key) return hit.result;
   const { buildKeelModule } = await builder();
   // (No declaration output: an engine part's linked imports resolve outside its own directory, which the declaration step refuses.)
-  const built = await buildKeelModule(prepared.dir, { types: false });
+  // REDLINE's staged game and the measured render module use gzip -9 on KEEL.
+  // Keep unchanged engine modules (including audio) on their existing recipes.
+  const built = await buildKeelModule(prepared.dir, {
+    types: false,
+    ...(mod.origin !== "engine" || mod.manifest.id === "keel/render" ? { compactSelection: "gzip-9" as const } : {}),
+  });
   const result: VerifiedModule = {
     id: mod.manifest.id,
     version: mod.manifest.version,
@@ -168,6 +174,7 @@ export async function buildVerifiedModule(mod: WorkspaceModule, workspace: reado
     inputs: built.recipe.inputs.map((i) => ({ path: i.path, sha256: i.integrity.digest })),
     format: built.recipe.options.format,
     external: built.recipe.options.external ?? [],
+    ...(built.recipe.compact?.selection === "gzip-9" ? { compactSelection: "gzip-9" as const } : {}),
   };
   cache.set(prepared.dir, { key, result });
   return result;
@@ -191,6 +198,7 @@ export async function readVerifiedModule(prepared: PreparedModule): Promise<Veri
     receiptDigest: (await createIntegrity(utf8ToBytes(canonicalJson(receipt)))).digest, disposition: receipt.disposition,
     inputs: recipe.inputs.map((i: { path: string; integrity: { digest: `0x${string}` } }) => ({ path: i.path, sha256: i.integrity.digest })),
     format: recipe.options.format, external: recipe.options.external ?? [],
+    ...(recipe.compact?.selection === "gzip-9" ? { compactSelection: "gzip-9" as const } : {}),
   };
 }
 
@@ -231,7 +239,7 @@ export interface GitHubVerification {
  * format and externals its recipe recorded, compare with the published digest,
  * and keep nothing.
  */
-export async function verifyFromGitHub(entry: { readonly id: string; readonly sourceRepository: { readonly url: string; readonly path: string }; readonly build: { readonly format: string; readonly external: readonly string[] }; readonly output: { readonly digest: string } }, commit: string, fetchImpl?: typeof fetch): Promise<GitHubVerification> {
+export async function verifyFromGitHub(entry: { readonly id: string; readonly sourceRepository: { readonly url: string; readonly path: string }; readonly build: { readonly format: string; readonly external: readonly string[]; readonly compactSelection?: "gzip-9" }; readonly output: { readonly digest: string } }, commit: string, fetchImpl?: typeof fetch): Promise<GitHubVerification> {
   const m = /^https:\/\/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?\/?$/.exec(entry.sourceRepository.url);
   if (!m) throw new Error(`${entry.id}: ${entry.sourceRepository.url} isn't a GitHub repository.`);
   const { KEEL_MODULE_BUILD_OPTIONS, verifyKeelModuleFromOrigin } = await builder();
@@ -241,7 +249,7 @@ export async function verifyFromGitHub(entry: { readonly id: string; readonly so
     entry: "keel/entry.ts",
     recipeRoot: entry.sourceRepository.path,
     options: { ...KEEL_MODULE_BUILD_OPTIONS, format: entry.build.format as "iife", ...(entry.build.external.length ? { external: [...entry.build.external] } : {}) },
-    compact: { keepComments: false },
+    compact: { keepComments: false, ...(entry.build.compactSelection === "gzip-9" ? { selection: "gzip-9" as const } : {}) },
     mediaType: "text/javascript",
     ...(fetchImpl ? { fetchImpl } : {}),
   } as Parameters<typeof verifyKeelModuleFromOrigin>[0]);

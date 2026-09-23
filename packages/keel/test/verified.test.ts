@@ -43,6 +43,8 @@ test("every engine package carries current pipeline files: keel.module.json, tsc
 
 test("the committed catalog pins the readable source on disk, file by file, in the registry's start order", () => {
   assert.deepEqual(catalog.order, dependencyOrder(engine).map((w) => w.manifest.id));
+  assert.equal(entryOf("keel/render").build.compactSelection, "gzip-9", "render selects the smaller stored object");
+  assert.equal(entryOf("keel/audio").build.compactSelection, undefined, "sound keeps its existing build");
   for (const m of catalog.modules) {
     const w = find(m.id);
     assert.equal(m.version, w.manifest.version);
@@ -165,6 +167,7 @@ test("the resolver takes a version's bytes from chain, verified digest by digest
 
 test("the resolver points at the readable source on GitHub, checks every file against the recipe's digest, and names the verify command", async () => {
   const release = releaseOf(catalog, new Map());
+  assert.match(readableSource(release, "keel/render").verifyCommand ?? "", / --gzip-compact --expect /);
   const src = readableSource(release, "keel/scene");
   assert.equal(src.commit, "1".repeat(40));
   assert.ok(src.files.every((f) => f.url?.startsWith(`https://raw.githubusercontent.com/keel-web3/keel-engine/${"1".repeat(40)}/packages/scene/`)));

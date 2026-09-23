@@ -216,7 +216,7 @@ export function readableSource(release: EngineCatalog, id: string): ReadableSour
   const gh = githubRepo(entry.sourceRepository.url);
   const files = entry.sourceFiles.map((f) => ({ path: f.path, sha256: f.sha256, url: gh && commit ? `https://raw.githubusercontent.com/${gh[0]}/${gh[1]}/${commit}/${f.path}` : null }));
   const verifyCommand = gh && commit
-    ? `keel module verify --repo ${gh[0]}/${gh[1]} --commit ${commit} --path ${entry.sourceRepository.path} --entry keel/entry.ts --format ${entry.build.format}${entry.build.external.length ? ` --external ${entry.build.external.join(",")}` : ""} --expect ${entry.output.digest}`
+    ? `keel module verify --repo ${gh[0]}/${gh[1]} --commit ${commit} --path ${entry.sourceRepository.path} --entry keel/entry.ts --format ${entry.build.format}${entry.build.external.length ? ` --external ${entry.build.external.join(",")}` : ""}${entry.build.compactSelection === "gzip-9" ? " --gzip-compact" : ""} --expect ${entry.output.digest}`
     : null;
   return { repository: entry.sourceRepository.url, commit, path: entry.sourceRepository.path, files, verifyCommand };
 }

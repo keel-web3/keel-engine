@@ -1912,15 +1912,16 @@
         "format": "iife",
         "external": [
           "@keel-engine/core"
-        ]
+        ],
+        "compactSelection": "gzip-9"
       },
       "output": {
-        "digest": "0x5f0f35e0da9bc9b2a2d2a0c91602a1216ba856535be605a230e9d599decdfef5",
-        "byteLength": 62241
+        "digest": "0xd8e3e4daa302f4c9a83af0418b4aa89487ed339f0fc2b8a678806d2cbce2e9a5",
+        "byteLength": 62281
       },
       "sourceDigest": "0x8632b8517d5ec7b9fa652a17ddce9fe719134a296122e943702ffda30868f323",
-      "recipeDigest": "0x424cfae065a16965484f56519a069a93393a24d484bf7419e5800d2119b415f9",
-      "receiptDigest": "0xcf4f6047ff3f1d66e78aeec447be0354331986bccf4a9ec697e7e37cfcfc893b",
+      "recipeDigest": "0xc233f268b16918affad0e1ae01c8d8e40e0c6b659b9e25e81e743087e580e0e6",
+      "receiptDigest": "0xed5b4ae4dd2926377ec6e19f8bd2f179f1a32d3a6d944506dec7be44481a02c4",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
