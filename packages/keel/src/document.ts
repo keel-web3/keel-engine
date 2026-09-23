@@ -103,6 +103,8 @@ export async function keelAudioScripts(vendorDir: string): Promise<PageScript[]>
 }
 
 export interface DocumentOptions extends BundleOptions, PrepareOptions {
+  /** Export to start after the modules load (default: main). Another entry reuses the same verified module slots. */
+  readonly entryExport?: string;
   /**
    * Where the modules' bytes come from. "verified" (the default): each module
    * through the KEEL module pipeline (`keel module build`), so the document
@@ -123,7 +125,16 @@ export interface DocumentOptions extends BundleOptions, PrepareOptions {
   readonly shell?: Awaited<ReturnType<typeof buildKeelInlineShellFragments>>;
 }
 
+/** Only the small entry changes between game and site documents; their verified module bytes stay shared. */
+export function gameEntrySource(gameId: string, entryExport = "main"): string {
+  if (!/^[A-Za-z_$][A-Za-z0-9_$]*$/.test(entryExport)) throw new Error(`Invalid game entry export: ${entryExport}`);
+  if (entryExport === "main") return `(async function(){var E=globalThis.KEEL_ENGINE;await E.start();var g=E.get(${JSON.stringify(gameId)});if(g&&typeof g.main==="function")await g.main(document.body);})().catch(function(e){document.body.textContent=String(e&&e.stack||e);throw e;});\n`;
+  return `(async function(){var E=globalThis.KEEL_ENGINE;await E.start();var g=E.get(${JSON.stringify(gameId)});var start=g&&g[${JSON.stringify(entryExport)}];if(typeof start!=="function")throw new Error(${JSON.stringify(`${gameId} has no ${entryExport} entry`)});await start(document.body);})().catch(function(e){document.body.textContent=String(e&&e.stack||e);throw e;});\n`;
+}
+
 export async function buildGameDocument(gameId: string, workspace: readonly WorkspaceModule[], options: DocumentOptions = {}): Promise<GameDocument> {
+  const entryExport = options.entryExport ?? "main";
+  const entry = gameEntrySource(gameId, entryExport);
   const mods = closureOf(gameId, workspace);
   const resolution = resolveModules(mods.map((m) => m.manifest));
   if (!resolution.ok) throw new Error(`${gameId}'s modules don't fit together:\n${resolution.problems.map((p) => `  ${p.module}: ${p.detail}`).join("\n")}`);
@@ -150,12 +161,11 @@ export async function buildGameDocument(gameId: string, workspace: readonly Work
     }));
   }
   // The entry: start every module, then hand the page to the game.
-  const entry = `(async function(){var E=globalThis.KEEL_ENGINE;await E.start();var g=E.get(${JSON.stringify(gameId)});if(g&&typeof g.main==="function")await g.main(document.body);})().catch(function(e){document.body.textContent=String(e&&e.stack||e);throw e;});\n`;
   const shell = options.shell ?? await buildKeelInlineShellFragments({ repositoryRoot: sdkRoot() });
   const doc = await buildKeelInlineLocalDocument({
     shell,
     modules: fragments,
-    entry: { id: `${gameId}/entry`, mediaType: "text/javascript", source: new TextEncoder().encode(entry), compression: "none", ...(options.background ? { backgroundColor: options.background } : {}) },
+    entry: { id: entryExport === "main" ? `${gameId}/entry` : `${gameId}/${entryExport}/entry`, mediaType: "text/javascript", source: new TextEncoder().encode(entry), compression: "none", ...(options.background ? { backgroundColor: options.background } : {}) },
   });
   const pages: ModuleReport[] = (options.pageScripts ?? []).map((p) => ({
     id: p.id, version: p.version, kind: "page-script", phase: "runtime", weight: p.weight, bytes: p.bytes.byteLength, stored: gzipSync(p.bytes, { level: 9 }).byteLength,

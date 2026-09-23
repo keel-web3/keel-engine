@@ -15,6 +15,7 @@
 //   modules                   every module the build can see: id, version, kind, needs, where from
 //   module <id>               one module's bytes -> <out>/modules/<id>/<version>/module.js (+ manifest.json)
 //   document <game-id>        a game as a KEEL local document -> <out>/documents/<game>/index.html (+ report.json)
+//                             --entry <export> selects another entry using the same verified modules
 //
 // `module` and `document` use the verified bytes by default; --dev uses the fast
 // in-memory bundle instead (same behaviour, no receipt; --readable unminifies it).
@@ -45,6 +46,7 @@ export async function run(argv: readonly string[], { engineRoot = ENGINE_ROOT, c
   const flag = (name: string) => { const out: string[] = []; for (let i = args.indexOf(name); i >= 0; i = args.indexOf(name)) { out.push(args[i + 1] ?? ""); args.splice(i, 2); } return out; };
   const projects = flag("--project").map((p) => resolve(cwd, p));
   const outFlag = flag("--out")[0];
+  const entryExport = flag("--entry")[0] ?? "main";
   const revision = flag("--revision")[0] ?? null;
   const chainId = Number(flag("--chain-id")[0] ?? 11155111);
   const dev = args.includes("--dev");
@@ -161,18 +163,18 @@ export async function run(argv: readonly string[], { engineRoot = ENGINE_ROOT, c
     }
     case "document": {
       if (!id) throw new Error("document <game-id>");
-      const audio = !args.includes("--no-audio") && closureOf(id, workspace).some((m) => m.manifest.id === "keel/audio") && existsSync(join(engineRoot, "vendor"));
-      const doc = await buildGameDocument(id, workspace, { minify, engineRoot, modules: dev ? "dev" : "verified", ...(audio ? { pageScripts: await keelAudioScripts(join(engineRoot, "vendor")) } : {}) });
-      const dir = join(out, "documents", id);
+      const audio = (entryExport === "main" || args.includes("--audio")) && !args.includes("--no-audio") && closureOf(id, workspace).some((m) => m.manifest.id === "keel/audio") && existsSync(join(engineRoot, "vendor"));
+      const doc = await buildGameDocument(id, workspace, { minify, engineRoot, modules: dev ? "dev" : "verified", entryExport, ...(audio ? { pageScripts: await keelAudioScripts(join(engineRoot, "vendor")) } : {}) });
+      const dir = join(out, "documents", id, ...(entryExport === "main" ? [] : [entryExport]));
       mkdirSync(dir, { recursive: true });
       writeFileSync(join(dir, "index.html"), doc.html);
-      writeFileSync(join(dir, "report.json"), `${JSON.stringify({ game: id, bytes: dev ? "dev" : "verified", order: doc.resolution.order, modules: doc.modules, document: doc.html.byteLength }, null, 2)}\n`);
+      writeFileSync(join(dir, "report.json"), `${JSON.stringify({ game: id, ...(entryExport === "main" ? {} : { entryExport }), bytes: dev ? "dev" : "verified", order: doc.resolution.order, modules: doc.modules, document: doc.html.byteLength }, null, 2)}\n`);
       for (const m of doc.modules) console.log(`  ${m.id}@${m.version}  ${m.kind}/${m.phase}@${m.weight}  ${kb(m.bytes)} (${kb(m.stored)} stored)${m.digest ? `  ${m.digest}` : ""}`);
       console.log(`${id}: ${doc.modules.length} modules (${dev ? "dev bundles" : "verified bytes"}), document ${kb(doc.html.byteLength)} -> ${join(dir, "index.html")}`);
       break;
     }
     default:
-      console.log("commands: prepare [--check] | build [--check] | test | index [--revision <sha>] [--check] | reproduce | verify-origin --commit <sha> | plan [--chain-id <id>] | modules | module <id> | document <game-id>   [--project <dir>]... [--out <dir>] [--dev] [--readable] [--no-audio]");
+      console.log("commands: prepare [--check] | build [--check] | test | index [--revision <sha>] [--check] | reproduce | verify-origin --commit <sha> | plan [--chain-id <id>] | modules | module <id> | document <game-id>   [--project <dir>]... [--out <dir>] [--entry <export>] [--dev] [--readable] [--audio|--no-audio]");
   }
 }
 
