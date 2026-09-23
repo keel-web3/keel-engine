@@ -12,7 +12,7 @@ import assert from "node:assert/strict";
 import { COURSE, PINS, SKIM, YARD, coursePilot, skimDrive, trace, wanderInputs } from "./fixtures.ts";
 
 test("golden: the course run is the recorded one, to the bit", () => {
-  const r = trace(COURSE, coursePilot, 120 * 16);
+  const r = trace(COURSE, coursePilot, { steps: 120 * 16 });
   for (const m of ["ground", "air", "wall", "grind"]) assert.ok(r.modes[m]! > 0, `the run visits ${m}: ${JSON.stringify(r.modes)}`);
   for (const e of ["jumped", "wallStart", "wallJump", "railStart", "railEnd", "landed"]) assert.ok(r.events[e]! > 0, `the run has ${e}: ${JSON.stringify(r.events)}`);
   assert.equal(r.hash, PINS.course, JSON.stringify({ modes: r.modes, events: r.events, pos: r.body.pos }));
@@ -21,14 +21,14 @@ test("golden: the course run is the recorded one, to the bit", () => {
 for (const seed of [1, 2, 3] as const) {
   test(`golden: wandering the yard (seed ${seed}) is the recorded walk, to the bit`, () => {
     const next = wanderInputs(seed);
-    const r = trace(YARD, () => next(), 120 * 20);
+    const r = trace(YARD, () => next(), { steps: 120 * 20 });
     assert.equal(r.hash, PINS[`yard${seed}`], JSON.stringify({ modes: r.modes, events: r.events, pos: r.body.pos }));
   });
 }
 
 test("golden: a skim and a sink are the recorded ones", () => {
   // Fast off a pad over open water: it skims, slows, sinks, respawns.
-  const r = trace(SKIM, skimDrive, 120 * 8);
+  const r = trace(SKIM, skimDrive, { steps: 120 * 8 });
   for (const e of ["skimStart", "splashIn", "respawn"]) assert.ok(r.events[e]! > 0, `${e}: ${JSON.stringify(r.events)}`);
   assert.equal(r.hash, PINS.skim, JSON.stringify({ modes: r.modes, events: r.events }));
 });
