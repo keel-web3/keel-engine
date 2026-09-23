@@ -11,7 +11,7 @@ export default await engineVectors(import.meta.url, [
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "3b164a64fecc978874a182b9b46943637b836c2ea1a2b704c634c9311b4521d0",
+    expect: "9a09bcbaa5ace49bf02ae023264b0d5098ba0a96ce36b1a930e16b437f05b18b",
   },
   {
     name: "hills from a seed, a road graded over them and a pad levelled land on the same bits",
