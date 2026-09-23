@@ -57,7 +57,7 @@ export interface EngineCatalogEntry {
   /** The READABLE files the recipe pinned, repo-relative, each by sha256. */
   readonly sourceFiles: ReadonlyArray<{ readonly path: string; readonly sha256: string }>;
   /** How it links: the classic-script format and the imports left to its neighbours. */
-  readonly build: { readonly format: string; readonly external: readonly string[] };
+  readonly build: { readonly format: string; readonly external: readonly string[]; readonly compactSelection?: "gzip-9" };
   readonly output: { readonly digest: string; readonly byteLength: number };
   readonly sourceDigest: string;
   readonly recipeDigest: string;
@@ -107,7 +107,8 @@ export async function catalogEntry(v: VerifiedModule, { revision = null, reposit
     sourceRepository: { url: repository, revision, path: v.sourcePath },
     githubPath: `${v.sourcePath}/keel/entry.ts`,
     sourceFiles: v.inputs.map((i) => ({ path: `${v.sourcePath}/${i.path}`, sha256: i.sha256 })),
-    build: { format: v.format, external: [...v.external] },
+    build: { format: v.format, external: [...v.external],
+      ...(v.compactSelection === "gzip-9" ? { compactSelection: "gzip-9" as const } : {}) },
     output: { digest: v.outputDigest, byteLength: v.bytes.byteLength },
     sourceDigest: v.sourceDigest, recipeDigest: v.recipeDigest, receiptDigest: v.receiptDigest,
     disposition: v.disposition, verified: VERIFIED.has(v.disposition),
