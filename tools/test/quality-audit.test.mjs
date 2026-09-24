@@ -59,17 +59,26 @@ test('audit applies filename conventions and directory limits while ignoring gen
   writeFileSync(join(root, 'packages', 'sample', 'node_modules', 'BadName.ts'), 'not source\n');
   mkdirSync(join(root, 'apps', 'web', 'src'), { recursive: true });
   writeFileSync(join(root, 'apps', 'web', 'src', 'ignored.ts'), `${Array.from({ length: 510 }, () => '// sibling source').join('\n')}\n`);
-  mkdirSync(join(root, 'packages', 'sample', 'test', 'fixtures', 'hello', 'game', 'src'), { recursive: true });
-  writeFileSync(join(root, 'packages', 'sample', 'test', 'fixtures', 'hello', 'game', 'src', 'BadName.ts'), 'not owned source\n');
-  writeFileSync(join(root, 'packages', 'sample', 'test', 'fixtures', 'hello', 'game', 'package.json'), '{}\n');
+  mkdirSync(join(root, 'packages', 'keel', 'test', 'fixtures', 'hello', 'game', 'src'), { recursive: true });
+  writeFileSync(join(root, 'packages', 'keel', 'test', 'fixtures', 'hello', 'game', 'src', 'BadName.ts'), 'not owned source\n');
+  writeFileSync(join(root, 'packages', 'keel', 'test', 'fixtures', 'hello', 'game', 'package.json'), '{}\n');
+  mkdirSync(join(root, 'packages', 'sample', 'src', 'fixtures'), { recursive: true });
+  writeFileSync(join(root, 'packages', 'sample', 'src', 'fixtures', 'BadName.ts'), 'owned source\n');
+  mkdirSync(join(root, 'packages', 'sample', 'test'), { recursive: true });
+  writeFileSync(join(root, 'packages', 'sample', 'test', 'BadName.ts'), 'owned test\n');
+  mkdirSync(join(root, 'tools'), { recursive: true });
+  writeFileSync(join(root, 'tools', 'BadName.ts'), 'owned tool\n');
 
   const result = scanProject(root);
   assert.equal(result.warnings.filter((warning) => warning.rule === 'directory-files').length, 1);
   assert.ok(result.warnings.some((warning) => warning.rule === 'file-naming' && warning.path.endsWith('BadName.ts')));
-  assert.equal(result.filesScanned, 32);
+  assert.equal(result.filesScanned, 35);
   assert.ok(!result.warnings.some((warning) => warning.path.includes('/dist/') || warning.path.includes('/node_modules/')));
   assert.ok(!result.warnings.some((warning) => warning.path.startsWith('apps/web/')));
-  assert.ok(!result.warnings.some((warning) => warning.path.includes('/fixtures/')));
+  assert.ok(!result.warnings.some((warning) => warning.path.startsWith('packages/keel/test/fixtures/')));
+  assert.ok(result.warnings.some((warning) => warning.path === 'packages/sample/src/fixtures/BadName.ts'));
+  assert.ok(result.warnings.some((warning) => warning.path === 'packages/sample/test/BadName.ts'));
+  assert.ok(result.warnings.some((warning) => warning.path === 'tools/BadName.ts'));
 });
 
 test('scan roots, path roles and thresholds can be supplied by a repository profile', (t) => {
