@@ -61,8 +61,8 @@ const campus: Op<"campus"> = (b, op) => {
     addBox(b, 1, s.x - side * s.hw * 0.3, 3.4, backFront + 1.5, 3, 0.2, 1.5, "trim");
     const fz0 = Math.max(backFront, end) + 2, fz1 = s.z + s.hd - 1.2;
     field(b, s.x - s.hw + 1, s.x + s.hw - 1, fz0, fz1);
-    if (fz1 - fz0 > 14) for (const sx of [-1, 1]) mast(b, s.x + sx * (s.hw - 0.5), (fz0 + fz1) / 2, 12, "led");
-    if (s.hw > 12 && end - backFront > 14) vehicle(b, "bus", s.x - side * (s.hw - 2), (backFront + end) / 2, 0, 1, 0, "buffBrick");
+    if (fz1 - fz0 > 14) for (const sx of [-1, 1]) mast(b, { x: s.x + sx * (s.hw - 0.5), z: (fz0 + fz1) / 2, h: 12, head: "led" });
+    if (s.hw > 12 && end - backFront > 14) vehicle(b, { kind: "bus", x: s.x - side * (s.hw - 2), z: (backFront + end) / 2, turn: 0, i: 1, paint: "buffBrick" });
     return;
   }
   // The quad: a hall across the back (the clock tower at its middle), halls down each side, the front one split by a gate.
@@ -224,7 +224,7 @@ const station: Op<"station"> = (b) => {
       addBox(b, 0, x, 2.7, tz, 6.1, 0.55, 1.5, "darkGlass");
     }
   }
-  if (!b.derelict) mast(b, s.x + s.hw - 0.5, pz, 8, "led");
+  if (!b.derelict) mast(b, { x: s.x + s.hw - 0.5, z: pz, h: 8, head: "led" });
 };
 
 /** A freight yard: container stacks in blocks, gantry cranes straddling them, trucks in the lane. */
@@ -258,9 +258,9 @@ const containers: Op<"containers"> = (b) => {
   }
   for (let k = 0; k < count(b.D, "trucks", [0, 2]); k += 1) {
     const x = s.x - s.hw + 8.5 + k * 16.5;
-    if (x + 8 < s.x + s.hw) vehicle(b, "truck", x, s.z + s.hd - 3.4, Math.PI / 2, 1200 + k);
+    if (x + 8 < s.x + s.hw) vehicle(b, { kind: "truck", x, z: s.z + s.hd - 3.4, turn: Math.PI / 2, i: 1200 + k });
   }
-  if (!b.derelict) for (const sx of [-1, 1]) mast(b, s.x + sx * (s.hw - 0.5), s.z + s.hd - 6, 14);
+  if (!b.derelict) for (const sx of [-1, 1]) mast(b, { x: s.x + sx * (s.hw - 0.5), z: s.z + s.hd - 6, h: 14 });
 };
 
 /** A substation: a fence round gravel, transformers, the gantries the lines come in to, a control hut. */
@@ -294,7 +294,7 @@ const substation: Op<"substation"> = (b) => {
       if (g === 0) { const [wx, wy, wz] = toWorld(b, x, H - 1.4, gz); b.anchors.push({ kind: "substation", x: wx, y: wy, z: wz }); }
     }
   }
-  if (!b.derelict) mast(b, hx, hz - 3.4, 7);
+  if (!b.derelict) mast(b, { x: hx, z: hz - 3.4, h: 7 });
 };
 
 /** A water tower: legs, a riser, a round tank with a catwalk, a light on top. */
