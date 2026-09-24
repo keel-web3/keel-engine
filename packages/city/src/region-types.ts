@@ -16,7 +16,17 @@ export interface RegionWater {
 /** An "industrial" town: works, yards and a rail spur, a through road down its middle (drift and rally country). */
 export type SettlementKind = "metro" | "city" | "town" | "village" | "industrial";
 /** A place on the horizon: where, how far it sprawls, how tall it stands, and its own seed (its skyline's). */
-export interface Settlement { readonly kind: SettlementKind; readonly x: number; readonly z: number; readonly y: number; readonly r: number; readonly top: number; readonly seed: string }
+export interface Settlement {
+  readonly kind: SettlementKind;
+  readonly x: number;
+  readonly z: number;
+  readonly y: number;
+  readonly r: number;
+  readonly top: number;
+  readonly seed: string;
+  /** A place of the city's world (keel/city world.ts): its id there. Its skyline is that place's; its ground its own. */
+  readonly place?: number;
+}
 
 export type SiteKind =
   | "airport" | "windfarm" | "solar" | "powerplant" | "quarry" | "mast" | "farm" | "orchard" | "truckstop" | "drivein"
@@ -105,8 +115,38 @@ export interface Region {
   readonly sky: RegionSky;
   /** The bearings the freeways leave the city on (rad): where a game joins its ring to them. */
   readonly exits: readonly number[];
+  /** Its world's links (RegionAround.roads), each as one of `roads`: which world link, and which of this city's portals (-1: it passes by). */
+  readonly links: readonly { readonly link: number; readonly road: number; readonly portal: number }[];
   /** The ground's height (m): the land, carved by the water, graded under the roads. */
   heightAt(x: number, z: number): number;
   ground(x: number, z: number): RegionGround;
 }
 
+
+/**
+ * What a city's region sees of the world of places it stands in (keel/city world.ts regionAround), in its own frame:
+ * the other places near it -- each on dry ground of its own (`land` m round its middle, its shore past that), its
+ * skyline `r` across -- and the links near it, every metre, their decks' heights the world's (the same from both ends).
+ */
+export interface RegionAround {
+  readonly places: readonly {
+    /** Its id in its world. */
+    readonly place: number;
+    readonly kind: SettlementKind;
+    readonly x: number;
+    readonly z: number;
+    readonly r: number;
+    readonly land: number;
+    readonly top: number;
+    readonly seed: string;
+  }[];
+  readonly roads: readonly {
+    /** Its id in its world, and which of this city's portals it runs out of (City.portals index; -1: it only passes by). */
+    readonly link: number;
+    readonly portal: number;
+    readonly bridge: boolean;
+    readonly x: Float64Array;
+    readonly z: Float64Array;
+    readonly y: Float64Array;
+  }[];
+}

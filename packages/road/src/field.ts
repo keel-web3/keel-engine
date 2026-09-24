@@ -92,7 +92,16 @@ export function roadField(graph: RoadGraph): RoadField {
   const segs = indexSegments(graph);
   const junctions = junctionsOf(graph);
   const chunks = new Map<string, FieldChunk>();
-  const inJunction = (x: number, z: number): boolean => junctions.some((j) => (x - j.x) ** 2 + (z - j.z) ** 2 < j.r2);
+  // (The junctions by chunk -- every chunk each one's round reaches into -- so a lookup only tries the few near it.)
+  const near = new Map<string, { x: number; z: number; r2: number }[]>();
+  for (const j of junctions) {
+    const r = Math.sqrt(j.r2);
+    for (let cz = Math.floor((j.z - r) / CHUNK); cz <= Math.floor((j.z + r) / CHUNK); cz += 1) for (let cx = Math.floor((j.x - r) / CHUNK); cx <= Math.floor((j.x + r) / CHUNK); cx += 1) {
+      const k = `${cx},${cz}`, list = near.get(k);
+      if (list) list.push(j); else near.set(k, [j]);
+    }
+  }
+  const inJunction = (x: number, z: number): boolean => (near.get(`${Math.floor(x / CHUNK)},${Math.floor(z / CHUNK)}`) ?? []).some((j) => (x - j.x) ** 2 + (z - j.z) ** 2 < j.r2);
 
   /** The nearest segment to a point among a chunk's list: [dist2, edge, sample, t] (ties to the lower edge, then sample). */
   const nearest = (list: readonly number[], px: number, pz: number): [number, number, number, number] => {
