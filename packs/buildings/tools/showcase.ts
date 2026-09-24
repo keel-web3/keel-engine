@@ -82,12 +82,12 @@ export function draw(px: PixelRenderer, scene: Pick<Scene, "colours" | "ramps" |
   return img;
 }
 
+type View = { size: [number, number]; eye: V3; target: V3; waterY?: number; screen?: 2 | 4 | 8 };
+
 /**
  * A scene too big for one raymarch (the renderer holds 256 boxes): the world alone, then each thing with it,
  * far to near, copied over where it shows -- its own pixels always, its shadow only onto bare ground.
  */
-type View = { size: [number, number]; eye: V3; target: V3; waterY?: number; screen?: 2 | 4 | 8 };
-
 export function composite({ px, things, world, view }: { px: PixelRenderer; things: readonly Drawn[]; world: Parameters<typeof sceneOf>[1]; view: View }): ImageData {
   // (Each thing in a scene of its own -- its palette, its materials -- over the same world: palettes never run out.)
   const bare = sceneOf([], world);
