@@ -392,7 +392,7 @@
         },
         {
           "path": "packages/architecture/src/foundations.ts",
-          "sha256": "0x44547cb071c2f5f39de45c6647fb2597c94b817adc22dd791f601b467d664fbd"
+          "sha256": "0xe51d0a67eee22b4f0068a9e798445c924e907b5d41e0288080fb3e0be3e0a3e0"
         },
         {
           "path": "packages/architecture/src/frame.ts",
@@ -472,12 +472,12 @@
         ]
       },
       "output": {
-        "digest": "0x9fc22d9fa3cf1c2e8858d1fc7c1e137fc58180487db7a230636dec78679923fd",
-        "byteLength": 102619
+        "digest": "0x3cd717dbf9b3be38b1d2acc78158bda34e0bb27e90c3f46a809f6226ac8c54e7",
+        "byteLength": 102891
       },
-      "sourceDigest": "0x56a68234ef51c4980e6d8ca598ab0b6838a528308ae4fad3309f942aedf47fd2",
-      "recipeDigest": "0xeae0a1ebf1cc91aa9e72040303b50827a5274eaf0200aa5094ee2a227b4ca817",
-      "receiptDigest": "0x8271956ddaa6db5c376daa710cb0573095c42490b5eb43f97ea24eb1f954401e",
+      "sourceDigest": "0x699fef33019f947dad92d3f0c9cc7a4721486db8024878c08a41e2b145ab5619",
+      "recipeDigest": "0xad13ee05e767681b26a8663ec079f0da06cebe7afe539f205cdfbb560e7e2958",
+      "receiptDigest": "0x1ee11985c2ad5082e2dbd7e52ffc5689742a9e95d330cdc97753435aff26dff7",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -1239,7 +1239,7 @@
         },
         {
           "path": "packages/city/src/height.ts",
-          "sha256": "0xcc168d232351a2b9dd34efcbeea645565c1504c27216d56eb9229afe5d39fc82"
+          "sha256": "0x246c6f8d49ff5dfbfcefcf993616bdd2bc266862f15c29fc7abd3bb393eb17a9"
         },
         {
           "path": "packages/city/src/index.ts",
@@ -1303,9 +1303,9 @@
         "digest": "0x95dd683e7ad248aede78aea4f59f70a8afbfb79ef544fbf2663cf937bee0f19c",
         "byteLength": 82940
       },
-      "sourceDigest": "0xa39f0cf5de937930a19bca971ae691bb15a41fecc33854faa24690ec9bc77b38",
-      "recipeDigest": "0xdf9daff57212551c9ec91992e942d32bf503ca43b2aaf2ee54d1fc898efd0a91",
-      "receiptDigest": "0xe841d5dbd71665c35354b5e3690c18b2a3665a0f942c85d3714e3fa7e2248126",
+      "sourceDigest": "0x787f3618e87ec8cdc00f23af82c248fef9357cf177dbda0200c4a51e7c6155c3",
+      "recipeDigest": "0x8712c1e10ace7a072ea7bd93efba5f0ee0bcdb39b7fe9c9dbd13186c718d7782",
+      "receiptDigest": "0xc4d9e6853da233a2f65ae55bdce1ad473396eebd719e9f3f7a28e3f8fabe3e6d",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
