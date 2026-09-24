@@ -2922,12 +2922,12 @@
         "compactSelection": "gzip-9"
       },
       "output": {
-        "digest": "0xf540cfb8a49f02347c75a3e8883cd3f5c361308825053f225e5c63080c0a3771",
-        "byteLength": 63723
+        "digest": "0x0423e96cdb21b30890c49cad9f984d7e57cc65291ef90305f7124916d4bf85dc",
+        "byteLength": 63781
       },
       "sourceDigest": "0xcf1f807263dc81f2387b4e287792488656b16ce29df06e06d09555ef21cf4704",
-      "recipeDigest": "0x1b059422c520bad6ff02078a71b82f2ef3135d6a9754c13b7ef6f889407047d7",
-      "receiptDigest": "0x6ce7921e52f38c910f0c7ab9617764c0341500d6024c2f2fa057bcd83c5dfff7",
+      "recipeDigest": "0x3f8d2ed5b155162594a299842937847b3c03698c697d86cf1778d6ff8b29b6e8",
+      "receiptDigest": "0x288084e4ba0ef9f6dd03f798121f864a065b58c1984119d98329c808e3a058cb",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
