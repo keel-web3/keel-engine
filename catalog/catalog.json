@@ -3403,7 +3403,7 @@
         },
         {
           "path": "packages/ui/src/chrome.ts",
-          "sha256": "0xb32b63d817ea8eafe3286b794687e41130e4837d163bdafedb0301c4c7324868"
+          "sha256": "0x849af151e144ae8df18565ef85efcde129697b2e8b98be633d8df1d2389d9bf7"
         },
         {
           "path": "packages/ui/src/color.ts",
@@ -3554,12 +3554,12 @@
         ]
       },
       "output": {
-        "digest": "0x0e0c3f404dd769ec465fb23393145182d67ec2848fa2bc8bd5a1a7ff621ac211",
-        "byteLength": 174390
+        "digest": "0xde603ab68b47246d0a229eb875b0a1a5bc39e717046fc5ff3c2cae738ba285ce",
+        "byteLength": 174739
       },
-      "sourceDigest": "0x49eb04a1b96d4b232d6972f69cacf55d04e1e1d7ecf6e4f863798ef15335175b",
-      "recipeDigest": "0x500fd9ade0dd2ee8a3c1c5b829b84285ff8c5097895a490b306f41601f0970c9",
-      "receiptDigest": "0x3f5aba3f798c11ae67485325bee76dcd94e02c94f69c76d8642fbdb4b3082d83",
+      "sourceDigest": "0x727fcd53455093e8ec1846780c09d44a9446d0f0d6c3a39a0cef11ac6e8248b5",
+      "recipeDigest": "0xbbf2c55c9d8e90c591791f81dcc5afacf618cca7ffad42efbd080faa50229cbc",
+      "receiptDigest": "0xda5e6e5c1d5a9016b7fbbfb6a5f91f1405cc7fa4bd6e9fb6788bf3d2a6dd0578",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
