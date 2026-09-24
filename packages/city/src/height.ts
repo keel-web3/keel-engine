@@ -11,7 +11,7 @@
 import { dcos, dsin } from "@keel-engine/core";
 import { addHills, cellX, cellZ, elevationOf, gradeCorridor, gridOver, levelDisc, levelRect, lockGrid, rangeUnder } from "@keel-engine/elevation";
 import type { Elevation, HeightGrid } from "@keel-engine/elevation";
-import { roadField } from "@keel-engine/road";
+import { locate, roadField } from "@keel-engine/road";
 import type { RoadClass } from "@keel-engine/road";
 import { blockCentre } from "./districts.ts";
 import { junctionsOf } from "./junctions.ts";
@@ -37,8 +37,11 @@ export interface CityHeight {
    * door (the pavement's height there: pavementAt), not by this.
    */
   pad(lot: Lot): number;
-  /** The pavement's height nearest a point: its road's graded height where the point is abreast of it (what a door opens onto). */
-  pavementAt(x: number, z: number): number;
+  /**
+   * The pavement's height abreast of a point: its road's graded height where the point stands beside it (what a door
+   * opens onto) -- on the road given (an edge id: the one a building faces), or else the nearest.
+   */
+  pavementAt(x: number, z: number, edge?: number): number;
   /** A road's height along it (m, at arc length s): what its whole width stands at. */
   roadAt(edge: number, s: number): number;
   /**
@@ -192,7 +195,13 @@ export function* cityHeightSteps(city: City, cell = 2): Generator<number, CityHe
     heightAt: elevation.heightAt, grid: land, elevation, natural: natural.heightAt, roadAt,
     under: (x, z, hw, hd, yaw) => rangeUnder(land, x, z, hw, hd, dcos(yaw), dsin(yaw)),
     pad: (lot) => pads.get(lot.key) ?? elevation.heightAt(lot.obb.x, lot.obb.z),
-    pavementAt: (x, z) => { const at = field.at(x, z); return at ? roadAt(at.edge, at.s) : elevation.heightAt(x, z); },
+    pavementAt: (x, z, edge) => {
+      // (On a road asked for by name -- the one a building faces -- or else the nearest.)
+      const e = edge === undefined ? undefined : g.edges[edge];
+      if (e) return roadAt(e.id, locate(e.path, x, z).s);
+      const at = field.at(x, z);
+      return at ? roadAt(at.edge, at.s) : elevation.heightAt(x, z);
+    },
   };
 }
 

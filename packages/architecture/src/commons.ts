@@ -9,7 +9,9 @@
 // only a piece a car could plough into, the fountain, is one.)
 
 import { dcos, dsin } from "@keel-engine/core";
+import type { CityHeight } from "@keel-engine/city";
 import { addBox, addCapsule, subPlacer, toWorld } from "./frame.ts";
+import { keepLevel, thing } from "./foundations.ts";
 import type { Build } from "./frame.ts";
 import { art } from "./street/art.ts";
 import { bench, lamp, tree } from "./street/furniture.ts";
@@ -64,19 +66,22 @@ export function commons(b: Build, _op: Extract<MassOp, { op: "commons" }>): void
     b.props.push({ kind, x: wx, z: wz, r, breaks });
   };
   box(ext, 2, 0.04, 0.04, "grass");
-  const W = c.water, level = site.level, wet = W ? meet(ext, W) : null;
+  const W = c.water, level = site.level, wet = W ? meet(ext, W) : null, lakeFrom = b.solids.length;
+  // (The basin reaches down to the lowest ground under the lake: on a slope it's a pool standing in its stone edge.)
+  const floor = Math.min(level - 0.3, site.floor ?? -0.2) - 0.1;
   if (wet && W) {
     // The lake: its water level across the block, its stone edge; nobody drives into it.
-    box(wet, 2, (level - 0.2) / 2, (level + 0.2) / 2, "water");
-    b.masses.push({ x: fx((wet.x0 + wet.x1) / 2), z: fz((wet.z0 + wet.z1) / 2), hw: (wet.x1 - wet.x0) / 2, hd: (wet.z1 - wet.z0) / 2, y0: 0, y1: level, slot: "concreteDark" });
+    box(wet, 2, (level + floor) / 2, (level - floor) / 2, "water");
+    b.masses.push(thing({ x: fx((wet.x0 + wet.x1) / 2), z: fz((wet.z0 + wet.z1) / 2), hw: (wet.x1 - wet.x0) / 2, hd: (wet.z1 - wet.z0) / 2, y0: 0, y1: level, slot: "concreteDark" }));
     const [wx, wy, wz] = toWorld(b, fx((wet.x0 + wet.x1) / 2), level, fz((wet.z0 + wet.z1) / 2));
     const spec: WaterSpec = { obb: { x: wx, z: wz, hw: (wet.x1 - wet.x0) / 2, hd: (wet.z1 - wet.z0) / 2, yaw: b.frame.yaw }, y: wy };
     b.water.push(spec);
     const edge = grow(W, 0.5);
     for (const e of [{ ...edge, z1: W.z0 }, { ...edge, z0: W.z1 }, { ...edge, x1: W.x0, z0: W.z0, z1: W.z1 }, { ...edge, x0: W.x1, z0: W.z0, z1: W.z1 }]) {
       const r = meet(e, ext);
-      if (r) box(r, 1, level / 2 + 0.05, level / 2 + 0.07, "plinth");
+      if (r) box(r, 1, (level + 0.12 + floor) / 2, (level + 0.12 - floor) / 2, "plinth");
     }
+    keepLevel(b, lakeFrom);
   }
   // Paths.
   const { loop, segs } = paths(c);
@@ -105,7 +110,7 @@ export function commons(b: Build, _op: Extract<MassOp, { op: "commons" }>): void
     }
   }
   // The pier and boathouse, and boats out on the water.
-  const p = c.pier;
+  const p = c.pier, pierFrom = b.solids.length;
   if (p && W && p.lot === b.key) {
     const ex = p.u + p.du * p.len, ez = p.v + p.dv * p.len, x = fx((p.u + ex) / 2), z = fz((p.v + ez) / 2);
     const hw = p.du ? p.len / 2 + 0.5 : 0.8, hd = p.dv ? p.len / 2 + 0.5 : 0.8, deck = level + 0.35;
@@ -122,6 +127,7 @@ export function commons(b: Build, _op: Extract<MassOp, { op: "commons" }>): void
       const u = W.x0 + 3 + (W.x1 - W.x0 - 6) * D.u("boatU", k), v = W.z0 + 3 + (W.z1 - W.z0 - 6) * D.u("boatV", k);
       addBox(b, 0, fx(u), level + 0.2, fz(v), 0.7, 0.2, 1.7, "wood", { wedge: true, lo: 0.4, turn: D.flat("boatTurn", k) * 3 });
     }
+    keepLevel(b, pierFrom);
   }
   // Lamps and benches along the loop, each on the lot it stands on.
   round(loop, 21).forEach(([u, v], k) => {
@@ -160,6 +166,17 @@ export function commons(b: Build, _op: Extract<MassOp, { op: "commons" }>): void
 }
 
 /** A lake's water as a block plan shows it: its surface's box (world) and its level. */
+/**
+ * The ground under a block's lake, lowest and highest (m): the lake stands a hand over the highest (never the ground
+ * showing through its water), its basin down past the lowest (on a slope, a pool standing in its stone edge).
+ */
+export function lakeLevel(c: CommonsBlock, height: CityHeight): [number, number] {
+  const o = lakeOf(c, 0)?.obb;
+  if (!o) return [0, 0];
+  const [lo, hi] = height.under(o.x, o.z, o.hw, o.hd, o.yaw);
+  return [lo, hi + 0.1];
+}
+
 export function lakeOf(c: CommonsBlock, level: number): WaterSpec | null {
   const W = c.water;
   if (!W) return null;

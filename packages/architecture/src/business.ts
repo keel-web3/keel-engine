@@ -10,6 +10,7 @@
 import { dcos, dsin } from "@keel-engine/core";
 import type { Build, Mass } from "./frame.ts";
 import { addBox, addCapsule, addMass, addPlant, count, pick, toWorld, within } from "./frame.ts";
+import { thing } from "./foundations.ts";
 import type { SlotName } from "./slots.ts";
 import type { MassOp, VehicleKind } from "./types.ts";
 
@@ -26,7 +27,7 @@ const PAINTS: Readonly<Partial<Record<SlotName, number>>> = { trim: 3, metal: 3,
 
 /** A mass a car hits that's drawn another way (or not at all): its record only. */
 function solid(b: Build, { x, z, hw, hd, y1, slot = "metal" }: SolidArgs): void {
-  b.masses.push({ x, z, hw, hd, y0: 0, y1, slot });
+  b.masses.push(thing({ x, z, hw, hd, y0: 0, y1, slot }));
 }
 
 /**

@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { cityHeight, generateCity, streetsOf } from "@keel-engine/city";
+import { cityHeight, generateCity, sidewalkReach, streetsOf } from "@keel-engine/city";
 import type { City, Lot } from "@keel-engine/city";
 import { roadField } from "@keel-engine/road";
-import { SLOT, blockWorld, districtPaint, frameOf, lookOf, planCity, planLot, planStreets } from "../src/index.ts";
+import { DOOR_LIFT, RISER, SLOT, blockWorld, districtPaint, frameOf, lookOf, planCity, planLot, planStreets } from "../src/index.ts";
 import type { Archetype, Catalogue, StreetCatalogue } from "../src/index.ts";
 
 // (A small catalogue of its own: the engine's tests never import a pack.)
@@ -260,27 +260,76 @@ test("parks and plazas: open space by the district weights, with trees, benches,
   assert.ok(plans.some((p) => p.archetype !== "park" && p.archetype !== "plaza" && p.solids.some((s) => s.layer === 1)), "a mural somewhere");
 });
 
-test("on a hilly city: no building buried or floating -- its floor at the highest ground under it, its foundation down to the lowest", () => {
+test("on a hilly city: each building stands level on its terrace -- its door at the pavement or up its stoop, its plinth down to the ground all round, what stands free on the lot on the ground", () => {
   const c = neon(), h = cityHeight(c);
-  let raised = 0;
+  // (Houses up stoops, and car parks: slabs, cars and lamp masts standing free on the lot.)
+  const cat: Catalogue = {
+    ...CAT,
+    archetypes: [...CAT.archetypes, arch("house", [{ op: "extrude" }, { op: "roof", kinds: { gable: 1 } }], { storeys: [1, 2], setbacks: [5, 1, 3], stoop: [0.5, 0.9], signs: [] }), arch("lot", [{ op: "parking" }], { storeys: [1, 1], signs: [] })],
+    weights: Object.fromEntries(Object.entries(CAT.weights).map(([k, w]) => [k, { ...w, house: 2, lot: 1 }])) as unknown as Catalogue["weights"],
+  };
+  let stoops = 0, level = 0, near = 0, shown = 0, slabs = 0, sloped = 0;
   for (const lot of c.lots) {
-    const p = planLot(CAT, c, lot, h);
-    if (!p.footprint.length) continue;
+    const p = planLot(cat, c, lot, h);
+    if (!p.footprint.length || !p.door) continue;
+    const a = cat.archetypes.find((x) => x.id === p.archetype)!;
     const masses = p.solids.filter((s) => s.box?.grid);
     const floor = Math.min(...masses.map((s) => (s.box!.c[1] ?? 0) - (s.box!.h[1] ?? 0)));
-    assert.ok(Math.abs(floor - p.base!) < 1e-6 && p.base! >= h.pad(lot), `${lot.key}: floor ${floor.toFixed(2)} vs base ${p.base}`);
-    const foot = Math.min(...p.solids.filter((s) => s.box && s.lod === 2).map((s) => s.box!.c[1]! - s.box!.h[1]!));
+    assert.ok(Math.abs(floor - p.base!) < 1e-6, `${lot.key}: floor ${floor.toFixed(2)} vs base ${p.base}`);
+    // The door: a hair over the ground in front of it -- a car drives in -- or up its stoop's steps; and from the
+    // pavement to it, the terrace: flush with the pavement where the door is by it, a gentle grade where it's set back.
+    const rise = p.base! - p.door.ground, field = roadField(c.graph), f = frameOf(lot), fx = Math.sin(f.yaw), fz = Math.cos(f.yaw);
+    if (a.stoop && rise > DOOR_LIFT + 1e-6) {
+      stoops += 1;
+      assert.ok(rise >= 2 * RISER - 1e-6 && rise <= a.stoop[1] + 1e-6, `${lot.key}: a stoop ${rise.toFixed(2)} m up`);
+      // (Its steps: treads from the door down toward the road, none of them on the road.)
+      const steps = p.solids.filter((s) => s.box && s.box.kind !== "wedge" && Math.abs(s.box.h[0]! - 1.4) < 1e-9 && s.lod === 1);
+      assert.ok(steps.length >= 2, `${lot.key}: ${steps.length} steps up its ${rise.toFixed(2)} m stoop`);
+      for (const st of steps) { const at = field.at(st.box!.c[0]!, st.box!.c[2]!); assert.ok(!at || Math.abs(at.d) > at.half + 0.4, `${lot.key}: a step on the road`); }
+    } else {
+      level += 1;
+      assert.ok(Math.abs(rise - DOOR_LIFT) < 1e-6, `${lot.key}: its door ${rise.toFixed(3)} m over the ground`);
+      let prev = h.heightAt(p.door.x, p.door.z), k = 0.5, pave = Infinity;
+      assert.ok(Math.abs(prev - p.base!) <= 0.03 + DOOR_LIFT, `${lot.key}: the ground at its door is ${(prev - p.base!).toFixed(2)} m off its floor`);
+      for (; k < 45; k += 0.5) {
+        const x = p.door.x + fx * k, z = p.door.z + fz * k, y = h.heightAt(x, z), at = field.at(x, z);
+        assert.ok(Math.abs(y - prev) <= 0.06, `${lot.key}: a ${(y - prev).toFixed(2)} m step ${k} m out of its door`);
+        prev = y;
+        if (at && Math.abs(at.d) <= sidewalkReach(c.graph.edges[at.edge]!.cls, at.half)) pave = Math.min(pave, k);
+        if (at && Math.abs(at.d) <= at.half) break;
+      }
+      if (pave <= 2.5) { near += 1; assert.ok(Math.abs(p.base! - p.door.pave) <= 0.03 + DOOR_LIFT, `${lot.key}: its door by the pavement, ${(p.base! - p.door.pave).toFixed(2)} m off it`); }
+    }
+    // Its plinth: under every footprint, from under the lowest ground round it up to the floor -- no air, anywhere.
+    const plinths = p.solids.filter((s) => s.box && s.lod === 2 && s.box.mat === SLOT.concreteDark && (s.box.c[1] ?? 0) + (s.box.h[1] ?? 0) <= p.base! + 0.03);
     for (const f of p.footprint) {
       const cy = Math.cos(f.yaw), sy = Math.sin(f.yaw);
-      for (let a = 0; a <= 8; a += 1) for (let b = 0; b <= 8; b += 1) {
-        const u = -f.hw + (2 * f.hw * a) / 8, v = -f.hd + (2 * f.hd * b) / 8, y = h.heightAt(f.x + u * cy + v * sy, f.z - u * sy + v * cy);
-        assert.ok(y <= p.base! + 1e-3, `${lot.key}: the ground comes ${(y - p.base!).toFixed(2)} m up through the floor`);
-        assert.ok(y >= foot - 1e-3, `${lot.key}: ${(foot - y).toFixed(2)} m of air under the foundation`);
+      // (A building's footprint -- walls with a facade grid stand on it -- not a parked car's.)
+      if (!masses.some((s) => Math.hypot(s.box!.c[0]! - f.x, s.box!.c[2]! - f.z) < Math.max(f.hw, f.hd))) continue;
+      const under = plinths.filter((s) => Math.hypot(s.box!.c[0]! - f.x, s.box!.c[2]! - f.z) < Math.hypot(f.hw, f.hd));
+      assert.ok(under.length, `${lot.key}: a plinth under its footprint`);
+      const bottom = Math.min(...under.map((s) => s.box!.c[1]! - s.box!.h[1]!)), top = Math.max(...under.map((s) => s.box!.c[1]! + s.box!.h[1]!));
+      assert.ok(top >= p.base! - 0.01, `${lot.key}: its plinth stops ${(p.base! - top).toFixed(2)} m under the floor`);
+      let low = Infinity;
+      for (let t = -1; t <= 1; t += 0.125) for (const [u, v] of [[t, -1], [t, 1], [-1, t], [1, t]] as const) {
+        const x = f.x + u * (f.hw + 0.1) * cy + v * (f.hd + 0.1) * sy, z = f.z - u * (f.hw + 0.1) * sy + v * (f.hd + 0.1) * cy, y = h.heightAt(x, z);
+        low = Math.min(low, y);
+        assert.ok(bottom <= y - 0.1, `${lot.key}: ${(bottom - y).toFixed(2)} m of air under its plinth at ${x.toFixed(1)},${z.toFixed(1)}`);
       }
+      if (p.base! - low > 0.3) shown += 1;
     }
-    if (p.base! - p.foot! > 0.3) raised += 1;
+    // What stands free on the lot stands on the ground: every slab laid on it lies on the ground under it.
+    for (const s of p.solids) {
+      const B = s.box;
+      // (The car parks' surfaces: roof-slot slabs down on the lot, not a building's roof.)
+      if (!B || (B.mat !== SLOT.roof) || B.h[0]! < 2 || B.h[2]! < 2 || B.h[1]! > 1 || B.c[1]! - B.h[1]! > p.base! + 0.5) continue;
+      const g = h.heightAt(B.c[0]!, B.c[2]!), topMid = B.kind === "wedge" ? B.c[1]! - B.h[1]! + B.h[1]! * (1 + (B.lo ?? 0)) : B.c[1]! + B.h[1]!;
+      slabs += 1; if (B.kind === "wedge") sloped += 1;
+      assert.ok(Math.abs(topMid - g - 0.06) < 0.12, `${lot.key}: a slab ${(topMid - g).toFixed(2)} m over the ground (${B.kind ?? "box"} ${JSON.stringify([B.c, B.h, B.lo, B.yaw])} base ${p.base})`);
+    }
   }
-  assert.ok(raised < c.lots.length * 0.4, `${raised} of ${c.lots.length} lots on a raised foundation: the pads should mostly be level`);
+  assert.ok(stoops > 5 && level > 20 && near > 5 && shown > 3, `${stoops} stoops, ${level} level doors (${near} by the pavement), ${shown} plinths standing out of falling ground`);
+  assert.ok(slabs > 5, `${slabs} car parks (${sloped} of them sloped)`);
   const st = planStreets(STREETS, c, h);
   for (const ch of st.chunks.slice(0, 5)) for (const s of ch.solids) if (s.box) {
     const [x, y, z] = [s.box.c[0]!, s.box.c[1]! - s.box.h[1]!, s.box.c[2]!];
