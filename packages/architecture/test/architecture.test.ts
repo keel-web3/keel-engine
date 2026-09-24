@@ -324,12 +324,21 @@ test("on a hilly city: each building stands level on its terrace -- its door at 
       // (The car parks' surfaces: roof-slot slabs down on the lot, not a building's roof.)
       if (!B || (B.mat !== SLOT.roof) || B.h[0]! < 2 || B.h[2]! < 2 || B.h[1]! > 1 || B.c[1]! - B.h[1]! > p.base! + 0.5) continue;
       const g = h.heightAt(B.c[0]!, B.c[2]!), topMid = B.kind === "wedge" ? B.c[1]! - B.h[1]! + B.h[1]! * (1 + (B.lo ?? 0)) : B.c[1]! + B.h[1]!;
-      slabs += 1; if (B.kind === "wedge") sloped += 1;
+      slabs += 1;
+      if (B.kind === "wedge") {
+        // (A wedge's foot -- lo of its height -- is at its local +z, its full height at -z: both ends over the ground.)
+        sloped += 1;
+        const fx = Math.sin(B.yaw ?? 0), fz = Math.cos(B.yaw ?? 0), d = 0.9 * B.h[2]!, bottom = B.c[1]! - B.h[1]!;
+        for (const [k, top] of [[d, bottom + 2 * B.h[1]! * ((B.lo ?? 0) + (1 - (B.lo ?? 0)) * (1 - 0.9) / 2)], [-d, bottom + 2 * B.h[1]! * (1 - (1 - (B.lo ?? 0)) * (1 - 0.9) / 2)]] as const) {
+          const ge = h.heightAt(B.c[0]! + fx * k, B.c[2]! + fz * k);
+          assert.ok(Math.abs(top - ge - 0.06) < 0.15, `${lot.key}: a sloped slab's end ${(top - ge).toFixed(2)} m over the ground`);
+        }
+      }
       assert.ok(Math.abs(topMid - g - 0.06) < 0.12, `${lot.key}: a slab ${(topMid - g).toFixed(2)} m over the ground (${B.kind ?? "box"} ${JSON.stringify([B.c, B.h, B.lo, B.yaw])} base ${p.base})`);
     }
   }
   assert.ok(stoops > 5 && level > 20 && near > 5 && shown > 3, `${stoops} stoops, ${level} level doors (${near} by the pavement), ${shown} plinths standing out of falling ground`);
-  assert.ok(slabs > 5, `${slabs} car parks (${sloped} of them sloped)`);
+  assert.ok(slabs > 5 && sloped > 2, `${slabs} car parks (${sloped} of them sloped)`);
   const st = planStreets(STREETS, c, h);
   for (const ch of st.chunks.slice(0, 5)) for (const s of ch.solids) if (s.box) {
     const [x, y, z] = [s.box.c[0]!, s.box.c[1]! - s.box.h[1]!, s.box.c[2]!];
