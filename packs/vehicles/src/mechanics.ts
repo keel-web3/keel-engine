@@ -4,6 +4,7 @@ import type { Car, Colour } from "./car.ts";
 import { clamp, drawsOf, snap } from "./draws.ts";
 import { BODY_SLOT as P } from "./slots.ts";
 import { both, box, cap, component, solids } from "./solids.ts";
+import { serviceEngine } from "./service.ts";
 import type { Solids, V3 } from "./solids.ts";
 
 export interface MechanicalUpgrades { readonly engine?: number; readonly turbo?: number; readonly transmission?: number }
@@ -31,6 +32,20 @@ const mechanicalSpecs = new WeakMap<Car, MechanicalSpec>();
 export function mechanicsOf(car: Car): MechanicalSpec {
   const cached = mechanicalSpecs.get(car); if (cached) return cached;
   const D = drawsOf(car.seed), g = car.body, a = car.archetype;
+  // (A service truck's engine is the box its body draws -- service.ts -- a straight six behind a closed cover: a bus's
+  // at the back, a lorry's under its cab.)
+  const own = car.parts.service && car.parts.service.kind !== "police" ? serviceEngine(car) : null;
+  if (own) {
+    const level = (n = 0) => Number.isFinite(n) ? clamp(Math.floor(n), 0, 3) : 0, body = car.paints.body;
+    const spec: MechanicalSpec = {
+      cylinders: 6, configuration: "I6", location: car.parts.service!.kind === "bus" ? "rear" : "front", transverse: false,
+      engineLevel: level(car.mechanical?.engine), turboLevel: level(car.mechanical?.turbo), transmissionLevel: level(car.mechanical?.transmission),
+      cover: "engine", finish: "body", colour: { ...body }, bay: "closed",
+      engine: { x: 0, y: (own.y0 + own.y1) / 2, z: (own.z0 + own.z1) / 2, width: own.x1 - own.x0, height: own.y1 - own.y0, length: own.z1 - own.z0 },
+      radiatorZ: car.parts.service!.kind === "bus" ? own.z0 - 0.1 : own.z1 + 0.1, pipeY: Math.max(0.09, g.ride - 0.035),
+    };
+    mechanicalSpecs.set(car, spec); return spec;
+  }
   const cylinders: 4 | 6 | 8 = car.parts.semi ? 6 : a === "muscle" || a === "hyper" || a === "proto" ? 8
     : a === "kei" || a === "rally" || a === "buggy" ? 4 : D.pick("mechanical.cylinders", [[6, 3], [8, 2]]);
   const configuration = cylinders === 4 ? "I4" : cylinders === 8 ? "V8" : car.parts.semi || D.u("mechanical.six") < 0.45 ? "I6" : "V6";

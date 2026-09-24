@@ -4,12 +4,16 @@
 // own colour round their own shape), and where on the car they sit (what a
 // ground pass throws their light from). One policy for every game that uses
 // these cars: lamps dim by day, lit at night; tail lamps a dim lens until the
-// brakes light them right up.
+// brakes light them right up; a service vehicle's beacons dark until the game
+// gives them a phase, then flashing half against half.
 
 import { oklch } from "@keel-engine/core";
 import type { Car, Colour } from "./car.ts";
 import { BODY_SLOT as S } from "./slots.ts";
 import { WHEEL_SLOT } from "./shapes.ts";
+
+/** A bus's destination sign: amber LEDs. */
+export const SIGN_AMBER: Colour = { light: 0.8, chroma: 0.16, hue: 72 };
 
 /** A car colour as sRGB 0..1. */
 export const colourRgb = (c: Colour): [number, number, number] => { const [r, g, b] = oklch(c.light, c.chroma, c.hue); return [r / 255, g / 255, b / 255]; };
@@ -27,11 +31,32 @@ export function lampSpots(car: Car): { headX: number; tailX: number } {
   return { headX: hw * head, tailX: hw * tail };
 }
 
-/** What a car's lights are doing: night or day, braking (0..1), its neon on (0..1). */
+/** What a car's lights are doing: night or day, braking (0..1), its neon on (0..1), its beacons' flash. */
 export interface LightState {
   readonly night: boolean;
   readonly braking: number;
   readonly neon: number;
+  /**
+   * The beacons' flash, on a car that has them (`car.parts.beacons`): a phase counted in flash cycles -- its fraction is
+   * where in the cycle it is (A double-flashes in the first half, B in the second), so a game passes `seconds * rate`
+   * (~1.5 cycles a second reads right) and it keeps running. Absent: the beacons are dark. No other car's lights move.
+   */
+  readonly beacon?: number | undefined;
+}
+
+/** How lit each half of the beacons is at a phase (1 on, 0 off): A double-flashes in the cycle's first half, B in its second. */
+export function beaconFlash(phase: number): [number, number] {
+  const p = phase - Math.floor(phase);
+  const flash = (q: number): number => (q < 0.13 || (q >= 0.2 && q < 0.33) ? 1 : 0);
+  return p < 0.5 ? [flash(p), 0] : [0, flash(p - 0.5)];
+}
+
+/** Where a car's beacons sit (car frame), which half each is, and the colour it throws: what a ground pass lights from. Empty without. */
+export function beaconLamps(car: Car): Array<{ x: number; y: number; z: number; slot: 30 | 31; rgb: [number, number, number] }> {
+  const b = car.paints.beacon, lamps = car.parts.service?.beacons;
+  if (!b || !lamps) return [];
+  const a = colourRgb(b.a), c = colourRgb(b.b);
+  return lamps.map((l) => ({ x: l.x, y: l.y, z: l.z, slot: l.slot, rgb: l.slot === S.beaconA ? a : c }));
 }
 
 /** Whether a car has glowing neon at all (a kit, or an effect that glows). */
@@ -64,6 +89,17 @@ export function carLights(car: Car, s: LightState): { glow: Float32Array; bloom:
   if (neon > 0 && (kit?.under || car.paints.effect === "underglow")) put(S.neon, colourRgb(car.paints.glow), neon * 0.6);
   // Glowing rims: lit enough to read, not so much they burn to white.
   let rims: Float32Array | undefined;
+  // A service vehicle's beacons: dark lenses, each half lit when its flash is (and throwing its colour round it); a bus's
+  // destination sign, lit in amber (it is the neon slot on a vehicle that has no kit).
+  const beacon = car.paints.beacon;
+  if (car.parts.beacons && beacon) {
+    const [a, b] = s.beacon !== undefined && Number.isFinite(s.beacon) ? beaconFlash(s.beacon) : [0, 0];
+    const off = s.night ? -0.22 : -0.32, on = s.night ? 0.8 : 0.62;
+    glow[S.beaconA] = off + (on - off) * a; glow[S.beaconB] = off + (on - off) * b;
+    put(S.beaconA, colourRgb(beacon.a), a * (s.night ? 1 : 0.7));
+    put(S.beaconB, colourRgb(beacon.b), b * (s.night ? 1 : 0.7));
+  }
+  if (car.parts.service?.kind === "bus") { glow[S.neon] = s.night ? 0.3 : 0.1; put(S.neon, colourRgb(SIGN_AMBER), s.night ? 0.4 : 0); }
   if ((kit?.rims || car.paints.effect === "glowrims") && neon > 0) {
     rims = new Float32Array(32);
     rims[WHEEL_SLOT.rim] = neon * 0.55; rims[WHEEL_SLOT.hub] = neon * 0.4; rims[WHEEL_SLOT.barrel] = neon * 0.35;

@@ -195,6 +195,22 @@ const PAINTERS: Readonly<Record<CarDecal["kind"], { aspect: number; directional:
       for (let x = 0; x < len; x += 1) { const f = x / len; line(c, c.w - x, y + bend * f * f, c.w - x - 1, y + bend * f * f, Math.max(0.5, (1 - f) * c.h * 0.09), 1); }
     }
   } },
+  // A service vehicle's lettering: its emblem, then its words (a line each, split at "|"), as big as the room allows.
+  lettering: { aspect: 3.2, directional: false, paint: (c, _D, d) => {
+    const em = d.emblem ? c.h : 0;
+    if (d.emblem) emblem(c, d.emblem, 0, 0, c.h);
+    const lines = d.text.split("|"), rowH = c.h / lines.length, x0 = em ? em + Math.max(1, Math.round(c.h * 0.12)) : 0, room = c.w - x0;
+    lines.forEach((line, i) => {
+      const scale = Math.max(1, Math.floor(Math.min((rowH * 0.8) / 7, room / Math.max(1, 6 * line.length))));
+      const w = text(null, line, 0, 0, scale, 1);
+      text(c, line, Math.round(x0 + (room - w) / 2), Math.round(i * rowH + (rowH - 7 * scale) / 2), scale, 1);
+    });
+  } },
+  // Rear chevrons: an inverted V of stripes, two inks, all the way across (a fire engine's back).
+  chevrons: { aspect: 2, directional: false, paint: (c) => {
+    const period = Math.max(4, Math.round(c.h / 3));
+    for (let y = 0; y < c.h; y += 1) for (let x = 0; x < c.w; x += 1) put(c, x, y, Math.floor((Math.abs(x + 0.5 - c.w / 2) + y) / period) % 2 ? 2 : 1);
+  } },
   tag: { aspect: 2.8, directional: false, paint: (c, D, d) => {
     // Bubble letters, fat and bouncing, an outline, a highlight, drips.
     const scale = Math.max(1, Math.floor((c.h * 0.55) / 7));
@@ -206,6 +222,39 @@ const PAINTERS: Readonly<Record<CarDecal["kind"], { aspect: number; directional:
     for (let x = x0; x < x0 + w; x += 3) put(c, x, y0 + scale, 2);
   } },
 };
+
+/**
+ * A service vehicle's emblem in a square (x, y, size): a police badge (a shield, a star on it), a fire service's Maltese
+ * cross, the star of life (three bars, the rod up the middle) -- in ink 2, its detail in ink 3.
+ */
+function emblem(c: Canvas, kind: NonNullable<CarDecal["emblem"]>, x: number, y: number, n: number): void {
+  const cx = x + n / 2, cy = y + n / 2;
+  if (kind === "shield") {
+    fillPoly(c, [[x + n * 0.12, y + n * 0.08], [x + n * 0.88, y + n * 0.08], [x + n * 0.88, y + n * 0.5], [cx, y + n * 0.96], [x + n * 0.12, y + n * 0.5]], 2);
+    const pts: [number, number][] = [];
+    for (let k = 0; k < 10; k += 1) { const a = (k / 10) * Math.PI * 2 - Math.PI / 2, r = (k % 2 ? 0.12 : 0.28) * n; pts.push([cx + r * dcos(a), y + n * 0.45 + r * dsin(a)]); }
+    fillPoly(c, pts, 3);
+  } else if (kind === "cross") {
+    for (let k = 0; k < 4; k += 1) {
+      const a = (k / 4) * Math.PI * 2, u = [dcos(a), dsin(a)] as const, v = [-u[1], u[0]] as const, p = (t: number, w: number): [number, number] => [cx + u[0] * t * n + v[0] * w * n, cy + u[1] * t * n + v[1] * w * n];
+      fillPoly(c, [p(0.06, 0.05), p(0.48, 0.2), p(0.4, 0), p(0.48, -0.2), p(0.06, -0.05)], 2);
+    }
+    fillCircle(c, cx, cy, n * 0.14, 3);
+  } else {
+    for (let k = 0; k < 3; k += 1) {
+      const a = (k / 3) * Math.PI, u = [dcos(a), dsin(a)] as const, v = [-u[1], u[0]] as const, p = (t: number, w: number): [number, number] => [cx + u[0] * t * n + v[0] * w * n, cy + u[1] * t * n + v[1] * w * n];
+      fillPoly(c, [p(-0.48, -0.1), p(0.48, -0.1), p(0.48, 0.1), p(-0.48, 0.1)], 2);
+    }
+    fillRect(c, cx - Math.max(0.5, n * 0.03), y + n * 0.22, cx + Math.max(0.5, n * 0.03), y + n * 0.8, 3);
+  }
+}
+
+/** A lit sign's text (a bus's route and destination): one line of the pixel font, ink 1 on nothing, centred. */
+export function signDecal(words: string): Decal {
+  const scale = 1, w = Math.max(12, text(null, words, 0, 0, scale, 1) + 4), c = canvas(w, 11);
+  text(c, words, 2, 2, scale, 1);
+  return { width: w, height: 11, texels: c.t };
+}
 
 // ---------------------------------------------------------------- placement, scored like a spray
 
@@ -271,7 +320,7 @@ export function carDecals(car: Car, { pitch = 0.8, texelsPerMetre = 72, extra = 
       const u = USABLE[panel];
       // The rect: the kind's aspect fitted into the usable box (in metres), centred -- or pushed to the front for directional art.
       const boxW = f.u * (u[2] - u[0]), boxH = f.v * (u[3] - u[1]);
-      const scale = d.kind === "flames" || d.kind === "checkered" || d.kind === "tribal" ? 1 : d.kind === "sponsors" ? 0.7 : 0.85;
+      const scale = d.kind === "flames" || d.kind === "checkered" || d.kind === "tribal" || d.kind === "chevrons" ? 1 : d.kind === "sponsors" ? 0.7 : 0.85;
       let w = boxW * scale, h = w / art.aspect;
       if (h > boxH * scale) { h = boxH * scale; w = h * art.aspect; }
       let picture: Decal;

@@ -143,10 +143,10 @@ function splitRows(text: string, rows: number): string[] {
 
 /**
  * Where a car's plate goes for this text, and how big it and its letters are (see the top of this file). Null for a
- * car with no plate recess (a semi tractor's plate is its trailer's business).
+ * car with no plate recess (a semi tractor's plate is its trailer's business; a service truck carries none here).
  */
 export function plateFit(car: Car, text: string): PlateFit | null {
-  if (car.parts.semi) return null;
+  if (car.parts.semi || (car.parts.service && car.parts.service.kind !== "police")) return null;
   const g = car.body, hull = g.belt - g.ride, L2 = g.length / 2;
   const rounded = !car.parts.bed && tailEndOf(car).depth > 0.02;
   const back = backPanelOf(car);
