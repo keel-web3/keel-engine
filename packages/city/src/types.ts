@@ -136,10 +136,25 @@ export interface Landmark {
   readonly gate: { readonly edge: number; readonly x: number; readonly z: number; readonly yaw: number };
 }
 
+/**
+ * A road out of the city to another place in a world of places (keel/city world.ts): the freeway leaves on this
+ * bearing (rad, 0 is +z) and runs out to its PORTAL -- the point on that bearing the world says the link starts from
+ * (portalRadius) -- where the link carries on to the next place. `bridge`: its way out is over water (its deck is
+ * raised over the sea from the shore), else it leaves over land.
+ */
+export interface CityLink {
+  readonly bearing: number;
+  readonly bridge: boolean;
+}
+
 /** A game's asks of its city's layout, beyond the seed (the same asks everywhere the city is built, or its roads differ). */
 export interface CityOptions {
   /** How many bridges to carry its freeway over its sea: 0 none; absent, the seed decides (rarely any). */
   readonly bridges?: number;
+  /** What lies past its edges, in place of the seed's own draw (a world of places decides where its sea is). */
+  readonly edges?: readonly { readonly trait: EdgeTrait; readonly bearing: number }[];
+  /** Its roads out to the other places of its world (City.portals says where each ends). */
+  readonly links?: readonly CityLink[];
 }
 
 export interface City {
@@ -152,4 +167,9 @@ export interface City {
   readonly districts: readonly District[];
   /** The places the city was laid out around (empty when none were asked for). */
   readonly landmarks: readonly Landmark[];
+  /**
+   * Per CityOptions.links entry, the node its freeway ends at (its portal: a dead end the link carries on from), or -1
+   * where no exit could be had. Empty for a city with no links.
+   */
+  readonly portals: readonly number[];
 }

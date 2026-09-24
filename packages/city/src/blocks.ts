@@ -8,6 +8,7 @@
 
 import { dcos, dsin } from "@keel-engine/core";
 import { roadField } from "@keel-engine/road";
+import type { RoadGraph } from "@keel-engine/road";
 import type { Network } from "./arterials.ts";
 import { districtsOf } from "./districts.ts";
 import { sidewalkReach } from "./sidewalks.ts";
@@ -17,6 +18,53 @@ import type { Block, CitySite, District, DistrictKind, Landmark, LandmarkWant, L
 
 /** Clear ground between a sidewalk's back edge and a lot (m). */
 const MARGIN = 0.6;
+
+/**
+ * How far past a road's edge the lots' own probes look (m), and the cells they're bucketed in: wider than any pavement
+ * and MARGIN (SIDEWALK: 5 m at most), so for "is this on a road, or its pavement?" the answer is the road field's own.
+ */
+const KERB_LOOK = 8, KERB_CELL = 8;
+
+/**
+ * The road a point is on or beside, as keel/road's field would say it -- the nearest by distance from its edge, ties to
+ * the lower edge then sample -- whenever that road's edge is within KERB_LOOK (else null, or a road further off than
+ * that): a fine bucket grid of the segments, so a big city's thousands of lots each probe a few dozen, not thousands.
+ */
+function kerbIndex(g: RoadGraph): (x: number, z: number) => { edge: number; d: number; half: number } | null {
+  // (Each road's line in runs of RUN segments, a run bucketed into every cell its box -- widened by the road's half and
+  // KERB_LOOK -- touches. Keys are numbers: cells well inside +-2^15 of the middle, which any city is.)
+  const RUN = 4, key = (cx: number, cz: number): number => (cx + 32768) * 65536 + (cz + 32768);
+  const cells = new Map<number, number[]>();
+  for (const e of g.edges) {
+    const p = e.path, L = p.length, segs = p.closed ? L : L - 1, r = e.half + KERB_LOOK;
+    for (let i0 = 0; i0 < segs; i0 += RUN) {
+      let x0 = Infinity, z0 = Infinity, x1 = -Infinity, z1 = -Infinity;
+      for (let i = i0; i <= Math.min(segs, i0 + RUN); i += 1) { const k = i % L; x0 = Math.min(x0, p.x[k]!); x1 = Math.max(x1, p.x[k]!); z0 = Math.min(z0, p.z[k]!); z1 = Math.max(z1, p.z[k]!); }
+      for (let cz = Math.floor((z0 - r) / KERB_CELL); cz <= Math.floor((z1 + r) / KERB_CELL); cz += 1) {
+        for (let cx = Math.floor((x0 - r) / KERB_CELL); cx <= Math.floor((x1 + r) / KERB_CELL); cx += 1) {
+          const k = key(cx, cz), list = cells.get(k);
+          if (list) list.push(e.id, i0); else cells.set(k, [e.id, i0]);
+        }
+      }
+    }
+  }
+  return (x, z) => {
+    const list = cells.get(key(Math.floor(x / KERB_CELL), Math.floor(z / KERB_CELL)));
+    if (!list) return null;
+    let bd = Infinity, be = -1, bi = 0, bc = 0;
+    for (let n = 0; n < list.length; n += 2) {
+      const e = g.edges[list[n]!]!, p = e.path, segs = p.closed ? p.length : p.length - 1, i0 = list[n + 1]!;
+      for (let i = i0; i < Math.min(segs, i0 + RUN); i += 1) {
+        const j = (i + 1) % p.length;
+        const ax = p.x[i]!, az = p.z[i]!, ex = p.x[j]! - ax, ez = p.z[j]! - az, e2 = ex * ex + ez * ez || 1;
+        const t = Math.max(0, Math.min(1, ((x - ax) * ex + (z - az) * ez) / e2));
+        const qx = x - (ax + ex * t), qz = z - (az + ez * t), c = Math.sqrt(qx * qx + qz * qz), dist = c - e.half;
+        if (dist < bd || (dist === bd && (e.id < be || (e.id === be && i < bi)))) { bd = dist; be = e.id; bi = i; bc = c; }
+      }
+    }
+    return be < 0 || bd > KERB_LOOK ? null : { edge: be, d: bc, half: g.edges[be]!.half };
+  };
+}
 
 /** Per district kind: frontage widths (m, low and high) and the storeys a lot may rise to. */
 const LOTS: Readonly<Record<DistrictKind, { readonly width: readonly [number, number]; readonly storeys: readonly [number, number]; readonly use: LotUse }>> = {
@@ -51,7 +99,7 @@ export function cutBlocks(
   wants: readonly LandmarkWant[] = [],
 ): { blocks: Block[]; lots: Lot[]; districts: District[]; landmarks: Landmark[] } {
   const D = drawsFor(site.seed, "lots");
-  const g = net.graph, field = roadField(g);
+  const g = net.graph, field = roadField(g), kerb = kerbIndex(g);
   const blocks = blocksOf(net);
   const { districts, blockDistrict } = districtsOf(site, blocks);
   // The places the city is built AROUND, claimed before a single lot is laid: their blocks get none at all, which
@@ -74,8 +122,8 @@ export function cutBlocks(
       const t = k / 4, side = Math.floor(t), f = t - side;
       const u = side === 0 ? -hw + 2 * hw * f : side === 1 ? hw : side === 2 ? hw - 2 * hw * f : -hw;
       const v = side === 0 ? -hd : side === 1 ? -hd + 2 * hd * f : side === 2 ? hd : hd - 2 * hd * f;
-      const at = field.at(cx + u * cy + v * sy, cz - u * sy + v * cy);
-      if (at && Math.abs(at.d) < sidewalkReach(g.edges[at.edge]!.cls, Math.abs(at.half)) + MARGIN - 0.5) return true;
+      const at = kerb(cx + u * cy + v * sy, cz - u * sy + v * cy);
+      if (at && at.d < sidewalkReach(g.edges[at.edge]!.cls, at.half) + MARGIN - 0.5) return true;
     }
     return false;
   };
@@ -85,8 +133,8 @@ export function cutBlocks(
     ([[0, 1], [1, 0], [0, -1], [-1, 0]] as const).forEach(([nu, nv], face) => {
       for (let step = 4; step <= 44; step += 4) {
         const reach = (nu ? hw : hd) + step, u = nu * reach, v = nv * reach;
-        const at = field.at(cx + u * cy + v * sy, cz - u * sy + v * cy);
-        if (at && Math.abs(at.d) < at.half) { out.push({ edge: at.edge, face: face as LotFront["face"], cls: g.edges[at.edge]!.cls }); return; }
+        const at = kerb(cx + u * cy + v * sy, cz - u * sy + v * cy);
+        if (at && at.d < at.half) { out.push({ edge: at.edge, face: face as LotFront["face"], cls: g.edges[at.edge]!.cls }); return; }
       }
     });
     return out;

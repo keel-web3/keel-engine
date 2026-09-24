@@ -6,12 +6,12 @@ export default await engineVectors(import.meta.url, [
   {
     name: "the export surface is intact",
     run: async (api) => { const names = surface(api); return { count: names.length, digest: await digest(names) }; },
-    expect: {"count":52,"digest":"59ac1cf86962f17f3a154baf465cbce2c263a5f2d37931903b563e328b46fdb0"},
+    expect: {"count":61,"digest":"d13727181975136fea851efb1d6afa02914e9069254d1d7af6cca89e97e21d80"},
   },
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "cc0bb5617fbfede83d22cef87219eaed7745d7fbd3ca04a6839abd01f0ce3c5a",
+    expect: "9c912f4ba07e742586baffbc8efc85ea626c0251869ea39aeb9ab4cc41d8673f",
   },
   {
     name: "the city of 'neon' is the same junctions, roads and lots",
@@ -27,6 +27,22 @@ export default await engineVectors(import.meta.url, [
       const c = generateCity("neon"), h = cityHeight(c, 4);
       return { districts: await digest(c.districts), grid: [h.grid.w, h.grid.h], ground: await digest(Array.from(h.grid.data)), at: [h.heightAt(0, 0), h.heightAt(137.5, -210.25)] };
     },
-    expect: {"at":[1.0891673266887665,0.4266322592739016],"districts":"80acb2b980107e346137cd12de46796c2f595ba7e1ea8666d6156f0526d0852e","grid":[578,556],"ground":"c7590d7d1ae5981c61e98120084ea117560464446ab54111f81c70079e92ab61"},
+    expect: {"at":[1.0891671031713486,0.42647294886410236],"districts":"80acb2b980107e346137cd12de46796c2f595ba7e1ea8666d6156f0526d0852e","grid":[578,556],"ground":"ab110a9b271355c283143f962ca18f77ee1a6c2d599d1b95f54824c412f67cb2"},
+  },
+  {
+    name: "the world of 'neon' is the same places and links, their roads and decks",
+    run: async ({ generateCityWorld }) => {
+      const w = generateCityWorld("neon");
+      return digest([w.places, w.links.map((l) => [l.id, l.kind, l.a, l.b, l.at, l.seam, l.clearance, Array.from(l.path.x), Array.from(l.path.z), Array.from(l.y)])]);
+    },
+    expect: "cac4d0d656a6be222cafbd7bb845fda45815e8a4817de5511c4eac2c50366285",
+  },
+  {
+    name: "the second place of 'neon' is the same roads, its portals where its links start",
+    run: async ({ generateCityWorld, worldCity }) => {
+      const c = worldCity(generateCityWorld("neon"), 1);
+      return digest([c.graph.nodes, c.graph.edges.map((e) => [e.a, e.b, e.cls, e.path.length, !!e.bridge]), c.portals, c.lots.length]);
+    },
+    expect: "39b98a0b4eb35aed4ad6c5818a485ba51052530976b9c187053a9131ffb75e1d",
   },
 ]);

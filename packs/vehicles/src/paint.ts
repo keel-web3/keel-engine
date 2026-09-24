@@ -22,7 +22,8 @@ import type { LayerPaint, PaintScreen, PaintSheen, SlotDecal, SlotPaint } from "
 import { clamp, snap } from "./draws.ts";
 import type { Car, Colour, Finish, Panel } from "./car.ts";
 import { PANELS } from "./car.ts";
-import { carDecals } from "./decals.ts";
+import { carDecals, signDecal } from "./decals.ts";
+import { SIGN_AMBER } from "./lights.ts";
 import { convertibleOf } from "./roof.ts";
 import { mechanicsOf } from "./mechanics.ts";
 import type { PlacedDecal } from "./decals.ts";
@@ -54,6 +55,9 @@ export const FINISH_LOOK: Readonly<Record<Finish, { finish: RoleFinish; span: nu
   candy: { finish: "cloth", span: 0.56, screen: "bayer8", dither: 1, gloss: true },
   chameleon: { finish: "leather", span: 0.56, screen: "halftone", dither: 1.2, gloss: true },
 };
+
+/** Where the city's buses say they're going. */
+const DESTINATIONS = ["DOWNTOWN", "HARBOR", "UPTOWN", "AIRPORT", "STADIUM", "DEPOT", "MIDTOWN", "BEACH"] as const;
 
 const SIDE_PANELS: readonly Panel[] = ["doorL", "doorR", "fenderFL", "fenderFR", "quarterL", "quarterR"];
 const TOP_PANELS: readonly Panel[] = ["hood", "trunk", "roof"];
@@ -126,6 +130,8 @@ export function bodyPaint(car: Car, options: PaintOptions = {}): LayerPaint {
         case "odd": return slot(role(cond.colour, base.finish, base.span), base.screen, base.dither, { sheen, decal });
         case "faded": return slot(role(cond.colour, "matte", base.span * 0.8), "bayer4", 0.7, { decal });
         case "rust": return slot(role(base.colour, "matte", base.span, pattern("camo", 3, 0, 5, "secondary")), "chunky", 0.8, { ink: role(cond.colour, "matte", 0.4), decal });
+        // (A fleet's second colour on a panel -- a cruiser's white doors, a steel dump bed: the body's own finish.)
+        case "livery": return slot(role(cond.colour, base.finish, base.span), base.screen, base.dither, { sheen, decal, mirror: base.gloss ? 0.16 : 0.05 });
       }
     }
     const l = liveryFor(panel);
@@ -176,6 +182,18 @@ export function bodyPaint(car: Car, options: PaintOptions = {}): LayerPaint {
   out[BODY_SLOT.light] = slot(role({ ...P.head, light: Math.max(0.86, P.head.light) }, "glow", 0.3), "none", 0);
   out[BODY_SLOT.tail] = slot(role({ ...P.tail, light: Math.max(0.58, P.tail.light), chroma: Math.max(0.18, P.tail.chroma) }, "glow", 0.36), "none", 0);
   out[BODY_SLOT.reflector] = out[BODY_SLOT.tail] ?? null;
+  // A service vehicle's beacons: each half a clean lens in its own colour (lights.ts holds them dark until they flash).
+  const beacon = P.beacon;
+  if (car.parts.beacons && beacon) {
+    out[BODY_SLOT.beaconA] = slot(role(beacon.a, "glow", 0.3), "none", 0);
+    out[BODY_SLOT.beaconB] = slot(role(beacon.b, "glow", 0.3), "none", 0);
+  }
+  // A bus's destination sign (the neon slot on a vehicle with no kit): black glass, its route and destination in amber.
+  const sv = car.parts.service;
+  if (sv?.kind === "bus") {
+    const sign = signDecal(`${sv.number} ${DESTINATIONS[Number(sv.number) % DESTINATIONS.length]}`);
+    out[BODY_SLOT.neon] = slot(role({ light: 0.12, chroma: 0.01, hue: 260 }, "matte", 0.2), "none", 0, { decal: { decal: sign, rect: [0, 0, 1, 1], flipU: true, flipV: false, inks: [role(SIGN_AMBER, "glow", 0.3)] } });
+  }
   out[BODY_SLOT.carbon] = slot(role({ light: 0.22, chroma: 0.01, hue: 250 }, "leather", 0.34), "weave", 1.5);
   out[BODY_SLOT.metal] = slot(role({ light: 0.62, chroma: 0.02, hue: 70 }, "metal", 0.6), "bayer4", 1);
   // The licence plate (only when there is one): its first ink the plate, its picture and text the decal over all of it.

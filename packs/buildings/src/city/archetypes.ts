@@ -41,7 +41,7 @@ export const CITY_ARCHETYPES: readonly Archetype[] = [
     roof: [{ kind: "waterTower", chance: 0.45 }, { kind: "bulkhead", chance: 0.5 }, { kind: "chimney", chance: 0.3, count: [1, 2] }],
   },
   {
-    id: "rowhouse", fits: { minFront: 12, minDepth: 10 }, storeys: [2, 4], setbacks: [2, 0, 3],
+    id: "rowhouse", fits: { minFront: 12, minDepth: 10 }, storeys: [2, 4], setbacks: [2, 0, 3], stoop: [0.5, 0.9],
     massing: [{ op: "rows", units: [2, 4] }],
     facades: ["walkup"], materials: { redBrick: 4, brownBrick: 3, buffBrick: 2 },
     signs: [], roof: [{ kind: "chimney", chance: 0.7, count: [1, 3] }],
@@ -89,7 +89,7 @@ export const CITY_ARCHETYPES: readonly Archetype[] = [
     roof: [{ kind: "hvac", chance: 0.5, count: [1, 3] }],
   },
   {
-    id: "church", fits: { minFront: 24, minDepth: 30 }, storeys: [2, 3], setbacks: [4, 2, 2], solo: true,
+    id: "church", fits: { minFront: 24, minDepth: 30 }, storeys: [2, 3], setbacks: [4, 2, 2], solo: true, stoop: [0.7, 1.2],
     massing: [{ op: "nave" }],
     facades: ["church"], materials: { stoneArched: 6, redBrick: 1 },
     signs: [], roof: [],
@@ -121,7 +121,7 @@ export const CITY_ARCHETYPES: readonly Archetype[] = [
     signs: [{ kind: "pole", chance: 0.9 }, { kind: "billboard", chance: 0.3 }], roof: [{ kind: "hvac", chance: 0.6, count: [2, 4] }],
   },
   {
-    id: "suburban", fits: { minFront: 12, minDepth: 12 }, storeys: [1, 2], setbacks: [6, 2, 6],
+    id: "suburban", fits: { minFront: 12, minDepth: 12 }, storeys: [1, 2], setbacks: [6, 2, 6], stoop: [0.45, 0.85],
     massing: [{ op: "extrude" }, { op: "roof", kinds: { gable: 5, flat: 1 } }],
     facades: ["house"], materials: { siding: 5, redBrick: 2, stucco: 2, buffBrick: 1 },
     signs: [], roof: [{ kind: "chimney", chance: 0.5 }],
@@ -263,14 +263,14 @@ export const CITY_ARCHETYPES: readonly Archetype[] = [
     signs: [{ kind: "marquee", chance: 1 }, { kind: "blade", chance: 1 }, { kind: "storefront", chance: 0.8 }, { kind: "rooftop", chance: 0.3 }], roof: [{ kind: "hvac", chance: 0.6, count: [1, 3] }],
   },
   {
-    id: "apartments", fits: { minFront: 26, minDepth: 26 }, storeys: [3, 8], setbacks: [2, 0, 0],
+    id: "apartments", fits: { minFront: 26, minDepth: 26 }, storeys: [3, 8], setbacks: [2, 0, 0], stoop: [0.5, 1],
     massing: [{ op: "wings", shapes: ["U", "U", "L"], depth: [8, 11] }, { op: "cornice" }, { op: "roof", kinds: { flat: 3, gable: 1 } }],
     facades: ["walkup", "hotel"], materials: { buffBrick: 2, redBrick: 2, stucco: 1, concreteLight: 1 },
     signs: [], roof: [{ kind: "waterTower", chance: 0.3 }, { kind: "hvac", chance: 0.5, count: [1, 3] }, { kind: "bulkhead", chance: 0.5 }],
   },
   // ---- Churches, the city's own buildings, its utilities (keel/architecture civic.ts).
   {
-    id: "chapel", fits: { minFront: 16, minDepth: 24 }, storeys: [2, 2], setbacks: [4, 2, 2], solo: true,
+    id: "chapel", fits: { minFront: 16, minDepth: 24 }, storeys: [2, 2], setbacks: [4, 2, 2], solo: true, stoop: [0.5, 0.9],
     massing: [{ op: "nave" }],
     facades: ["church"], materials: { siding: 3, stucco: 2, stoneArched: 1 },
     signs: [], roof: [],

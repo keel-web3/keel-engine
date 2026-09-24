@@ -214,6 +214,52 @@ test("height: a pure function of the city, the grid covering it and its lots sta
   assert.ok(hilly > 3, "the city isn't flat");
 });
 
+test("terraces: every lot's ground meets its pavements flush, its neighbours continuously, and nothing in a block is a step", () => {
+  const c = generateCity("neon"), h = cityHeight(c), f = roadField(c.graph);
+  let fronts = 0, worstEdge = 0, worstStrip = 0, worstSide = 0, worstLot = 0;
+  for (const lot of c.lots) {
+    const { x, z, hw, hd, yaw } = lot.obb, cy = Math.cos(yaw), sy = Math.sin(yaw);
+    const at = (u: number, v: number): [number, number] => [x + u * cy + v * sy, z - u * sy + v * cy];
+    // Along every face with a pavement within 8 m of it: out to the pavement's back edge, every 2 m along the face.
+    for (const [nu, nv] of [[0, 1], [1, 0], [0, -1], [-1, 0]] as const) {
+      const ext = nu ? hw : hd, len = nu ? hd : hw;
+      for (let a = -len + 1; a <= len - 1; a += 2) {
+        const [px, pz] = nu ? at(nu * ext, a) : at(a, nv * ext), nx = nu * cy + nv * sy, nz = -nu * sy + nv * cy;
+        let back = -1, edge = -1, s = 0;
+        for (let k = 0; k <= 8; k += 0.05) {
+          const r = f.at(px + nx * k, pz + nz * k);
+          if (r && Math.abs(r.d) <= sidewalkReach(c.graph.edges[r.edge]!.cls, r.half)) { if (!r.junction) { back = k; edge = r.edge; s = r.s; } break; }
+        }
+        if (back < 0) continue;
+        fronts += 1;
+        const y = (k: number): number => h.heightAt(px + nx * k, pz + nz * k), road = h.roadAt(edge, s);
+        // (The pavement's back edge against the lot's ground just behind it: flush, within 5 cm; and the road's height.)
+        worstEdge = Math.max(worstEdge, Math.abs(y(back + 0.1) - y(back - 0.6)), Math.abs(y(back - 0.6) - road));
+        // (The strip from the pavement to the lot and a metre into it: no 2 m of it rises more than 30 cm.)
+        for (let k = -1; k + 2 <= back + 0.5; k += 0.25) worstStrip = Math.max(worstStrip, Math.abs(y(k + 2) - y(k)));
+      }
+    }
+    // Inside the lot and its margin: no 2 m rises more than 30 cm (the steepest a road's grade round the block makes it).
+    for (let u = -hw - 1; u <= hw - 1; u += 1) for (let v = -hd - 1; v <= hd - 1; v += 1) {
+      const [ax, az] = at(u, v), [bx, bz] = at(u + 2, v), [ex, ez] = at(u, v + 2), y = h.heightAt(ax, az);
+      worstLot = Math.max(worstLot, Math.abs(h.heightAt(bx, bz) - y), Math.abs(h.heightAt(ex, ez) - y));
+    }
+    // Its neighbour along the row: across the gap between them, one ground -- a slope at most, never a step.
+    const nb = lot.right ? c.lots.find((l) => l.key === lot.right) : undefined;
+    if (nb) for (let t = -0.9; t <= 0.9; t += 0.3) {
+      const mx = (nb.obb.x - x) / 2, mz = (nb.obb.z - z) / 2, du = mx * cy - mz * sy, dv = mx * sy + mz * cy;
+      const alongU = Math.abs(du) > Math.abs(dv), [qx, qz] = alongU ? at(du, t * hd) : at(t * hw, dv);
+      const ox = alongU ? Math.sign(du) * cy * 1.1 : Math.sign(dv) * sy * 1.1, oz = alongU ? -Math.sign(du) * sy * 1.1 : Math.sign(dv) * cy * 1.1;
+      worstSide = Math.max(worstSide, Math.abs(h.heightAt(qx - ox, qz - oz) - h.heightAt(qx + ox, qz + oz)));
+    }
+  }
+  assert.ok(fronts > 500, `${fronts} frontage samples`);
+  assert.ok(worstEdge <= 0.05, `a pavement's back edge ${worstEdge.toFixed(3)} m off the lot's ground behind it (or its road)`);
+  assert.ok(worstStrip <= 0.3, `the strip from a pavement to its lot rises ${worstStrip.toFixed(3)} m in 2 m`);
+  assert.ok(worstLot <= 0.3, `a lot's ground rises ${worstLot.toFixed(3)} m in 2 m`);
+  assert.ok(worstSide <= 0.3, `neighbours ${worstSide.toFixed(3)} m apart across the 2.2 m between them`);
+});
+
 test("bridges: rare by the seed, as many as a game asks for, on land at both ends and a deck over the sea", () => {
   const site = generateCity("redline:world:1", undefined, null, [], { bridges: 2 }), h = cityHeight(site);
   const decks = site.graph.edges.filter((e) => e.bridge);

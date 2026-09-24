@@ -99,21 +99,22 @@ const planeOf = (p: GlassPane): CabinPlane => ({ n: p.normal, d: dot(p.normal, p
 export interface GlassCar {
   readonly archetype: string;
   readonly body: Pick<Car["body"], "belt" | "roof" | "cabFront" | "cabRear" | "cabWidth" | "screenRun" | "rearRun">;
-  readonly parts: { readonly open: boolean; readonly semi?: unknown };
+  readonly parts: { readonly open: boolean; readonly semi?: unknown; readonly service?: { readonly kind: string } };
   readonly dials: { readonly round: number };
 }
 
 const made = new WeakMap<GlassCar, Glasshouse | null>();
 
 /**
- * The car's glasshouse (null: a semi tractor, whose cab is its own -- semi.ts). Worked out from the body's own
+ * The car's glasshouse (null: a semi tractor, a bus, a fire engine, an ambulance or a dump truck, whose cabs are their
+ * own -- semi.ts, service.ts; a police cruiser's is its sedan's). Worked out from the body's own
  * measurements, so a car's glass is part of what its seed makes, never stored on it.
  */
 export function glasshouse(car: GlassCar): Glasshouse | null {
   if (made.has(car)) return made.get(car)!;
   const g = car.body, p = car.parts;
   let out: Glasshouse | null = null;
-  if (!p.semi) {
+  if (!p.semi && !(p.service && p.service.kind !== "police")) {
     const C2 = g.cabWidth / 2, cabF = g.cabFront, cabR = g.cabRear, foot = g.belt - TUCK;
     if (p.open || car.archetype === "buggy") {
       // An open top's short screen standing on the scuttle, raked back 0.9 of its height; no roof.

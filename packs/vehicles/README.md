@@ -60,9 +60,26 @@ const wheel = table.add(wheelPaint(car));
 ## The rest of the pack
 
 `car.ts` the generated car and its panels · `traits.ts` what a seed rolls ·
-`stance.ts` ride height and camber · `bumpers.ts`, `semi.ts`, `plate.ts` parts ·
+`stance.ts` ride height and camber · `bumpers.ts`, `semi.ts`, `service.ts`, `plate.ts` parts ·
 `drive.ts`, `physics.ts` how it moves · `metadata.ts` the token's attributes.
 
 **BODY_STYLES and ARCHETYPES are consensus-coupled** — they are read by proving
 code, so they are not to be reordered or edited. Non-mintable bodies belong in
 `SPECIAL_STYLES`.
+
+## Service vehicles
+
+`service.ts` builds the city's working vehicles as special styles, asked for by name:
+`generateCar(seed, { style })` with `"City Bus"`, `"Fire Engine"`, `"Ambulance"`,
+`"Police Cruiser"` or `"Dump Truck"` (`SERVICE_STYLES` has them by kind). Seeds vary
+the details: a bus's livery and power, a pumper or an aerial ladder, an ambulance's
+stripe, a tipper's bed height. Each wears its fleet's paint unless the game pins
+another (`traits: { Paint: "Signal Yellow" }`).
+
+- `car.parts.service` holds the kind, its form, its axles and where each beacon sits.
+- `car.parts.beacons` is `true` on every one that flashes (all but the bus). Slots 30
+  and 31 are the two halves; `carLights(car, { ..., beacon: seconds * 1.5 })` flashes
+  them, and they stay dark without a phase. `beaconLamps(car)` gives the spots and
+  colours for light on the ground.
+- A dump truck's `car.parts.bed` is its bed's inside volume (a pickup's is still
+  `true`); `dumpTipPose(car, tip)` poses its `dumpBed` and `dumpRam` components.
