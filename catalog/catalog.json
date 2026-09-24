@@ -376,7 +376,7 @@
         },
         {
           "path": "packages/architecture/src/business.ts",
-          "sha256": "0xa115865d41f0b3b51d46129f0b839f0adc79dba0e4fbff384f1eec5c4b2e3a4d"
+          "sha256": "0x6cda3c7162cca4f8ec2b39e7195a553d67b992389de25b19c16d2ba0ac79f6b2"
         },
         {
           "path": "packages/architecture/src/city.ts",
@@ -384,7 +384,7 @@
         },
         {
           "path": "packages/architecture/src/civic.ts",
-          "sha256": "0x62dce97da91dd9e0867ab701045003e89874a1e9d857848149abf82a8206f1a2"
+          "sha256": "0x784754ea97266bfccc42e59ab487d54e6a03161b3be04eb0130b8aa6572899d7"
         },
         {
           "path": "packages/architecture/src/commons.ts",
@@ -468,12 +468,12 @@
         ]
       },
       "output": {
-        "digest": "0x30ee2160e0a56c67c3297591166d3a6fcfc407128a7f5048bdbd31e4564d381f",
-        "byteLength": 95935
+        "digest": "0x759f73fd97fdd50a4458cd947645528b55d6fd8eb27bcbe60dda25ce748845f5",
+        "byteLength": 96435
       },
-      "sourceDigest": "0x2e254db7ab14f1acc6807a5173743f5ce835e0c100bf3dbf2d0aae8498e5ef44",
-      "recipeDigest": "0xcabdbc38a7920944568792e1e9b1f63e12472e17b3679dfc3b95af530c57396c",
-      "receiptDigest": "0x2dca16060d15778f0eab58c1301ed579ae67ab8ec57902e607e9884e747c6df0",
+      "sourceDigest": "0xd7ecbb722162e1a6c977e2df626bcd1b7837612fe0b936ee018cb6399c616708",
+      "recipeDigest": "0xa5931a9fea01dd0ce3f6d45cdef9e8449659ebb1f0519e2ec7e44ae581ce244e",
+      "receiptDigest": "0xbbf7118f85fe3999afbd2e1901cceafb11a1db6c17ac28c4ebcda7c5a206d38e",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
