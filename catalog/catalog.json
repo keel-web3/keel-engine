@@ -5072,11 +5072,11 @@
         },
         {
           "path": "packs/vehicles/src/car.ts",
-          "sha256": "0xffd54022329691c21f39a65ca84b948d39d8c4b172fba77315cc783913d74f4f"
+          "sha256": "0x20d0fb62803691090d04699a7ef7fe68ebc7a8c67e8e3a1ec217cbc315ddd82a"
         },
         {
           "path": "packs/vehicles/src/decals.ts",
-          "sha256": "0xb64e5ba93e49829be7c7df028e098892ade51f4b7689b80f48e36a251ab1a93a"
+          "sha256": "0x2ce1d52816c5fd9f26122fdef6122910aba092a98f2d6122003a6df5a4a42be0"
         },
         {
           "path": "packs/vehicles/src/draws.ts",
@@ -5092,19 +5092,19 @@
         },
         {
           "path": "packs/vehicles/src/glass.ts",
-          "sha256": "0x3ad5c1faa976a4af8344ada0d7696a9997efd9ccbe1f112cb281f0fad48cc8ae"
+          "sha256": "0x1e740d0dda5daf8e24cce45903dc0b45bdb8a3be086c66e6fb69ad0d5ad0390d"
         },
         {
           "path": "packs/vehicles/src/index.ts",
-          "sha256": "0x1f41803e3a9fd18c88a1d313e35c3fd0608c4a3591cd632d451dca024e606780"
+          "sha256": "0x36e59dc35bebf0114e1362b783f591da9ac82971f15efb1239e7d55402ebfe8b"
         },
         {
           "path": "packs/vehicles/src/lights.ts",
-          "sha256": "0xe80878f93743a0ad05be475f4630e5572afbcde641e1727e954cb356c1e4cc54"
+          "sha256": "0x2e7eec51c7ec6e7268867031d086619a114d04c26a88d12280976a3ba2649c90"
         },
         {
           "path": "packs/vehicles/src/mechanics.ts",
-          "sha256": "0xcf8a29a91de9a21504bd88d574f49fec8cb028c7f8ddd472cb667287f6a4c38d"
+          "sha256": "0x8bbebf66242b3745f327845510afce7c07498fb92755adab172690535bc560a6"
         },
         {
           "path": "packs/vehicles/src/metadata.ts",
@@ -5112,15 +5112,15 @@
         },
         {
           "path": "packs/vehicles/src/paint.ts",
-          "sha256": "0x7ca7a1b8cb02634d62cbfb89fefc03abfde1169d83278c159d58161d5b97eb44"
+          "sha256": "0x2bcbb76cb63e2964f965b9accc0dc5f5e92cbb0841301cd06c221139852f6b51"
         },
         {
           "path": "packs/vehicles/src/physics.ts",
-          "sha256": "0x16c7f5f0b8360a0d9862ee8765091854ce4a1323449e8a27f1e454d20dc1485a"
+          "sha256": "0x57986defbf62d8a585bd1e1d11c934ddfa6039e692fe66bf7167ae0d666a72fd"
         },
         {
           "path": "packs/vehicles/src/plate.ts",
-          "sha256": "0x90cd0a29b253760948a9e42c2e3d3ff4ff4093bf3615c0229e8d7ae2e4d21ed0"
+          "sha256": "0x219e1b2bfa7c3c412b62289fbd4ec0ec41069165a40813fd960686f7141a8b51"
         },
         {
           "path": "packs/vehicles/src/roof.ts",
@@ -5131,12 +5131,16 @@
           "sha256": "0x7337ce281c337073a3d184df7b413759500467145f1485fda7c1d0b69f0191fa"
         },
         {
+          "path": "packs/vehicles/src/service.ts",
+          "sha256": "0x0ffca66449ed3798b7976ce6b95a56cd428a0f4ee657e0cb2343b762e280a2a3"
+        },
+        {
           "path": "packs/vehicles/src/shapes.ts",
-          "sha256": "0x12c041a88724e0684f2336142f84e1c622a5fee4a8511762978ecb98a5bb88d4"
+          "sha256": "0xa93202c7add529c5bb65b53b447a79d3efa83494cc0fd21f788fed950e213513"
         },
         {
           "path": "packs/vehicles/src/slots.ts",
-          "sha256": "0xd988c3fa7a17601990a33c96e8d94fa7ef76cdef75ba00f1cbbddd6b841145f9"
+          "sha256": "0xe363bd0a832bea8d06c5b761d4eb85b95c72081ac0a181791d21983e5336e002"
         },
         {
           "path": "packs/vehicles/src/solids.ts",
@@ -5148,7 +5152,7 @@
         },
         {
           "path": "packs/vehicles/src/traits.ts",
-          "sha256": "0x65dfb70f975347c604e9f9b3d90e7aa852ba84923bbd9168967034b68e46595d"
+          "sha256": "0x96b5305fd8b8dbcd0752cd0ca93187341c431a7d262b1f909851da7a86bf3913"
         }
       ],
       "build": {
@@ -5159,17 +5163,17 @@
         ]
       },
       "output": {
-        "digest": "0x9e09784f6fdee15db82c6318eae26ca9492c9b546b1e4d6407e2cbbeae52bf3d",
-        "byteLength": 135581
+        "digest": "0xc9c1baf3cca4c387f3504e9ce6094c8946bb9d452ddf83e7daa38564acff6fe4",
+        "byteLength": 175036
       },
-      "sourceDigest": "0x4ce37504063095ac64f6728a5be23af52406abf4361865078295aa2f5bee850b",
-      "recipeDigest": "0xe5253ce12a4fea79bcb37a3957d42d3e8cd556d591a2c84492ff52f1dcb1075c",
-      "receiptDigest": "0xa7f59b7e5c28299f85bc6ec2e12bd495b7ea24102a15accbe1fe4f09133a9ad7",
+      "sourceDigest": "0x75cbe072dbb43c59b0ab93271798dd8ffdbb633c2b193fd9f68e28fd395f72b5",
+      "recipeDigest": "0x8e36ac5f1876133187d8297c45a1dcaac6dc09528e1dd1da0eed5586bce6d693",
+      "receiptDigest": "0x7b80d89c0bec607c984062efc8c13eb7614ee90385550462634f38b7fd4a318e",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packs/vehicles/test/vectors.mjs",
-        "sha256": "0x30be07693ad507673709da571c349c4292dbbdc7dd1129b03bff451e1f1a2c45"
+        "sha256": "0x1594e98a2846eb0a97931c8d330012e109937d5035b4c81998eb18f02f681649"
       },
       "deployments": [],
       "deployed": false

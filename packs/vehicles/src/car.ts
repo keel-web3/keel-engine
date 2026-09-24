@@ -23,6 +23,8 @@ import {
 import type { BodyStyle, PaintKey, Site, Table, Tier, Trait } from "./traits.ts";
 import type { MechanicalUpgrades } from "./mechanics.ts";
 import { semiRig } from "./semi.ts";
+import { FLEET_TAIL, policeParts, serviceDecals, serviceLook, serviceRig } from "./service.ts";
+import type { DumpBed, ServiceParts } from "./service.ts";
 
 // ---------------------------------------------------------------- vocabulary
 
@@ -177,11 +179,16 @@ export interface CarParts {
   readonly arches: "none" | "trim" | "cladding";
   readonly mirrors: "wing" | "aero" | "none";
   readonly twoTone: boolean;
-  readonly bed: boolean;
+  /** A pickup's bed (true) -- or a dump truck's, its inside volume (service.ts DumpBed): either way, it has one. */
+  readonly bed: boolean | DumpBed;
   readonly crew: boolean;
   readonly open: boolean;
   /** A semi tractor's own forms (the "Semi Truck" style only; semi.ts builds it). */
   readonly semi?: SemiParts;
+  /** A service vehicle's own forms (the bus, fire engine, ambulance, police cruiser and dump truck; service.ts). */
+  readonly service?: ServiceParts;
+  /** It carries flashing beacons (BODY_SLOT.beaconA/B; carLights' `beacon` phase flashes them). */
+  readonly beacons?: true;
 }
 
 /** A semi tractor's forms: its sleeper (m; 0 a day cab) and whether its roof is raised, a roof fairing, where its fifth wheel and its two drive axles are (z). */
@@ -194,17 +201,20 @@ export interface SemiParts {
 }
 
 /** A panel painted other than the body: primer, a part off another car, rust, sun-faded. */
-export interface PanelPaint { readonly panel: Panel; readonly kind: "primer" | "odd" | "rust" | "faded"; readonly colour: Colour }
+/** (A "livery" panel is the fleet's own second colour -- a cruiser's white doors, a steel dump bed -- in the body's finish.) */
+export interface PanelPaint { readonly panel: Panel; readonly kind: "primer" | "odd" | "rust" | "faded" | "livery"; readonly colour: Colour }
 
 /** A decal the car wears: its kind, what it says or shows (varied per car), and the panels it may go on, best first. */
 export interface CarDecal {
-  readonly kind: "number" | "sponsors" | "flames" | "teeth" | "bolt" | "starburst" | "checkered" | "skull" | "stars" | "tribal" | "tag";
+  readonly kind: "number" | "sponsors" | "flames" | "teeth" | "bolt" | "starburst" | "checkered" | "skull" | "stars" | "tribal" | "tag" | "lettering" | "chevrons";
   readonly seed: string;
   /** Race number, sponsor names, or nothing. */
   readonly text: string;
   readonly panels: readonly Panel[];
   /** Which of the car's colours its inks wear. */
   readonly inks: readonly ("accent" | "alt" | "body" | "white" | "black" | "fire" | "gold")[];
+  /** A service vehicle's lettering: the emblem before its words (a badge, a Maltese cross, the star of life). */
+  readonly emblem?: "shield" | "cross" | "star";
 }
 
 /** What each paintable part wears. */
@@ -239,6 +249,8 @@ export interface CarPaints {
   readonly lampName: string;
   /** Its neon kit, if it has one (its colour is `glow`). */
   readonly neon: NeonKit | null;
+  /** A service vehicle's beacons: the colour each half of its flash burns (BODY_SLOT.beaconA, beaconB). */
+  readonly beacon?: { readonly a: Colour; readonly b: Colour };
 }
 
 export interface Handling {
@@ -324,6 +336,10 @@ const MODELS: Readonly<Record<Archetype, readonly string[]>> = {
   kei: ["Pip", "Mochi", "Button", "Dot", "Sprout", "Pebble"], pickup: ["Hauler", "Ridge", "Ranch", "Mule", "Canyon", "Bison"],
   buggy: ["Dune", "Scrub", "Goat", "Mesa", "Sidewinder", "Tumble"], proto: ["LMP", "Prototype", "Endurance", "Mirage", "Spectre", "Nova"],
 };
+/** A service vehicle's model, by its form. */
+const SERVICE_MODEL: Readonly<Record<string, string>> = {
+  diesel: "Citybus", hybrid: "Citybus Hybrid", cng: "Citybus CNG", pumper: "Pumper", aerial: "Aerial Ladder", type3: "Medic III", cruiser: "Interceptor", tipper: "Tipper 6x4",
+};
 const SPONSOR_A = ["Volt", "Nano", "Apex", "Hydro", "Turbo", "Omni", "Pyro", "Zen", "Flux", "Grip", "Neo", "Rad", "Ultra", "Maxi", "Dyna"];
 const SPONSOR_B = ["rix", "brake", "lube", "tek", "fuel", "cola", "max", "tron", "grip", "zap", "oil", "wax", "gear", "spark", "coil"];
 
@@ -356,6 +372,10 @@ export function generateCar(seed: string, options: CarOptions = {}): Car {
   if (!candidates.length && !special) throw new RangeError(`No body style "${options.style ?? options.archetype}".`);
   const style: BodyStyle = special ?? D.pick("style", candidates.map((s) => [s, s.weight] as const));
   const cls = style.cls;
+  // (A service vehicle's style also settles what no roll decides -- its lamps, rim size, no spinner, no rare type, no
+  // effect, no neon -- from its `force`; "None" is none. Every other style draws them as it always has.)
+  const svc = style.service;
+  const fixed = (k: string): string | null | undefined => { const f = svc ? style.force?.[k] : undefined; return f === undefined ? undefined : f === "None" ? null : f; };
   traits.push({ category: "Body", name: style.name, site: "Body", ppm: stylePpm(style) });
 
   /** A category's roll: forced by the style, pinned, or drawn from its class table -- noted as a trait (with its site) when it lands. */
@@ -444,10 +464,11 @@ export function generateCar(seed: string, options: CarOptions = {}): Car {
   const widthF = snap(at(0.5 * d.width + 0.4 * d.power - (kei ? 0.3 : 0), 0.17, 0.3) * (buggy || tyre === "knobby" ? 1.2 : 1), 0.01);
   const widthR = snap(widthF * (1 + 0.35 * stagger), 0.01);
   // The rims' size: the wheel keeps its diameter, so a bigger rim just wears a thinner tyre (and fills the arch).
-  const rimSizeName = pins["Rim Size"] ?? D.pick("pick.RimSize", lucky(RIM_SIZE_TABLE.entries));
+  const rimSizeName = pins["Rim Size"] ?? fixed("Rim Size") ?? D.pick("pick.RimSize", lucky(RIM_SIZE_TABLE.entries));
   const rimSize = Number.parseInt(rimSizeName, 10);
   traits.push({ category: "Rim Size", name: rimSizeName, site: "Rim Size", ppm: entryPpm(RIM_SIZE_TABLE, rimSizeName) });
-  const spinnerName = pins["Spinner"] ?? (D.u("gate.Spinner") < odds(SPINNER_TABLE.chance) / ONE_PPM ? D.pick("pick.Spinner", lucky(SPINNER_TABLE.entries)) : null);
+  const fixedSpinner = fixed("Spinner");
+  const spinnerName = pins["Spinner"] ?? (fixedSpinner !== undefined ? fixedSpinner : D.u("gate.Spinner") < odds(SPINNER_TABLE.chance) / ONE_PPM ? D.pick("pick.Spinner", lucky(SPINNER_TABLE.entries)) : null);
   const spinner: Spinner = spinnerName === null || spinnerName === "None" ? "none" : lookBy<Spinner>({ Spinners: "spinners", Floaters: "floaters", "Knock-Offs": "knockoffs" }, spinnerName);
   if (spinnerName) traits.push({ category: "Spinner", name: spinnerName, site: "Spinner", ppm: entryPpm(SPINNER_TABLE, spinnerName) });
   // (A bigger rim wears a thinner tyre -- but a tyre is still a tyre: even a 24" keeps a wall you can see, or the wheel
@@ -506,10 +527,11 @@ export function generateCar(seed: string, options: CarOptions = {}): Car {
   const body: BodyGeometry = { length, width, ride, belt, roof: roofY, cabRear, cabFront, cabWidth, screenRun, rearRun, nose, noseLo, tail: tailLen, tailLo, tailRound, tailRoll, tailTuck, shoulder, flare, strip, doorFront, doorRear, wheelbase, frontAxle, rearAxle, track };
 
   // ------------------------------------------------ paint: a type (rare) or a family on its curve, a finish, livery, decals, condition
-  const typeName = pins["Type"] ?? (D.u("gate.Type") < odds(TYPE_TABLE.chance) / ONE_PPM ? D.pick("pick.Type", lucky(TYPE_TABLE.entries)) : null);
+  const fixedType = fixed("Type");
+  const typeName = pins["Type"] ?? (fixedType !== undefined ? fixedType : D.u("gate.Type") < odds(TYPE_TABLE.chance) / ONE_PPM ? D.pick("pick.Type", lucky(TYPE_TABLE.entries)) : null);
   const type: CarType | null = typeName === null || typeName === "None" ? null : lookBy<CarType>({ "Gold Plated": "gold", Chrome: "chrome", "Full Carbon": "carbon", "Rust Bucket": "rust", Hologram: "hologram", Stealth: "stealth" }, typeName);
   // (A pinned Paint names a family -- the paint shop's choice; the draw is still made, so nothing after it moves.)
-  const drawnFamily: PaintKey = D.pick("family", PAINT_TABLES[cls]);
+  const drawnFamily: PaintKey = D.pick("family", style.paints ?? PAINT_TABLES[cls]);
   const pinnedFamily = pins["Paint"] ? (Object.keys(PAINT_FAMILIES) as PaintKey[]).find((k) => PAINT_FAMILIES[k].name === pins["Paint"]) : undefined;
   const familyKey: PaintKey = pinnedFamily ?? drawnFamily;
   const fam = PAINT_FAMILIES[familyKey];
@@ -589,14 +611,15 @@ export function generateCar(seed: string, options: CarOptions = {}): Car {
 
   const tintName = roll("Tint")!;
   const TINTS: Readonly<Record<string, Colour>> = { Smoke: { light: 0.2, chroma: 0.02, hue: 250 }, Clear: { light: 0.34, chroma: 0.03, hue: 220 }, "Blue Tint": { light: 0.26, chroma: 0.07, hue: 245 }, Mirror: { light: 0.5, chroma: 0.02, hue: 240 }, "Purple Tint": { light: 0.24, chroma: 0.08, hue: 300 }, "Gold Tint": { light: 0.4, chroma: 0.09, hue: 80 } };
-  const effectName = pins["Effect"] ?? (D.u("gate.Effect") < odds(EFFECT_TABLE.chance) / ONE_PPM ? D.pick("pick.Effect", lucky(EFFECT_TABLE.entries)) : null);
+  const fixedEffect = fixed("Effect");
+  const effectName = pins["Effect"] ?? (fixedEffect !== undefined ? fixedEffect : D.u("gate.Effect") < odds(EFFECT_TABLE.chance) / ONE_PPM ? D.pick("pick.Effect", lucky(EFFECT_TABLE.entries)) : null);
   const effect: Effect | null = effectName === null || effectName === "None" ? null : lookBy<Effect>({ Underglow: "underglow", "Neon Trim": "neon", "Glow Rims": "glowrims", "Light Trails": "trails" }, effectName);
   const glow = D.pick<Colour>("glow", [[{ light: 0.78, chroma: 0.14, hue: 200 }, 3], [{ light: 0.66, chroma: 0.24, hue: 340 }, 3], [{ light: 0.84, chroma: 0.22, hue: 130 }, 2], [{ light: 0.78, chroma: 0.16, hue: 75 }, 2], [{ light: 0.6, chroma: 0.2, hue: 295 }, 2]]);
   const glowName = ["cyan", "magenta", "lime", "amber", "violet"][[200, 340, 130, 75, 295].indexOf(glow.hue)] ?? "";
   if (effect) traits.push({ category: "Effect", name: effectName!, site: "Effect", ppm: entryPpm(EFFECT_TABLE, effectName!), detail: glowName });
 
   // Its lamps: what they burn. Every car has some, and the beam it throws takes the same colour.
-  const lampName = pins["Lights"] ?? D.pick("pick.Lights", lucky(LIGHT_TABLE.entries));
+  const lampName = pins["Lights"] ?? fixed("Lights") ?? D.pick("pick.Lights", lucky(LIGHT_TABLE.entries));
   const lamp = lookBy<LampKind>({ Halogen: "halogen", "LED White": "led", "Xenon Blue": "xenon", Amber: "amber", "Ice Blue": "ice", Violet: "violet", "Toxic Green": "green" }, lampName);
   const LAMP_COLOUR: Readonly<Record<LampKind, Colour>> = {
     halogen: { light: 0.92, chroma: 0.05, hue: 92 }, led: { light: 0.96, chroma: 0.015, hue: 240 }, xenon: { light: 0.92, chroma: 0.07, hue: 240 },
@@ -605,7 +628,8 @@ export function generateCar(seed: string, options: CarOptions = {}): Car {
   traits.push({ category: "Lights", name: lampName, site: "Lights", ppm: entryPpm(LIGHT_TABLE, lampName) });
 
   // A neon kit: tubes under the sills, round the rims, along the trim, or -- once in a while -- everywhere.
-  const neonName = pins["Neon"] ?? (D.u("gate.Neon") < odds(NEON_TABLE.chance) / ONE_PPM ? D.pick("pick.Neon", lucky(NEON_TABLE.entries)) : null);
+  const fixedNeon = fixed("Neon");
+  const neonName = pins["Neon"] ?? (fixedNeon !== undefined ? fixedNeon : D.u("gate.Neon") < odds(NEON_TABLE.chance) / ONE_PPM ? D.pick("pick.Neon", lucky(NEON_TABLE.entries)) : null);
   const neon: NeonKit | null = neonName === null || neonName === "None" ? null : {
     name: neonName,
     run: D.pick<NeonRun>("neonRun", [["full", 6], ["ring", 3], ["front", 2], ["rear", 2]]),
@@ -688,6 +712,12 @@ export function generateCar(seed: string, options: CarOptions = {}): Car {
 
   // A semi tractor: its own measurements, wheels, handling and forms (semi.ts) over everything drawn above.
   const rig = style.semi ? semiRig(D, d, wheelF) : null;
+  // A service vehicle: the same for the bus, the fire engine, the ambulance and the dump truck; the cruiser keeps the
+  // sedan it drew and wears its kit. Each wears its fleet's second colour, its livery panels, its beacons, its lettering.
+  const svcRig = svc && svc !== "police" ? serviceRig(svc, D, d, wheelF) : null;
+  const service = svcRig ? svcRig.service : svc === "police" ? policeParts(D, { archetype: cls, body, dials: d }) : null;
+  const look = service ? serviceLook(service, D, bodyC) : null;
+  if (service) decals.push(...serviceDecals(service, seed, bodyC));
 
   const chips = chipsOf(traits);
   const score = scoreOf(chips);
@@ -697,13 +727,17 @@ export function generateCar(seed: string, options: CarOptions = {}): Car {
   const trimName = D.pick("trimName", [["", 5], [" RS", 1 + aero01], [" GT", 1], [" S", 1], [" R", power01], [" Turbo", power01], [" Evo", cls === "rally" ? 2 : 0.3], [" XL", pickup ? 2 : 0]]);
   return {
     ...(options.mechanical ? { mechanical: { ...options.mechanical } } : {}),
-    seed, style: style.name, archetype: cls, name: `${make} ${model}${trimName}`, dials: d,
-    body: rig ? rig.body : body,
-    parts: rig ? { ...parts, bed: false, crew: false, open: false, semi: rig.semi } : parts,
-    wheels: rig ? rig.wheels : [wheelF, wheelR],
-    mounts: rig ? rig.mounts : mounts,
-    paints: rig ? { ...paints, trimChrome: true } : paints,
-    decals, handling: rig ? rig.handling : handling,
+    seed, style: style.name, archetype: cls, name: service ? `${make} ${SERVICE_MODEL[service.form] ?? service.form}` : `${make} ${model}${trimName}`, dials: d,
+    body: rig ? rig.body : svcRig ? svcRig.body : body,
+    parts: rig ? { ...parts, bed: false, crew: false, open: false, semi: rig.semi }
+      : service ? { ...parts, ...(svcRig ? { bed: svcRig.bed ?? false, crew: false, open: false } : {}), service, ...(service.beacons.length ? { beacons: true as const } : {}) }
+      : parts,
+    wheels: rig ? rig.wheels : svcRig ? svcRig.wheels : [wheelF, wheelR],
+    mounts: rig ? rig.mounts : svcRig ? svcRig.mounts : mounts,
+    paints: rig ? { ...paints, trimChrome: true }
+      : look ? { ...paints, alt: look.alt, accent: look.accent, tail: FLEET_TAIL, panels: [...look.panels], trimChrome: look.trimChrome, ...(look.beacon ? { beacon: look.beacon } : {}) }
+      : paints,
+    decals, handling: rig ? rig.handling : svcRig ? svcRig.handling : handling,
     traits, chips, score, tier: tierOf(score),
   };
 }

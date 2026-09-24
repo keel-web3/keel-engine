@@ -30,6 +30,7 @@ import { bumperSolids } from "./bumpers.ts";
 import { mechanicalSolids, mechanicsOf, componentBounds } from "./mechanics.ts";
 import { BODY_SLOT } from "./slots.ts";
 import { semiFace, semiSolids, semiStacks } from "./semi.ts";
+import { ownBody, policeKit, serviceExhaust, serviceFace, serviceSolids } from "./service.ts";
 
 export { BODY_SLOT } from "./slots.ts";
 /** A panel's slot. */
@@ -142,6 +143,8 @@ export function doorsOf(car: Car): { front: number; rear: number } {
 function bodySolids(car: Car): Solids {
   // (A semi tractor is built its own way: semi.ts.)
   if (car.parts.semi) { const S = semiSolids(car); fitMechanics(S, car); return S; }
+  // (So is a bus, a fire engine, an ambulance, a dump truck -- service.ts; their engines are their own solids.)
+  if (ownBody(car)) return serviceSolids(car);
   const S = solids();
   const g = car.body, p = car.parts, P = BODY_SLOT;
   const L2 = g.length / 2, W2 = g.width / 2;
@@ -584,6 +587,8 @@ function bodySolids(car: Car): Solids {
     }
   }
 
+  // (A police cruiser's kit: its light bar, push bar and spot lamp.)
+  if (p.service?.kind === "police") policeKit(S, car);
   fitMechanics(S, car);
   // The underside, dark: hides the ground seen between the wheels from low angles.
   box(S, P.dark, -hw * 0.9, Math.max(0.02, g.ride - 0.04), wr.z1, hw * 0.9, g.ride + 0.02, wf.z0);
@@ -607,7 +612,7 @@ function enginePanel(S: Solids, car: Car, panel: "hood" | "trunk", half: number,
 }
 
 /** The damage layout reads the same solids the body owns. */
-export const mechanicalBounds = (car: Car) => componentBounds(car.parts.semi ? bodySolids(car) : mechanicalSolids(car, exhaustTips(car)));
+export const mechanicalBounds = (car: Car) => componentBounds(car.parts.semi || ownBody(car) ? bodySolids(car) : mechanicalSolids(car, exhaustTips(car)));
 function fitMechanics(S: Solids, car: Car): void {
   const assembly = mechanicalSolids(car, exhaustTips(car));
   S.boxes.push(...assembly.boxes); S.wedges.push(...assembly.wedges); S.capsules.push(...assembly.capsules);
@@ -658,7 +663,7 @@ export interface PanelFace { readonly face: "side" | "top" | "front" | "back"; r
 
 export function panelFace(car: Car, panel: Panel): PanelFace {
   const f = carPanelFace(car, panel);
-  return car.parts.semi ? { ...f, ...semiFace(car, panel) } : f;
+  return car.parts.semi ? { ...f, ...semiFace(car, panel) } : ownBody(car) ? { ...f, ...serviceFace(car, panel) } : f;
 }
 function carPanelFace(car: Car, panel: Panel): PanelFace {
   // (A box's side face runs u along +z; a wedge turned for the rear runs it along -z. Seen from the right, the front
@@ -668,7 +673,7 @@ function carPanelFace(car: Car, panel: Panel): PanelFace {
   const hw = car.archetype === "buggy" ? g.width * 0.31 : g.width / 2;
   const st = Math.min(g.strip, hw * 0.4);
   const W = wellsOf(car), doors = doorsOf(car);
-  const bed = car.parts.bed;
+  const bed = !!car.parts.bed;
   const sideFace = (u: number, v: number, side: -1 | 1, uFront: boolean): PanelFace => ({ face: "side", u, v, side, uFront, readU: side > 0 ? !uFront : uFront, readV: false });
   switch (panel) {
     case "doorL": return sideFace(doors.front - doors.rear, hull, -1, true);
@@ -784,6 +789,7 @@ export function spinnerDesign(w: WheelSpec): VehicleDesign | null {
  * straight up out of their tops, where the pipes visibly end.
  */
 export function exhaustTips(car: Car): Array<{ x: number; y: number; z: number; dz: number; dx: number; dy: number; r: number }> {
+  if (ownBody(car)) return serviceExhaust(car);
   const g = car.body, p = car.parts, L2 = g.length / 2, hull = g.belt - g.ride;
   // (Inside the back panel's corners, wherever the tail is rounded.)
   const TE = tailEndOf(car), hw = TE.depth > 0.02 && !p.bed ? Math.min(g.width / 2, TE.at((TAIL_SLICES - 0.5) / TAIL_SLICES).half + 0.06) : g.width / 2;
