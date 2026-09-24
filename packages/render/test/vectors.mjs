@@ -12,7 +12,7 @@ export default await engineVectors(import.meta.url, [
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "f0e0d29df057e245ef51e12d87bac5b99cd9814680f870d5ebb570b5e5e07df6",
+    expect: "59f7a2b0ddd5c019cc865355cfdf754d6867de1d68ce4177706f5f2543964021",
   },
   {
     name: "fx resolve and toggle",

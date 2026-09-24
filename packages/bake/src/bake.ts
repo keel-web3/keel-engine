@@ -42,7 +42,15 @@ export interface BakeCapsule { readonly a: ArrayLike<number>; readonly b: ArrayL
  * side faces in METRIC cells -- [bay width (m), storey height (m), u offset, v offset (cells)] -- for the "windows"
  * pattern: a 40-storey tower shows 40 rows of windows and a 4-storey one 4. Its top and bottom keep the 0..1 coordinate.
  */
-export interface BakeBox { readonly c: ArrayLike<number>; readonly h: ArrayLike<number>; readonly yaw?: number | undefined; readonly mat?: number | undefined; readonly kind?: string | undefined; readonly lo?: number | undefined; readonly skin?: number | undefined; readonly grid?: FacadeGrid | undefined }
+export interface BakeBox {
+  readonly c: ArrayLike<number>; readonly h: ArrayLike<number>; readonly yaw?: number | undefined; readonly mat?: number | undefined; readonly kind?: string | undefined; readonly lo?: number | undefined; readonly skin?: number | undefined; readonly grid?: FacadeGrid | undefined;
+  /**
+   * A wedge's span across (local x, as fractions of its half width) at its full-height end, -z: its foot at +z always
+   * spans [-1, 1]. Tapers and shifts the wedge toward its top -- with `skin`, a glass pane leaning in to a narrower
+   * roof, a trapezoid that meets its pillars. Default [-1, 1], no taper.
+   */
+  readonly top?: readonly [number, number] | undefined;
+}
 /** A box's facade grid: bay width and storey height (m), and where its first cell starts (cells; lines stacked boxes up). */
 export type FacadeGrid = readonly [number, number, number?, number?];
 /** A design posed at one frame: solids at the origin, facing +z (the frame convention). */

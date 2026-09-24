@@ -2,6 +2,7 @@
 // whose top slopes) and capsules, each with the slot it wears -- and the little
 // helpers that place them between two corners, the way a body is drawn up.
 
+import { dhypot } from "@keel-engine/core";
 import type { BakeBox, BakeCapsule } from "@keel-engine/bake";
 
 export interface Solids { boxes: BakeBox[]; wedges: BakeBox[]; capsules: BakeCapsule[]; components?: Map<object, string> }
@@ -47,3 +48,35 @@ export const cap = (S: Solids, mat: number, a: V3, b: V3, r: number): void => {
 };
 /** Both sides: f(+1) and f(-1). */
 export const both = (f: (s: 1 | -1) => void): void => { f(1); f(-1); };
+/**
+ * A pane of glass (glass.ts GlassPane) as one thin solid: a wedge skinned `thickness` through -- its slope the pane's
+ * outer face, from the foot edge up to the top edge -- tapered so its sides are the pane's own edges (the pillars'
+ * lines). A screen (its foot and top edges across the car) or a side window (along it). The box runs one skin below the
+ * foot, buried in the body under the belt, so the pane is the same thickness right down to where it disappears.
+ */
+export function pane(S: Solids, mat: number, p: { readonly name: string; readonly corners: readonly (readonly number[])[]; readonly thickness: number }): void {
+  const [f0, f1, t0, t1] = p.corners as readonly (readonly [number, number, number])[] as [V3, V3, V3, V3];
+  const yFoot = f0[1], yTop = t0[1], rise = yTop - yFoot;
+  const across = Math.abs(f0[2] - f1[2]) < 1e-6;   // (the foot edge runs across the car: a screen)
+  const n = S.wedges.length;
+  if (across) {
+    // Local x = world x (turned a half round for a rear screen: its foot at -z).
+    const zFoot = f0[2], zTop = t0[2], run = Math.abs(zFoot - zTop), skin = p.thickness * dhypot(rise, run) / Math.max(1e-3, run);
+    const xa = Math.min(f0[0], f1[0]), xb = Math.max(f0[0], f1[0]), cx = (xa + xb) / 2, half = (xb - xa) / 2;
+    const y0 = yFoot - skin, front = zFoot > zTop;
+    wedge(S, mat, xa, y0, zTop, xb, yTop, zFoot, skin / (yTop - y0), front ? "front" : "rear");
+    if (S.wedges.length === n) return;
+    const ta = (Math.min(t0[0], t1[0]) - cx) / half, tb = (Math.max(t0[0], t1[0]) - cx) / half;
+    S.wedges[n] = { ...S.wedges[n]!, skin, top: front ? [ta, tb] : [-tb, -ta] };
+  } else {
+    // A side window: the foot edge along the car at x = f0's, the top edge further in; local x runs along world z.
+    const xFoot = f0[0], xTop = t0[0], run = Math.abs(xFoot - xTop), skin = p.thickness * dhypot(rise, run) / Math.max(1e-3, run);
+    const za = Math.min(f0[2], f1[2]), zb = Math.max(f0[2], f1[2]), cz = (za + zb) / 2, half = (zb - za) / 2;
+    const y0 = yFoot - skin;
+    wedgeX(S, mat, xTop, xFoot, y0, yTop, za, zb, skin / (yTop - y0));
+    if (S.wedges.length === n) return;
+    const ta = (Math.min(t0[2], t1[2]) - cz) / half, tb = (Math.max(t0[2], t1[2]) - cz) / half;
+    // (Turned a quarter: world z = cz - local x with the foot at +x, cz + local x with it at -x -- wedgeX's yaw.)
+    S.wedges[n] = { ...S.wedges[n]!, skin, top: xFoot > xTop ? [-tb, -ta] : [ta, tb] };
+  }
+}

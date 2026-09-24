@@ -39,9 +39,16 @@ export function rayWedge(b: BakeBox, o: V3, d: V3): number {
   const r = toBox(b, o, d);
   const hx = b.h[0] ?? 0, hy = b.h[1] ?? 0, hz = b.h[2] ?? 0, lo = Math.max(0, Math.min(0.98, b.lo ?? 0));
   let t0 = -Infinity, t1 = Infinity;
-  // (x: a slab.)
-  if (Math.abs(r.d[0]) < 1e-12) { if (Math.abs(r.o[0]) > hx) return Infinity; }
-  else { let a = (-hx - r.o[0]) / r.d[0], c = (hx - r.o[0]) / r.d[0]; if (a > c) { const t = a; a = c; c = t; } t0 = Math.max(t0, a); t1 = Math.min(t1, c); }
+  // (Across: two planes standing on the section's z, the foot's [-hx, hx] to the back's `top` -- a slab untapered.)
+  const T0 = b.top ? Math.max(-1, Math.min(b.top[0], b.top[1])) : -1, T1 = b.top ? Math.min(1, Math.max(b.top[0], b.top[1])) : 1;
+  for (const [k, back] of [[1, T1 * hx], [-1, -T0 * hx]] as const) {
+    // k x - (m z + c) <= 0, the edge running from `back` at z = -hz to hx at +hz.
+    const m = hz > 1e-12 ? (hx - back) / (2 * hz) : 0, c = (hx + back) / 2;
+    const s0 = k * r.o[0] - m * r.o[2] - c, ds = k * r.d[0] - m * r.d[2];
+    if (Math.abs(ds) < 1e-12) { if (s0 > 0) return Infinity; continue; }
+    const t = -s0 / ds;
+    if (ds > 0) t1 = Math.min(t1, t); else t0 = Math.max(t0, t);
+  }
   // (The section: four edges, inside where the cross product is <= 0 -- the renderer's sdSection.)
   const foot = -hy + 2 * hy * lo;
   const v: Array<[number, number]> = [[-hz, b.skin ? Math.max(-hy, hy - b.skin) : -hy], [hz, b.skin ? Math.max(-hy, foot - b.skin) : -hy], [hz, foot], [-hz, hy]];

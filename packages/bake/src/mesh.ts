@@ -117,7 +117,10 @@ function boxMesh(B: Builder, b: BakeBox): void {
   emit([[x, -y, -z], [-x, -y, -z], [-x, y, -z], [x, y, -z]], [0, 0, -1], 2);
 }
 
-/** A wedge: its section in (z, y) the foot at +z (lo x its height), rising to full height at -z (keel/render's). */
+/**
+ * A wedge: its section in (z, y) the foot at +z (lo x its height), rising to full height at -z (keel/render's). Its
+ * span across is [-x, x] at the foot and `top` of that at the full-height end, straight between (BakeBox.top).
+ */
 function wedgeMesh(B: Builder, b: BakeBox): void {
   const rotation: [number, number] = [dcos(b.yaw ?? 0), dsin(b.yaw ?? 0)];
   const emit = (corners: readonly (readonly number[])[], normal: readonly number[], axis: 0 | 1 | 2): void => face(B, b, corners, normal, axis, rotation);
@@ -127,16 +130,21 @@ function wedgeMesh(B: Builder, b: BakeBox): void {
   const backBottom = b.skin ? Math.max(-y, y - b.skin) : -y;
   const frontBottom = b.skin ? Math.max(-y, yf - b.skin) : -y;
   const sec = [[-z, backBottom], [z, frontBottom], [z, yf], [-z, y]] as const;
-  // Sides: the section at +x and -x.
-  emit([[x, sec[0][1], sec[0][0]], [x, sec[3][1], sec[3][0]], [x, sec[2][1], sec[2][0]], [x, sec[1][1], sec[1][0]]].map(([px, py, pz]) => [px!, py!, pz!]), [1, 0, 0], 0);
-  emit([[-x, sec[0][1], sec[0][0]], [-x, sec[1][1], sec[1][0]], [-x, sec[2][1], sec[2][0]], [-x, sec[3][1], sec[3][0]]].map(([px, py, pz]) => [px!, py!, pz!]), [-1, 0, 0], 0);
+  // (Across: the right edge at the back (-z) and the foot (+z), and the left's. No taper: the plain wedge's own faces.)
+  const t0 = b.top ? Math.max(-1, Math.min(b.top[0], b.top[1])) : -1, t1 = b.top ? Math.min(1, Math.max(b.top[0], b.top[1])) : 1;
+  const rb = x * t1, lb = x * t0;
+  const R = (zz: number): number => (zz < 0 ? rb : x), L = (zz: number): number => (zz < 0 ? lb : -x);
+  // Sides: the section at the right and the left edge (planes standing on the section's z: a tapered wedge's lean in).
+  const tapered = t0 !== -1 || t1 !== 1, sr = dhypot(2 * z, x - rb) || 1, sl = dhypot(2 * z, lb + x) || 1;
+  emit([sec[0], sec[3], sec[2], sec[1]].map(([pz, py]) => [R(pz), py, pz]), tapered ? [2 * z / sr, 0, (rb - x) / sr] : [1, 0, 0], 0);
+  emit([sec[0], sec[1], sec[2], sec[3]].map(([pz, py]) => [L(pz), py, pz]), tapered ? [-2 * z / sl, 0, (-lb - x) / sl] : [-1, 0, 0], 0);
   const slope = (frontBottom - backBottom) / (2 * z || 1), nl = Math.sqrt(1 + slope * slope);
-  emit([[-x, backBottom, -z], [x, backBottom, -z], [x, frontBottom, z], [-x, frontBottom, z]], [0, -1 / nl, slope / nl], 1);
-  emit([[x, backBottom, -z], [-x, backBottom, -z], [-x, y, -z], [x, y, -z]], [0, 0, -1], 2);
+  emit([[lb, backBottom, -z], [rb, backBottom, -z], [x, frontBottom, z], [-x, frontBottom, z]], [0, -1 / nl, slope / nl], 1);
+  emit([[rb, backBottom, -z], [lb, backBottom, -z], [lb, y, -z], [rb, y, -z]], [0, 0, -1], 2);
   if (yf > -y + 1e-4) emit([[-x, frontBottom, z], [x, frontBottom, z], [x, yf, z], [-x, yf, z]], [0, 0, 1], 2);
   // The slope, from the full height at -z down to the foot at +z.
   const dy = yf - y, dz = 2 * z, len = dhypot(dy, dz) || 1;
-  emit([[-x, y, -z], [-x, yf, z], [x, yf, z], [x, y, -z]], [0, dz / len, -dy / len], 1);
+  emit([[lb, y, -z], [-x, yf, z], [x, yf, z], [rb, y, -z]], [0, dz / len, -dy / len], 1);
 }
 
 // Tessellation depends only on resolution, never the seed, pose or material. Keep a small bounded set of
