@@ -3927,7 +3927,7 @@
         },
         {
           "path": "packages/worldgen/src/dungeon.ts",
-          "sha256": "0xd0924d50f73eba970a14588b15a76e079a1da39f150de946528131fa15fa0d91"
+          "sha256": "0x16480c026690eb751564a6dc9dd41b0e6cb23f5c14ff3b5fd5ffaa6e67d6a36f"
         },
         {
           "path": "packages/worldgen/src/index.ts",
@@ -3955,7 +3955,7 @@
         },
         {
           "path": "packages/worldgen/src/pipeline.ts",
-          "sha256": "0x81bc6b97470e93f7f9296878d51041f7a1f3ecaa7cce3d35ffbdbe420d02ee61"
+          "sha256": "0x3a48a2ed2fda34666a0ed4a6cde40c9215147bc4c2dc69c186b3d57fddfcf48d"
         },
         {
           "path": "packages/worldgen/src/runner.ts",
@@ -3999,12 +3999,12 @@
         ]
       },
       "output": {
-        "digest": "0x09d7913c61b0a911d1170072fb54bab5d07aa0701a610a38f9030cf0021f9b66",
-        "byteLength": 223108
+        "digest": "0xe7e4f317868ac3370f8628176eb308641808a017a70d9f34efb6eb214708d30e",
+        "byteLength": 223237
       },
-      "sourceDigest": "0x0f4fd594c6df059f629992f97a16e931c8cbcff79f10386ad8736d569ff600ee",
-      "recipeDigest": "0xdcf1b49eff0ce2e19f2458358a7657f60e70ad9278735a58e4ec62b6c1fb0868",
-      "receiptDigest": "0xcb2e38d519b0c68a1de4971178ca3962d014e479e87c135f9d8008833e2d3c80",
+      "sourceDigest": "0x42789981e9f4aec464011546253fc72f301b812dd4c00b8ac2efda7ce43afb28",
+      "recipeDigest": "0x1744bc4bf555de757abaca3dcdc95d6ae9641062730d416a967d0bbb58c98306",
+      "receiptDigest": "0x687901d7be1acb14b7997ba99b1ef3614ffd5329459c26ccb837847d5ed203f9",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {

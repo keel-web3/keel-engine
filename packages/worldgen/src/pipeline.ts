@@ -243,12 +243,11 @@ function sharedOf(recipe: WorldRecipe, opts: PipelineOptions): Shared {
   return { table: createBiomeTable(opts.biomes ?? DEFAULT_BIOMES), types: opts.types ?? terrainTypes(), acts: opts.acts ?? DEFAULT_ACTS, settings, choose: chooser(recipe.seed, settings), templates: opts.templates, overworlds: new Map() };
 }
 
-function contextFor(recipe: WorldRecipe, stage: StageSpec, index: number, map: WorldMap, sh: Shared, bounds: readonly [number, number, number, number]): StageContext {
+function contextFor(recipe: WorldRecipe, stage: StageSpec, map: WorldMap, sh: Shared, bounds: readonly [number, number, number, number]): StageContext {
   const seed = stage.seed ?? `${recipe.seed}/${stage.id}`;
   const act = recipe.act ? sh.acts.find((a) => a.id === recipe.act) ?? null : null;
   const thing = { id: stage.id, tags: ["stage", `use:${stage.use}`] };
   const mask = maskFn(stage.mask, seed, map, sh.table);
-  void index;
   const ctx: StageContext = {
     recipe, stage, seed, map, table: sh.table, types: sh.types, act, mask, bounds: maskBounds(stage.mask, bounds),
     param<T extends SettingValue>(name: string, fallback: T): T {
@@ -305,10 +304,20 @@ function applyPins(recipe: WorldRecipe, map: WorldMap, sh: Shared): void {
 /** Run a finite recipe: a map of width x depth tiles. */
 export function runPipeline(recipe: WorldRecipe, opts: PipelineOptions = {}): WorldMap {
   if (!recipe.width || !recipe.depth) throw new RangeError("An infinite recipe (0 x 0) streams chunks: createWorldStream().");
-  return runRect(recipe, 0, 0, recipe.width, recipe.depth, sharedOf(recipe, opts), false);
+  return runRect(recipe, { i0: 0, j0: 0, w: recipe.width, d: recipe.depth, sh: sharedOf(recipe, opts), localOnly: false });
 }
 
-function runRect(recipe: WorldRecipe, i0: number, j0: number, w: number, d: number, sh: Shared, localOnly: boolean, regionCache?: Map<string, WorldMap>): WorldMap {
+interface RectRun {
+  i0: number;
+  j0: number;
+  w: number;
+  d: number;
+  sh: Shared;
+  localOnly: boolean;
+  regionCache?: Map<string, WorldMap>;
+}
+
+function runRect(recipe: WorldRecipe, { i0, j0, w, d, sh, localOnly, regionCache }: RectRun): WorldMap {
   const map = createMap({ seed: recipe.seed, width: w, depth: d, i0, j0, types: sh.types, tileSize: recipe.tileSize ?? 2, stepHeight: recipe.stepHeight ?? 1 });
   const bounds: [number, number, number, number] = recipe.width ? [0, 0, recipe.width, recipe.depth] : [i0, j0, i0 + w, j0 + d];
   recipe.stages.forEach((stage, index) => {
@@ -323,7 +332,7 @@ function runRect(recipe: WorldRecipe, i0: number, j0: number, w: number, d: numb
       let region = regionCache?.get(key);
       if (!region) {
         const sub: WorldRecipe = { ...recipe, width: 0, depth: 0, stages: recipe.stages.slice(0, index + 1), pins: [] };
-        region = runRect(sub, mb[0], mb[1], mb[2] - mb[0], mb[3] - mb[1], { ...sh, overworlds: sh.overworlds }, false);
+        region = runRect(sub, { i0: mb[0], j0: mb[1], w: mb[2] - mb[0], d: mb[3] - mb[1], sh: { ...sh, overworlds: sh.overworlds }, localOnly: false });
         regionCache?.set(key, region);
       }
       const zone = index + 1;
@@ -332,7 +341,7 @@ function runRect(recipe: WorldRecipe, i0: number, j0: number, w: number, d: numb
       applyPins(recipe, map, sh);
       return;
     }
-    const ctx = contextFor(recipe, stage, index, map, sh, bounds);
+    const ctx = contextFor(recipe, stage, map, sh, bounds);
     def.run(ctx);
     applyPins(recipe, map, sh);
   });
@@ -367,8 +376,8 @@ export function createWorldStream(recipe: WorldRecipe, opts: PipelineOptions = {
   const C = recipe.chunk ?? 32;
   const regionCache = new Map<string, WorldMap>();
   const first = recipe.stages.find((s) => s.use === "overworld@1");
-  const ow = first ? contextFor(recipe, first, 0, createMap({ seed: recipe.seed, width: 1, depth: 1, types: sh.types }), sh, [0, 0, 1, 1]).overworld() : null;
-  const block = (i0: number, j0: number, w: number, d: number): WorldMap => runRect({ ...recipe, width: 0, depth: 0 }, i0, j0, w, d, sh, true, regionCache);
+  const ow = first ? contextFor(recipe, first, createMap({ seed: recipe.seed, width: 1, depth: 1, types: sh.types }), sh, [0, 0, 1, 1]).overworld() : null;
+  const block = (i0: number, j0: number, w: number, d: number): WorldMap => runRect({ ...recipe, width: 0, depth: 0 }, { i0, j0, w, d, sh, localOnly: true, regionCache });
   return {
     recipe, table: sh.table, types: sh.types, chunkSize: C, overworld: ow,
     block,
