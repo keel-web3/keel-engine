@@ -51,7 +51,7 @@ test("gifIndexer: the colours a clip uses, the palette first; past 255 it refuse
 
 type Make = typeof tCap.createCapture;
 /** A little game: step counts time, draw paints a frame of `colours` colours from a seed (into the canvas and the renderer's buffer). */
-function game(seed: number, W: number, H: number, colours: number, canvas: FakeCanvas, log: Log) {
+function game({ seed, W, H, colours, canvas, log }: { seed: number; W: number; H: number; colours: number; canvas: FakeCanvas; log: Log }) {
   let t = 0;
   let frame = new Uint8Array(W * H * 4);
   const r = rand(seed);
@@ -90,7 +90,7 @@ async function session(make: Make, seed: number, what: (cap: Capture) => Promise
   const env = install(log);
   try {
     const canvas = env.canvas("game", W, H);
-    const g = game(seed, W, H, colours, canvas, log);
+    const g = game({ seed, W, H, colours, canvas, log });
     const opts: CaptureOptions = fixed ? { step: g.step, draw: g.draw, ...(renderer ? { renderer: g.renderer } : {}) } : {};
     const cap = make(canvas as unknown as HTMLCanvasElement, opts);
     const out = await outcome(async () => { const b = await what(cap); return typeof b === "string" ? b : blob(b); });
@@ -113,7 +113,7 @@ test("png, gif, film, video and save on stand-ins", async () => {
   // (Rebuild it by hand: the renderer's frames, flipped, indexed, encoded.)
   const log: Log = [];
   const canvas = { rgba: new Uint8ClampedArray(16 * 12 * 4) } as FakeCanvas;
-  const g = game(2, 16, 12, 6, canvas, log);
+  const g = game({ seed: 2, W: 16, H: 12, colours: 6, canvas, log });
   const table = tCap.gifIndexer();
   const frames = Array.from({ length: 5 }, () => { g.step(1 / 25); g.draw(); return { pixels: table.index(tCap.flipRows(g.renderer.read(), 16, 12), 16 * 12), delay: 4 }; });
   assert.deepEqual(bytes, [...encodeGif({ width: 16, height: 12, palette: table.colours, frames, loop: 0 })]);

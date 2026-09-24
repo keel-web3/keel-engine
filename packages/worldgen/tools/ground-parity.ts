@@ -255,7 +255,7 @@ export async function run(canvas: HTMLCanvasElement, opts: RunOptions = {}): Pro
 }
 
 /** What the CPU's layers hold at a picture pixel (debugging a difference): per layer its code and depth. */
-export function probe(sceneName: string, k: number, pitch: number, x: number, y: number, size: readonly [number, number] = [320, 200], seed = "parity-1"): unknown[] {
+export function probe({ sceneName, k, pitch, x, y, size = [320, 200], seed = "parity-1" }: { sceneName: string; k: number; pitch: number; x: number; y: number; size?: readonly [number, number]; seed?: string }): unknown[] {
   const [W, H] = size;
   const scene = sceneOf(sceneName, seed);
   const view = viewOf({ center: scene.center, yaw: 0, pitch, k, width: W, height: H });
