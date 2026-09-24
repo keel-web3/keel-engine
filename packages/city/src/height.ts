@@ -46,7 +46,8 @@ export interface CityHeight {
   roadAt(edge: number, s: number): number;
   /**
    * The lowest and highest ground under an oriented box (centre, half extents, yaw): exact for the surface as drawn.
-   * A building's floor goes at the highest (the ground never comes up through it), its foundation down to the lowest.
+   * A building's plinth goes down past the lowest (keel/architecture foundations); where the highest is over its floor,
+   * it's set into the slope.
    */
   under(x: number, z: number, hw: number, hd: number, yaw: number): [number, number];
 }
