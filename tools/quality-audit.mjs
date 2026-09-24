@@ -30,7 +30,7 @@ const SOURCE_EXTENSIONS = new Set([
 export const DEFAULT_SCAN_ROOTS = Object.freeze(['packages', 'packs', 'ai', 'systems', 'tools']);
 const IGNORED_DIRECTORIES = new Set([
   '.git', '.cache', '.next', '.turbo', 'node_modules', 'dist', 'build',
-  'coverage', 'target', 'vendor', 'out', 'generated',
+  'coverage', 'target', 'vendor', 'out', 'generated', 'fixtures',
 ]);
 
 function isSourcePath(path) {

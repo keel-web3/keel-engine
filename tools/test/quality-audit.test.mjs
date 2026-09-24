@@ -59,6 +59,9 @@ test('audit applies filename conventions and directory limits while ignoring gen
   writeFileSync(join(root, 'packages', 'sample', 'node_modules', 'BadName.ts'), 'not source\n');
   mkdirSync(join(root, 'apps', 'web', 'src'), { recursive: true });
   writeFileSync(join(root, 'apps', 'web', 'src', 'ignored.ts'), `${Array.from({ length: 510 }, () => '// sibling source').join('\n')}\n`);
+  mkdirSync(join(root, 'packages', 'sample', 'test', 'fixtures', 'hello', 'game', 'src'), { recursive: true });
+  writeFileSync(join(root, 'packages', 'sample', 'test', 'fixtures', 'hello', 'game', 'src', 'BadName.ts'), 'not owned source\n');
+  writeFileSync(join(root, 'packages', 'sample', 'test', 'fixtures', 'hello', 'game', 'package.json'), '{}\n');
 
   const result = scanProject(root);
   assert.equal(result.warnings.filter((warning) => warning.rule === 'directory-files').length, 1);
@@ -66,6 +69,7 @@ test('audit applies filename conventions and directory limits while ignoring gen
   assert.equal(result.filesScanned, 32);
   assert.ok(!result.warnings.some((warning) => warning.path.includes('/dist/') || warning.path.includes('/node_modules/')));
   assert.ok(!result.warnings.some((warning) => warning.path.startsWith('apps/web/')));
+  assert.ok(!result.warnings.some((warning) => warning.path.includes('/fixtures/')));
 });
 
 test('scan roots, path roles and thresholds can be supplied by a repository profile', (t) => {
