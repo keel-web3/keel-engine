@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { lookMesh, raycastWorld } from "@keel-engine/bake";
 import type { BakeWorld } from "@keel-engine/bake";
-import { BODY_SLOT, BODY_STYLES, bodyDesign, cabinMargin, carDesigns, generateCar, glasshouse, standIn } from "../src/index.ts";
+import { BODY_SLOT, BODY_STYLES, bodyDesign, cabinMargin, carDesigns, ceilingAt, generateCar, glasshouse, reachAt, standIn } from "../src/index.ts";
 import type { Car } from "../src/index.ts";
 
 // Every body style, many seeds each: the glass the generator makes, and what it keeps inside it.
@@ -80,6 +80,22 @@ test("the panes are thin sheets on their planes, and a ray through the screen me
       const o = [p.centre[0] + p.normal[0], p.centre[1] + p.normal[1], p.centre[2] + p.normal[2]] as const;
       const t = raycastWorld(world, o, [-p.normal[0], -p.normal[1], -p.normal[2]]);
       assert.ok(Math.abs(t - 1) < 2e-3, `${car.seed} ${name}: hit at ${t.toFixed(4)} m`);
+    }
+  }
+});
+
+test("the cabin's floor covers the body under the glass, end to end: none of its paint shows inside", () => {
+  for (const car of closed) {
+    const h = glasshouse(car)!, g = car.body, w = bodyDesign(car).pose("still", 0);
+    const floor = (w.boxes ?? []).find((b) => b.mat === BODY_SLOT.interior && Math.abs((b.c[1] ?? 0) - (b.h[1] ?? 0) - (g.belt - 0.08)) < 1e-6);
+    assert.ok(floor, `${car.seed}: no floor`);
+    const [cy, hy, cz, hz] = [floor.c[1]!, floor.h[1]!, floor.c[2]!, floor.h[2]!];
+    assert.ok(cy + hy >= g.belt, `${car.seed}: the floor's under the belt`);
+    // (Right up under the screens: where it stops, the glass over it is no more than a sliver above the belt.)
+    // (Or, under an upright pane, a finger's width from it.)
+    for (const [z, dir] of [[cz - hz, -1], [cz + hz, 1]] as const) {
+      const over = ceilingAt(h, 0, z) - g.belt, gap = Math.abs(reachAt(h, 0, cy + hy, dir) - z);
+      assert.ok(over < 0.06 || gap < 0.04, `${car.seed}: the floor stops at z ${z.toFixed(2)}, ${(over * 100).toFixed(1)} cm under the glass, ${(gap * 100).toFixed(1)} cm from it`);
     }
   }
 });

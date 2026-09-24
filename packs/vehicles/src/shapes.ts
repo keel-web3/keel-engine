@@ -413,8 +413,11 @@ function bodySolids(car: Car): Solids {
       box(S, slot, x0, Math.min(y0, y1), zb, x1, Math.max(Math.min(y0, y1) + 0.01, top), zf);
     };
     const who = standIn(car)!, zHead = who.seatZ;
-    // The floor, level with the belt from the rear glass's foot to the screen's.
-    inBox(P.interior, -Ci * 0.95, g.belt - 0.08, zr - 0.05, Ci * 0.95, g.belt + 0.01, zs + 0.25);
+    // The floor, level with the belt from the rear glass's foot right to the screen's (under a raked screen too: none of
+    // the body's paint shows inside the cabin).
+    // (Out to the side glass at its own height, not past it: the leaning panes would bring its top down under the belt.)
+    const floorX = Math.min(C2 - 0.03, ...house.planes.filter((q) => q.n[0] > 0.1).map((q) => (q.d - clear - q.n[1] * (g.belt + 0.01)) / q.n[0]));
+    inBox(P.interior, -floorX, g.belt - 0.08, cabR, floorX, g.belt + 0.01, cabF);
     // The dash: in front of the driver, under the windscreen.
     const dashZ = Math.max(zHead + 0.24, zs - 0.08);
     inBox(P.dark, -Ci * 0.9, g.belt, dashZ, Ci * 0.9, g.belt + 0.13, Math.max(dashZ + 0.12, Math.min(cabF - 0.12, zHead + 0.56)));

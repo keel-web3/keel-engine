@@ -5121,7 +5121,7 @@
         },
         {
           "path": "packs/vehicles/src/shapes.ts",
-          "sha256": "0xd9c687b4ea4f4845ff419ab4ab179aed3c2c233c4f272b94629148084706efdb"
+          "sha256": "0x12c041a88724e0684f2336142f84e1c622a5fee4a8511762978ecb98a5bb88d4"
         },
         {
           "path": "packs/vehicles/src/slots.ts",
@@ -5148,12 +5148,12 @@
         ]
       },
       "output": {
-        "digest": "0x025bfddeaf30355d06fa191d2fda37affd0f1f148c9407d190c5f28673a17cef",
-        "byteLength": 135501
+        "digest": "0x9e09784f6fdee15db82c6318eae26ca9492c9b546b1e4d6407e2cbbeae52bf3d",
+        "byteLength": 135581
       },
-      "sourceDigest": "0x8d2d8cc0c34bfe7d53e58a7aa1b6341f30163047c9ecad92a5e0a9c3d18225fe",
-      "recipeDigest": "0xf02173c8ac479eb66312ecfb110f7a5d7a9dc0b6f73e011789ac25f35c382612",
-      "receiptDigest": "0xbfea194e15130e912aa253ec07e71fe1d702ad32461cd5e6df28f988b0dacd42",
+      "sourceDigest": "0x4ce37504063095ac64f6728a5be23af52406abf4361865078295aa2f5bee850b",
+      "recipeDigest": "0xe5253ce12a4fea79bcb37a3957d42d3e8cd556d591a2c84492ff52f1dcb1075c",
+      "receiptDigest": "0xa7f59b7e5c28299f85bc6ec2e12bd495b7ea24102a15accbe1fe4f09133a9ad7",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
