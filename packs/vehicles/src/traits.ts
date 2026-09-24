@@ -52,7 +52,30 @@ export interface BodyStyle {
   readonly crew?: boolean;
   /** A semi tractor (car.ts's semiRig): its own measurements and body (shapes.ts's semiSolids), not the car's. */
   readonly semi?: boolean;
+  /**
+   * A service vehicle (service.ts): a bus, a fire engine, an ambulance, a police cruiser or a dump truck. Every one but
+   * the cruiser (a sedan's body with its kit on) has its own measurements and body, as the semi has.
+   */
+  readonly service?: "bus" | "fire" | "ambulance" | "police" | "dump";
+  /** Its own paint table (the family drawn when the game pins none): a fleet's colours, not the class's. */
+  readonly paints?: ReadonlyArray<readonly [PaintKey, number]>;
 }
+
+/**
+ * What a service vehicle wears that no roll decides -- the categories outside the class tables (Lights, Rim Size,
+ * Spinner, Type, Effect, Neon) are honoured from `force` for a service style only -- and everything off it that a
+ * working vehicle never has: no wings, no scoops, no race numbers, no rust.
+ */
+const WORKING: Readonly<Record<string, string>> = {
+  Stance: "Stock", Spoiler: "None", Splitter: "None", "Bull Bar": "None", "Light Pod": "None", Hood: "None", "Engine Bay": "None", Diffuser: "None",
+  "Roof Scoop": "None", "Roof Rack": "None", "Light Bar": "None", Cage: "None", Fin: "None", Snorkel: "None",
+  Widebody: "None", Intakes: "None", Skirts: "None", Arches: "None", Tyres: "Street", Livery: "None", "Roof Livery": "None", Finish: "Gloss",
+  "Race Number": "None", Sponsors: "None", Flames: "None", "Shark Teeth": "None", Bolt: "None", Starburst: "None", Checkered: "None", Skull: "None",
+  Stars: "None", Tribal: "None", Tag: "None", Condition: "None", Rust: "None",
+  Spinner: "None", Type: "None", Effect: "None", Neon: "None",
+};
+/** A working truck on top of that: one pipe under it, flaps behind the wheels, steel dish wheels on truck tyres. */
+const TRUCK: Readonly<Record<string, string>> = { ...WORKING, Exhaust: "Single Pipe", Mudflaps: "Mudflaps", Mirrors: "Wing Mirrors", Rims: "Dish", "Rim Size": '22"', Lights: "Halogen" };
 
 export const BODY_STYLES: readonly BodyStyle[] = [
   { name: "Wedge Hyper", cls: "hyper", weight: 30, dials: { rake: 1, low: 1, round: -0.4 } },
@@ -110,6 +133,42 @@ export const SPECIAL_STYLES: readonly BodyStyle[] = [
       "Roof Scoop": "None", "Roof Rack": "None", Mudflaps: "None", Intakes: "None",
       Stance: "Stock", Exhaust: "Single Pipe", Tyres: "Street", Rims: "Dish", Condition: "None", Rust: "None",
     },
+  },
+  // The city's SERVICE VEHICLES (service.ts): what a world's traffic needs that no one owns. Each is built only by name,
+  // like the two above, and wears its fleet's paint unless the game pins another (`traits: { Paint: "..." }`).
+  // A low-floor CITY BUS: twelve metres, two axles, a long glazed side, a lit destination sign, roof pods.
+  {
+    name: "City Bus", cls: "pickup", weight: 0, dials: { length: 1, mass: 1 }, service: "bus",
+    paints: [["white", 30], ["red", 12], ["blue", 10], ["navy", 8], ["silver", 8], ["racingGreen", 6], ["orange", 5], ["teal", 5], ["yellow", 4]],
+    force: { ...TRUCK, Headlights: "Twin Pods", Grille: "Smooth Nose", "Tail Lights": "Blocks", "Rim Finish": "Chrome", Roof: "Hardtop", Tint: "Smoke" },
+  },
+  // A FIRE ENGINE: a tall crew cab, lockers down both sides behind it, chrome rails -- a pumper with its ladders racked
+  // on top, or an aerial ladder on a turntable (the seed decides). Red, a white roof, a chrome bumper.
+  {
+    name: "Fire Engine", cls: "pickup", weight: 0, dials: { length: 1, power: 0.6, mass: 1 }, service: "fire", paints: [["red", 1]],
+    force: { ...TRUCK, Headlights: "Quad Round", Grille: "Chrome Grille", "Tail Lights": "Quad Round", "Rim Finish": "Chrome", Roof: "Contrast Roof", Tint: "Clear" },
+  },
+  // An AMBULANCE: a van's cab and a square box behind it, white with a bold stripe, beacons at the box's corners.
+  {
+    name: "Ambulance", cls: "pickup", weight: 0, dials: { length: 0.6, power: 0.4, mass: 0.6 }, service: "ambulance", paints: [["white", 1]],
+    force: { ...TRUCK, Headlights: "Quad Round", Grille: "Chrome Grille", "Tail Lights": "Blocks", "Rim Finish": "Chrome", "Rim Size": '16"', Roof: "Hardtop", Tint: "Clear" },
+  },
+  // A POLICE CRUISER: the pace car's four-square sedan with the kit on -- a light bar, a push bar, a spot lamp -- in
+  // black with white doors and roof.
+  {
+    name: "Police Cruiser", cls: "gt", weight: 0, dials: { length: 0.55, roof: 0.3, fast: -0.6, low: -0.2, aero: -0.8, flare: -0.6, power: 0.6, mass: 0.4 }, service: "police",
+    paints: [["black", 1]],
+    force: {
+      ...WORKING, Exhaust: "Twin Pipes", Mudflaps: "None", Mirrors: "Wing Mirrors", Headlights: "Twin Pods", Rims: "Steelies", "Rim Finish": "Black", "Rim Size": '17"',
+      Roof: "Contrast Roof", Tint: "Smoke", Lights: "LED White",
+    },
+  },
+  // A DUMP TRUCK: a rigid three-axle tipper -- a cab over the front axle, a steel bed behind it with a lip over the cab,
+  // the ram under its front. Its bed's inside is in `parts.dumpBed`, for a game to load.
+  {
+    name: "Dump Truck", cls: "pickup", weight: 0, dials: { length: 0.6, power: 0.6, mass: 1 }, service: "dump",
+    paints: [["white", 20], ["yellow", 14], ["orange", 14], ["red", 10], ["blue", 8], ["forest", 6], ["gunmetal", 5], ["black", 5]],
+    force: { ...TRUCK, Headlights: "Round Eyes", Grille: "Slat Grille", "Tail Lights": "Blocks", "Rim Finish": "White", Roof: "Hardtop", Tint: "Clear" },
   },
 ];
 
