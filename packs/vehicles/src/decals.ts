@@ -197,11 +197,12 @@ const PAINTERS: Readonly<Record<CarDecal["kind"], { aspect: number; directional:
   } },
   // A service vehicle's lettering: its emblem, then its words (a line each, split at "|"), as big as the room allows.
   lettering: { aspect: 3.2, directional: false, paint: (c, _D, d) => {
-    const em = d.emblem ? c.h : 0;
-    if (d.emblem) emblem(c, d.emblem, 0, 0, c.h);
-    const lines = d.text.split("|"), rowH = c.h / lines.length, x0 = em ? em + Math.max(1, Math.round(c.h * 0.12)) : 0, room = c.w - x0;
+    const em = d.emblem ? Math.round(c.h * 0.92) : 0;
+    if (d.emblem) emblem(c, d.emblem, 0, Math.round((c.h - em) / 2), em);
+    const lines = d.text.split("|"), rowH = c.h / lines.length, x0 = em ? em + Math.max(1, Math.round(c.h * 0.1)) : 0, room = c.w - x0;
     lines.forEach((line, i) => {
-      const scale = Math.max(1, Math.floor(Math.min((rowH * 0.8) / 7, room / Math.max(1, 6 * line.length))));
+      // (Letters as big as the row and the room allow -- a fraction of a texel's scale is fine at this size.)
+      const scale = Math.max(1, Math.min((rowH * 0.8) / 7, room / Math.max(1, 6 * line.length - 1)));
       const w = text(null, line, 0, 0, scale, 1);
       text(c, line, Math.round(x0 + (room - w) / 2), Math.round(i * rowH + (rowH - 7 * scale) / 2), scale, 1);
     });
@@ -326,7 +327,9 @@ export function carDecals(car: Car, { pitch = 0.8, texelsPerMetre = 72, extra = 
       let picture: Decal;
       if (d.extra) picture = d.extra.decal;
       else {
-        const tw = Math.max(12, Math.min(128, Math.round(w * texelsPerMetre))), th = Math.max(8, Math.min(96, Math.round(h * texelsPerMetre)));
+        // (A service vehicle's lettering and markings keep their shape when a big panel caps the texels.)
+        const keep = d.kind === "lettering" || d.kind === "chevrons" ? Math.min(1, 128 / (w * texelsPerMetre), 96 / (h * texelsPerMetre)) : 1;
+        const tw = Math.max(12, Math.min(128, Math.round(w * texelsPerMetre * keep))), th = Math.max(8, Math.min(96, Math.round(h * texelsPerMetre * keep)));
         const c = canvas(tw, th);
         art.paint!(c, D, d as CarDecal);
         picture = { width: tw, height: th, texels: c.t };

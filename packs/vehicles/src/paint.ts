@@ -192,7 +192,7 @@ export function bodyPaint(car: Car, options: PaintOptions = {}): LayerPaint {
   const sv = car.parts.service;
   if (sv?.kind === "bus") {
     const sign = signDecal(`${sv.number} ${DESTINATIONS[Number(sv.number) % DESTINATIONS.length]}`);
-    out[BODY_SLOT.neon] = slot(role({ light: 0.12, chroma: 0.01, hue: 260 }, "matte", 0.2), "none", 0, { decal: { decal: sign, rect: [0, 0, 1, 1], flipU: false, flipV: false, inks: [role(SIGN_AMBER, "glow", 0.3)] } });
+    out[BODY_SLOT.neon] = slot(role({ light: 0.12, chroma: 0.01, hue: 260 }, "matte", 0.2), "none", 0, { decal: { decal: sign, rect: [0, 0, 1, 1], flipU: true, flipV: false, inks: [role(SIGN_AMBER, "glow", 0.3)] } });
   }
   out[BODY_SLOT.carbon] = slot(role({ light: 0.22, chroma: 0.01, hue: 250 }, "leather", 0.34), "weave", 1.5);
   out[BODY_SLOT.metal] = slot(role({ light: 0.62, chroma: 0.02, hue: 70 }, "metal", 0.6), "bayer4", 1);

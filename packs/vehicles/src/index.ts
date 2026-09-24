@@ -56,7 +56,11 @@ export function placeWheels(car: Car, x: number, z: number, yaw: number, steer: 
 export type { CarPhysics } from "./physics.ts";
 export { physicsOf } from "./physics.ts";
 export type { LightState } from "./lights.ts";
-export { carLights, colourRgb, hasNeon, lampColours, lampSpots } from "./lights.ts";
+export { beaconFlash, beaconLamps, carLights, colourRgb, hasNeon, lampColours, lampSpots } from "./lights.ts";
+// The city's service vehicles (the special styles "City Bus", "Fire Engine", "Ambulance", "Police Cruiser", "Dump Truck"):
+// their names, forms, beacons, a dump bed's inside and its tip.
+export { SERVICE_STYLES, dumpTipPose } from "./service.ts";
+export type { BeaconLamp, DumpBed, ServiceKind, ServiceParts } from "./service.ts";
 
 export { mechanicsOf, MECHANICAL_PARTS } from "./mechanics.ts";
 export type { MechanicalSpec, MechanicalUpgrades, MechanicalPart } from "./mechanics.ts";

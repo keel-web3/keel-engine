@@ -23,7 +23,7 @@ import {
 import type { BodyStyle, PaintKey, Site, Table, Tier, Trait } from "./traits.ts";
 import type { MechanicalUpgrades } from "./mechanics.ts";
 import { semiRig } from "./semi.ts";
-import { policeParts, serviceDecals, serviceLook, serviceRig } from "./service.ts";
+import { FLEET_TAIL, policeParts, serviceDecals, serviceLook, serviceRig } from "./service.ts";
 import type { DumpBed, ServiceParts } from "./service.ts";
 
 // ---------------------------------------------------------------- vocabulary
@@ -735,7 +735,7 @@ export function generateCar(seed: string, options: CarOptions = {}): Car {
     wheels: rig ? rig.wheels : svcRig ? svcRig.wheels : [wheelF, wheelR],
     mounts: rig ? rig.mounts : svcRig ? svcRig.mounts : mounts,
     paints: rig ? { ...paints, trimChrome: true }
-      : look ? { ...paints, alt: look.alt, accent: look.accent, panels: [...look.panels], trimChrome: look.trimChrome, ...(look.beacon ? { beacon: look.beacon } : {}) }
+      : look ? { ...paints, alt: look.alt, accent: look.accent, tail: FLEET_TAIL, panels: [...look.panels], trimChrome: look.trimChrome, ...(look.beacon ? { beacon: look.beacon } : {}) }
       : paints,
     decals, handling: rig ? rig.handling : svcRig ? svcRig.handling : handling,
     traits, chips, score, tier: tierOf(score),

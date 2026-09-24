@@ -156,7 +156,7 @@ export const SPECIAL_STYLES: readonly BodyStyle[] = [
   // A POLICE CRUISER: the pace car's four-square sedan with the kit on -- a light bar, a push bar, a spot lamp -- in
   // black with white doors and roof.
   {
-    name: "Police Cruiser", cls: "gt", weight: 0, dials: { length: 0.55, roof: 0.3, fast: -0.6, low: -0.2, aero: -0.8, flare: -0.6, power: 0.6, mass: 0.4 }, service: "police",
+    name: "Police Cruiser", cls: "gt", weight: 0, dials: { length: 0.55, roof: 0.3, fast: -0.9, rake: -0.5, low: -0.2, aero: -0.8, flare: -0.6, power: 0.3, mass: 0.4 }, service: "police",
     paints: [["black", 1]],
     force: {
       ...WORKING, Exhaust: "Twin Pipes", Mudflaps: "None", Mirrors: "Wing Mirrors", Headlights: "Twin Pods", Rims: "Steelies", "Rim Finish": "Black", "Rim Size": '17"',

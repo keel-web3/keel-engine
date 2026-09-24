@@ -67,6 +67,8 @@ type FireM = {
   readonly face: number; readonly cabRoof: number; readonly crewRoof: number; readonly roofStep: number; readonly bodyFront: number; readonly bodyRear: number;
   readonly top: number; readonly ly: number; readonly tt: number;
 };
+/** An ambulance box's kerb-side door, from the box's front (m): its panel stops there. */
+const SIDE_DOOR = 0.95;
 type AmbM = { readonly boxHw: number; readonly cabHw: number; readonly nose: number; readonly cowl: number; readonly screenTop: number; readonly boxFront: number; readonly boxRear: number; readonly cabRoof: number; readonly boxBottom: number; readonly twin: number };
 type PoliceM = { readonly barZ: number; readonly barW: number; readonly barY: number; readonly noseTop: number };
 type DumpM = { readonly face: number; readonly cabBottom: number; readonly floor: number; readonly sideTop: number; readonly frontTop: number; readonly lipZ: number; readonly z0: number; readonly z1: number; readonly bedAlt: number };
@@ -250,6 +252,8 @@ const BANDS: ReadonlyArray<readonly [Colour, number]> = [
 
 /** The paint a service vehicle wears over its family: its second colour and stripe, its livery panels, its beacons. */
 export interface ServiceLook { readonly alt: Colour; readonly accent: Colour; readonly panels: readonly PanelPaint[]; readonly beacon: { readonly a: Colour; readonly b: Colour } | null; readonly trimChrome: boolean }
+/** A fleet's tail lamps: plain red, whatever a car's table would have drawn. */
+export const FLEET_TAIL: Colour = { light: 0.56, chroma: 0.2, hue: 25 };
 
 export function serviceLook(sv: ServiceParts, D: Draws, body: Colour): ServiceLook {
   switch (sv.kind) {
@@ -268,7 +272,7 @@ export function serviceLook(sv: ServiceParts, D: Draws, body: Colour): ServiceLo
       return { alt, accent: D.pick<Colour>("amb.mark", [[{ light: 0.48, chroma: 0.17, hue: 258 }, 2], [alt, 1]]), panels: [], beacon: { a: LAMP.red, b: LAMP.white }, trimChrome: true };
     }
     case "police":
-      return { alt: WHITE, accent: GOLD, panels: (["doorL", "doorR"] as const).map((panel) => ({ panel, kind: "livery" as const, colour: WHITE })), beacon: { a: LAMP.red, b: LAMP.blue }, trimChrome: false };
+      return { alt: WHITE, accent: { light: 0.76, chroma: 0.01, hue: 250 }, panels: (["doorL", "doorR"] as const).map((panel) => ({ panel, kind: "livery" as const, colour: WHITE })), beacon: { a: LAMP.red, b: LAMP.blue }, trimChrome: false };
     case "dump": {
       // (Its bed in the cab's colour, or bare steel: the bed's sides and tailgate are panels, painted as the bed is.)
       const alt = sv.m.bedAlt ? D.pick<Colour>("dump.bed", [[{ light: 0.44, chroma: 0.01, hue: 250 }, 3], [BLACK, 2], [{ light: 0.3, chroma: 0.01, hue: 250 }, 1]]) : body;
@@ -319,7 +323,7 @@ export function serviceFace(car: Car, panel: Panel): Partial<PanelFace> {
     case "ambulance": {
       const m = sv.m as AmbM;
       if (panel === "doorL" || panel === "doorR") return side(m.cowl - m.boxFront - 0.05, g.belt - g.ride - 0.12);
-      if (panel === "quarterL" || panel === "quarterR") return side(m.boxFront - m.boxRear, g.roof - 0.02 - m.boxBottom);
+      if (panel === "quarterL" || panel === "quarterR") return side(m.boxFront - m.boxRear - (panel === "quarterR" ? SIDE_DOOR : 0), g.roof - 0.02 - m.boxBottom);
       if (panel === "trunk") return back(1.56, g.roof - 0.28 - 0.95);
       return {};
     }
@@ -509,7 +513,8 @@ function busSolids(car: Car): Solids {
   box(S, P.bumperR, -hw, ride, back - 0.06, hw, ride + 0.3, back + 0.08);
   both((s) => { box(S, P.tail, s * 0.9, 0.55, back - 0.03, s * 1.2, 1.3, back + 0.02); box(S, P.reflector, s * 0.4, ride + 0.2, back - 0.075, s * 0.55, ride + 0.26, back - 0.05); });
   box(S, P.glass, -(hw - 0.15), 1.5, back - 0.01, hw - 0.15, winTop, back + 0.05);
-  box(S, P.neon, -0.35, winTop - 0.25, back - 0.012, 0.35, winTop - 0.06, back + 0.01);
+  // (The rear sign turned half round: its face reads from behind as the front one does from ahead.)
+  S.boxes.push({ c: [0, winTop - 0.155, back - 0.001], h: [0.35, 0.095, 0.011], mat: P.neon, yaw: Math.PI });
   component(S, "exhaust", () => { for (const t of serviceExhaust(car)) cap(S, P.metal, [t.x, t.y + 0.04, t.z + 0.5], [t.x, t.y, t.z], t.r); });
   both((s) => box(S, P.dark, s * (hw - 0.68), ride - 0.12, wr.z0 - 0.06, s * (hw - 0.04), ride + 0.3, wr.z0 - 0.03));
 
@@ -671,7 +676,8 @@ function fireSolids(car: Car): Solids {
     // resting on a cradle behind the cab; outrigger feet stowed under the body.
     const tt = m.tt, ly = m.ly;
     component(S, "aerial", () => {
-      cap(S, P.dark, [0, top, tt], [0, top + 0.18, tt], 0.85);
+      box(S, P.dark, -0.85, top, tt - 0.85, 0.85, top + 0.1, tt + 0.85);
+      box(S, P.metal, -0.7, top + 0.1, tt - 0.7, 0.7, top + 0.18, tt + 0.7);
       box(S, P.paint, -0.45, top + 0.18, tt - 0.45, 0.45, ly, tt + 0.35);
       box(S, P.metal, 0.5, top + 0.18, tt - 0.35, 0.8, top + 0.9, tt - 0.05);
       const sections = [[0.46, tt - 0.35, cabRear + 0.2, 0.32], [0.4, tt + 0.3, face - 0.4, 0.28], [0.34, tt + 0.9, L2 + 0.3, 0.24]] as const;
@@ -742,7 +748,9 @@ function ambulanceSolids(car: Car): Solids {
   box(S, P.roof, -(hw - 0.02), boxTop - 0.05, br, hw - 0.02, boxTop, bf);
   both((s) => {
     const right = s > 0;
-    box(S, right ? P.quarterR : P.quarterL, s * (hw - 0.04), bb, br, s * hw, boxTop - 0.02, bf);
+    // (The kerb side's panel stops at its door, so what's written on it sits clear of the door.)
+    box(S, right ? P.quarterR : P.quarterL, s * (hw - 0.04), bb, br, s * hw, boxTop - 0.02, right ? bf - SIDE_DOOR : bf);
+    if (right) box(S, P.paint, hw - 0.04, bb, bf - SIDE_DOOR, hw, boxTop - 0.02, bf);
     for (const z of [br, bf]) cap(S, P.metal, [s * (hw - 0.01), bb, z], [s * (hw - 0.01), boxTop - 0.01, z], 0.03);
     cap(S, P.metal, [s * (hw - 0.01), boxTop - 0.01, br], [s * (hw - 0.01), boxTop - 0.01, bf], 0.03);
     for (const [z0, z1] of [[wr.z1, bf - 0.02], [br + 0.02, wr.z0]] as const) box(S, P.paint, s * hw, 0.56, z0, s * (hw - 0.55), bb, z1);
@@ -760,8 +768,10 @@ function ambulanceSolids(car: Car): Solids {
       box(S, P.glass, hw + 0.008, 1.72, z0 + 0.1, hw + 0.016, 2.28, z1 - 0.1);
       box(S, P.metal, hw, 1.55, z1 - 0.2, hw + 0.03, 1.6, z1 - 0.1);
     } else for (const [z0, z1] of [[br + 0.15, wr.z0 - 0.1], [wr.z1 + 0.1, bf - 0.2]] as const) {
-      box(S, P.paint, -hw, bb + 0.1, z0, -(hw + 0.01), 2.3, z1);
-      box(S, P.metal, -(hw + 0.01), 1.6, z1 - 0.2, -(hw + 0.03), 1.64, z1 - 0.08);
+      // (Lockers down the other side: their doors' seams and handles, so the lettering reads across them.)
+      for (const [a, b] of [[z0, z0 + 0.025], [z1 - 0.025, z1]] as const) box(S, P.dark, -hw, bb + 0.1, a, -(hw + 0.008), 2.3, b);
+      for (const y of [bb + 0.1, 2.28]) box(S, P.dark, -hw, y, z0, -(hw + 0.008), y + 0.02, z1);
+      box(S, P.metal, -(hw + 0.008), 1.6, z1 - 0.2, -(hw + 0.03), 1.64, z1 - 0.08);
     }
     for (const z of [bf - 0.5, br + 0.25]) box(S, P.light, s * hw, boxTop - 0.3, z, s * (hw + 0.02), boxTop - 0.18, z + 0.25);
   });
@@ -797,7 +807,7 @@ function dumpSolids(car: Car): Solids {
   });
   both((s) => { cap(S, P.trim, [s * 0.85, 0.66, L2 - 0.02], [s * 0.85, 0.66, L2 + 0.005], 0.1); cap(S, P.light, [s * 0.85, 0.66, L2 - 0.01], [s * 0.85, 0.66, L2 + 0.02], 0.085); });
   engineBlock(S, car);
-  cap(S, P.metal, [-(hw - 0.28), 0.78, cabRear - 0.25], [-(hw - 0.28), 0.78, cabRear - 1.1], 0.26);
+  cap(S, P.metal, [-(hw - 0.24), 0.72, cabRear - 0.3], [-(hw - 0.24), 0.72, cabRear - 1.05], 0.2);
   box(S, P.dark, hw - 0.55, 0.55, cabRear - 1.0, hw - 0.1, 1.0, cabRear - 0.05);
   component(S, "exhaust", () => { for (const t of serviceExhaust(car)) cap(S, P.metal, [0.5, t.y, t.z], [t.x, t.y, t.z], t.r); });
 
@@ -885,10 +895,10 @@ export function policeKit(S: Solids, car: Car): void {
   const g = car.body, sv = car.parts.service!, m = sv.m as PoliceM, L2 = g.length / 2, C2 = g.cabWidth / 2;
   const [a, b] = sv.beacons as [BeaconLamp, BeaconLamp];
   component(S, "lightbar", () => {
-    box(S, P.dark, -m.barW, m.barY - 0.01, m.barZ - 0.14, m.barW, m.barY + 0.045, m.barZ + 0.14);
-    box(S, a.slot, -m.barW + 0.02, m.barY + 0.045, m.barZ - 0.12, -0.03, m.barY + 0.13, m.barZ + 0.12);
-    box(S, b.slot, 0.03, m.barY + 0.045, m.barZ - 0.12, m.barW - 0.02, m.barY + 0.13, m.barZ + 0.12);
-    box(S, P.dark, -0.03, m.barY + 0.045, m.barZ - 0.12, 0.03, m.barY + 0.14, m.barZ + 0.12);
+    box(S, P.dark, -m.barW, m.barY - 0.01, m.barZ - 0.11, m.barW, m.barY + 0.045, m.barZ + 0.11);
+    box(S, a.slot, -m.barW + 0.02, m.barY + 0.045, m.barZ - 0.09, -0.03, m.barY + 0.13, m.barZ + 0.09);
+    box(S, b.slot, 0.03, m.barY + 0.045, m.barZ - 0.09, m.barW - 0.02, m.barY + 0.13, m.barZ + 0.09);
+    box(S, P.dark, -0.03, m.barY + 0.045, m.barZ - 0.09, 0.03, m.barY + 0.14, m.barZ + 0.09);
   });
   component(S, "pushbar", () => {
     const z = L2 + 0.12, y1 = m.noseTop + 0.08;
