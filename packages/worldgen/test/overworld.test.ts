@@ -4,7 +4,7 @@ import { FLAG, WATER_NONE } from "@keel-engine/terrain";
 import { DEFAULT_ACTS, createBiomeTable, createOverworld, fbm, hashLayers, noiseField, seedOf, simplex2 } from "../src/index.ts";
 import type { TileLayers } from "../src/index.ts";
 
-const same = (a: TileLayers, b: TileLayers, i0: number, j0: number, w: number, d: number): number => {
+const same = (a: TileLayers, b: TileLayers, { i0, j0, w, d }: { i0: number; j0: number; w: number; d: number }): number => {
   let diff = 0;
   for (let j = j0; j < j0 + d; j += 1) for (let i = i0; i < i0 + w; i += 1) {
     const ka = (j - a.j0) * a.w + (i - a.i0), kb = (j - b.j0) * b.w + (i - b.i0);
@@ -40,13 +40,13 @@ test("chunk independence: two chunks generated either way round, and inside one 
     const w1 = createOverworld(seed), w2 = createOverworld(seed);
     const a1 = w1.block(3 * C - A, -2 * C - A, C + 2 * A, C + 2 * A), b1 = w1.block(4 * C - A, -2 * C - A, C + 2 * A, C + 2 * A);
     const b2 = w2.block(4 * C - A, -2 * C - A, C + 2 * A, C + 2 * A), a2 = w2.block(3 * C - A, -2 * C - A, C + 2 * A, C + 2 * A);
-    assert.equal(same(a1, a2, 3 * C - A, -2 * C - A, C + 2 * A, C + 2 * A), 0, `${seed}: chunk A differs by order`);
-    assert.equal(same(b1, b2, 4 * C - A, -2 * C - A, C + 2 * A, C + 2 * A), 0, `${seed}: chunk B differs by order`);
+    assert.equal(same(a1, a2, { i0: 3 * C - A, j0: -2 * C - A, w: C + 2 * A, d: C + 2 * A }), 0, `${seed}: chunk A differs by order`);
+    assert.equal(same(b1, b2, { i0: 4 * C - A, j0: -2 * C - A, w: C + 2 * A, d: C + 2 * A }), 0, `${seed}: chunk B differs by order`);
     // The overlap of the two aprons, and both chunks against one big block.
-    assert.equal(same(a1, b1, 4 * C - A, -2 * C - A, 2 * A, C), 0, `${seed}: the aprons disagree`);
+    assert.equal(same(a1, b1, { i0: 4 * C - A, j0: -2 * C - A, w: 2 * A, d: C }), 0, `${seed}: the aprons disagree`);
     const big = createOverworld(seed).block(3 * C - A, -2 * C - A, 2 * C + 2 * A, C + 2 * A);
-    assert.equal(same(a1, big, 3 * C - A, -2 * C - A, C + 2 * A, C + 2 * A), 0, `${seed}: chunk A differs from the big block`);
-    assert.equal(same(b1, big, 4 * C - A, -2 * C - A, C + 2 * A, C + 2 * A), 0, `${seed}: chunk B differs from the big block`);
+    assert.equal(same(a1, big, { i0: 3 * C - A, j0: -2 * C - A, w: C + 2 * A, d: C + 2 * A }), 0, `${seed}: chunk A differs from the big block`);
+    assert.equal(same(b1, big, { i0: 4 * C - A, j0: -2 * C - A, w: C + 2 * A, d: C + 2 * A }), 0, `${seed}: chunk B differs from the big block`);
   }
 });
 
