@@ -283,7 +283,7 @@ test("on a hilly city: each building stands level on its terrace -- its door at 
       stoops += 1;
       assert.ok(rise >= 2 * RISER - 1e-6 && rise <= a.stoop[1] + 1e-6, `${lot.key}: a stoop ${rise.toFixed(2)} m up`);
       // (Its steps: treads from the door down toward the road, none of them on the road.)
-      const steps = p.solids.filter((s) => s.box && s.box.kind !== "wedge" && Math.abs(s.box.h[0]! - 1.4) < 1e-9 && s.lod === 1);
+      const steps = p.solids.filter((s) => s.box && s.box.kind !== "wedge" && Math.abs(s.box.h[0]! - 1.4) < 1e-9 && s.lod <= 1 && s.box.mat === SLOT.concreteLight);
       assert.ok(steps.length >= 2, `${lot.key}: ${steps.length} steps up its ${rise.toFixed(2)} m stoop`);
       for (const st of steps) { const at = field.at(st.box!.c[0]!, st.box!.c[2]!); assert.ok(!at || Math.abs(at.d) > at.half + 0.4, `${lot.key}: a step on the road`); }
     } else {

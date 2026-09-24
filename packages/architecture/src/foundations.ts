@@ -102,14 +102,15 @@ export function stoopSteps(b: Build, height: CityHeight, rise: number): void {
     const top = -k * riser, za = k ? z0 + LANDING + (k - 1) * TREAD : z0, zb = za + (k ? TREAD : LANDING), ground = groundUnder(za, zb, hw);
     if (top - 0.05 <= ground) break;
     const bottom = ground - 0.15;
-    addBox(b, 1, s.x, (top + bottom) / 2, (za + zb) / 2, hw, (top - bottom) / 2, (zb - za) / 2, "concreteLight");
+    // (The landing shows from a block away; the treads only close to.)
+    addBox(b, k ? 0 : 1, s.x, (top + bottom) / 2, (za + zb) / 2, hw, (top - bottom) / 2, (zb - za) / 2, "concreteLight");
     end = zb;
   }
   if (end <= z0) return;
   // (The cheeks: wedges, full height at the door, their foot at the flight's end.)
   const bottom = groundUnder(z0, end, hw + 0.24) - 0.15, hi = 0.35, lowTop = -rise + 0.35 + riser;
   const H = hi - bottom, lo = Math.max(0.05, Math.min(1, (lowTop - bottom) / H));
-  for (const side of [-1, 1]) addBox(b, 1, s.x + side * (hw + 0.12), bottom + H / 2, (z0 + end) / 2, 0.12, H / 2, (end - z0) / 2, "concreteDark", { wedge: true, lo });
+  for (const side of [-1, 1]) addBox(b, 0, s.x + side * (hw + 0.12), bottom + H / 2, (z0 + end) / 2, 0.12, H / 2, (end - z0) / 2, "concreteDark", { wedge: true, lo });
 }
 
 /** A solid's plan in the building's frame (an axis-aligned box round it), its bottom and top over the floor. */
@@ -214,13 +215,33 @@ function stand(s: Solid, foot: number): Solid {
   return s;
 }
 
-/** The most a slab laid on the ground spans (m) before it's laid in pieces, each following the ground under it. */
-const TILE = 12;
+/** The most a slab laid on the ground spans (m) before it's laid in pieces, each following the ground under it -- when
+ * the ground under it is further than PLANAR (m) off the plane that fits it best. */
+const TILE = 12, PLANAR = 0.04;
 
-/** A slab in pieces no more than TILE across, each set on the ground under it (slabOn). */
+/**
+ * The ground under a slab fitted with a plane, least squares over nine points (its corners, its edges' middles, its
+ * middle): the mean, the rise from the middle to its +x and +z edges, the lowest of the nine, and the most any is off it.
+ */
+function planeFit(B: BakeBox, height: CityHeight): { m: number; ax: number; az: number; low: number; off: number } {
+  const yaw = B.yaw ?? 0, c = dcos(yaw), sn = dsin(yaw), w = B.h[0]!, d = B.h[2]!, cx = B.c[0]!, cz = B.c[2]!, gs: number[] = [];
+  let m = 0, ax = 0, az = 0, low = Infinity;
+  for (const u of [-1, 0, 1]) for (const v of [-1, 0, 1]) {
+    const g = height.heightAt(cx + u * w * c + v * d * sn, cz - u * w * sn + v * d * c);
+    gs.push(g); m += g / 9; ax += (u * g) / 6; az += (v * g) / 6; low = Math.min(low, g);
+  }
+  let off = 0, k = 0;
+  for (const u of [-1, 0, 1]) for (const v of [-1, 0, 1]) off = Math.max(off, Math.abs(gs[k++]! - (m + ax * u + az * v)));
+  return { m, ax, az, low, off };
+}
+
+/**
+ * A slab set on the ground under it (slabOn): whole where the ground under it is near enough a plane, else in pieces no
+ * more than TILE across, each set on the ground under its own part.
+ */
 function slabsOn(b: Build, s: Solid, B: BakeBox, height: CityHeight): Solid[] {
   const w = B.h[0]!, d = B.h[2]!, nx = Math.max(1, Math.ceil((2 * w) / TILE)), nz = Math.max(1, Math.ceil((2 * d) / TILE));
-  if (nx === 1 && nz === 1) return [slabOn(b, s, B, height)];
+  if ((nx === 1 && nz === 1) || planeFit(B, height).off <= PLANAR) return [slabOn(b, s, B, height)];
   const yaw = B.yaw ?? 0, c = dcos(yaw), sn = dsin(yaw), out: Solid[] = [];
   for (let i = 0; i < nx; i += 1) for (let j = 0; j < nz; j += 1) {
     const u = -w + (w / nx) * (2 * i + 1), v = -d + (d / nz) * (2 * j + 1);
@@ -236,12 +257,8 @@ function slabsOn(b: Build, s: Solid, B: BakeBox, height: CityHeight): Solid[] {
  * it slopes most, its top that far over the plane at each end.
  */
 function slabOn(b: Build, s: Solid, B: BakeBox, height: CityHeight): Solid {
-  const y = b.frame.y ?? 0, yaw = B.yaw ?? 0, c = dcos(yaw), sn = dsin(yaw), w = B.h[0]!, d = B.h[2]!, cx = B.c[0]!, cz = B.c[2]!;
-  let m = 0, ax = 0, az = 0, low = Infinity;
-  for (const u of [-1, 0, 1]) for (const v of [-1, 0, 1]) {
-    const g = height.heightAt(cx + u * w * c + v * d * sn, cz - u * w * sn + v * d * c);
-    m += g / 9; ax += (u * g) / 6; az += (v * g) / 6; low = Math.min(low, g);
-  }
+  const y = b.frame.y ?? 0, yaw = B.yaw ?? 0, w = B.h[0]!, d = B.h[2]!, cx = B.c[0]!, cz = B.c[2]!;
+  const { m, ax, az, low } = planeFit(B, height);
   const y0 = B.c[1]! - B.h[1]! - y, t = 2 * B.h[1]!;
   if (2 * Math.max(Math.abs(ax), Math.abs(az)) <= FLAT) return { ...s, box: { ...B, c: [cx, B.c[1]! + m - y, cz] } };
   // (The wedge's foot -- lo of its height -- is at its local +z, its full height at -z: turned so -z is uphill.)
