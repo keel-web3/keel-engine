@@ -94,7 +94,7 @@ export function carLights(car: Car, s: LightState): { glow: Float32Array; bloom:
   const beacon = car.paints.beacon;
   if (car.parts.beacons && beacon) {
     const [a, b] = s.beacon !== undefined && Number.isFinite(s.beacon) ? beaconFlash(s.beacon) : [0, 0];
-    const off = s.night ? -0.22 : -0.32, on = s.night ? 0.8 : 0.62;
+    const off = s.night ? -0.42 : -0.46, on = s.night ? 0.85 : 0.65;
     glow[S.beaconA] = off + (on - off) * a; glow[S.beaconB] = off + (on - off) * b;
     put(S.beaconA, colourRgb(beacon.a), a * (s.night ? 1 : 0.7));
     put(S.beaconB, colourRgb(beacon.b), b * (s.night ? 1 : 0.7));

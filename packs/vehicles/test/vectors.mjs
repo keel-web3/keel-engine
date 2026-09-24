@@ -47,7 +47,7 @@ export default await engineVectors(import.meta.url, [
       const lit = (c, beacon) => { const l = carLights(c, { night: true, braking: 0, neon: 0, ...(beacon === undefined ? {} : { beacon }) }); return [l.glow[30], l.glow[31], l.bloom[123], l.bloom[127]].map((v) => Math.round(v * 100)); };
       return [lit(cop), lit(cop, 0.05), lit(cop, 0.55), lit(plain), lit(plain, 0.05)];
     },
-    expect: [[-22, -22, 0, 0], [80, -22, 100, 0], [-22, 80, 0, 100], [0, 0, 0, 0], [0, 0, 0, 0]],
+    expect: [[-42, -42, 0, 0], [85, -42, 100, 0], [-42, 85, 0, 100], [0, 0, 0, 0], [0, 0, 0, 0]],
   },
   {
     name: "the cars there were are the cars there are: data, bodies and lights (pinned before the service vehicles)",

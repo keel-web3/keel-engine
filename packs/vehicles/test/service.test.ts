@@ -95,7 +95,7 @@ test("the dump truck's bed: its inside volume in parts.bed, inside the truck, ti
     // Tipped, the bed's front rises well over the cab and its hinge stays put.
     const at = (m: Float32Array, y: number, z: number) => [m[5]! * y + m[9]! * z + m[13]!, m[6]! * y + m[10]! * z + m[14]!];
     const [yFront] = at(up.bed, bed.y, bed.z1), [yHinge, zHinge] = at(up.bed, bed.hingeY, bed.hingeZ);
-    assert.ok(yFront > g.roof + 2, `${car.seed} tipped front at ${yFront}`);
+    assert.ok(yFront! > g.roof + 2, `${car.seed} tipped front at ${yFront}`);
     assert.ok(Math.abs(yHinge! - bed.hingeY) < 1e-4 && Math.abs(zHinge! - bed.hingeZ) < 1e-4);
     assert.ok(up.ram[5]! > 1, "the ram draws out");
   }
