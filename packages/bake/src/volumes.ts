@@ -13,6 +13,8 @@
 // car in front of a smoke cloud stays in front of it, and one inside it is
 // swallowed pixel by pixel.
 
+import { CURL_GLSL } from "@keel-engine/core";
+
 /** What a volume is made of: how it swells, drifts and takes its light. */
 export const VOLUME_KIND = { smoke: 0, fire: 1, dust: 2, energy: 3, glow: 4 } as const;
 export type VolumeKind = (typeof VOLUME_KIND)[keyof typeof VOLUME_KIND];
@@ -123,6 +125,7 @@ float vnoise(vec3 p) {
 }
 // (Two octaves is enough at these sizes: a third never reaches a pixel.)
 float fbm(vec3 p) { return vnoise(p) * 0.65 + vnoise(p * 2.3) * 0.35; }
+${CURL_GLSL}
 vec4 pal(int i) { return texelFetch(uPalette, ivec2(i % uPaletteRow, i / uPaletteRow), 0); }
 void main() {
   float r = vP.w;
@@ -137,6 +140,9 @@ void main() {
   // Smoke and dust climb and shear as they age; fire and nitro are drawn up and eaten from the top.
   vec3 drift = kind == 1 ? vec3(0.0, -2.6, 0.0) : kind == 3 ? vec3(0.0, -3.4, 0.0) : vec3(0.35, -0.8, 0.2);
   float freq = (kind == 1 || kind == 3) ? 3.4 / max(r, 0.05) : 2.1 / max(r, 0.05);
+  // Curl noise warps the billows: one sample a pixel (its line of sight through the ball), in eddies about the
+  // ball's own size, growing as it ages -- so wisps curl round each other instead of scrolling past as one sheet.
+  vec3 warp = kind == 4 ? vec3(0.0) : curlNoiseN((uRight * vOff.x + uUp * vOff.y) / max(r, 0.05) * 0.8 + seed * 3.17, uTime, 1) * (0.6 + 1.4 * age);
   float dens = 0.0, lit = 0.0;
   for (int i = 0; i < 16; i++) {
     if (i >= uSteps) break;
@@ -148,7 +154,7 @@ void main() {
     float shape = 1.0 - rad * rad;
     if (kind == 1 || kind == 3) shape *= clamp(1.0 - (q.y / r) * 0.8 - age * 0.5, 0.0, 1.0) * 1.4;
     // (A glow -- a lamp's bloom, a neon halo -- is a smooth ball, brightest at its heart: no billowing.)
-    float d = kind == 4 ? shape * 0.8 : max(0.0, (fbm(q * freq + drift * uTime * (0.6 + 0.4 * fract(seed)) + seed * 7.13) - 0.42) * 2.1) * shape;
+    float d = kind == 4 ? shape * 0.8 : max(0.0, (fbm(q * freq + warp + drift * uTime * (0.6 + 0.4 * fract(seed)) + seed * 7.13) - 0.42) * 2.1) * shape;
     dens += d;
     // A puff's own light: the sun on the side it comes from (smoke, dust) or its heat at its heart (fire, nitro).
     lit += d * ((kind == 1 || kind == 3 || kind == 4) ? clamp(1.1 - rad * 1.3, 0.0, 1.0) : clamp(0.45 + 0.55 * dot(normalize(q + 1e-4), uSun), 0.0, 1.0));

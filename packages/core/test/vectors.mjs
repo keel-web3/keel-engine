@@ -6,17 +6,22 @@ export default await engineVectors(import.meta.url, [
   {
     name: "the export surface is intact",
     run: async (api) => { const names = surface(api); return { count: names.length, digest: await digest(names) }; },
-    expect: {"count":131,"digest":"d682f83e8345f31291c3df79857c92929ca65cf20e0dca4239b15d739fa3ace4"},
+    expect: {"count":135,"digest":"9a32931f085470bb13a17197edcfd37c3db455038fdbad1890ff49509b1fe2a7"},
   },
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "fd9bc6cca86e3ea31d01b90857248c5729bf6797ee9d01c8192beb489fd431af",
+    expect: "4ee25dc4bd568d542acb727f0d615e1c98dc3fa0d9d58aeecc8cdfc78224a3ca",
   },
   {
     name: "value noise and fbm are deterministic",
     run: ({ vnoise2, fbm2, hash2 }) => [vnoise2(0.5, 1.5), vnoise2(3.25, -2, 7), fbm2(0.3, 0.7, 11), hash2(4, 9, 3)],
     expect: [0.2912852555164136,0.2597379146318417,0.38955764171135526,0.5850013650488108],
+  },
+  {
+    name: "the curl field (presentation: the particle pool's and volume smoke's flow)",
+    run: ({ curlNoise }) => { const o = [0, 0, 0, 0, 0, 0]; curlNoise(0.5, 1.5, -2.25, 0, o, 0); curlNoise(13.7, -4.1, 8.9, 123.4, o, 3); return o; },
+    expect: [-1.4093363280773463,0.4328855713626694,-0.6003181658278559,-0.6810558155988391,-0.058824263866600605,-0.7143881532533333],
   },
   {
     // (x64's V8 Math gives these too; an arm64 Mac's gives other last bits for the first, and for dcbrt's input.)

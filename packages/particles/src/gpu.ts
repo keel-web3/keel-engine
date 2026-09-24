@@ -27,6 +27,7 @@ import { CURVE_SAMPLES, MAX_STYLES, STYLE_WIDTH } from "./pool.ts";
 import type { ParticlePool } from "./pool.ts";
 import { particleSpriteAtlas } from "./palette.ts";
 import { PARTICLE_FS, PARTICLE_VS, SCATTER_FS, SCATTER_VS, STATE_WIDTH } from "./gpu-shaders.ts";
+import { FLOW_PERIOD } from "@keel-engine/core";
 export { MOTION_GLSL, PARTICLE_FS, PARTICLE_VS, STATE_WIDTH } from "./gpu-shaders.ts";
 const RECORD_FLOATS = 17; // slot, then the four texels
 const BATCH = 16384;
@@ -81,7 +82,7 @@ export function createParticleRenderer(gl: WebGL2RenderingContext, { capacity }:
   const u = (name: string) => gl.getUniformLocation(prog, name);
   const U = {
     persp: u("uPersp"), eye: u("uEye"), tan: u("uTan"), clip: u("uClip"), contract: u("uContract"),
-    center: u("uCenter"), right: u("uRight"), up: u("uUp"), forward: u("uForward"), k: u("uK"), size: u("uSize"), depth: u("uDepthRange"), now: u("uNow"),
+    center: u("uCenter"), right: u("uRight"), up: u("uUp"), forward: u("uForward"), k: u("uK"), size: u("uSize"), depth: u("uDepthRange"), now: u("uNow"), flow: u("uFlow"),
     styles: u("uStyles"), palette: u("uPalette"), sprites: u("uSprites"), t: [u("uT0"), u("uT1"), u("uT2"), u("uT3")],
   };
   const scatter = link(SCATTER_VS, SCATTER_FS);
@@ -309,6 +310,7 @@ export function createParticleRenderer(gl: WebGL2RenderingContext, { capacity }:
       gl.uniform2f(U.size, W, H);
       gl.uniform1f(U.depth, Math.max(W, H) / view.pixelsPerMetre * 4); // (the sprite renderer's depth range: the two share a depth buffer)
       gl.uniform1f(U.now, pool.time + ahead - base);
+      gl.uniform1f(U.flow, (pool.time + ahead) % FLOW_PERIOD);
       gl.uniform1i(U.styles, 1);
       gl.uniform1i(U.palette, 2);
       gl.uniform1i(U.sprites, 3);

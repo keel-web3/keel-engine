@@ -79,6 +79,14 @@ export interface ParticleLook {
   readonly wind?: number;
   /** Turns its horizontal heading at this many radians a second (a swirl; default 0). */
   readonly curl?: number;
+  /**
+   * Curl noise: metres a divergence-free flow field carries it off its path, at most (default 0: none). Smoke,
+   * embers, snow, motes -- anything the air carries -- eddy together instead of each wobbling on its own. A
+   * particle that meets the ground is carried less the lower it gets, so it still lands where it lands.
+   */
+  readonly turbulence?: number;
+  /** Curl noise: metres across one of its eddies (default 2). */
+  readonly turbulenceScale?: number;
   readonly ground?: GroundMode;
   /** Bounce: how much speed it keeps off the ground (default 0.4). */
   readonly bounce?: number;
@@ -174,6 +182,8 @@ export function recipeProblems(r: EmitterRecipe, path = "recipe"): string[] {
     if (!spanOk(p.light, 0) || p.light[1] > 1) bad("particle.light is within 0..1");
     if (!curveOk(p.sizeCurve) || !curveOk(p.lightCurve) || !curveOk(p.alpha, 1)) bad("curves are 1..32 keys, >= 0 (alpha <= 1)");
     if (p.soft !== undefined && !(p.soft >= 0 && p.soft <= 1)) bad("particle.soft is within 0..1");
+    if (p.turbulence !== undefined && !(p.turbulence >= 0 && p.turbulence < Infinity)) bad("particle.turbulence is metres, >= 0");
+    if (p.turbulenceScale !== undefined && !(p.turbulenceScale > 0 && p.turbulenceScale < Infinity)) bad("particle.turbulenceScale is positive metres");
     if (typeof p.ramp !== "string" || !p.ramp) bad("particle.ramp must name a ramp");
     if (p.sprite !== undefined && !PARTICLE_SPRITES.includes(p.sprite)) bad(`sprite "${p.sprite}"`);
     if (p.ground !== undefined && !GROUND_MODES.includes(p.ground)) bad(`ground "${p.ground}"`);

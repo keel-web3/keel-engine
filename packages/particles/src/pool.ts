@@ -40,6 +40,7 @@ import { sampleCurve } from "./recipe.ts";
 import type { EmitterRecipe, ParticleSprite, Span } from "./recipe.ts";
 import { PARTICLE_SPRITES } from "./recipe.ts";
 import { PoolState } from "./pool-state.ts";
+import { FLOW_PERIOD, curlCore } from "@keel-engine/core";
 import { poolRecordOf, poolSnapshotOf } from "./pool-codec.ts";
 import { frameFromYaw, frameToWorld } from "./pool-frame.ts";
 import { CURVE_SAMPLES, h30, MAX_STYLES, STYLE_WIDTH } from "./pool-internal.ts";
@@ -168,13 +169,18 @@ function writeStyle(S: PoolState, c: Compiled) {
   const o = row + CURVE_SAMPLES * 4;
   d.set([p.size[0], p.size[1], p.light[0], p.light[1]], o);
   d.set([0, 0, PARTICLE_SPRITES.indexOf(p.sprite ?? "dot"), p.shade ?? 0], o + 4);
-  d.set([p.streak ?? 0, p.depthBias ?? 0, p.soft ?? (p.sprite === "puff" ? 0.5 : 0), 0], o + 8);
-  d.set([p.drag ?? 0, p.curl ?? 0, p.gravity ?? 0, 0], o + 12);
+  // (Turbulence faded toward the ground rides as its sign: see turbSlot and the VS.)
+  const turb = (p.turbulence ?? 0) * ((p.ground ?? "none") === "none" ? 1 : -1);
+  const turbK = 1 / (p.turbulenceScale ?? 2);
+  d.set([p.streak ?? 0, p.depthBias ?? 0, p.soft ?? (p.sprite === "puff" ? 0.5 : 0), turbK], o + 8);
+  d.set([p.drag ?? 0, p.curl ?? 0, p.gravity ?? 0, turb], o + 12);
   S.styleRamps[s] = p.ramp;
   S.sGrav[s] = p.gravity ?? 0;
   S.sDrag[s] = p.drag ?? 0;
   S.sWind[s] = p.wind ?? 0;
   S.sCurl[s] = p.curl ?? 0;
+  S.sTurb[s] = turb;
+  S.sTurbK[s] = turbK;
   S.sGround[s] = GROUND[p.ground ?? "none"];
   S.sBounce[s] = p.bounce ?? 0.4;
   S.sFric[s] = p.friction ?? 0.7;
@@ -306,6 +312,23 @@ function sampleSlot(S: PoolState, i: number) {
   F[38] = vi[o]!; F[39] = vi[o + 1]!; F[40] = vi[o + 2]!;
   F[41] = S.sDrag[s]!; F[42] = S.sCurl[s]!; F[43] = S.sGrav[s]!; F[44] = F[18]! - S.tSeg[i]!; F[45] = S.tStop[i]!;
   motionCore(F, 32, 20);
+}
+
+// Slot i's curl-noise drift at time F[18], added to the position sampleSlot left in F[20..22] (the VS's twin:
+// what's drawn, and where what it throws starts). Off its closed-form path, never into it: bounces don't see it.
+const CURL = new Float64Array(7);
+function turbSlot(S: PoolState, i: number) {
+  const s = S.style[i]!;
+  const a = S.sTurb[s]!;
+  if (a === 0) return;
+  const F = S.F;
+  const age = Math.max(0, F[18]! - S.tBirth[i]!);
+  let k = Math.abs(a) * age / (age + 0.5);
+  if (a < 0) k *= Math.min(1, Math.max(0, F[21]! * 2));
+  const q = S.sTurbK[s]!;
+  CURL[0] = F[20]! * q; CURL[1] = F[21]! * q; CURL[2] = F[22]! * q; CURL[3] = F[18]! % FLOW_PERIOD;
+  curlCore(CURL, 0, 4);
+  F[20] = F[20]! + CURL[4]! * k; F[21] = F[21]! + CURL[5]! * k; F[22] = F[22]! + CURL[6]! * k;
 }
 
 // The first segment time at which slot i's height reaches 0 (before its life runs out), into F[26] (NEVER: none).
@@ -572,6 +595,7 @@ function event(S: PoolState, i: number) {
   if (S.tLive[i]! === t && t < tDeath) {
     // A live sub-emit, and when the next one is.
     sampleSlot(S, i);
+    turbSlot(S, i);
     const j = s * 3 + 2;
     const n = S.liveN[i]! + 1;
     S.liveN[i] = n & 0xffff;
@@ -585,6 +609,7 @@ function event(S: PoolState, i: number) {
   if (S.sSub[jd]! >= 0 && draw(S.pseed[i]!, 11) * INV30 < S.sSubChance[jd]!) {
     F[18] = tDeath;
     sampleSlot(S, i);
+    turbSlot(S, i);
     subEmit(S, i, jd, subCount(S, i, jd, 12), 0x0d1e);
   }
   freeSlot(S, i);
@@ -866,6 +891,7 @@ export function createParticlePool(options: ParticlePoolOptions = {}): ParticleP
     sample(slot, out, o = 0, at = S.F[16]!) {
       S.F[18] = at;
       sampleSlot(S, slot);
+      turbSlot(S, slot);
       for (let k = 0; k < 6; k += 1) out[o + k] = S.F[20 + k]!;
     },
     takeChanges(out) {
@@ -957,6 +983,7 @@ export function createParticlePool(options: ParticlePoolOptions = {}): ParticleP
         const light = (d[o + 2]! + (d[o + 3]! - d[o + 2]!) * r2) * d[row + ci + 1]!;
         F[18] = now;
         sampleSlot(S, i);
+        turbSlot(S, i);
         out.push({ p: [F[20]!, F[21]!, F[22]!], size, ramp: S.styleRamps[s]!, light: Math.min(1, light) });
       }
       return out;

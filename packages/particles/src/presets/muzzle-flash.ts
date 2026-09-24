@@ -12,6 +12,6 @@ export default defineParticleRecipe({
   also: [{
     mode: "burst", count: [2, 3], shape: "cone", dir: [0, 0, 1], angle: 0.5, offset: [0, 0, 0.25],
     speed: [0.4, 1], priority: 1, reach: 2,
-    particle: { life: [0.4, 0.7], size: [0.15, 0.25], sizeCurve: [0.6, 1.3], light: [0.5, 0.7], alpha: [0.8, 0.6, 0], ramp: "smoke", soft: 0.5, shade: 0.4, drag: 3, gravity: -0.3, wind: 0.8 },
+    particle: { life: [0.4, 0.7], size: [0.15, 0.25], sizeCurve: [0.6, 1.3], light: [0.5, 0.7], alpha: [0.8, 0.6, 0], ramp: "smoke", soft: 0.5, shade: 0.4, drag: 3, gravity: -0.3, wind: 0.8, turbulence: 0.6 },
   }],
 });

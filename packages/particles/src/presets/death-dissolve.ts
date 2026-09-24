@@ -6,7 +6,7 @@ export default defineParticleRecipe({
   mode: "burst", count: [18, 26], shape: "sphere", radius: 0.5, speed: [0.1, 0.4], up: [0.8, 1.8], priority: 2, reach: 4,
   particle: {
     life: [0.8, 1.5], size: [0.06, 0.11], light: [0.6, 1], lightCurve: [1, 1.1, 0.8], alpha: [1, 1, 0.6, 0],
-    ramp: "energy", drag: 0.8, gravity: -0.5, curl: 1.5,
+    ramp: "energy", drag: 0.8, gravity: -0.5, turbulence: 0.35,
   },
   also: [
     {
