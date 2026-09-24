@@ -79,6 +79,12 @@ class Buckets {
 const PLACE_Y = 1.5;
 /** Past a place's own ground its land falls (or rises) back to the region's over this (m). */
 const PLACE_SHORE = 350;
+/**
+ * A world link over land runs down a valley of its own: within CORRIDOR m of it the land eases down to its deck (never
+ * up to it -- over a dip it stands on its viaduct), flat for CORRIDOR_FLOOR m either side. Found through a grid of
+ * CORRIDOR_CELL m cells, each holding the link sample nearest it: one lookup a height.
+ */
+const CORRIDOR = 320, CORRIDOR_FLOOR = 60, CORRIDOR_CELL = 40;
 
 /**
  * The region round a city. Made once a city (regionOf). `around`: the world of places it stands in (keel/city
@@ -181,6 +187,26 @@ export function cityRegion(city: City, around: RegionAround | null = null): Regi
     for (let i = 0; i < count; i += 1) back += w[i]! * sectors[i]!.backdrop;
     return ramp(e, 2800, 6200) * back * (0.35 + ridged(15, x, z, 2300));
   };
+  const corridorCells = new Map<number, { x: number; z: number; y: number; d: number }>();
+  for (const road of (around?.roads ?? []).filter((q) => !q.bridge)) {
+    const reachCells = Math.ceil(CORRIDOR / CORRIDOR_CELL) + 1, cellKey = (i: number, j: number): number => (i + 32768) * 65536 + (j + 32768);
+    for (let k = 0; k < road.x.length; k += 10) {
+      const sx = road.x[k]!, sz = road.z[k]!, ci = Math.floor(sx / CORRIDOR_CELL), cj = Math.floor(sz / CORRIDOR_CELL);
+      for (let di = -reachCells; di <= reachCells; di += 1) for (let dj = -reachCells; dj <= reachCells; dj += 1) {
+        const d = dhypot((ci + di + 0.5) * CORRIDOR_CELL - sx, (cj + dj + 0.5) * CORRIDOR_CELL - sz);
+        if (d > CORRIDOR + CORRIDOR_CELL) continue;
+        const kk = cellKey(ci + di, cj + dj), had = corridorCells.get(kk);
+        if (!had || d < had.d) corridorCells.set(kk, { x: sx, z: sz, y: road.y[k]!, d });
+      }
+    }
+  }
+  /** The land eased down to a link's deck near it (its valley), else as it is. */
+  const corridorAt = (x: number, z: number, h: number): number => {
+    const c = corridorCells.get((Math.floor(x / CORRIDOR_CELL) + 32768) * 65536 + (Math.floor(z / CORRIDOR_CELL) + 32768));
+    if (!c) return h;
+    const floor = c.y - 1;
+    return h > floor ? floor + (h - floor) * ramp(dhypot(x - c.x, z - c.z), CORRIDOR_FLOOR, CORRIDOR) : h;
+  };
   const baseHeight = (x: number, z: number): number => {
     const r = dhypot(x, z), e = Math.max(0, r - edge);
     weights(x, z, w);
@@ -191,6 +217,7 @@ export function cityRegion(city: City, around: RegionAround | null = null): Regi
       h += wi * landHeight(sectors[i]!.land, x, z, e, sectors[i]!.shore ?? 0);
     }
     h += groundAt(site, x, z).height + backdropAt(x, z, e);
+    if (corridorCells.size) h = corridorAt(x, z, h);
     // (The world's other places stand on their own flat ground -- an island's, over the sea -- the land meeting it past.)
     for (const p of places) {
       const d = dhypot(x - p.x, z - p.z);

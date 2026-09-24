@@ -149,3 +149,28 @@ test("world: a place's city grades its bridge link up over the sea to the world'
   const y = h.roadAt(edge, e.b === portal ? e.path.length - 1 : 0);
   assert.ok(Math.abs(y - main.y[0]!) < 4, `the city's deck at its portal ${y.toFixed(2)} vs the link's ${main.y[0]!.toFixed(2)}`);
 });
+
+test("world: a freeway between places runs down a valley of its own, never through a cutting", () => {
+  let checked = 0;
+  for (const seed of ["redline:world:2", "world-test-5", "world-test-40"]) {
+    const w = generateCityWorld(seed);
+    for (const p of w.places.slice(0, 2)) {
+      const region = cityRegion(worldCity(w, p.id), regionAround(w, p.id));
+      for (const l of region.links) {
+        if (w.links[l.link]!.kind !== "freeway") continue;
+        const r = region.roads[l.road]!;
+        for (let i = 5; i + 1 < r.x.length - 5; i += 5) {
+          const dx = r.x[i + 1]! - r.x[i]!, dz = r.z[i + 1]! - r.z[i]!, len = Math.hypot(dx, dz) || 1;
+          // (80 m off each side, clear of the city's own ground -- the valley's floor and its first slope.)
+          for (const side of [-1, 1]) {
+            const x = r.x[i]! + (dz / len) * 80 * side, z = r.z[i]! - (dx / len) * 80 * side;
+            if (Math.max(Math.abs(x), Math.abs(z)) < region.edge + 200) continue;
+            assert.ok(region.heightAt(x, z) < r.y[i]! + 8, `${seed} place ${p.id} link ${l.link}: the land 80 m off stands ${(region.heightAt(x, z) - r.y[i]!).toFixed(1)} m over the deck`);
+            checked += 1;
+          }
+        }
+      }
+    }
+  }
+  assert.ok(checked > 100, `looked along ${checked} points`);
+});
