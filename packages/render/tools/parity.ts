@@ -21,14 +21,15 @@ function oklchToRgb(L: number, C: number, h: number): [number, number, number] {
   const [r, g, bb] = lin.map((v) => { const c = Math.max(0, Math.min(1, v)); return Math.round(255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055)); });
   return [r!, g!, bb!];
 }
-const ramp = (n: number, h: number, C: number, L0: number, L1: number, turn = 0) => Array.from({ length: n }, (_, i) => { const k = i / (n - 1); return oklchToRgb(L0 + (L1 - L0) * k, C * Math.sin(Math.PI * (0.15 + 0.7 * k)), h + turn * (k - 0.5)); });
+interface RampOptions { n: number; h: number; C: number; L0: number; L1: number; turn?: number }
+const ramp = ({ n, h, C, L0, L1, turn = 0 }: RampOptions) => Array.from({ length: n }, (_, i) => { const k = i / (n - 1); return oklchToRgb(L0 + (L1 - L0) * k, C * Math.sin(Math.PI * (0.15 + 0.7 * k)), h + turn * (k - 0.5)); });
 const LIST: Record<string, [number, number, number][]> = {
-  stone: ramp(8, 250, 0.018, 0.16, 0.86, 10), rail: ramp(5, 230, 0.03, 0.3, 0.92), dark: ramp(3, 280, 0.02, 0.08, 0.3),
-  water: ramp(8, 172, 0.13, 0.12, 0.93, -20), sky: ramp(6, 45, 0.035, 0.08, 0.7, 20), fur: ramp(5, 80, 0.03, 0.55, 0.98),
-  jacket: ramp(5, 180, 0.12, 0.3, 0.8, 15), spark: ramp(5, 40, 0.19, 0.55, 0.97, 60), glow: ramp(5, 70, 0.14, 0.55, 0.98, 20),
-  neon: ramp(6, 330, 0.2, 0.35, 0.92, 30), ramp: ramp(6, 30, 0.06, 0.25, 0.8, 10), white: ramp(3, 90, 0.01, 0.9, 1),
-  stoneNight: ramp(8, 265, 0.03, 0.08, 0.55, 10), waterNight: ramp(8, 220, 0.09, 0.08, 0.6, -20), skyNight: ramp(6, 270, 0.05, 0.05, 0.4, 10),
-  smooth: ramp(64, 300, 0.12, 0.2, 0.9, 80),
+  stone: ramp({ n: 8, h: 250, C: 0.018, L0: 0.16, L1: 0.86, turn: 10 }), rail: ramp({ n: 5, h: 230, C: 0.03, L0: 0.3, L1: 0.92 }), dark: ramp({ n: 3, h: 280, C: 0.02, L0: 0.08, L1: 0.3 }),
+  water: ramp({ n: 8, h: 172, C: 0.13, L0: 0.12, L1: 0.93, turn: -20 }), sky: ramp({ n: 6, h: 45, C: 0.035, L0: 0.08, L1: 0.7, turn: 20 }), fur: ramp({ n: 5, h: 80, C: 0.03, L0: 0.55, L1: 0.98 }),
+  jacket: ramp({ n: 5, h: 180, C: 0.12, L0: 0.3, L1: 0.8, turn: 15 }), spark: ramp({ n: 5, h: 40, C: 0.19, L0: 0.55, L1: 0.97, turn: 60 }), glow: ramp({ n: 5, h: 70, C: 0.14, L0: 0.55, L1: 0.98, turn: 20 }),
+  neon: ramp({ n: 6, h: 330, C: 0.2, L0: 0.35, L1: 0.92, turn: 30 }), ramp: ramp({ n: 6, h: 30, C: 0.06, L0: 0.25, L1: 0.8, turn: 10 }), white: ramp({ n: 3, h: 90, C: 0.01, L0: 0.9, L1: 1 }),
+  stoneNight: ramp({ n: 8, h: 265, C: 0.03, L0: 0.08, L1: 0.55, turn: 10 }), waterNight: ramp({ n: 8, h: 220, C: 0.09, L0: 0.08, L1: 0.6, turn: -20 }), skyNight: ramp({ n: 6, h: 270, C: 0.05, L0: 0.05, L1: 0.4, turn: 10 }),
+  smooth: ramp({ n: 64, h: 300, C: 0.12, L0: 0.2, L1: 0.9, turn: 80 }),
 };
 export const colours: [number, number, number][] = [];
 export const ramps: Record<string, [number, number]> = {};
@@ -40,9 +41,10 @@ export const MATERIALS: Material[] = [
 ];
 
 export const boxes: RenderBox[] = [];
-const slab = (x0: number, x1: number, z0: number, z1: number, top: number, mat = 1) => boxes.push({ c: [(x0 + x1) / 2, top - 1.5, (z0 + z1) / 2], h: [(x1 - x0) / 2, 1.5, (z1 - z0) / 2], mat });
-slab(-4, 4, -3, 6, 0.35);
-slab(-4, 4, 11, 16, 1.95);
+interface SlabOptions { x0: number; x1: number; z0: number; z1: number; top: number; mat?: number }
+const slab = ({ x0, x1, z0, z1, top, mat = 1 }: SlabOptions) => boxes.push({ c: [(x0 + x1) / 2, top - 1.5, (z0 + z1) / 2], h: [(x1 - x0) / 2, 1.5, (z1 - z0) / 2], mat });
+slab({ x0: -4, x1: 4, z0: -3, z1: 6, top: 0.35 });
+slab({ x0: -4, x1: 4, z0: 11, z1: 16, top: 1.95 });
 boxes.push({ c: [-3.8, 2.5, 7], h: [0.25, 4, 5], mat: 0 }, { c: [4.5, 3, 9], h: [0.3, 4.5, 2.5], yaw: 0.35, mat: 0 }, { c: [2.4, 0.95, 3.2], h: [0.3, 0.6, 0.3], yaw: 0.6, mat: 10 });
 export const wedges: RenderWedge[] = [
   { c: [0, 0.35 + 0.8, 8.5], h: [1.6, 0.8, 2.5], yaw: Math.PI, lo: 0, mat: 8 },

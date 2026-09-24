@@ -36,7 +36,9 @@ export interface Sample {
 
 // A dome shell: the outer cap (radius ro) and the inner (ri) down to `cut` below the centre, joined at the rim -- a
 // closed solid, hollow inside (a helmet), so the head keeps its own cells.
-function addDome(m: MeshData, c: V3, ro: V3, ri: V3, cut: number, x: VertexExtras, seg = 20, rings = 8): void {
+function addDome(m: MeshData, c: V3, { ro, ri, cut, x, seg = 20, rings = 8 }: {
+  ro: V3; ri: V3; cut: number; x: VertexExtras; seg?: number; rings?: number;
+}): void {
   const th1 = Math.acos(Math.max(-1, Math.min(1, cut)));
   const cap = (r: V3, inward: boolean): number[] => {
     const base = m.positions.length / 3;
@@ -99,7 +101,7 @@ export function knightBuild({ names = true, skin: skinned = true }: { names?: bo
   }
   // Helmet: a steel dome over the crown and the back of the head, the face open (skinned to the head).
   const helmet = meshData();
-  addDome(helmet, [0, 1.72, -0.005], [0.145, 0.15, 0.145], [0.123, 0.133, 0.123], -0.05, w("Head"));
+  addDome(helmet, [0, 1.72, -0.005], { ro: [0.145, 0.15, 0.145], ri: [0.123, 0.133, 0.123], cut: -0.05, x: w("Head") });
   addBox(helmet, [0, 1.84, 0], [0.012, 0.035, 0.1], w("Head"));
   // Shield: a crimson disc with a gold boss on the outside of the left forearm.
   const shield = meshData(), boss = meshData();
@@ -279,20 +281,20 @@ export function robotVox(): Uint8Array {
   const pal = new Uint8Array(256 * 4);
   pal.set([150, 160, 176, 255], 4); pal.set([44, 46, 58, 255], 8); pal.set([120, 240, 255, 255], 12); pal.set([210, 60, 50, 255], 16);
   const body: Array<[number, number, number, number]> = [];
-  const box = (x0: number, x1: number, y0: number, y1: number, z0: number, z1: number, c: number): void => {
+  const box = ([x0, x1, y0, y1, z0, z1]: readonly [number, number, number, number, number, number], c: number): void => {
     for (let x = x0; x <= x1; x += 1) for (let y = y0; y <= y1; y += 1) for (let z = z0; z <= z1; z += 1) body.push([x, y, z, c]);
   };
   // (MagicaVoxel frame: +z up, the front -y. Model 12 x 8 x 22.)
-  box(1, 3, 2, 5, 0, 7, 1); box(8, 10, 2, 5, 0, 7, 1);
-  box(1, 3, 1, 5, 0, 1, 2); box(8, 10, 1, 5, 0, 1, 2);
-  box(0, 11, 1, 6, 8, 15, 1);
-  box(4, 7, 0, 0, 10, 12, 4);
-  box(2, 9, 1, 6, 16, 21, 1);
-  box(3, 4, 0, 0, 18, 19, 3); box(7, 8, 0, 0, 18, 19, 3);
+  box([1, 3, 2, 5, 0, 7], 1); box([8, 10, 2, 5, 0, 7], 1);
+  box([1, 3, 1, 5, 0, 1], 2); box([8, 10, 1, 5, 0, 1], 2);
+  box([0, 11, 1, 6, 8, 15], 1);
+  box([4, 7, 0, 0, 10, 12], 4);
+  box([2, 9, 1, 6, 16, 21], 1);
+  box([3, 4, 0, 0, 18, 19], 3); box([7, 8, 0, 0, 18, 19], 3);
   // Arms: hanging beside the body, a gap between.
-  for (const x of [-2, 13]) box(x, x, 2, 5, 6, 15, 2);
+  for (const x of [-2, 13]) box([x, x, 2, 5, 6, 15], 2);
   // (Shoulders: the arms hang from the torso's top corners.)
-  box(-1, -1, 2, 5, 15, 15, 1); box(12, 12, 2, 5, 15, 15, 1);
+  box([-1, -1, 2, 5, 15, 15], 1); box([12, 12, 2, 5, 15, 15], 1);
   const shift = body.map(([x, y, z, c]) => [x + 2, y, z, c] as [number, number, number, number]);
   const antenna: Array<[number, number, number, number]> = [];
   for (let z = 0; z < 4; z += 1) antenna.push([1, 1, z, 2]);

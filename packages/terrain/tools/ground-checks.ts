@@ -41,7 +41,7 @@ function viewAt(cx: number, cz: number, pitch: number, k: number): PixelView {
   return pixelView({ center: [a.right[0] * gx + a.up[0] * gy + a.forward[0] * f, a.up[1] * gy + a.forward[1] * f, a.right[2] * gx + a.up[2] * gy + a.forward[2] * f], yaw: 0, pitch, pixelsPerMetre: k, width: W, height: H });
 }
 
-export async function run(canvas: HTMLCanvasElement): Promise<unknown> {
+function setup(canvas: HTMLCanvasElement) {
   const sr = createSpriteRenderer(canvas, { width: W, height: H, capacity: 4096 });
   sr.setTarget(W, H);
   const gl = sr.gl;
@@ -52,6 +52,18 @@ export async function run(canvas: HTMLCanvasElement): Promise<unknown> {
   const read = (): Uint8Array => { const px = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px); return px; };
   const lit = (px: Uint8Array, o: number): boolean => px[o]! + px[o + 1]! + px[o + 2]! > 0;
 
+  return { sr, gl, t, palette, surface, auto, read, lit };
+}
+type GroundCheck = ReturnType<typeof setup>;
+
+export async function run(canvas: HTMLCanvasElement): Promise<unknown> {
+  const context = setup(canvas);
+  const { sweep, cpuGround } = await zoomSweep(context);
+  const buildings = await checkBuildings({ ...context, cpuGround });
+  return { sweep, buildings };
+}
+
+async function zoomSweep({ sr, gl, t, palette, surface, auto, read, lit }: GroundCheck) {
   // ---------------------------------------------------------------- the zoom sweep
   const gpu = createGpuGround(gl, { palette, seed: 1 });
   const stream = createGpuTerrain(gpu, { terrain: t, auto, surface, prefetch: 1, seed: 1 });
@@ -113,6 +125,10 @@ export async function run(canvas: HTMLCanvasElement): Promise<unknown> {
     list: frames,
   };
 
+  return { sweep, cpuGround };
+}
+
+async function checkBuildings({ sr, gl, t, palette, surface, read, cpuGround }: GroundCheck & { cpuGround: ReturnType<typeof createGroundRenderer> }) {
   // ---------------------------------------------------------------- buildings on flat ground
   // Flat sites: a 5 x 5 tile square at one level, dry, no ramps -- a house's footprint (7 x 5 m) sits well inside one.
   const flat = createTerrain({ width: 128, depth: 128, chunk: 32, fill: "grass", level: 2 });
@@ -172,7 +188,7 @@ export async function run(canvas: HTMLCanvasElement): Promise<unknown> {
     buildings.push({ k, pitch, pixels, hiddenFootprint: hf, hiddenMiddle: hm, cpuExact: he, cpuStandIn: hs });
     await new Promise((r) => setTimeout(r, 0));
   }
-  return { sweep, buildings };
+  return buildings;
 }
 
 const pad = (src: Uint8Array, w: number, h: number, W2: number, H2: number): Uint8Array => { const out = new Uint8Array(W2 * H2 * 4); for (let y = 0; y < h; y += 1) out.set(src.subarray(y * w * 4, (y + 1) * w * 4), y * W2 * 4); return out; };

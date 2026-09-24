@@ -42,7 +42,9 @@ async function save(c: HTMLCanvasElement, name: string, log: Log): Promise<void>
   const res = await fetch(`/out/ui/${name}.png`, { method: "PUT", body: blob });
   log(`saved out/ui/${name}.png (${c.width}x${c.height}) ${res.status}`);
 }
-function text(b: Bitmap, f: PixelFont, s: string, x: number, y: number, c: Rgba): number {
+type TextOptions = { readonly bitmap: Bitmap; readonly font: PixelFont; readonly value: string; readonly x: number; readonly y: number; readonly color: Rgba };
+
+function text({ bitmap: b, font: f, value: s, x, y, color: c }: TextOptions): number {
   let pen = x, prev = -1;
   for (const ch of s) {
     const code = ch.codePointAt(0)!;
@@ -119,34 +121,34 @@ async function fonts(main: HTMLElement, log: Log): Promise<void> {
   const label = generateFont(DEFAULT_FONT, 5);
   let y = 10;
   const sample = "The quick brown fox jumps 0123456789 AVATAR !?";
-  text(sheet, label, "GENERATED FAMILIES (THEME FONTS), 5 7 9 12 16 PX", 6, y, dim); y += 8;
+  text({ bitmap: sheet, font: label, value: "GENERATED FAMILIES (THEME FONTS), 5 7 9 12 16 PX", x: 6, y, color: dim }); y += 8;
   for (const culture of CULTURES) {
     const t = generateTheme({ seed: 3, culture });
-    text(sheet, label, culture.toUpperCase(), 6, y + 6, dim);
+    text({ bitmap: sheet, font: label, value: culture.toUpperCase(), x: 6, y: y + 6, color: dim });
     let x = 70;
-    for (const size of [5, 7, 9, 12]) { const f = generateFont(t.type.font, size); x = text(sheet, f, size >= 9 ? "Hamburgefonstiv 0123" : "Hamburgefonstiv 0123", x, y + size, ink) + 10; }
+    for (const size of [5, 7, 9, 12]) { const f = generateFont(t.type.font, size); x = text({ bitmap: sheet, font: f, value: "Hamburgefonstiv 0123", x, y: y + size, color: ink }) + 10; }
     const big = generateFont(t.type.font, 16);
     y += 18;
-    text(sheet, big, "Myriad 1234", 70, y + 16, ink);
-    text(sheet, generateFont(t.type.font, 9), "abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ", 260, y + 12, dim);
+    text({ bitmap: sheet, font: big, value: "Myriad 1234", x: 70, y: y + 16, color: ink });
+    text({ bitmap: sheet, font: generateFont(t.type.font, 9), value: "abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ", x: 260, y: y + 12, color: dim });
     y += 24;
   }
   y += 6;
-  text(sheet, label, "IMPORTED", 6, y, dim); y += 8;
+  text({ bitmap: sheet, font: label, value: "IMPORTED", x: 6, y, color: dim }); y += 8;
   const fnt = await (await fetch("../test/fixtures/keel5.fnt")).text();
   const png = decodePng(new Uint8Array(await (await fetch("../test/fixtures/keel5.png")).arrayBuffer()));
   const bm = bmFont(parseBmFont(fnt), [png]);
-  text(sheet, label, "BMFONT", 6, y + 5, dim); text(sheet, bm, sample, 70, y + 5, ink); y += 12;
+  text({ bitmap: sheet, font: label, value: "BMFONT", x: 6, y: y + 5, color: dim }); text({ bitmap: sheet, font: bm, value: sample, x: 70, y: y + 5, color: ink }); y += 12;
   const ttf = buildTtf();
-  text(sheet, label, "TTF (BUILT)", 6, y + 9, dim);
+  text({ bitmap: sheet, font: label, value: "TTF (BUILT)", x: 6, y: y + 9, color: dim });
   let x = 70;
-  for (const size of [7, 9, 12, 16]) { x = text(sheet, loadFont(ttf, size), "HOl=AV-", x, y + size, ink) + 12; }
+  for (const size of [7, 9, 12, 16]) { x = text({ bitmap: sheet, font: loadFont(ttf, size), value: "HOl=AV-", x, y: y + size, color: ink }) + 12; }
   y += 22;
   for (const family of ["Georgia", "Helvetica", "Arial", "Times New Roman", "Menlo"]) {
     try {
-      text(sheet, label, `${family.toUpperCase()} (BROWSER)`.slice(0, 18), 6, y + 9, dim);
+      text({ bitmap: sheet, font: label, value: `${family.toUpperCase()} (BROWSER)`.slice(0, 18), x: 6, y: y + 9, color: dim });
       let xx = 110;
-      for (const size of [7, 9, 12]) { const f = await loadBrowserFont(`local('${family}')`, size); xx = text(sheet, f, size === 12 ? "Hamburgefonstiv 0123" : "Hamburgefonstiv 0123 AVATAR", xx, y + size, ink) + 12; }
+      for (const size of [7, 9, 12]) { const f = await loadBrowserFont(`local('${family}')`, size); xx = text({ bitmap: sheet, font: f, value: size === 12 ? "Hamburgefonstiv 0123" : "Hamburgefonstiv 0123 AVATAR", x: xx, y: y + size, color: ink }) + 12; }
       y += 18;
     } catch (e) { log(`${family}: ${String(e)}`); }
   }
@@ -336,7 +338,7 @@ export async function run(main: HTMLElement, nav: HTMLElement, log: Log): Promis
     case "loading": return screen(main, log, "loading");
     case "bench": {
       for (const [w, h, s] of [[1920, 1080, 3], [1920, 1080, 1], [1440, 810, 3]] as const) {
-        const r = bench(w, h, s);
+        const r = bench({ width: w, height: h, scale: s });
         log(`${r.size}: ${r.buttons} buttons, ${r.nodes} nodes; first frame ${r.firstMs.toFixed(1)} ms; static ${(r.staticMs * 1000).toFixed(2)} µs; animated ${r.animatedMs.toFixed(3)} ms (${r.animatedPixels} px); full redraw ${r.fullMs.toFixed(2)} ms`);
       }
       (globalThis as { benchDone?: boolean }).benchDone = true;

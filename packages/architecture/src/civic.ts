@@ -13,6 +13,8 @@ import type { MassOp } from "./types.ts";
 import { mast, vehicle } from "./business.ts";
 
 type Op<K extends MassOp["op"]> = (b: Build, op: Extract<MassOp, { op: K }>) => void;
+type SolidArgs = { readonly x: number; readonly z: number; readonly hw: number; readonly hd: number; readonly y1: number; readonly slot?: SlotName };
+type GableArgs = { readonly x: number; readonly z: number; readonly hw: number; readonly hd: number; readonly y: number; readonly rise: number; readonly slot: SlotName };
 
 const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
 const snap = (b: Build, h: number): number => Math.max(b.storey, Math.round(h / b.storey) * b.storey);
@@ -21,14 +23,14 @@ const R2 = 0.7071067811865476;
 const OCT: readonly (readonly [number, number])[] = [[1, 0], [R2, R2], [0, 1], [-R2, R2], [-1, 0], [-R2, -R2], [0, -1], [R2, -R2]];
 
 /** A mass a car hits whose look is drawn apart: its record only. */
-const solid = (b: Build, x: number, z: number, hw: number, hd: number, y1: number, slot: SlotName = "metal"): void => { b.masses.push({ x, z, hw, hd, y0: 0, y1, slot }); };
+const solid = (b: Build, { x, z, hw, hd, y1, slot = "metal" }: SolidArgs): void => { b.masses.push({ x, z, hw, hd, y0: 0, y1, slot }); };
 
 /** A gable whose ridge runs across the front (x): its ends face the sides. */
-function gableX(b: Build, x: number, z: number, hw: number, hd: number, y: number, rise: number, slot: SlotName): void {
+function gableX(b: Build, { x, z, hw, hd, y, rise, slot }: GableArgs): void {
   for (const side of [1, -1]) addBox(b, 1, x, y + rise / 2, z + (side * hd) / 2, hw, rise / 2, hd / 2, slot, { wedge: true, turn: side > 0 ? 0 : Math.PI });
 }
 /** A gable whose ridge runs front to back (z): its end -- a pediment -- faces the street. */
-function gableZ(b: Build, x: number, z: number, hw: number, hd: number, y: number, rise: number, slot: SlotName): void {
+function gableZ(b: Build, { x, z, hw, hd, y, rise, slot }: GableArgs): void {
   for (const side of [1, -1]) addBox(b, 1, x + (side * hw) / 2, y + rise / 2, z, hd, rise / 2, hw / 2, slot, { wedge: true, turn: (side * Math.PI) / 2 });
 }
 
@@ -59,8 +61,8 @@ const campus: Op<"campus"> = (b, op) => {
     addBox(b, 1, s.x - side * s.hw * 0.3, 3.4, backFront + 1.5, 3, 0.2, 1.5, "trim");
     const fz0 = Math.max(backFront, end) + 2, fz1 = s.z + s.hd - 1.2;
     field(b, s.x - s.hw + 1, s.x + s.hw - 1, fz0, fz1);
-    if (fz1 - fz0 > 14) for (const sx of [-1, 1]) mast(b, s.x + sx * (s.hw - 0.5), (fz0 + fz1) / 2, 12, "led");
-    if (s.hw > 12 && end - backFront > 14) vehicle(b, "bus", s.x - side * (s.hw - 2), (backFront + end) / 2, 0, 1, 0, "buffBrick");
+    if (fz1 - fz0 > 14) for (const sx of [-1, 1]) mast(b, { x: s.x + sx * (s.hw - 0.5), z: (fz0 + fz1) / 2, h: 12, head: "led" });
+    if (s.hw > 12 && end - backFront > 14) vehicle(b, { kind: "bus", x: s.x - side * (s.hw - 2), z: (backFront + end) / 2, turn: 0, i: 1, paint: "buffBrick" });
     return;
   }
   // The quad: a hall across the back (the clock tower at its middle), halls down each side, the front one split by a gate.
@@ -75,7 +77,7 @@ const campus: Op<"campus"> = (b, op) => {
     if (hw < 2 || hd < 2) continue;
     addMass(b, { x, z, hw, hd, y0: 0, y1: top, slot: b.wall });
     const rise = Math.min(hw, hd) * 0.6;
-    if (hw >= hd) gableX(b, x, z, hw + 0.3, hd + 0.3, top, rise, "roof"); else gableZ(b, x, z, hw + 0.3, hd + 0.3, top, rise, "roof");
+    if (hw >= hd) gableX(b, { x, z, hw: hw + 0.3, hd: hd + 0.3, y: top, rise, slot: "roof" }); else gableZ(b, { x, z, hw: hw + 0.3, hd: hd + 0.3, y: top, rise, slot: "roof" });
   }
   const ix = s.hw - 2 * d, iz = s.hd - 2 * d;
   if (ix > 2 && iz > 2) {
@@ -89,8 +91,8 @@ const campus: Op<"campus"> = (b, op) => {
   addBox(b, 2, s.x, th / 2, tz, tw, th / 2, tw, b.wall, { grid: true });
   addBox(b, 1, s.x, th - 2, tz, tw + 0.1, 1.3, 1.3, "backlit");
   addBox(b, 1, s.x, th - 2, tz, 1.3, 1.3, tw + 0.1, "backlit");
-  gableX(b, s.x, tz, tw + 0.3, tw + 0.3, th, 3.5, "roof");
-  gableZ(b, s.x, tz, tw + 0.3, tw + 0.3, th, 3.5, "roof");
+  gableX(b, { x: s.x, z: tz, hw: tw + 0.3, hd: tw + 0.3, y: th, rise: 3.5, slot: "roof" });
+  gableZ(b, { x: s.x, z: tz, hw: tw + 0.3, hd: tw + 0.3, y: th, rise: 3.5, slot: "roof" });
 };
 
 /** A city hall, a library, a courthouse: steps, a portico of columns under a pediment, a dome or a clock tower. */
@@ -107,7 +109,7 @@ const hall: Op<"hall"> = (b, op) => {
     addCapsule(b, 1, [x, 0.9, front + 2.4], [x, colH, front + 2.4], 0.42, "limestone");
   }
   addBox(b, 1, s.x, colH + 0.55, front + 1.5, pw + 0.5, 0.55, 1.5, "limestone");
-  gableZ(b, s.x, front + 1.5, pw + 0.5, 1.5, colH + 1.1, Math.min(4, pw * 0.3), "limestone");
+  gableZ(b, { x: s.x, z: front + 1.5, hw: pw + 0.5, hd: 1.5, y: colH + 1.1, rise: Math.min(4, pw * 0.3), slot: "limestone" });
   if (pick(b.D, "hallTop", op.tops) === "clock") {
     const tw = Math.min(3, hw * 0.3), th = h + within(b.D, "towerH", [8, 14]);
     addBox(b, 1, s.x, (h + th) / 2, z0, tw, (th - h) / 2, tw, b.wall, { grid: true });
@@ -132,7 +134,7 @@ const stadium: Op<"stadium"> = (b) => {
     [s.x + s.hw - sw / 2, s.z, sw / 2, s.hd - sw, -Math.PI / 2], [s.x - s.hw + sw / 2, s.z, sw / 2, s.hd - sw, Math.PI / 2],
   ];
   ends.forEach(([x, z, hw, hd, turn], k) => {
-    solid(b, x, z, hw, hd, H, b.wall);
+    solid(b, { x, z, hw, hd, y1: H, slot: b.wall });
     const along = k < 2;
     // (The rake -- a wedge -- and the stand's back wall, windowed.)
     addBox(b, 2, x, H / 2, z, along ? hw : hd, H / 2, along ? hd : hw, "concreteLight", { wedge: true, lo: 0.12, turn });
@@ -158,7 +160,7 @@ const stadium: Op<"stadium"> = (b) => {
 const cemetery: Op<"cemetery"> = (b) => {
   const s = b.site, ch = { hw: Math.min(3.5, s.hw * 0.3), hd: Math.min(5, s.hd * 0.2) }, cz = s.z - s.hd + ch.hd + 1.5, h = 6.5;
   addMass(b, { x: s.x, z: cz, hw: ch.hw, hd: ch.hd, y0: 0, y1: h, slot: b.wall });
-  gableZ(b, s.x, cz, ch.hw + 0.3, ch.hd + 0.3, h, ch.hw * 0.9, "roof");
+  gableZ(b, { x: s.x, z: cz, hw: ch.hw + 0.3, hd: ch.hd + 0.3, y: h, rise: ch.hw * 0.9, slot: "roof" });
   addBox(b, 1, s.x, h + 3, cz + ch.hd - 1, 0.8, 3, 0.8, b.wall);
   addCapsule(b, 1, [s.x, h + 6, cz + ch.hd - 1], [s.x, h + 9, cz + ch.hd - 1], 0.35, "roof");
   addBox(b, 2, s.x, 0.04, s.z, s.hw, 0.04, s.hd, "grass");
@@ -168,7 +170,7 @@ const cemetery: Op<"cemetery"> = (b) => {
   const walls: [number, number, number, number][] = [[s.x, s.z - s.hd + 0.2, s.hw, 0.2], [s.x - s.hw + 0.2, s.z, 0.2, s.hd], [s.x + s.hw - 0.2, s.z, 0.2, s.hd]];
   const gw = (s.hw - 2) / 2;
   for (const sx of [-1, 1]) walls.push([s.x + sx * (2 + gw), s.z + s.hd - 0.2, gw, 0.2]);
-  for (const [x, z, hw, hd] of walls) { solid(b, x, z, hw, hd, wh, wall); addBox(b, 2, x, wh / 2, z, hw, wh / 2, hd, wall); }
+  for (const [x, z, hw, hd] of walls) { solid(b, { x, z, hw, hd, y1: wh, slot: wall }); addBox(b, 2, x, wh / 2, z, hw, wh / 2, hd, wall); }
   // The stones, in rows either side of the path, a cross or an obelisk among them.
   let n = 0;
   for (let r = 0; n < 180; r += 1) {
@@ -206,7 +208,7 @@ const station: Op<"station"> = (b) => {
   const pz = bz - bh - 3, tz = pz - 2.5 - 2.2;
   if (tz - 2 < s.z - s.hd) return;
   const pw = s.hw - 0.5;
-  solid(b, s.x, pz, pw, 2.5, 1, "concreteLight");
+  solid(b, { x: s.x, z: pz, hw: pw, hd: 2.5, y1: 1, slot: "concreteLight" });
   addBox(b, 2, s.x, 0.5, pz, pw, 0.5, 2.5, "concreteLight");
   for (let x = -pw + 1; x <= pw - 1; x += 8) addBox(b, 1, s.x + x, 2.7, pz, 0.15, 1.7, 0.15, "metal");
   addBox(b, 1, s.x, 4.5, pz - 0.3, pw, 0.15, 2.9, "metal");
@@ -217,12 +219,12 @@ const station: Op<"station"> = (b) => {
     const n = Math.floor((2 * s.hw - 1) / 13.2), paint = pick(b.D, "livery", { trim: 2, glassBlue: 1, metal: 2, redBrick: 1 }) ?? "metal";
     for (let k = 0; k < n; k += 1) {
       const x = s.x - s.hw + 0.5 + 13.2 * (k + 0.5);
-      solid(b, x, tz, 6.4, 1.45, 4, paint);
+      solid(b, { x, z: tz, hw: 6.4, hd: 1.45, y1: 4, slot: paint });
       addBox(b, 1, x, 2.2, tz, 6.4, 1.8, 1.45, paint);
       addBox(b, 0, x, 2.7, tz, 6.1, 0.55, 1.5, "darkGlass");
     }
   }
-  if (!b.derelict) mast(b, s.x + s.hw - 0.5, pz, 8, "led");
+  if (!b.derelict) mast(b, { x: s.x + s.hw - 0.5, z: pz, h: 8, head: "led" });
 };
 
 /** A freight yard: container stacks in blocks, gantry cranes straddling them, trucks in the lane. */
@@ -239,14 +241,14 @@ const containers: Op<"containers"> = (b) => {
     if (u < 0.15) continue;
     const tiers = 1 + Math.floor(b.D.u("tiers", i) * (u < 0.5 ? 2 : 4)), x = x0 + 2.6 * (c + 0.5), z = z0 + 6.8 * (r + 0.5);
     for (let t = 0; t < tiers; t += 1) addBox(b, t === 0 ? 2 : 1, x, 1.3 + 2.6 * t, z, 1.22, 1.3, 3.05, pick(b.D, "box", PAINT, i * 8 + t) ?? "corrugated");
-    solid(b, x, z, 1.22, 3.05, 2.6 * tiers, "corrugated");
+    solid(b, { x, z, hw: 1.22, hd: 3.05, y1: 2.6 * tiers, slot: "corrugated" });
     stacks += 1;
   }
   // (The cranes: legs outside the stacks, beams across the yard, a trolley and its hoist.)
   const n = rows > 1 ? 1 + count(b.D, "cranes", [0, 1]) : 0, H = within(b.D, "craneH", [17, 23]), span = s.hw - 1;
   for (let k = 0; k < n; k += 1) {
     const z = z0 + (z1 - z0) * (n === 1 ? 0.5 : k ? 0.72 : 0.28);
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) { addBox(b, 1, s.x + sx * span, H / 2, z + sz * 3.4, 0.4, H / 2, 0.4, "buffBrick"); solid(b, s.x + sx * span, z + sz * 3.4, 0.4, 0.4, H, "buffBrick"); }
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) { addBox(b, 1, s.x + sx * span, H / 2, z + sz * 3.4, 0.4, H / 2, 0.4, "buffBrick"); solid(b, { x: s.x + sx * span, z: z + sz * 3.4, hw: 0.4, hd: 0.4, y1: H, slot: "buffBrick" }); }
     for (const sz of [-1, 1]) addBox(b, 1, s.x, H, z + sz * 3.4, span + 0.4, 0.6, 0.45, "buffBrick");
     for (const sx of [-1, 1]) addBox(b, 1, s.x + sx * span, H, z, 0.45, 0.6, 3.4, "buffBrick");
     const tx = s.x + b.D.flat("trolley", k) * (span - 3);
@@ -256,9 +258,9 @@ const containers: Op<"containers"> = (b) => {
   }
   for (let k = 0; k < count(b.D, "trucks", [0, 2]); k += 1) {
     const x = s.x - s.hw + 8.5 + k * 16.5;
-    if (x + 8 < s.x + s.hw) vehicle(b, "truck", x, s.z + s.hd - 3.4, Math.PI / 2, 1200 + k);
+    if (x + 8 < s.x + s.hw) vehicle(b, { kind: "truck", x, z: s.z + s.hd - 3.4, turn: Math.PI / 2, i: 1200 + k });
   }
-  if (!b.derelict) for (const sx of [-1, 1]) mast(b, s.x + sx * (s.hw - 0.5), s.z + s.hd - 6, 14);
+  if (!b.derelict) for (const sx of [-1, 1]) mast(b, { x: s.x + sx * (s.hw - 0.5), z: s.z + s.hd - 6, h: 14 });
 };
 
 /** A substation: a fence round gravel, transformers, the gantries the lines come in to, a control hut. */
@@ -268,14 +270,14 @@ const substation: Op<"substation"> = (b) => {
   addBox(b, 1, s.x, 0.04, s.z, s.hw, 0.04, s.hd, "gravel");
   const fh = 2.4;
   for (const [x, z, hw, hd] of [[s.x, s.z - s.hd + 0.05, s.hw, 0.05], [s.x, s.z + s.hd - 0.05, s.hw, 0.05], [s.x - s.hw + 0.05, s.z, 0.05, s.hd], [s.x + s.hw - 0.05, s.z, 0.05, s.hd]] as const) {
-    solid(b, x, z, hw, hd, fh);
+    solid(b, { x, z, hw, hd, y1: fh });
     addBox(b, 1, x, fh / 2, z, hw, fh / 2, hd, "metal");
   }
   // (The transformers: tanks with their cooling fins and bushings.)
   const n = clamp(Math.floor((2 * s.hw - 4) / 5), 1, 4) - count(b.D, "fewer", [0, 1]), tz = s.z + (s.hd > 12 ? 1 : 0);
   for (let k = 0; k < Math.max(1, n); k += 1) {
     const x = s.x - s.hw + 2.5 + (2 * s.hw - 5) * (k + 0.5) / Math.max(1, n);
-    solid(b, x, tz, 1.4, 1.8, 2.6, "concreteDark");
+    solid(b, { x, z: tz, hw: 1.4, hd: 1.8, y1: 2.6, slot: "concreteDark" });
     addBox(b, 2, x, 1.3, tz, 1.4, 1.3, 1.8, "concreteDark");
     for (const sx of [-1, 1]) addBox(b, 0, x + sx * 1.55, 1.2, tz, 0.15, 1, 1.4, "metal");
     for (let j = -1; j <= 1; j += 1) addCapsule(b, 0, [x + j * 0.8, 2.6, tz], [x + j * 0.8, 3.6, tz], 0.14, "trim");
@@ -284,7 +286,7 @@ const substation: Op<"substation"> = (b) => {
   const gs = Math.min(s.hw - 1.5, 9), H = 11;
   for (const [g, gz] of [[0, s.z - s.hd + 2.5], [1, s.z - s.hd * 0.25]] as const) {
     if (g === 1 && gz - (s.z - s.hd + 2.5) < 5) continue;
-    for (const sx of [-1, 1]) { addBox(b, 1, s.x + sx * gs, H / 2, gz, 0.3, H / 2, 0.3, "metal"); solid(b, s.x + sx * gs, gz, 0.3, 0.3, H); }
+    for (const sx of [-1, 1]) { addBox(b, 1, s.x + sx * gs, H / 2, gz, 0.3, H / 2, 0.3, "metal"); solid(b, { x: s.x + sx * gs, z: gz, hw: 0.3, hd: 0.3, y1: H }); }
     addBox(b, 1, s.x, H, gz, gs + 0.3, 0.3, 0.3, "metal");
     for (let j = -1; j <= 1; j += 1) {
       const x = s.x + (j * gs) / 2;
@@ -292,7 +294,7 @@ const substation: Op<"substation"> = (b) => {
       if (g === 0) { const [wx, wy, wz] = toWorld(b, x, H - 1.4, gz); b.anchors.push({ kind: "substation", x: wx, y: wy, z: wz }); }
     }
   }
-  if (!b.derelict) mast(b, hx, hz - 3.4, 7);
+  if (!b.derelict) mast(b, { x: hx, z: hz - 3.4, h: 7 });
 };
 
 /** A water tower: legs, a riser, a round tank with a catwalk, a light on top. */
@@ -301,7 +303,7 @@ const waterTower: Op<"waterTower"> = (b) => {
   addBox(b, 2, s.x, 0.04, s.z, s.hw, 0.04, s.hd, "grass");
   const slot = pick(b.D, "tank", { concreteLight: 2, trim: 2, glassBlue: 1, siding: 1 }) ?? "trim";
   for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
-    solid(b, s.x + sx * leg, s.z + sz * leg, 0.3, 0.3, H, "metal");
+    solid(b, { x: s.x + sx * leg, z: s.z + sz * leg, hw: 0.3, hd: 0.3, y1: H, slot: "metal" });
     addBox(b, 2, s.x + sx * leg, H / 2, s.z + sz * leg, 0.25, H / 2, 0.25, "metal");
   }
   for (const y of [H * 0.35, H * 0.7]) { for (const sz of [-1, 1]) addBox(b, 0, s.x, y, s.z + sz * leg, leg, 0.08, 0.08, "metal"); for (const sx of [-1, 1]) addBox(b, 0, s.x + sx * leg, y, s.z, 0.08, 0.08, leg, "metal"); }
@@ -318,7 +320,7 @@ const tanks: Op<"tanks"> = (b, op) => {
   if (op.kind === "gasometer") {
     const R = clamp(Math.min(s.hw, s.hd) - 2, 5, 18), H = clamp(R * 1.8, 16, 40);
     const slot = pick(b.D, "holder", { metal: 2, concreteDark: 1, glassGreen: 1 }) ?? "metal";
-    solid(b, s.x, s.z, R * 0.9, R * 0.9, H, slot);
+    solid(b, { x: s.x, z: s.z, hw: R * 0.9, hd: R * 0.9, y1: H, slot });
     addCapsule(b, 2, [s.x, R * 0.35, s.z], [s.x, H * within(b.D, "full", [0.55, 1]) - R * 0.4, s.z], R * 0.92, slot);
     const rr = R + 0.4;
     for (const [ux, uz] of OCT) addBox(b, 1, s.x + ux * rr, (H + 2) / 2, s.z + uz * rr, 0.3, (H + 2) / 2, 0.3, "metal");
@@ -333,7 +335,7 @@ const tanks: Op<"tanks"> = (b, op) => {
   for (let r = 0; r < rows; r += 1) for (let c = 0; c < cols; c += 1) {
     const i = r * 16 + c, x = s.x - s.hw + pw * (c + 0.5), z = s.z - s.hd + ph * (r + 0.5), h = within(b.D, "tankH", [R * 1.2, R * 2.6], i);
     const slot = pick(b.D, "tankSlot", { trim: 3, concreteLight: 2, metal: 2 }, i) ?? "trim";
-    solid(b, x, z, R * 0.85, R * 0.85, h, slot);
+    solid(b, { x, z, hw: R * 0.85, hd: R * 0.85, y1: h, slot });
     addCapsule(b, 2, [x, R * 0.35, z], [x, h - R * 0.6, z], R, slot);
     if (c + 1 < cols) addBox(b, 0, x + pw / 2, 1.4, z, pw / 2 - R, 0.15, 0.15, "metal");
   }

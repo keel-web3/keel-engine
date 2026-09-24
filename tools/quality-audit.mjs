@@ -32,6 +32,7 @@ const IGNORED_DIRECTORIES = new Set([
   '.git', '.cache', '.next', '.turbo', 'node_modules', 'dist', 'build',
   'coverage', 'target', 'vendor', 'out', 'generated',
 ]);
+const EXCLUDED_PROJECT_DIRECTORIES = new Set(['packages/keel/test/fixtures']);
 
 function isSourcePath(path) {
   return SOURCE_EXTENSIONS.has(extname(path).toLowerCase())
@@ -108,10 +109,10 @@ function isFunctionLike(node) {
 function isPublicApi(node, sourceFile) {
   let current = node;
   while (current && current !== sourceFile) {
+    if (current !== node && ts.isFunctionLike(current)) return false;
     if (hasModifier(current, ts.SyntaxKind.PrivateKeyword)
       || hasModifier(current, ts.SyntaxKind.ProtectedKeyword)) return false;
     if (hasModifier(current, ts.SyntaxKind.ExportKeyword)) return true;
-    if (current !== node && ts.isFunctionLike(current)) return false;
     if (current !== node && ts.isClassLike(current)) {
       return hasModifier(current, ts.SyntaxKind.ExportKeyword);
     }
@@ -230,7 +231,9 @@ function walk(root, path, files, directories, excludeFile) {
   for (const entry of entries) {
     const relativePath = path ? `${path}/${entry.name}` : entry.name;
     if (entry.isDirectory()) {
-      if (!IGNORED_DIRECTORIES.has(entry.name)) walk(root, relativePath, files, directories, excludeFile);
+      if (!IGNORED_DIRECTORIES.has(entry.name) && !EXCLUDED_PROJECT_DIRECTORIES.has(relativePath)) {
+        walk(root, relativePath, files, directories, excludeFile);
+      }
       continue;
     }
     if (entry.isFile() && (isSourcePath(entry.name) || isManifestPath(entry.name)) && !excludeFile(relativePath)) {

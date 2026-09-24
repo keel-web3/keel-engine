@@ -376,7 +376,7 @@
         },
         {
           "path": "packages/architecture/src/business.ts",
-          "sha256": "0xa115865d41f0b3b51d46129f0b839f0adc79dba0e4fbff384f1eec5c4b2e3a4d"
+          "sha256": "0x355340ff775fcd2aff245e1e29b52ec5f5380ad2fd4d72e237be2bdf6174a85f"
         },
         {
           "path": "packages/architecture/src/city.ts",
@@ -384,7 +384,7 @@
         },
         {
           "path": "packages/architecture/src/civic.ts",
-          "sha256": "0x62dce97da91dd9e0867ab701045003e89874a1e9d857848149abf82a8206f1a2"
+          "sha256": "0x56b2de36f9cc808d8c24f00181e5d2d0bdf128d58ef7daa2ef7332f054df2822"
         },
         {
           "path": "packages/architecture/src/commons.ts",
@@ -468,12 +468,12 @@
         ]
       },
       "output": {
-        "digest": "0x30ee2160e0a56c67c3297591166d3a6fcfc407128a7f5048bdbd31e4564d381f",
-        "byteLength": 95935
+        "digest": "0x13b46a6fe63a5b0a153639b984659d237a37816f976e0124fc2e8addb5b27548",
+        "byteLength": 96868
       },
-      "sourceDigest": "0x2e254db7ab14f1acc6807a5173743f5ce835e0c100bf3dbf2d0aae8498e5ef44",
-      "recipeDigest": "0xcabdbc38a7920944568792e1e9b1f63e12472e17b3679dfc3b95af530c57396c",
-      "receiptDigest": "0x2dca16060d15778f0eab58c1301ed579ae67ab8ec57902e607e9884e747c6df0",
+      "sourceDigest": "0xd8e2fea6ca669acb4d8722fc8fd11b907e179ac76c4bdb15fd7add5e0bf53924",
+      "recipeDigest": "0x28a49eae3719765faa0987ed16702ec70705bf4e9e4d147efb0e538ddb7740ea",
+      "receiptDigest": "0xb620f76d2f4e42763169fbe5135ae85fffb4a5a69ae0fcc6be11782e1c778958",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -2024,7 +2024,7 @@
         },
         {
           "path": "packages/import/src/samples.ts",
-          "sha256": "0xb5bc5507db6c7bdd3ec7bd65b9ed3d1a2803490e3cdeb090757b5203d9676708"
+          "sha256": "0xf6cbbdaa3f2390032e8e4151bc7b658dad9c08b1a98e05b0031e14a07912237b"
         },
         {
           "path": "packages/import/src/scene.ts",
@@ -2064,12 +2064,12 @@
         ]
       },
       "output": {
-        "digest": "0xf66c56b1d871e2dc73f521f726f0857f6821091f2c1d1aac91256a02577ccfd5",
-        "byteLength": 112924
+        "digest": "0x3e2c929e6bffdbc3bf969b492ec1d6d9f6f8bf5813688f6476b58ceb1699dbda",
+        "byteLength": 112988
       },
-      "sourceDigest": "0x210ce6a15ea1817f5b06f2f0be65009ff0bba77b8a3af91482be006f56911516",
-      "recipeDigest": "0x4c09bb086e1e7cb684a0ad48621f0e032214ee1116dfda7a74450b5d5c96c358",
-      "receiptDigest": "0x05e20ba0fc2f5d559b222da739a06d62fc4b9feb2d316cb5391b07a919fd2698",
+      "sourceDigest": "0x8cfe8dd2ea63f70c288e4e7e0b6cbb9b11e7c7172cee74e4054b8cbff2abead4",
+      "recipeDigest": "0x3ad20e0437f330d9a93c57a9f04ea35f5b8803d343fe1b12e2c25294b8d815bf",
+      "receiptDigest": "0x477a8ba75118a08d1750662e22824acbedba7e8922b5c3d2e089ac9895368bff",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -3927,7 +3927,7 @@
         },
         {
           "path": "packages/worldgen/src/dungeon.ts",
-          "sha256": "0xd0924d50f73eba970a14588b15a76e079a1da39f150de946528131fa15fa0d91"
+          "sha256": "0x16480c026690eb751564a6dc9dd41b0e6cb23f5c14ff3b5fd5ffaa6e67d6a36f"
         },
         {
           "path": "packages/worldgen/src/index.ts",
@@ -3955,7 +3955,7 @@
         },
         {
           "path": "packages/worldgen/src/pipeline.ts",
-          "sha256": "0x81bc6b97470e93f7f9296878d51041f7a1f3ecaa7cce3d35ffbdbe420d02ee61"
+          "sha256": "0x3a48a2ed2fda34666a0ed4a6cde40c9215147bc4c2dc69c186b3d57fddfcf48d"
         },
         {
           "path": "packages/worldgen/src/runner.ts",
@@ -3999,12 +3999,12 @@
         ]
       },
       "output": {
-        "digest": "0x09d7913c61b0a911d1170072fb54bab5d07aa0701a610a38f9030cf0021f9b66",
-        "byteLength": 223108
+        "digest": "0xe7e4f317868ac3370f8628176eb308641808a017a70d9f34efb6eb214708d30e",
+        "byteLength": 223237
       },
-      "sourceDigest": "0x0f4fd594c6df059f629992f97a16e931c8cbcff79f10386ad8736d569ff600ee",
-      "recipeDigest": "0xdcf1b49eff0ce2e19f2458358a7657f60e70ad9278735a58e4ec62b6c1fb0868",
-      "receiptDigest": "0xcb2e38d519b0c68a1de4971178ca3962d014e479e87c135f9d8008833e2d3c80",
+      "sourceDigest": "0x42789981e9f4aec464011546253fc72f301b812dd4c00b8ac2efda7ce43afb28",
+      "recipeDigest": "0x1744bc4bf555de757abaca3dcdc95d6ae9641062730d416a967d0bbb58c98306",
+      "receiptDigest": "0x687901d7be1acb14b7997ba99b1ef3614ffd5329459c26ccb837847d5ed203f9",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {

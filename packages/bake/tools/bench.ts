@@ -30,7 +30,14 @@ function makeSprites() {
   return { atlas, pages, W, H };
 }
 
-export async function bench(canvas: HTMLCanvasElement, counts: number[], sizes: Array<[number, number]>, viewMetres = 30): Promise<Result[]> {
+type BenchOptions = {
+  readonly canvas: HTMLCanvasElement;
+  readonly counts: number[];
+  readonly sizes: Array<[number, number]>;
+  readonly viewMetres?: number;
+};
+
+export async function bench({ canvas, counts, sizes, viewMetres = 30 }: BenchOptions): Promise<Result[]> {
   const { atlas, pages, W, H } = makeSprites();
   const results: Result[] = [];
   for (const [w, h] of sizes) {

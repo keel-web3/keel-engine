@@ -16,7 +16,7 @@ const SEEDS = Number(args["seeds"] ?? 6), SIZE = Number(args["size"] ?? 1.6);
 const VIEW = { pixelsPerMetre: 12, pitch: (55 * Math.PI) / 180 };
 const CLIPS = [{ name: "idle", frames: 4 }, { name: "walk", frames: 6 }, { name: "attack", frames: 8 }];
 
-export const shapeOf = (seed: string, plan: CreaturePlan, size: number, pins: Record<string, unknown> = {}): BodyShape => {
+export const shapeOf = ({ seed, plan, size, pins = {} }: { seed: string; plan: CreaturePlan; size: number; pins?: Record<string, unknown> }): BodyShape => {
   const c = creatureOf(seed, plan, { size, pins });
   return bodyShape(c.spec, { pack: "packs/creatures", clips: CLIPS, skin: (s) => c.skin(s), sockets: c.sockets });
 };
@@ -54,9 +54,9 @@ const acc: Record<string, number[]> = {};
 const self: Record<string, number[]> = {};
 for (let s = 0; s < SEEDS; s += 1) {
   const seed = `m${s}`;
-  const sh = pl.map((p) => shapeOf(seed, p, SIZE));
+  const sh = pl.map((p) => shapeOf({ seed, plan: p, size: SIZE }));
   const cs = sh.map(cells);
-  pl.forEach((p, i) => { (acc[p] ??= []).push(accentShare(sh[i]!)); (self[p] ??= []).push(iou(cells(shapeOf(seed, p, 1.2)), cells(shapeOf(seed, p, 2.4)))); });
+  pl.forEach((p, i) => { (acc[p] ??= []).push(accentShare(sh[i]!)); (self[p] ??= []).push(iou(cells(shapeOf({ seed, plan: p, size: 1.2 })), cells(shapeOf({ seed, plan: p, size: 2.4 })))); });
   for (let i = 0; i < pl.length; i += 1) for (let j = i + 1; j < pl.length; j += 1) {
     const v = iou(cs[i]!, cs[j]!);
     sums[i]![j]! += v / SEEDS; maxes[i]![j] = Math.max(maxes[i]![j]!, v);
@@ -69,7 +69,7 @@ pl.forEach((p, i) => console.log(`${p.padEnd(9)}${pl.map((_, j) => (j > i ? `${s
 if (args["dims"] !== undefined) for (const p of pl) {
   const out: string[] = [];
   for (let s = 0; s < SEEDS; s += 1) {
-    const m = softMask(shapeOf(`m${s}`, p, SIZE), "idle", 0, VIEW);
+    const m = softMask(shapeOf({ seed: `m${s}`, plan: p, size: SIZE }), "idle", 0, VIEW);
     let x0 = m.w, x1 = -1, y0 = m.h, y1 = -1, n = 0;
     for (let y = 0; y < m.h; y += 1) for (let x = 0; x < m.w; x += 1) if (m.solid[y * m.w + x]) { n += 1; x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
     // (Where its mass is: the share of its pixels in the lower, middle and upper thirds of its box.)
@@ -88,7 +88,7 @@ for (let s = 0; s < Number(args["pseeds"] ?? Math.min(3, SEEDS)); s += 1) {
   const look = lookOf(`race${s}`, roles, { pins: { "eye.finish": "glow", "accent.hue": 20 + s * 110, "accent.chroma": 0.2 } });
   const P = createPortraits(table);
   const sheets = pl.map((p) => {
-    const b = shapeOf(`m${s}`, p, SIZE);
+    const b = shapeOf({ seed: `m${s}`, plan: p, size: SIZE });
     const subject: PortraitSubject = { spec: b, kind: "unit", head: headOf(b), quadruped: b.spec.plan === "quadruped" };
     for (const j of P.need(subject)) P.offer(j, softBake(b, j));
     if (args["heads"] !== undefined) console.log(`${p} head r ${subject.head?.r.toFixed(3)} (${(subject.head!.r / b.height).toFixed(3)} of its height ${b.height.toFixed(2)})`);

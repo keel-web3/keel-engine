@@ -14,6 +14,10 @@ import type { SlotName } from "./slots.ts";
 import type { MassOp, VehicleKind } from "./types.ts";
 
 type Op<K extends MassOp["op"]> = (b: Build, op: Extract<MassOp, { op: K }>) => void;
+type SolidArgs = { readonly x: number; readonly z: number; readonly hw: number; readonly hd: number; readonly y1: number; readonly slot?: SlotName };
+type VehiclePlacement = { readonly kind: VehicleKind; readonly x: number; readonly z: number; readonly turn: number; readonly i: number; readonly y?: number; readonly paint?: SlotName };
+type LotMast = { readonly x: number; readonly z: number; readonly h: number; readonly head?: SlotName };
+type ParkingRows = { readonly x0: number; readonly x1: number; readonly z0: number; readonly z1: number; readonly fill: number; readonly lamps?: boolean };
 
 const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
 
@@ -21,7 +25,7 @@ const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.m
 const PAINTS: Readonly<Partial<Record<SlotName, number>>> = { trim: 3, metal: 3, darkGlass: 3, redBrick: 2, glassBlue: 2, concreteDark: 2, buffBrick: 1, glassBronze: 1, glassGreen: 1, concreteLight: 2 };
 
 /** A mass a car hits that's drawn another way (or not at all): its record only. */
-function solid(b: Build, x: number, z: number, hw: number, hd: number, y1: number, slot: SlotName = "metal"): void {
+function solid(b: Build, { x, z, hw, hd, y1, slot = "metal" }: SolidArgs): void {
   b.masses.push({ x, z, hw, hd, y0: 0, y1, slot });
 }
 
@@ -29,7 +33,7 @@ function solid(b: Build, x: number, z: number, hw: number, hd: number, y1: numbe
  * A parked vehicle at (x, z) of the building's frame, turned `turn` from facing +z, standing on y: its body, its
  * glass, a patrol car's light bar. Solid (a car hits it) when it's on the ground.
  */
-export function vehicle(b: Build, kind: VehicleKind, x: number, z: number, turn: number, i: number, y = 0, paint?: SlotName): void {
+export function vehicle(b: Build, { kind, x, z, turn, i, y = 0, paint }: VehiclePlacement): void {
   const c = Math.abs(dcos(turn)), s = Math.abs(dsin(turn)), o = { turn };
   // (Nothing parks off its lot: a vehicle that would stand outside the envelope isn't there.)
   const [lw, ld] = kind === "truck" ? [1.25, 7.5] : kind === "bus" ? [1.3, 6] : kind === "ambulance" ? [1.05, 2.9] : [0.9, 2.2];
@@ -68,11 +72,11 @@ export function vehicle(b: Build, kind: VehicleKind, x: number, z: number, turn:
       if (kind === "patrol") addBox(b, 0, x, y + 0.62, z, 0.92, 0.12, 1.4, "darkGlass", o);
     }
   }
-  if (y < 0.01) solid(b, x, z, hw * c + hd * s, hw * s + hd * c, h, slot);
+  if (y < 0.01) solid(b, { x, z, hw: hw * c + hd * s, hd: hw * s + hd * c, y1: h, slot });
 }
 
 /** A lamp mast in a lot: a pole, a sodium head, its pool of light. */
-export function mast(b: Build, x: number, z: number, h: number, head: SlotName = "sodium"): void {
+export function mast(b: Build, { x, z, h, head = "sodium" }: LotMast): void {
   addBox(b, 1, x, h / 2, z, 0.14, h / 2, 0.14, "metal");
   addBox(b, 1, x, h + 0.1, z, 0.9, 0.12, 0.35, head);
   const [wx, , wz] = toWorld(b, x, 0, z);
@@ -84,7 +88,7 @@ export function mast(b: Build, x: number, z: number, h: number, head: SlotName =
  * A parking lot's rows between x0..x1 and z0..z1: a dark surface, bays in rows (cars nosed in, facing alternate
  * ways, `fill` of them taken), lamp masts on the row ends. Returns how many rows it laid.
  */
-export function parkingRows(b: Build, x0: number, x1: number, z0: number, z1: number, fill: number, lamps = true): number {
+export function parkingRows(b: Build, { x0, x1, z0, z1, fill, lamps = true }: ParkingRows): number {
   if (x1 - x0 < 6 || z1 - z0 < 5.4) return 0;
   addBox(b, 1, (x0 + x1) / 2, 0.03, (z0 + z1) / 2, (x1 - x0) / 2, 0.03, (z1 - z0) / 2, "roof");
   const rows = Math.max(1, Math.floor((z1 - z0 + 1) / 6.4)), cols = Math.max(1, Math.floor((x1 - x0 - 1) / 2.8));
@@ -95,10 +99,10 @@ export function parkingRows(b: Build, x0: number, x1: number, z0: number, z1: nu
       const x = x0 + w * (k + 0.5), i = r * 64 + k;
       // (The bay's painted line on its left.)
       addBox(b, 0, x - w / 2, 0.07, z, 0.06, 0.02, 2.4, "trim");
-      if (b.D.u("bayTaken", i) < fill) vehicle(b, "car", x, z + (b.D.flat("bayJog", i) * 0.25), turn + b.D.flat("bayYaw", i) * 0.05, i);
+      if (b.D.u("bayTaken", i) < fill) vehicle(b, { kind: "car", x, z: z + (b.D.flat("bayJog", i) * 0.25), turn: turn + b.D.flat("bayYaw", i) * 0.05, i });
     }
   }
-  if (lamps) for (let r = 0; r < rows; r += 2) for (const x of [x0 + 0.4, x1 - 0.4]) if (x1 - x0 > 16 || x === x0 + 0.4) mast(b, x, z0 + pitch * (r + 0.5), 9);
+  if (lamps) for (let r = 0; r < rows; r += 2) for (const x of [x0 + 0.4, x1 - 0.4]) if (x1 - x0 > 16 || x === x0 + 0.4) mast(b, { x, z: z0 + pitch * (r + 0.5), h: 9 });
   return rows;
 }
 
@@ -125,14 +129,14 @@ const showroom: Op<"showroom"> = (b) => {
       const i = r * 64 + k, x = s.x - s.hw + 1.5 + pitch * (k + 0.5);
       if (r === rows - 1 && k === (aisle === 0 ? cols - 1 : 0) && s.hw > 7) {
         // (The plinth: a low stage with the car of the month on it.)
-        solid(b, x, z, 2.2, 2.9, 0.55, "concreteLight");
+        solid(b, { x, z, hw: 2.2, hd: 2.9, y1: 0.55, slot: "concreteLight" });
         addBox(b, 1, x, 0.275, z, 2.2, 0.275, 2.9, "concreteLight");
-        vehicle(b, "car", x, z, 0.6, i, 0.55);
+        vehicle(b, { kind: "car", x, z, turn: 0.6, i, y: 0.55 });
         if (!b.derelict) addBox(b, 0, x, 0.6, z + 2.95, 2.2, 0.05, 0.05, b.neon);
         continue;
       }
       if (b.D.u("onShow", i) < (b.derelict ? 0.85 : 0.12)) continue;
-      vehicle(b, "car", x, z, turn, i);
+      vehicle(b, { kind: "car", x, z, turn, i });
     }
   }
   // Bunting: poles along the front, pennant lines strung between them, flags on top.
@@ -144,7 +148,7 @@ const showroom: Op<"showroom"> = (b) => {
       addBox(b, 0, x + 0.5, ph - 0.4, zf, 0.45, 0.3, 0.02, k % 2 ? b.neon : "trim");
       if (k < n) addBox(b, 0, x + (s.hw - 0.6) / n, ph - 1.2, zf, (s.hw - 0.6) / n, 0.05, 0.04, k % 2 ? "trim" : b.neon);
     }
-    if (rows > 1) for (const sx of [-1, 1]) mast(b, s.x + sx * (s.hw - 0.4), za + 2.8, 9, "led");
+    if (rows > 1) for (const sx of [-1, 1]) mast(b, { x: s.x + sx * (s.hw - 0.4), z: za + 2.8, h: 9, head: "led" });
   }
 };
 
@@ -173,7 +177,7 @@ const bigbox: Op<"bigbox"> = (b, op) => {
   addBox(b, 1, s.x, h - 0.4, front + 0.1, hw + 0.1, 0.4, 0.1, "trim");
   addBox(b, 0, s.x - hw - 0.3, 1.8, z0 - hd * 0.4, 0.3, 1.6, 2, "corrugated");
   // The lot: rows from the drive along the front to the road, lamp masts, a cart corral or two.
-  const rows = parkingRows(b, s.x - s.hw + 0.5, s.x + s.hw - 0.5, front + 5, s.z + s.hd - 2, b.derelict ? 0.05 : within(b.D, "busy", [0.3, 0.6]));
+  const rows = parkingRows(b, { x0: s.x - s.hw + 0.5, x1: s.x + s.hw - 0.5, z0: front + 5, z1: s.z + s.hd - 2, fill: b.derelict ? 0.05 : within(b.D, "busy", [0.3, 0.6]) });
   // (The corrals stand along the drive, either side of the doors.)
   for (let k = 0; k < (rows ? 2 : 0); k += 1) {
     const x = ex + (k ? 1 : -1) * (ew + 4), z = front + 3.4;
@@ -211,11 +215,11 @@ const drivethru: Op<"drivethru"> = (b) => {
   if (!b.derelict) addBox(b, 1, mx, 1.9, mz, 0.08, 0.8, 1.1, "backlit");
   // Cars: a queue in the lane, a few parked out front.
   const queue = b.derelict ? 0 : count(b.D, "queue", [0, 3]);
-  for (let k = 0; k < queue; k += 1) vehicle(b, "car", lx, bz + hd - 1 - k * 5.4, Math.PI, 200 + k);
+  for (let k = 0; k < queue; k += 1) vehicle(b, { kind: "car", x: lx, z: bz + hd - 1 - k * 5.4, turn: Math.PI, i: 200 + k });
   const room = s.z + s.hd - front - 1;
   if (room > 5.5) {
     const n = Math.floor((2 * hw + 2) / 2.8);
-    for (let k = 0; k < n; k += 1) if (b.D.u("eatIn", k) < (b.derelict ? 0.1 : 0.45)) vehicle(b, "car", bx - hw + 1.4 + k * 2.8, front + 3, Math.PI, 300 + k);
+    for (let k = 0; k < n; k += 1) if (b.D.u("eatIn", k) < (b.derelict ? 0.1 : 0.45)) vehicle(b, { kind: "car", x: bx - hw + 1.4 + k * 2.8, z: front + 3, turn: Math.PI, i: 300 + k });
   }
 };
 
@@ -239,9 +243,9 @@ const bays: Op<"bays"> = (b, op) => {
     // (What's in the bay: a car waiting its turn, an engine, a bus nosed in.)
     if (b.derelict) return;
     const ahead = b.D.u("waiting", k);
-    if (bus) { if (ahead < 0.7) vehicle(b, "bus", x, front + 6.6, Math.PI, 500 + k); }
-    else if (fire) { if (openDoor || ahead < 0.2) vehicle(b, "truck", x, front + 7.8, 0, 500 + k, 0, "redBrick"); }
-    else if (ahead < 0.6) vehicle(b, "car", x, front + 3, Math.PI + b.D.flat("wait", k) * 0.15, 500 + k);
+    if (bus) { if (ahead < 0.7) vehicle(b, { kind: "bus", x, z: front + 6.6, turn: Math.PI, i: 500 + k }); }
+    else if (fire) { if (openDoor || ahead < 0.2) vehicle(b, { kind: "truck", x, z: front + 7.8, turn: 0, i: 500 + k, paint: "redBrick" }); }
+    else if (ahead < 0.6) vehicle(b, { kind: "car", x, z: front + 3, turn: Math.PI + b.D.flat("wait", k) * 0.15, i: 500 + k });
   });
   if (fire && !b.derelict) {
     // (Red trim along the top, the hose tower at one end.)
@@ -258,7 +262,7 @@ const bays: Op<"bays"> = (b, op) => {
       addCapsule(b, 0, [x, 0.36, front + 0.9], [x, top, front + 0.9], 0.36, "roof");
     }
   }
-  if (bus) for (let k = 0; k < 2; k += 1) mast(b, s.x + (k ? 1 : -1) * (s.hw - 0.5), front + apron * 0.5, 10);
+  if (bus) for (let k = 0; k < 2; k += 1) mast(b, { x: s.x + (k ? 1 : -1) * (s.hw - 0.5), z: front + apron * 0.5, h: 10 });
 };
 
 /** A car wash: a long tunnel down one side, its mouth to the road, brushes, arches over it; vacuum bays down the other. */
@@ -282,14 +286,14 @@ const carwash: Op<"carwash"> = (b) => {
   }
   // The queue at the mouth, the vacuum bays down the other side under their canopy.
   const q = lit ? count(b.D, "washQueue", [0, 2]) : 0;
-  for (let k = 0; k < q; k += 1) { const z = mouth + 3 + k * 5.2; if (z < s.z + s.hd - 2.3) vehicle(b, "car", tx, z, Math.PI, 700 + k); }
+  for (let k = 0; k < q; k += 1) { const z = mouth + 3 + k * 5.2; if (z < s.z + s.hd - 2.3) vehicle(b, { kind: "car", x: tx, z, turn: Math.PI, i: 700 + k }); }
   const vx = s.x - side * (s.hw - 1.6), room = 2 * s.hw - 2 * hw - 1;
   if (room > 5) {
     const n = Math.max(2, Math.floor((2 * hd) / 4));
     for (let k = 0; k <= n; k += 1) addBox(b, 0, vx, 1.4, tz - hd + (2 * hd * k) / n, 0.2, 1.4, 0.2, "metal");
     addBox(b, 1, vx + side * 1, 3, tz, 1.4, 0.12, hd, "metal");
     if (lit) addBox(b, 1, vx + side * 1, 2.86, tz, 1.3, 0.03, hd - 0.2, "led");
-    for (let k = 0; k < n; k += 1) if (lit && b.D.u("vacuum", k) < 0.35) vehicle(b, "car", vx + side * 2.6, tz - hd + (2 * hd * (k + 0.5)) / n, side > 0 ? Math.PI / 2 : -Math.PI / 2, 750 + k);
+    for (let k = 0; k < n; k += 1) if (lit && b.D.u("vacuum", k) < 0.35) vehicle(b, { kind: "car", x: vx + side * 2.6, z: tz - hd + (2 * hd * (k + 0.5)) / n, turn: side > 0 ? Math.PI / 2 : -Math.PI / 2, i: 750 + k });
   }
 };
 
@@ -299,7 +303,7 @@ const parking: Op<"parking"> = (b) => {
   addMass(b, { x: bx, z: s.z + s.hd - 1.8, hw: 1.2, hd: 1.2, y0: 0, y1: 2.6, slot: b.wall });
   if (!b.derelict) addBox(b, 0, bx, 1.6, s.z + s.hd - 0.55, 0.9, 0.5, 0.05, "shopWarm");
   addBox(b, 1, bx, 2.75, s.z + s.hd - 1.8, 1.5, 0.15, 1.5, "roof");
-  parkingRows(b, s.x - s.hw + 0.3, s.x + s.hw - 0.3, s.z - s.hd + 0.3, s.z + s.hd - 3.6, b.derelict ? 0.08 : within(b.D, "full", [0.45, 0.85]));
+  parkingRows(b, { x0: s.x - s.hw + 0.3, x1: s.x + s.hw - 0.3, z0: s.z - s.hd + 0.3, z1: s.z + s.hd - 3.6, fill: b.derelict ? 0.08 : within(b.D, "full", [0.45, 0.85]) });
 };
 
 /** Vehicles parked in front of the building (its first mass): a police station's patrol cars, a hospital's ambulances, a motel's guests. */
@@ -312,7 +316,7 @@ const forecourt: Op<"forecourt"> = (b, op) => {
   const len = big ? 13 : op.vehicle === "ambulance" ? 6.2 : 4.8, pitch = big ? 3.4 : op.vehicle === "ambulance" ? 3 : 2.8;
   if (z1 - z0 < len) return;
   const n = Math.floor((2 * s.hw - 2) / pitch), z = z0 + len / 2 + (big ? 0 : 0.2);
-  for (let k = 0; k < n; k += 1) if (!b.derelict && b.D.u("court", k) < fill) vehicle(b, op.vehicle, s.x - s.hw + 1 + pitch * (k + 0.5), z, Math.PI, 900 + k);
+  for (let k = 0; k < n; k += 1) if (!b.derelict && b.D.u("court", k) < fill) vehicle(b, { kind: op.vehicle, x: s.x - s.hw + 1 + pitch * (k + 0.5), z, turn: Math.PI, i: 900 + k });
 };
 
 /** A trailer park: an office at the gate, rows of trailers on blocks, a car by some, trees between. */
@@ -332,7 +336,7 @@ const trailers: Op<"trailers"> = (b) => {
     addBox(b, 1, tx, 1.75, z, 1.3, 1.35, hd, t.slot, { grid: true });
     addBox(b, 0, tx, 0.2, z, 1.1, 0.2, hd - 0.4, "concreteDark");
     addBox(b, 0, tx + 1.7, 0.35, z + hd * 0.3, 0.45, 0.35, 1.2, "timber");
-    if (b.D.u("trailerCar", i) < 0.5) vehicle(b, "car", x + 2.4, z - hd * 0.3, 0, 1000 + i);
+    if (b.D.u("trailerCar", i) < 0.5) vehicle(b, { kind: "car", x: x + 2.4, z: z - hd * 0.3, turn: 0, i: 1000 + i });
     else if (b.D.u("trailerTree", i) < 0.6) addPlant(b, b.D.u("trailerTreeKind", i) < 0.7 ? "tree" : "bush", x + 2.4, 0, z - hd * 0.3, 0.7, Math.floor(b.D.u("trailerSeed", i) * 1e6));
   }
 };

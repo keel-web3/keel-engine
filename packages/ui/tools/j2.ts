@@ -23,7 +23,9 @@ const save = (name: string, b: Bitmap, scale: number) => { writeFileSync(resolve
 
 const BG = rgba(22, 24, 30), INK = rgba(232, 234, 240), DIM = rgba(130, 136, 150);
 const label = generateFont(generateTheme({ seed: 1, culture: "clean" }).type.font, 7);
-function text(b: Bitmap, font: PixelFont, s: string, x: number, y: number, c: Rgba): number {
+type TextOptions = { readonly bitmap: Bitmap; readonly font: PixelFont; readonly value: string; readonly x: number; readonly y: number; readonly color: Rgba };
+
+function text({ bitmap: b, font, value: s, x, y, color: c }: TextOptions): number {
   let pen = x;
   for (const ch of s) {
     const g = glyphOf(font, ch.codePointAt(0)!)!;
@@ -55,12 +57,12 @@ const glyphSheet = (cultures: readonly string[]): Bitmap => {
   fillRect(b, 0, 0, b.w, b.h, BG);
   let y = 6;
   cultures.forEach((culture, i) => {
-    text(b, label, culture.toUpperCase(), 4, y + 7, DIM);
+    text({ bitmap: b, font: label, value: culture.toUpperCase(), x: 4, y: y + 7, color: DIM });
     y += 12;
     for (const f of fonts[i]!) {
-      text(b, label, `${f.size}px`, 4, y + f.ascent, DIM);
-      const x = text(b, f, SAMPLE[0]!, 36, y + f.ascent, INK);
-      text(b, f, SAMPLE[1]!, Math.max(x + 16, 250), y + f.ascent, INK);
+      text({ bitmap: b, font: label, value: `${f.size}px`, x: 4, y: y + f.ascent, color: DIM });
+      const x = text({ bitmap: b, font: f, value: SAMPLE[0]!, x: 36, y: y + f.ascent, color: INK });
+      text({ bitmap: b, font: f, value: SAMPLE[1]!, x: Math.max(x + 16, 250), y: y + f.ascent, color: INK });
       y += f.lineHeight + 4;
     }
     y += 6;
@@ -98,7 +100,7 @@ for (const c of CULTURES) {
     const w = world(ui.width, h);
     blit(b, w, 0, 0, w.w, w.h, 0, i * (h + 12) + 10);
     over(b, ui, 0, i * (h + 12) + 10, { x: 0, y: y0, w: ui.width, h });
-    text(b, label, CULTURES[i]!.toUpperCase(), 4, i * (h + 12) + 8, INK);
+    text({ bitmap: b, font: label, value: CULTURES[i]!.toUpperCase(), x: 4, y: i * (h + 12) + 8, color: INK });
   });
   save("consoles.png", b, 2);
 }
@@ -112,7 +114,7 @@ for (const c of CULTURES) {
   CULTURES.forEach((c, r) => {
     const theme = generateTheme({ seed: 3, culture: c });
     const y = 12 + r * (cell + 4);
-    text(b, label, c.toUpperCase(), 4, y + 14, DIM);
+    text({ bitmap: b, font: label, value: c.toUpperCase(), x: 4, y: y + 14, color: DIM });
     COMMAND_ICONS.forEach((name, i) => {
       // (Each on its button's face, its colours kept 3:1 off it, as the console draws it.)
       const face = frameColours(theme, "button", "normal").fill;
@@ -120,7 +122,7 @@ for (const c of CULTURES) {
       for (const [k, size] of [[0, 16], [1, 24]] as const) { const ic = iconBitmap(name, size, theme, { seed: 7, variant: 0, on: face }); blit(b, ic, 0, 0, ic.w, ic.h, 80 + i * cell * 2 + k * (cell - 8), y + (cell - size) / 2); }
     });
   });
-  COMMAND_ICONS.forEach((name, i) => text(b, label, name.slice(0, 7), 80 + i * cell * 2, 9, DIM));
+  COMMAND_ICONS.forEach((name, i) => text({ bitmap: b, font: label, value: name.slice(0, 7), x: 80 + i * cell * 2, y: 9, color: DIM }));
   save("icons.png", b, 3);
 }
 

@@ -200,7 +200,7 @@ export async function builderPage(out: HTMLElement): Promise<Record<string, unkn
   const liveLabel = document.createElement("div");
   out.prepend(Object.assign(document.createElement("h3"), { textContent: "live: an op list drawing" }), liveCanvas, liveLabel);
   const lg = liveCanvas.getContext("2d")!;
-  const replay = async (name: string, session: Session, ops: readonly AgentOp[], perFrame: number, frames: number, yaw: number): Promise<void> => {
+  const replay = async (name: string, session: Session, ops: readonly AgentOp[], { perFrame, frames, yaw }: { perFrame: number; frames: number; yaw: number }): Promise<void> => {
     const live = livePreview(session);
     const strip: Array<{ img: ImageData; label: string }> = [];
     const snapAt = new Set(Array.from({ length: frames }, (_, i) => Math.round(((i + 1) / frames) * ops.length) - 1));
@@ -229,7 +229,7 @@ export async function builderPage(out: HTMLElement): Promise<Record<string, unkn
     save(`builder-live-${name}`, sheet(strip, 4, 1));
   };
   const critter = generate("critter", "3", { plan: "quadruped" });
-  await replay("voxels", createSession(), [...opsOf(critter.model), ...Object.entries(critter.colours).map(([role, colour]): AgentOp => ({ op: "look", role, colour: [...colour] }))], 2, 8, 0.7);
+  await replay("voxels", createSession(), [...opsOf(critter.model), ...Object.entries(critter.colours).map(([role, colour]): AgentOp => ({ op: "look", role, colour: [...colour] }))], { perFrame: 2, frames: 8, yaw: 0.7 });
   const hat = attributeFromVoxels((() => { const m = createVoxels({ unit: 0.02 }); const e = createEditor(m, { symmetry: { mode: "xz" } }); e.box([0, 0, 0], [5, 0, 5], "dark"); e.box([0, 1, 0], [3, 8, 3], "dark"); e.box([0, 2, 0], [3, 2, 3], "accent"); return m; })(), { id: "top-hat", slot: "head", fill: 0.8 });
   await replay("character", createSession(undefined, { attributes: [hat] }), [
     { op: "character", kind: "anthro", species: "fox", seed: "7" },
@@ -244,7 +244,7 @@ export async function builderPage(out: HTMLElement): Promise<Record<string, unkn
     { op: "part", id: "badge", shape: "box", on: "chest", c: [0.25, 0.1, 0.15], h: [0.12, 0.12, 0.08], role: "trim" },
     { op: "wear", attribute: "top-hat" },
     { op: "proportion", name: "headR", scale: 1.3 },
-  ], 1, 8, 1.25);
+  ], { perFrame: 1, frames: 8, yaw: 1.25 });
 
   // 4. The op list end to end: an agent's ops -> an entity -> its pack file.
   const built = buildSession(runOps([{ op: "generate", kind: "critter", seed: "3", plan: "quadruped" }, { op: "rig", as: "quadruped" }, { op: "target", as: "entity", id: "blocky-beast" }]).session);

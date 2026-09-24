@@ -198,7 +198,8 @@ export async function bench(canvas: HTMLCanvasElement, log: (s: string) => void,
   const rows: Row[] = [];
   const sprites = makeSprites();
   const { colours, ramps } = particlePalette();
-  const run = async (mode: string, w: number, h: number, viewMetres: number, units: number, make: (pool: ParticlePool, world: World) => (s: number) => void, poolOpts: Parameters<typeof createParticlePool>[0], shot: string | null) => {
+  type RunOptions = { mode: string; w: number; h: number; viewMetres: number; units: number; make: (pool: ParticlePool, world: World) => (s: number) => void; poolOpts: Parameters<typeof createParticlePool>[0]; shot: string | null };
+  const run = async ({ mode, w, h, viewMetres, units, make, poolOpts, shot }: RunOptions) => {
     const world = makeWorld(units, 3);
     const sr = createSpriteRenderer(canvas, { width: w, height: h, capacity: 65536 });
     sr.setPages(sprites.pages);
@@ -249,17 +250,17 @@ export async function bench(canvas: HTMLCanvasElement, log: (s: string) => void,
     pr.dispose();
   };
   // (A run thrown away first: the JIT and the driver's shader cache.)
-  await run("warm-up", 480, 270, 72, 3000, (pool, world) => battle(pool, world, [MAP / 2, MAP / 2]), { capacity: 65536, emitters: 8192 }, null);
+  await run({ mode: "warm-up", w: 480, h: 270, viewMetres: 72, units: 3000, make: (pool, world) => battle(pool, world, [MAP / 2, MAP / 2]), poolOpts: { capacity: 65536, emitters: 8192 }, shot: null });
   rows.length = 0;
   // The battle, the same framing at three resolutions: LOD does the rest.
-  for (const [w, h] of SIZES) await run("battle", w, h, 72, 3000, (pool, world) => battle(pool, world, [MAP / 2, MAP / 2]), { capacity: 65536, emitters: 8192 }, `battle-${w}x${h}`);
+  for (const [w, h] of SIZES) await run({ mode: "battle", w, h, viewMetres: 72, units: 3000, make: (pool, world) => battle(pool, world, [MAP / 2, MAP / 2]), poolOpts: { capacity: 65536, emitters: 8192 }, shot: `battle-${w}x${h}` });
   // The stress: ~100k live, LOD and pressure off, the whole map in view, then close up.
   const stressPool = { capacity: 131072, emitters: 8192, minPixels: 0, pressure: false, reserve: [1, 1, 1, 1] } as const;
-  for (const [w, h] of SIZES) await run("stress-map", w, h, 400, 2000, (pool) => stress(pool, 100000, [MAP / 2, MAP / 2, MAP / 2, MAP / 2]), stressPool, w === 1920 ? "stress-map-1920x1080" : null);
-  for (const [w, h] of SIZES) await run("stress-close", w, h, 72, 2000, (pool) => stress(pool, 100000, [MAP / 2, MAP / 2, 34, 30]), stressPool, w === 1920 ? "stress-close-1920x1080" : null);
+  for (const [w, h] of SIZES) await run({ mode: "stress-map", w, h, viewMetres: 400, units: 2000, make: (pool) => stress(pool, 100000, [MAP / 2, MAP / 2, MAP / 2, MAP / 2]), poolOpts: stressPool, shot: w === 1920 ? "stress-map-1920x1080" : null });
+  for (const [w, h] of SIZES) await run({ mode: "stress-close", w, h, viewMetres: 72, units: 2000, make: (pool) => stress(pool, 100000, [MAP / 2, MAP / 2, 34, 30]), poolOpts: stressPool, shot: w === 1920 ? "stress-close-1920x1080" : null });
   // And 50k, at 1920×1080.
-  await run("stress-map 50k", 1920, 1080, 400, 2000, (pool) => stress(pool, 50000, [MAP / 2, MAP / 2, MAP / 2, MAP / 2]), stressPool, null);
-  await run("stress-close 50k", 1920, 1080, 72, 2000, (pool) => stress(pool, 50000, [MAP / 2, MAP / 2, 34, 30]), stressPool, null);
+  await run({ mode: "stress-map 50k", w: 1920, h: 1080, viewMetres: 400, units: 2000, make: (pool) => stress(pool, 50000, [MAP / 2, MAP / 2, MAP / 2, MAP / 2]), poolOpts: stressPool, shot: null });
+  await run({ mode: "stress-close 50k", w: 1920, h: 1080, viewMetres: 72, units: 2000, make: (pool) => stress(pool, 50000, [MAP / 2, MAP / 2, 34, 30]), poolOpts: stressPool, shot: null });
   return rows;
 }
 
@@ -383,4 +384,3 @@ export async function damageScene(canvas: HTMLCanvasElement): Promise<void> {
   }
   pr.dispose();
 }
-

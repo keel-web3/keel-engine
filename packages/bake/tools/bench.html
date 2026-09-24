@@ -5,7 +5,11 @@
 <canvas id="c"></canvas><pre id="out">running…</pre>
 <script type="module">
   import { bench } from "./dist/bench.js";
-  const c = document.getElementById("c"); const r = [...await bench(c, [4000, 20000], [[480, 270], [1920, 1080]], 30), ...await bench(c, [4000, 10000, 20000], [[480, 270], [960, 540], [1920, 1080]], 400)];
+  const c = document.getElementById("c");
+  const r = [
+    ...await bench({ canvas: c, counts: [4000, 20000], sizes: [[480, 270], [1920, 1080]], viewMetres: 30 }),
+    ...await bench({ canvas: c, counts: [4000, 10000, 20000], sizes: [[480, 270], [960, 540], [1920, 1080]], viewMetres: 400 }),
+  ];
   globalThis.benchResults = r;
   document.getElementById("out").textContent = r.map((x) => `${String(x.units).padStart(6)} units  ${x.size.padEnd(16)} visible ${String(x.visible).padStart(6)}  cpu ${x.msCpu} ms  frame ${x.msFrame} ms  ~${x.fps} fps`).join("\n");
 </script>

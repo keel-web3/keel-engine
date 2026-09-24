@@ -82,11 +82,13 @@ export function draw(px: PixelRenderer, scene: Pick<Scene, "colours" | "ramps" |
   return img;
 }
 
+type View = { size: [number, number]; eye: V3; target: V3; waterY?: number; screen?: 2 | 4 | 8 };
+
 /**
  * A scene too big for one raymarch (the renderer holds 256 boxes): the world alone, then each thing with it,
  * far to near, copied over where it shows -- its own pixels always, its shadow only onto bare ground.
  */
-export function composite(px: PixelRenderer, things: readonly Drawn[], world: Parameters<typeof sceneOf>[1], view: { size: [number, number]; eye: V3; target: V3; waterY?: number; screen?: 2 | 4 | 8 }): ImageData {
+export function composite({ px, things, world, view }: { px: PixelRenderer; things: readonly Drawn[]; world: Parameters<typeof sceneOf>[1]; view: View }): ImageData {
   // (Each thing in a scene of its own -- its palette, its materials -- over the same world: palettes never run out.)
   const bare = sceneOf([], world);
   const base = draw(px, { ...bare, boxes: bare.world, capsules: [] }, view);
@@ -124,7 +126,7 @@ export function frame(b: readonly number[], yaw = 0.55, pitch = 0.5): { eye: V3;
 export interface Cell { img: ImageData; label: string }
 
 /** A sheet of cells, each a picture and its label, scaled by `scale`. */
-export function sheet(cells: readonly Cell[], cols: number, scale: number, title = ""): HTMLCanvasElement {
+export function sheet({ cells, cols, scale, title = "" }: { cells: readonly Cell[]; cols: number; scale: number; title?: string }): HTMLCanvasElement {
   const cw = cells[0]!.img.width * scale, ch = cells[0]!.img.height * scale;
   const pad = 6, labelH = 14, top = title ? 20 : 0;
   const c = document.createElement("canvas");
@@ -164,7 +166,7 @@ function lookOfDef(pack: ContentPack, def: StyledObjectDef, seed: string, profil
   return lookFor(def, seed, profile ? { profile } : {});
 }
 
-export function assetCells(px: PixelRenderer, pack: ContentPack, def: StyledObjectDef, { size, seed, pins = {}, profile, label }: { size: number; seed: string; pins?: Record<string, unknown>; profile?: string; label?: string }): Cell[] {
+export function assetCells({ px, pack, def, size, seed, pins = {}, profile, label }: { px: PixelRenderer; pack: ContentPack; def: StyledObjectDef; size: number; seed: string; pins?: Record<string, unknown>; profile?: string; label?: string }): Cell[] {
   const cells: Cell[] = [];
   const look = lookOfDef(pack, def, seed, profile);
   const builds = (["pixel", "voxel"] as const).map((style) => def.build({ seed, pins, style }));
@@ -278,7 +280,7 @@ function bridgeScene(px: PixelRenderer): { canvas: HTMLCanvasElement; report: un
   // Banks either side of a river 12 m wide, the bed under water.
   const extra = [{ c: [0, -1, 26] as V3, h: [60, 1, 20] as V3 }, { c: [0, -0.4, -26] as V3, h: [60, 1, 20] as V3 }, { c: [0, -3, 0] as V3, h: [60, 0.5, 8] as V3 }];
   const view = { size: [480, 240] as [number, number], eye: [0, 17, 24] as V3, target: [0, -0.5, 0] as V3, waterY: -0.9, screen: 4 as const };
-  const img = composite(px, things, { extra, ground: [82, 104, 62] }, view);
+  const img = composite({ px, things, world: { extra, ground: [82, 104, 62] }, view });
   // (Every bridge's two end sockets, where they landed against where they were asked to.)
   const report = things.slice(0, 4).map((t, i) => {
     const s = t.inst.def.sockets;
@@ -312,7 +314,7 @@ function villageRecords(): ContentRecord[] {
 
 function villageScene(px: PixelRenderer, style: "pixel" | "voxel"): { canvas: HTMLCanvasElement; report: unknown } {
   const things = placeAll(villageRecords(), style);
-  const img = composite(px, things, { ground: [74, 96, 58] }, { size: [480, 300], eye: [-4, 30, 34], target: [0, 0, -1], screen: 4 });
+  const img = composite({ px, things, world: { ground: [74, 96, 58] }, view: { size: [480, 300], eye: [-4, 30, 34], target: [0, 0, -1], screen: 4 } });
   const keys = new Set(things.map((t) => t.built.key));
   return { canvas: big(img, 2), report: { things: things.length, shapes: keys.size, fellBack: things.filter((t) => t.built.fellBack).length } };
 }
@@ -333,7 +335,7 @@ function colonyScene(px: PixelRenderer): { canvas: HTMLCanvasElement; report: un
   for (const [k, [x, z]] of scatterPts(21, 10, [-26, -22, 26, 13], avoid).entries()) r.push({ pack: F, id: ["alien-tree", "crystal", "mushroom", "rock"][k % 4]!, seed: k, pins: {}, look: { profile: k % 4 === 2 ? "fungal" : "alien" }, pos: [x, 0, z], yaw: k });
   for (const [k, [x, z]] of scatterPts(22, 24, [-26, -20, 26, 13], avoid).entries()) r.push({ pack: F, id: "grass", seed: k % 5, pins: { height: 0.35 }, look: { profile: "alien" }, pos: [x, 0, z], yaw: k });
   const things = placeAll(r);
-  const img = composite(px, things, { ground: [70, 62, 84] }, { size: [480, 300], eye: [-4, 30, 34], target: [0, 0, -2], screen: 4 });
+  const img = composite({ px, things, world: { ground: [70, 62, 84] }, view: { size: [480, 300], eye: [-4, 30, 34], target: [0, 0, -2], screen: 4 } });
   return { canvas: big(img, 2), report: { things: things.length } };
 }
 
@@ -349,21 +351,21 @@ export async function showcasePage(out: HTMLElement, q: URLSearchParams): Promis
   const t0 = performance.now();
   if (want("foliage")) {
     for (const size of [128, 256] as const) {
-      const cells = foliage.objects.flatMap((def) => assetCells(px, foliage, def, { size, seed: "sheet-1" }));
-      show(out, `world-foliage-${size}`, sheet(cells, size === 128 ? 8 : 6, size === 128 ? 2 : 1, `packs/foliage: every kind, pixel | voxel (${size} px)`), save, `foliage ${size}`);
+      const cells = foliage.objects.flatMap((def) => assetCells({ px, pack: foliage, def, size, seed: "sheet-1" }));
+      show(out, `world-foliage-${size}`, sheet({ cells, cols: size === 128 ? 8 : 6, scale: size === 128 ? 2 : 1, title: `packs/foliage: every kind, pixel | voxel (${size} px)` }), save, `foliage ${size}`);
     }
     // Seasons: one oak and one bush through the profiles (looks only: the same baked shape).
-    const seasons = ["spring", "summer", "autumn", "winter", "dry", "alien"].flatMap((p) => assetCells(px, foliage, foliage.get("oak")!, { size: 128, seed: "season", pins: { crown: "round" }, profile: p, label: `oak ${p}` }).slice(0, 1));
-    show(out, "world-foliage-seasons", sheet(seasons, 6, 2, "one oak shape, six profiles (looks, not bakes)"), save, "seasons");
+    const seasons = ["spring", "summer", "autumn", "winter", "dry", "alien"].flatMap((p) => assetCells({ px, pack: foliage, def: foliage.get("oak")!, size: 128, seed: "season", pins: { crown: "round" }, profile: p, label: `oak ${p}` }).slice(0, 1));
+    show(out, "world-foliage-seasons", sheet({ cells: seasons, cols: 6, scale: 2, title: "one oak shape, six profiles (looks, not bakes)" }), save, "seasons");
   }
-  if (want("wind")) show(out, "world-wind", sheet(windStrip(px, 128), 8, 2, "wind: baked frames (sway clip) | the sprite shader's row shift on one baked picture"), save, "wind");
+  if (want("wind")) show(out, "world-wind", sheet({ cells: windStrip(px, 128), cols: 8, scale: 2, title: "wind: baked frames (sway clip) | the sprite shader's row shift on one baked picture" }), save, "wind");
   if (want("buildings")) {
     for (const size of [128, 256] as const) {
-      const cells = buildings.objects.flatMap((def) => assetCells(px, buildings, def, { size, seed: "sheet-1" }));
-      show(out, `world-buildings-${size}`, sheet(cells, size === 128 ? 8 : 6, size === 128 ? 2 : 1, `packs/buildings: every variant and piece, pixel | voxel (${size} px)`), save, `buildings ${size}`);
+      const cells = buildings.objects.flatMap((def) => assetCells({ px, pack: buildings, def, size, seed: "sheet-1" }));
+      show(out, `world-buildings-${size}`, sheet({ cells, cols: size === 128 ? 8 : 6, scale: size === 128 ? 2 : 1, title: `packs/buildings: every variant and piece, pixel | voxel (${size} px)` }), save, `buildings ${size}`);
     }
-    const cultures = ["village", "stone", "desert", "nordic", "scifi", "machine"].flatMap((p) => assetCells(px, buildings, buildings.get("cottage")!, { size: 128, seed: "culture", pins: { footprint: "L", floors: 2 }, profile: p, label: `cottage ${p}` }).slice(0, 1));
-    show(out, "world-buildings-cultures", sheet(cultures, 6, 2, "one cottage shape, six cultures (looks, not bakes)"), save, "cultures");
+    const cultures = ["village", "stone", "desert", "nordic", "scifi", "machine"].flatMap((p) => assetCells({ px, pack: buildings, def: buildings.get("cottage")!, size: 128, seed: "culture", pins: { footprint: "L", floors: 2 }, profile: p, label: `cottage ${p}` }).slice(0, 1));
+    show(out, "world-buildings-cultures", sheet({ cells: cultures, cols: 6, scale: 2, title: "one cottage shape, six cultures (looks, not bakes)" }), save, "cultures");
   }
   if (want("bridge")) {
     const r = bridgeScene(px);
