@@ -9,7 +9,7 @@ import { bench } from "../tools/bench.ts";
 
 test("a full HUD (60 buttons and text): a static frame costs ~nothing; an animated one a sliver of a 120 fps frame", () => {
   for (const [w, h, s] of [[1920, 1080, 3], [1920, 1080, 1]] as const) {
-    const r = bench(w, h, s, 200);
+    const r = bench({ width: w, height: h, scale: s, frames: 200 });
     console.log(`${r.size}: ${r.buttons} buttons, ${r.nodes} nodes; first frame ${r.firstMs.toFixed(1)} ms (fonts, icons, atlas); static ${(r.staticMs * 1000).toFixed(2)} µs/frame; animated ${r.animatedMs.toFixed(3)} ms/frame (${r.animatedPixels} px redrawn); full redraw ${r.fullMs.toFixed(2)} ms`);
     assert.ok(r.buttons >= 60, `${r.buttons} buttons`);
     // (Run alone -- node packages/ui/tools/bench.ts -- this machine measures ~0.4 µs static, ~0.3 ms animated,

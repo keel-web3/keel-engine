@@ -19,7 +19,15 @@ export interface BenchResult {
 }
 
 /** A full HUD: the generated one (command card, queue, a 16-unit group, idle, menu) plus a 20-button control-group and build bar. */
-export function fullHud(width: number, height: number, scale: number, culture = "industrial", seed: string | number = 7): Ui {
+type FullHudOptions = {
+  readonly width: number;
+  readonly height: number;
+  readonly scale: number;
+  readonly culture?: string;
+  readonly seed?: string | number;
+};
+
+export function fullHud({ width, height, scale, culture = "industrial", seed = 7 }: FullHudOptions): Ui {
   const hud = generateHud({ seed, culture, width: Math.ceil(width / scale), height: Math.ceil(height / scale), slots: { selection: { group: 16 }, resources: 4 } });
   const ui = createUi({ theme: hud.theme, width, height, scale });
   ui.load(hud.screen);
@@ -31,8 +39,10 @@ export function fullHud(width: number, height: number, scale: number, culture = 
 
 const time = (f: () => void, n: number): number => { const t0 = performance.now(); for (let i = 0; i < n; i += 1) f(); return (performance.now() - t0) / n; };
 
-export function bench(width: number, height: number, scale: number, frames = 240): BenchResult {
-  const ui = fullHud(width, height, scale);
+type BenchOptions = { readonly width: number; readonly height: number; readonly scale: number; readonly frames?: number };
+
+export function bench({ width, height, scale, frames = 240 }: BenchOptions): BenchResult {
+  const ui = fullHud({ width, height, scale });
   const t0 = performance.now();
   ui.render();
   const firstMs = performance.now() - t0;
@@ -63,7 +73,7 @@ export function bench(width: number, height: number, scale: number, frames = 240
 const argv1 = (globalThis as { process?: { argv: string[] } }).process?.argv[1];
 if (argv1 && import.meta.url === `file://${argv1}`) {
   for (const [w, h, s] of [[1920, 1080, 3], [1920, 1080, 1], [1440, 810, 3]] as const) {
-    const r = bench(w, h, s);
+    const r = bench({ width: w, height: h, scale: s });
     console.log(`${r.size.padEnd(16)} buttons ${r.buttons}  nodes ${r.nodes}  first ${r.firstMs.toFixed(1)} ms  static ${(r.staticMs * 1000).toFixed(1)} µs  animated ${r.animatedMs.toFixed(3)} ms (${r.animatedPixels} px/frame)  full redraw ${r.fullMs.toFixed(2)} ms`);
   }
 }
