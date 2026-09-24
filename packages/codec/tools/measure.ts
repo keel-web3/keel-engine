@@ -38,7 +38,8 @@ const plain = (v: unknown): unknown => (ArrayBuffer.isView(v) ? Array.from(v as 
 
 interface Row { name: string; note: string; json: number; jsonGz: number; codec: number; codecGz: number; exact: string }
 const rows: Row[] = [];
-function row<S extends Type<unknown>>(name: string, note: string, schema: S, value: Infer<S>, json: string, exact: string): Uint8Array {
+interface RowInput<S extends Type<unknown>> { name: string; note: string; schema: S; value: Infer<S>; json: string; exact: string }
+function row<S extends Type<unknown>>({ name, note, schema, value, json, exact }: RowInput<S>): Uint8Array {
   const bytes = encode(schema, value);
   // (Every row decodes back: the table is of documents that work.)
   const back = decode(schema, bytes);
@@ -50,12 +51,12 @@ function row<S extends Type<unknown>>(name: string, note: string, schema: S, val
 // ---------------------------------------------------------------- objects
 
 const pieces = PIECE_KEYS.flatMap((key) => Array.from({ length: 25 }, (_, i) => objectRecordOf(buildPiece(key, `0x${(i + 1).toString(16)}`) as unknown as ObjectDefLike)));
-row("object catalogue", `${pieces.length} pieces (12 kinds × 25 seeds)`, array(OBJECT), pieces, JSON.stringify(pieces), "to the mm");
+row({ name: "object catalogue", note: `${pieces.length} pieces (12 kinds × 25 seeds)`, schema: array(OBJECT), value: pieces, json: JSON.stringify(pieces), exact: "to the mm" });
 rows.push({ ...rows[rows.length - 1]!, name: "", note: "... against JSON at the same precision", json: Buffer.byteLength(JSON.stringify(roundDeep(pieces))), jsonGz: gz(JSON.stringify(roundDeep(pieces))) });
 
 const course = levelOf("7");
 const placed = placedRecordOf(course.objects as unknown as InstanceLike[]);
-row("WALLRUN course", `${course.objects.length} instances, ${placed.defs.length} definitions`, PLACED, placed, JSON.stringify(placed), "to the mm");
+row({ name: "WALLRUN course", note: `${course.objects.length} instances, ${placed.defs.length} definitions`, schema: PLACED, value: placed, json: JSON.stringify(placed), exact: "to the mm" });
 rows.push({ ...rows[rows.length - 1]!, name: "", note: "... against JSON at the same precision", json: Buffer.byteLength(JSON.stringify(roundDeep(placed))), jsonGz: gz(JSON.stringify(roundDeep(placed))) });
 
 // ---------------------------------------------------------------- the garden world
@@ -66,14 +67,14 @@ garden.simulate(10);
 for (let k = 0; k < 6; k += 1) garden.particles.emit("dust", [k - 3, 0.3, -k], { count: 8 });
 garden.simulate(0.2);
 const snap = garden.snapshot();
-row("garden world snapshot", `${snap.entities.length} entities, ${snap.particles.length} particles, 10.2 s in`, WORLD_SNAPSHOT, snap as never, JSON.stringify(snap), "exact");
-row("garden particles (save)", `${snap.particles.length} live particles`, PARTICLES, snap.particles as never, JSON.stringify(snap.particles), "exact");
+row({ name: "garden world snapshot", note: `${snap.entities.length} entities, ${snap.particles.length} particles, 10.2 s in`, schema: WORLD_SNAPSHOT, value: snap as never, json: JSON.stringify(snap), exact: "exact" });
+row({ name: "garden particles (save)", note: `${snap.particles.length} live particles`, schema: PARTICLES, value: snap.particles as never, json: JSON.stringify(snap.particles), exact: "exact" });
 
 const pool = createParticlePool({ capacity: 4096, emitters: 256, seed: 7, recipes: PRESETS });
 for (let k = 0; k < 12; k += 1) pool.emit(Object.keys(PRESETS)[k % Object.keys(PRESETS).length]!, k * 2, 0, k);
 for (let k = 0; k < 40; k += 1) pool.step(1 / 60);
 const poolSnap = plain(pool.save()) as Infer<typeof PARTICLE_POOL>;
-row("particle pool snapshot", `${pool.count} particles, 256 emitter slots`, PARTICLE_POOL, poolSnap, JSON.stringify(poolSnap), "exact (JSON: not -- Infinity becomes null)");
+row({ name: "particle pool snapshot", note: `${pool.count} particles, 256 emitter slots`, schema: PARTICLE_POOL, value: poolSnap, json: JSON.stringify(poolSnap), exact: "exact (JSON: not -- Infinity becomes null)" });
 
 // ---------------------------------------------------------------- the army
 
@@ -81,16 +82,16 @@ let t0 = now();
 const pop = armyPopulation("army", 10000);
 const popRec = populationRecordOf("army", pop as never);
 const popMs = now() - t0;
-const popBytes = row("army population (pack + looks)", `10,000 units, ${popRec.bodies.length} bodies, ${popRec.attributes.length} wearable shapes`, POPULATION, popRec, JSON.stringify(popRec), "exact");
+const popBytes = row({ name: "army population (pack + looks)", note: `10,000 units, ${popRec.bodies.length} bodies, ${popRec.attributes.length} wearable shapes`, schema: POPULATION, value: popRec, json: JSON.stringify(popRec), exact: "exact" });
 // (The same 10,000 units as a hybrid record: the recipe and the look re-rolls -- bake's populationOf makes every unit again.)
 const hybrid = recordOf(pop);
-row("army population as a hybrid record", `the same 10,000: recipe + ${hybrid.exceptions.length} units' re-rolls`, HYBRID_POPULATION, hybrid, JSON.stringify(popRec), "exact (regenerated)");
+row({ name: "army population as a hybrid record", note: `the same 10,000: recipe + ${hybrid.exceptions.length} units' re-rolls`, schema: HYBRID_POPULATION, value: hybrid, json: JSON.stringify(popRec), exact: "exact (regenerated)" });
 
 // ---------------------------------------------------------------- scripts
 
 const bc = compileScript(GUARD_SCRIPT);
-row("script: blocks", "a guard (4 handlers, 7 vars)", BLOCKS, GUARD_SCRIPT as never, JSON.stringify(GUARD_SCRIPT), "exact");
-row("script: bytecode", `the same, ${bc.handlers.reduce((a, h) => a + h.code.length, 0)} ops`, BYTECODE, bc, JSON.stringify(GUARD_SCRIPT), "exact (vs the blocks' JSON)");
+row({ name: "script: blocks", note: "a guard (4 handlers, 7 vars)", schema: BLOCKS, value: GUARD_SCRIPT as never, json: JSON.stringify(GUARD_SCRIPT), exact: "exact" });
+row({ name: "script: bytecode", note: `the same, ${bc.handlers.reduce((a, h) => a + h.code.length, 0)} ops`, schema: BYTECODE, value: bc, json: JSON.stringify(GUARD_SCRIPT), exact: "exact (vs the blocks' JSON)" });
 
 // ---------------------------------------------------------------- sound
 
@@ -112,18 +113,18 @@ try {
 if (nocturnes) {
   const { plans, recipes } = nocturnes;
   const one = JSON.stringify(plans[0]);
-  row("NOCTURNES music: 1 plan as recipe", "token 1", MUSIC_RECIPE, recipes[0]!, one, "the plan, exactly (scoreOf)");
-  row("NOCTURNES music: 1 plan as song", "token 1", SONG, songOf(plans[0] as never), one, "the plan, JSON-equal");
-  row("NOCTURNES music: 100 recipes", "tokens 1..100, one document", array(MUSIC_RECIPE), recipes, JSON.stringify(plans), "the plans, exactly");
-  row("NOCTURNES music: 100 songs", "tokens 1..100, one document", array(SONG), plans.map((p) => songOf(p as never)), JSON.stringify(plans), "the plans, JSON-equal");
+  row({ name: "NOCTURNES music: 1 plan as recipe", note: "token 1", schema: MUSIC_RECIPE, value: recipes[0]!, json: one, exact: "the plan, exactly (scoreOf)" });
+  row({ name: "NOCTURNES music: 1 plan as song", note: "token 1", schema: SONG, value: songOf(plans[0] as never), json: one, exact: "the plan, JSON-equal" });
+  row({ name: "NOCTURNES music: 100 recipes", note: "tokens 1..100, one document", schema: array(MUSIC_RECIPE), value: recipes, json: JSON.stringify(plans), exact: "the plans, exactly" });
+  row({ name: "NOCTURNES music: 100 songs", note: "tokens 1..100, one document", schema: array(SONG), value: plans.map((p) => songOf(p as never)), json: JSON.stringify(plans), exact: "the plans, JSON-equal" });
 }
 const WALLRUN = { name: "Night Water", energy: 0.65, darkness: 0.7, weather: ["waves", "wind"] } as const;
 const wallrunSpecs = Array.from({ length: 50 }, (_, i) => ({ ...WALLRUN, weather: [...WALLRUN.weather], hue: (i * 37.5) % 360 }));
 const wallrunPlans = wallrunSpecs.map((spec, i) => scoreOf(moodFor(spec), `wallrun-${i}`));
 const wallrunRecipes = wallrunSpecs.map((spec, i): Infer<typeof MUSIC_RECIPE> => ({ from: "game", seed: `wallrun-${i}`, spec }));
-row("WALLRUN music: 50 recipes", "moodFor spec + seed", array(MUSIC_RECIPE), wallrunRecipes, JSON.stringify(wallrunPlans), "the plans, exactly");
-row("WALLRUN music: 50 songs", "", array(SONG), wallrunPlans.map((p) => songOf(p as never)), JSON.stringify(wallrunPlans), "the plans, JSON-equal");
-row("WALLRUN sfx settings", "seed, style, body mapping, per-sound tuning", SFX_SETTINGS, WALLRUN_SFX, JSON.stringify(WALLRUN_SFX), "exact");
+row({ name: "WALLRUN music: 50 recipes", note: "moodFor spec + seed", schema: array(MUSIC_RECIPE), value: wallrunRecipes, json: JSON.stringify(wallrunPlans), exact: "the plans, exactly" });
+row({ name: "WALLRUN music: 50 songs", note: "", schema: array(SONG), value: wallrunPlans.map((p) => songOf(p as never)), json: JSON.stringify(wallrunPlans), exact: "the plans, JSON-equal" });
+row({ name: "WALLRUN sfx settings", note: "seed, style, body mapping, per-sound tuning", schema: SFX_SETTINGS, value: WALLRUN_SFX, json: JSON.stringify(WALLRUN_SFX), exact: "exact" });
 
 // ---------------------------------------------------------------- the builder (if it loads: it's being written)
 
@@ -133,11 +134,11 @@ try {
   const recs = models.map((m) => voxelRecordOf(m));
   const kv1 = models.reduce((a, m) => a + B.encodeVoxels(m).length, 0);
   const kv1gz = models.reduce((a, m) => a + gz(B.encodeVoxels(m)), 0);
-  const bytes = row("builder voxel models", `${models.length} generated (6 kinds × 3 seeds)`, array(VOXELS), recs, JSON.stringify(recs), "exact");
+  const bytes = row({ name: "builder voxel models", note: `${models.length} generated (6 kinds × 3 seeds)`, schema: array(VOXELS), value: recs, json: JSON.stringify(recs), exact: "exact" });
   rows.push({ name: "", note: `... the builder's own KV1 bytes: ${kv1} B (gz ${kv1gz} B, per model)`, json: kv1, jsonGz: kv1gz, codec: bytes.length, codecGz: gz(bytes), exact: "" });
   const OPS_SCHEMA = opListSchema(B.OPS as unknown as OpTable);
   const examples = Object.values(B.OPS as unknown as Record<string, { example: Record<string, unknown> }>).map((o) => o.example);
-  row("builder op list", `${examples.length} ops (every op's example)`, OPS_SCHEMA, examples as never, JSON.stringify(examples), "exact");
+  row({ name: "builder op list", note: `${examples.length} ops (every op's example)`, schema: OPS_SCHEMA, value: examples as never, json: JSON.stringify(examples), exact: "exact" });
 } catch (e) { console.error(`(the builder didn't load: ${(e as Error).message.split("\n")[0]}; its rows are skipped)`); }
 
 // ---------------------------------------------------------------- the table
