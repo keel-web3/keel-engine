@@ -14,6 +14,7 @@ import type { SlotName } from "./slots.ts";
 import type { MassOp, VehicleKind } from "./types.ts";
 
 type Op<K extends MassOp["op"]> = (b: Build, op: Extract<MassOp, { op: K }>) => void;
+type SolidArgs = { readonly x: number; readonly z: number; readonly hw: number; readonly hd: number; readonly y1: number; readonly slot?: SlotName };
 
 const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
 
@@ -21,7 +22,7 @@ const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.m
 const PAINTS: Readonly<Partial<Record<SlotName, number>>> = { trim: 3, metal: 3, darkGlass: 3, redBrick: 2, glassBlue: 2, concreteDark: 2, buffBrick: 1, glassBronze: 1, glassGreen: 1, concreteLight: 2 };
 
 /** A mass a car hits that's drawn another way (or not at all): its record only. */
-function solid(b: Build, x: number, z: number, hw: number, hd: number, y1: number, slot: SlotName = "metal"): void {
+function solid(b: Build, { x, z, hw, hd, y1, slot = "metal" }: SolidArgs): void {
   b.masses.push({ x, z, hw, hd, y0: 0, y1, slot });
 }
 
@@ -68,7 +69,7 @@ export function vehicle(b: Build, kind: VehicleKind, x: number, z: number, turn:
       if (kind === "patrol") addBox(b, 0, x, y + 0.62, z, 0.92, 0.12, 1.4, "darkGlass", o);
     }
   }
-  if (y < 0.01) solid(b, x, z, hw * c + hd * s, hw * s + hd * c, h, slot);
+  if (y < 0.01) solid(b, { x, z, hw: hw * c + hd * s, hd: hw * s + hd * c, y1: h, slot });
 }
 
 /** A lamp mast in a lot: a pole, a sodium head, its pool of light. */
@@ -125,7 +126,7 @@ const showroom: Op<"showroom"> = (b) => {
       const i = r * 64 + k, x = s.x - s.hw + 1.5 + pitch * (k + 0.5);
       if (r === rows - 1 && k === (aisle === 0 ? cols - 1 : 0) && s.hw > 7) {
         // (The plinth: a low stage with the car of the month on it.)
-        solid(b, x, z, 2.2, 2.9, 0.55, "concreteLight");
+        solid(b, { x, z, hw: 2.2, hd: 2.9, y1: 0.55, slot: "concreteLight" });
         addBox(b, 1, x, 0.275, z, 2.2, 0.275, 2.9, "concreteLight");
         vehicle(b, "car", x, z, 0.6, i, 0.55);
         if (!b.derelict) addBox(b, 0, x, 0.6, z + 2.95, 2.2, 0.05, 0.05, b.neon);
