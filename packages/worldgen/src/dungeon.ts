@@ -128,10 +128,11 @@ export const ROOM_TEMPLATES: readonly RoomTemplate[] = [
 // ---------------------------------------------------------------- the generators
 
 const blank = (w: number, d: number): Uint8Array => new Uint8Array(w * d);
-const carveRect = (c: Uint8Array, w: number, x: number, y: number, rw: number, rh: number, v: number = CELL.FLOOR): void => {
-  for (let j = y; j < y + rh; j += 1) for (let i = x; i < x + rw; i += 1) c[j * w + i] = v;
+const carveRect = (c: Uint8Array, w: number, room: Pick<Room, "x" | "y" | "w" | "h">, v: number = CELL.FLOOR): void => {
+  for (let j = room.y; j < room.y + room.h; j += 1) for (let i = room.x; i < room.x + room.w; i += 1) c[j * w + i] = v;
 };
-const carveL = (c: Uint8Array, w: number, ax: number, ay: number, bx: number, by: number, R: Rng): void => {
+const carveL = (c: Uint8Array, w: number, a: readonly [number, number], b: readonly [number, number], R: Rng): void => {
+  const [ax, ay] = a, [bx, by] = b;
   const horizFirst = R.chance(0.5);
   const put = (i: number, j: number): void => { if (c[j * w + i] === CELL.WALL) c[j * w + i] = CELL.CORRIDOR; };
   if (horizFirst) { for (let i = Math.min(ax, bx); i <= Math.max(ax, bx); i += 1) put(i, ay); for (let j = Math.min(ay, by); j <= Math.max(ay, by); j += 1) put(bx, j); }
@@ -149,7 +150,7 @@ function bsp(w: number, d: number, R: Rng, P: DungeonParams): { cells: Uint8Arra
       const rw = R.int(Math.max(4, Math.floor(n.w * 0.45)), Math.max(4, n.w - 2)), rh = R.int(Math.max(4, Math.floor(n.h * 0.45)), Math.max(4, n.h - 2));
       const rx = n.x + R.int(1, Math.max(1, n.w - rw - 1)), ry = n.y + R.int(1, Math.max(1, n.h - rh - 1));
       const room: Room = { id: rooms.length, x: rx, y: ry, w: Math.min(rw, n.x + n.w - 1 - rx), h: Math.min(rh, n.y + n.h - 1 - ry), kind: "room", template: null };
-      if (room.w >= 3 && room.h >= 3) { rooms.push(room); carveRect(cells, w, room.x, room.y, room.w, room.h); n.room = room; }
+      if (room.w >= 3 && room.h >= 3) { rooms.push(room); carveRect(cells, w, room); n.room = room; }
       return;
     }
     const vertical = canV && (!canH || n.w > n.h * 1.2 || (n.w * 1.2 >= n.h && R.chance(0.5)));
@@ -170,7 +171,7 @@ function bsp(w: number, d: number, R: Rng, P: DungeonParams): { cells: Uint8Arra
     let best: [Room, Room] = [A[0]!, B[0]!], bd = Infinity;
     for (const a of A) for (const b of B) { const [ax, ay] = centre(a), [bx, by] = centre(b); const dd = Math.abs(ax - bx) + Math.abs(ay - by); if (dd < bd) { bd = dd; best = [a, b]; } }
     const [ax, ay] = centre(best[0]), [bx, by] = centre(best[1]);
-    carveL(cells, w, ax, ay, bx, by, R);
+    carveL(cells, w, [ax, ay], [bx, by], R);
   };
   join(root);
   // Loops: a few extra corridors between near rooms.
@@ -179,7 +180,7 @@ function bsp(w: number, d: number, R: Rng, P: DungeonParams): { cells: Uint8Arra
     const a = R.pick(rooms);
     const near = rooms.filter((r) => r !== a).sort((p, q) => dhypot(p.x - a.x, p.y - a.y) - dhypot(q.x - a.x, q.y - a.y))[R.int(0, 1)]!;
     const [ax, ay] = centre(a), [bx, by] = centre(near);
-    carveL(cells, w, ax, ay, bx, by, R);
+    carveL(cells, w, [ax, ay], [bx, by], R);
   }
   return { cells, rooms };
 }
