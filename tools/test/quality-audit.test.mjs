@@ -29,7 +29,22 @@ test('audit warns on long modules, overlong functions and oversized argument lis
   assert.equal(counts['max-arguments'], 2);
 });
 
-test('audit applies filename conventions and directory limits while ignoring generated outputs', (t) => {
+test('nested helpers use the internal argument limit inside exported functions', () => {
+  const source = [
+    'export function wrapper(a, b, c, d) {',
+    '  function smallHelper(a, b, c, d) { return a; }',
+    '  function largeHelper(a, b, c, d, e, f) { return a; }',
+    '}',
+  ].join('\n');
+  const warnings = analyzeSource(source, 'packages/core/src/helpers.ts')
+    .filter((warning) => warning.rule === 'max-arguments');
+  assert.deepEqual(warnings.map((warning) => warning.message), [
+    'wrapper has 4 arguments; public API limit is 3',
+    'largeHelper has 6 arguments; internal limit is 5',
+  ]);
+});
+
+test('audit applies filename conventions and directory limits while ignoring generated outputs and sibling projects', (t) => {
   const root = mkdtempSync(join(tmpdir(), 'keel-quality-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const sourceDirectory = join(root, 'packages', 'sample', 'src');
@@ -42,12 +57,15 @@ test('audit applies filename conventions and directory limits while ignoring gen
   writeFileSync(join(root, 'packages', 'sample', 'dist', 'bad_name.ts'), 'not source\n');
   mkdirSync(join(root, 'packages', 'sample', 'node_modules'), { recursive: true });
   writeFileSync(join(root, 'packages', 'sample', 'node_modules', 'BadName.ts'), 'not source\n');
+  mkdirSync(join(root, 'apps', 'web', 'src'), { recursive: true });
+  writeFileSync(join(root, 'apps', 'web', 'src', 'ignored.ts'), `${Array.from({ length: 510 }, () => '// sibling source').join('\n')}\n`);
 
   const result = scanProject(root);
   assert.equal(result.warnings.filter((warning) => warning.rule === 'directory-files').length, 1);
   assert.ok(result.warnings.some((warning) => warning.rule === 'file-naming' && warning.path.endsWith('BadName.ts')));
   assert.equal(result.filesScanned, 32);
   assert.ok(!result.warnings.some((warning) => warning.path.includes('/dist/') || warning.path.includes('/node_modules/')));
+  assert.ok(!result.warnings.some((warning) => warning.path.startsWith('apps/web/')));
 });
 
 test('scan roots, path roles and thresholds can be supplied by a repository profile', (t) => {

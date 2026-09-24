@@ -108,10 +108,10 @@ function isFunctionLike(node) {
 function isPublicApi(node, sourceFile) {
   let current = node;
   while (current && current !== sourceFile) {
+    if (current !== node && ts.isFunctionLike(current)) return false;
     if (hasModifier(current, ts.SyntaxKind.PrivateKeyword)
       || hasModifier(current, ts.SyntaxKind.ProtectedKeyword)) return false;
     if (hasModifier(current, ts.SyntaxKind.ExportKeyword)) return true;
-    if (current !== node && ts.isFunctionLike(current)) return false;
     if (current !== node && ts.isClassLike(current)) {
       return hasModifier(current, ts.SyntaxKind.ExportKeyword);
     }
