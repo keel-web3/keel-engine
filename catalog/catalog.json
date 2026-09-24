@@ -376,19 +376,23 @@
         },
         {
           "path": "packages/architecture/src/business.ts",
-          "sha256": "0x355340ff775fcd2aff245e1e29b52ec5f5380ad2fd4d72e237be2bdf6174a85f"
+          "sha256": "0x9b3c1afe0a41bc8d4969b6a49e2792006bbf6537c6baab9878b05eca73675248"
         },
         {
           "path": "packages/architecture/src/city.ts",
-          "sha256": "0xd485d6e9effc9bf2636188ad24c37dfe569de883931a61cdd397997a910895f6"
+          "sha256": "0x1f866e90cab09232226d6d91f3cf304e6220a15e02d9e7a03d78143af512d483"
         },
         {
           "path": "packages/architecture/src/civic.ts",
-          "sha256": "0x56b2de36f9cc808d8c24f00181e5d2d0bdf128d58ef7daa2ef7332f054df2822"
+          "sha256": "0x08c268b1d06e9aef2623ac29bb2a164d2d9fb1ea73bb6de3954a682654745b9b"
         },
         {
           "path": "packages/architecture/src/commons.ts",
-          "sha256": "0xc462272f97b0736586a4c4ff23ee4c7e3be0833c9948089f673b325a8f7b070a"
+          "sha256": "0x241375af5a43d7838aa246c530f159f18519d5fad41b7a8df68301567861daa5"
+        },
+        {
+          "path": "packages/architecture/src/foundations.ts",
+          "sha256": "0x44547cb071c2f5f39de45c6647fb2597c94b817adc22dd791f601b467d664fbd"
         },
         {
           "path": "packages/architecture/src/frame.ts",
@@ -396,7 +400,7 @@
         },
         {
           "path": "packages/architecture/src/index.ts",
-          "sha256": "0xc083dd02bd1c59debc2613922cd822cdbd82e6bf0af9177da5d94c3aed76cb1c"
+          "sha256": "0xb90f532f14816eca1f77544a2d2e74f25d0bb82d420b77772db606a02f13ea60"
         },
         {
           "path": "packages/architecture/src/massing.ts",
@@ -412,7 +416,7 @@
         },
         {
           "path": "packages/architecture/src/plan.ts",
-          "sha256": "0xfd854fbe0e9ce0eb8e3e65e813b3dfa83505e41a487ae56f7a63ec3aa4d91c86"
+          "sha256": "0x93c8e6835731dcf31f071f62e22c8faca371d1afa6e445b1c694ed5187511d45"
         },
         {
           "path": "packages/architecture/src/roofs.ts",
@@ -456,7 +460,7 @@
         },
         {
           "path": "packages/architecture/src/zoning.ts",
-          "sha256": "0xdd8a39a232da2f9d825ac71dc59d490e8015f56363114779a487ab2a0ffe493b"
+          "sha256": "0xf665f25610320f5e83184ee18d0c37bef38da4b38d6e77258fcf33e4a0849535"
         }
       ],
       "build": {
@@ -468,17 +472,17 @@
         ]
       },
       "output": {
-        "digest": "0x13b46a6fe63a5b0a153639b984659d237a37816f976e0124fc2e8addb5b27548",
-        "byteLength": 96868
+        "digest": "0x9fc22d9fa3cf1c2e8858d1fc7c1e137fc58180487db7a230636dec78679923fd",
+        "byteLength": 102619
       },
-      "sourceDigest": "0xd8e2fea6ca669acb4d8722fc8fd11b907e179ac76c4bdb15fd7add5e0bf53924",
-      "recipeDigest": "0x28a49eae3719765faa0987ed16702ec70705bf4e9e4d147efb0e538ddb7740ea",
-      "receiptDigest": "0xb620f76d2f4e42763169fbe5135ae85fffb4a5a69ae0fcc6be11782e1c778958",
+      "sourceDigest": "0x56a68234ef51c4980e6d8ca598ab0b6838a528308ae4fad3309f942aedf47fd2",
+      "recipeDigest": "0xeae0a1ebf1cc91aa9e72040303b50827a5274eaf0200aa5094ee2a227b4ca817",
+      "receiptDigest": "0x8271956ddaa6db5c376daa710cb0573095c42490b5eb43f97ea24eb1f954401e",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/architecture/test/vectors.mjs",
-        "sha256": "0xb67f1451924f5f327541e699c2bf6c7a0ca21b8a23434c2d002831b0e7ebba74"
+        "sha256": "0xd245db3a4c4a1f3d8bedbffde04b3b150a5cc38bda95cbbd97e6a5239a1f3573"
       },
       "deployments": [],
       "deployed": false
@@ -1235,7 +1239,7 @@
         },
         {
           "path": "packages/city/src/height.ts",
-          "sha256": "0x25f76a8797c87d924fd01f2fcfb8c869fa027bbf187472a97f32ccf106e2d46c"
+          "sha256": "0xcc168d232351a2b9dd34efcbeea645565c1504c27216d56eb9229afe5d39fc82"
         },
         {
           "path": "packages/city/src/index.ts",
@@ -1270,6 +1274,10 @@
           "sha256": "0xe157e4665aaaf96b55acdfb2a5ce305305821c5d085f4206ac27adcb4f9cac89"
         },
         {
+          "path": "packages/city/src/terraces.ts",
+          "sha256": "0x7c11106bb4c32eaa15a934f49918c623d3d9255c5db1fcf0012a9fec537a7737"
+        },
+        {
           "path": "packages/city/src/terrain.ts",
           "sha256": "0x5f5b6195dca76190bc52d78cbb4d263b5457689c6132106a4a65f0a1a4e9b920"
         },
@@ -1292,17 +1300,17 @@
         ]
       },
       "output": {
-        "digest": "0x54f9b221a6aff666a710a1e77991ae29cb975358ee5ede7f27c9ce2a82ecd353",
-        "byteLength": 77863
+        "digest": "0x95dd683e7ad248aede78aea4f59f70a8afbfb79ef544fbf2663cf937bee0f19c",
+        "byteLength": 82940
       },
-      "sourceDigest": "0x695f91e7542b417d58ad9ebbd826ff5c30a990087817e3149c179491260afceb",
-      "recipeDigest": "0x85481ffe0781a71caaf7608b6e8d7b1cedca0daef2e3df9eee4a5e4ab3d87c96",
-      "receiptDigest": "0x59adec9ff03fb83c406e3b41f21857a265346586c273d192bf869224a218a685",
+      "sourceDigest": "0xa39f0cf5de937930a19bca971ae691bb15a41fecc33854faa24690ec9bc77b38",
+      "recipeDigest": "0xdf9daff57212551c9ec91992e942d32bf503ca43b2aaf2ee54d1fc898efd0a91",
+      "receiptDigest": "0xe841d5dbd71665c35354b5e3690c18b2a3665a0f942c85d3714e3fa7e2248126",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/city/test/vectors.mjs",
-        "sha256": "0xba336c7720e3fd6611466866d6d504075aea0d4971da29198174c82f63629133"
+        "sha256": "0x1c1a79745c27374089ee3c249a3b646fa740bf4dd379d1607d75d1a8d6cd5690"
       },
       "deployments": [],
       "deployed": false
@@ -2918,16 +2926,15 @@
         "format": "iife",
         "external": [
           "@keel-engine/core"
-        ],
-        "compactSelection": "gzip-9"
+        ]
       },
       "output": {
-        "digest": "0x0423e96cdb21b30890c49cad9f984d7e57cc65291ef90305f7124916d4bf85dc",
-        "byteLength": 63781
+        "digest": "0xf540cfb8a49f02347c75a3e8883cd3f5c361308825053f225e5c63080c0a3771",
+        "byteLength": 63723
       },
       "sourceDigest": "0xcf1f807263dc81f2387b4e287792488656b16ce29df06e06d09555ef21cf4704",
-      "recipeDigest": "0x3f8d2ed5b155162594a299842937847b3c03698c697d86cf1778d6ff8b29b6e8",
-      "receiptDigest": "0x288084e4ba0ef9f6dd03f798121f864a065b58c1984119d98329c808e3a058cb",
+      "recipeDigest": "0x1b059422c520bad6ff02078a71b82f2ef3135d6a9754c13b7ef6f889407047d7",
+      "receiptDigest": "0x6ce7921e52f38c910f0c7ab9617764c0341500d6024c2f2fa057bcd83c5dfff7",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -4165,7 +4172,7 @@
         },
         {
           "path": "packs/buildings/src/city/archetypes.ts",
-          "sha256": "0x499625377ab0c84139643a613b4d727ad36ec2a692316575f51d44e6d655f6a9"
+          "sha256": "0x1d589c01cc83fed480059820c1c250f99a6c3c26760a01479fe5c4e9ff583605"
         },
         {
           "path": "packs/buildings/src/city/index.ts",
@@ -4296,17 +4303,17 @@
         ]
       },
       "output": {
-        "digest": "0x774e58baef807f25013bc96e1a580e797bd201610e63940589c7571d196940c8",
-        "byteLength": 102974
+        "digest": "0x6d3d52f36b9d1c404137a90ecf5a36e9812818a79084ed28e24c301c3486f977",
+        "byteLength": 103046
       },
-      "sourceDigest": "0x0f31e2255300187bbf36704778865fdb8f05a45acb9a54c5e357faf541d3f19f",
-      "recipeDigest": "0x7c1c6fda7a3e13cd2de7f752a15f1ed3d8edbd00c8edf1ef061fb7d343254103",
-      "receiptDigest": "0x08bdc5f73e0d971fbee18c80fff7f8330f60e5dd2d08c7f56a702d1c0f7a38af",
+      "sourceDigest": "0xf6861535b8adf85eab821fe9138cd438d1282e56239e70f0d15045b77cff2beb",
+      "recipeDigest": "0x6cd1e62a5b2b609c45b1c571ca8bc2fe91f4f4692b994f42fbb20c10508e0a76",
+      "receiptDigest": "0xd213b5c8ec4021e025d537f8cbb1adfc13ac4b20127d317099d124ab5a692063",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packs/buildings/test/vectors.mjs",
-        "sha256": "0xf58a081e0ea9711db50ddefa2459882388fec3cfa552786fbcb72c9931e0f532"
+        "sha256": "0xa4affd60ebe53de85eb6fb5f06e77bc2b8b509661b6e8e1e4fa897cf4fce5202"
       },
       "deployments": [],
       "deployed": false

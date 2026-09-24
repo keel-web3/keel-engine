@@ -24,12 +24,12 @@ export default await engineVectors(import.meta.url, [
   {
     name: "the export surface is intact",
     run: async (api) => { const names = surface(api); return { count: names.length, digest: await digest(names) }; },
-    expect: {"count":17,"digest":"bd51514a1afa1576abbaffc5cd492bd08f7614d9f475fbc4f4b6e5cc3fcbd592"},
+    expect: {"count":22,"digest":"d812cf7ecc019a0ce6ac62a1d41214883e9515ae4bc795a99d19636932989995"},
   },
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "48f12f0493a4c22523349b5848e84758cc5c8cac602d667c70b084f0b8393b42",
+    expect: "be7256fc9c5cc18dbd7df31011329c96d57d29db6ae24dca6907c9fc77773928",
   },
   {
     name: "a lot's tower is the same solids, footprint and height on every machine",
