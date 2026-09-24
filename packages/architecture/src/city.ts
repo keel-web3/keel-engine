@@ -4,7 +4,7 @@
 
 import type { City, CityHeight } from "@keel-engine/city";
 import { blockVariant, lookOf } from "./paint.ts";
-import { lakeOf } from "./commons.ts";
+import { lakeLevel, lakeOf } from "./commons.ts";
 import { planLot } from "./plan.ts";
 import type { BuildingPlan, Catalogue, DistrictLook, WaterSpec } from "./types.ts";
 import { zoningOf } from "./zoning.ts";
@@ -27,8 +27,8 @@ export function planCity(cat: Catalogue, city: City, height?: CityHeight): Block
   return [...byBlock].map(([block, plans]) => {
     const lots = city.lots.filter((l) => l.block === block), district = city.districts[lots[0]!.district]!;
     const c = zoning.commons.get(block);
-    // (The lake's level: a hand over the highest of its lots' pads, as its lots lay it.)
-    const lake = c?.water ? lakeOf(c, (height ? Math.max(...lots.map((l) => height.pad(l))) : 0) + 0.1) : null;
+    // (The lake's level: a hand over the highest ground under it, as its lots lay it.)
+    const lake = c?.water ? lakeOf(c, height ? lakeLevel(c, height)[1] : 0.1) : null;
     return { key: `${cat.version}|${city.site.seed}|block${block}`, block, look: lookOf(cat, district, blockVariant(cat, city.site.seed, district, block)), plans, ...(lake ? { lake } : {}) };
   });
 }

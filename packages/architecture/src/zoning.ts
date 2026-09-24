@@ -38,7 +38,7 @@ export interface CommonsBlock {
   readonly D: Draws;
 }
 /** A commons lot's building: its block, and its own middle in the block's frame. The lake's surface over its floor (m). */
-export interface CommonsSite { readonly info: CommonsBlock; readonly u: number; readonly v: number; readonly level: number }
+export interface CommonsSite { readonly info: CommonsBlock; readonly u: number; readonly v: number; readonly level: number; readonly floor?: number }
 
 /** A lot near a district of another kind: that kind, how much it leans to it (0..max), and that kind's storeys. */
 export interface Blend { readonly kind: DistrictKind; readonly t: number; readonly band: readonly [number, number] }

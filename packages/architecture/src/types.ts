@@ -99,6 +99,11 @@ export interface Archetype {
   readonly affinity?: { readonly roads?: Readonly<Partial<Record<RoadClass, number>>>; readonly corner?: number };
   /** Never next door to another of its kind (two burger joints side by side), whatever its walls. */
   readonly solo?: boolean;
+  /**
+   * A stoop: its floor this far over the pavement at its door (m, low and high), up steps from the ground in front --
+   * a walk-up's, a house's, a church's. Without one, the floor is level with the pavement: a shop, a garage, a lobby.
+   */
+  readonly stoop?: Range;
 }
 
 /**
@@ -199,6 +204,8 @@ export interface BuildingPlan {
    */
   readonly base?: number;
   readonly foot?: number;
+  /** On a city's ground: its door (the middle of its front) and the pavement's height abreast of it. */
+  readonly door?: Door;
   /** Lamps it lights the ground with (a park's lanterns): world x, z and reach (m). */
   readonly lights?: readonly LightSpot[];
   /** Small things standing on it a car could hit (a park's trees and benches): collision candidates. */
@@ -212,6 +219,12 @@ export interface BuildingPlan {
   /** Points other systems tie to: a substation's gantry tops, where the power lines come in (world). */
   readonly anchors?: readonly AnchorSpot[];
 }
+
+/**
+ * A building's door (world x, z: the middle of its front), the ground a step out of it (what its floor was set by: a
+ * hair over it, or a stoop up from it) and the pavement's height abreast of it on the road it faces.
+ */
+export interface Door { readonly x: number; readonly z: number; readonly ground: number; readonly pave: number }
 
 export interface WaterSpec { readonly obb: Obb; readonly y: number }
 export interface AnchorSpot { readonly kind: "substation"; readonly x: number; readonly y: number; readonly z: number }

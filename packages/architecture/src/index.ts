@@ -3,11 +3,12 @@ export type {
   Archetype, BuildingPlan, Catalogue, CityLike, Condition, CrownKind, DistrictLook, FacadeStyle, LookSpec, Lod, MassOp, MaterialSpec,
   Range, RoofItem, RoofKind, RoofRule, SignKind, SignRule, Solid, Weights, WindowType,
   AdSlotSpec, ArtKind, FurnitureKind, PlantKind, PlantSpot, FurnitureRule, LampKind, LampStyle, LightSpot, PropKind, PropPart, PropSpot, StreetCatalogue,
-  InfraSpec, StreetSign,
+  InfraSpec, StreetSign, Door,
 } from "./types.ts";
 export type { AnySlot, SlotName, StreetSlotName } from "./slots.ts";
 export { NEON_SLOTS, SLOT, SLOT_NAMES, STREET_SLOT, STREET_SLOT_NAMES } from "./slots.ts";
 export { frameOf, planLot } from "./plan.ts";
+export { CAP_SHOWS, DOOR_LIFT, LANDING, RISER, TREAD } from "./foundations.ts";
 export { blockWorld, worldOf } from "./world.ts";
 export { blockVariant, districtPaint, lookOf, streetPaint } from "./paint.ts";
 export type { StreetChunk, StreetGrid, StreetPlan } from "./street/plan.ts";

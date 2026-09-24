@@ -10,7 +10,7 @@ const cars: Car[] = [];
 for (const s of BODY_STYLES) for (let i = 0; i < 24; i += 1) cars.push(generateCar(`glass-${s.name}-${i}`, { style: s.name }));
 const closed = cars.filter((c) => glasshouse(c)?.kind === "closed");
 
-const near = (a: readonly number[], b: readonly number[], e = 1e-9): boolean => a.every((v, k) => Math.abs(v - b[k]!) < e);
+const near = (a: ArrayLike<number>, b: ArrayLike<number>, e = 1e-9): boolean => Array.from(a).every((v, k) => Math.abs(v - b[k]!) < e);
 
 test("the glasshouse: four planar panes, their edges the pillars they share, their feet on the belt", () => {
   assert.ok(closed.length > 100, `closed cars: ${closed.length}`);
