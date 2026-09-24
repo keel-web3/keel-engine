@@ -711,7 +711,7 @@
         },
         {
           "path": "packages/bake/src/bake.ts",
-          "sha256": "0x85ba6b7b876d00031a2b7601e84b0e88f07d8506b5dc30346d6c0173e90c6c4e"
+          "sha256": "0x79574dd30011eb63a96eb5ab90a0879890d727921137d88a784b633a3368a6ad"
         },
         {
           "path": "packages/bake/src/bloom.ts",
@@ -791,7 +791,7 @@
         },
         {
           "path": "packages/bake/src/mesh.ts",
-          "sha256": "0x9e227718857ed4ba359fa34063df8d830cc4c7b25cc8a6b9225bffd34f214c92"
+          "sha256": "0x83eac05c9e0f8e032be29bcee2bb14859e0330bf248227bae479e6c14764011c"
         },
         {
           "path": "packages/bake/src/paint-shader.ts",
@@ -823,7 +823,7 @@
         },
         {
           "path": "packages/bake/src/raycast.ts",
-          "sha256": "0x82d8956fbd87301a4b22dfe268358af07e716a3f8897e2c917127412ef58240a"
+          "sha256": "0x6ff0ce70851be6818d1c8dd04c1c3e64b89a55a4495ed437834dcb98ff5f418f"
         },
         {
           "path": "packages/bake/src/screen-bounds.ts",
@@ -892,12 +892,12 @@
         ]
       },
       "output": {
-        "digest": "0x45310d827c2a83e9e6f4105449a8a70c2752dd6bbfcb95cc4f0ff24565e9aec2",
-        "byteLength": 254861
+        "digest": "0x0a962b0fa67c90655578953d17362bb48294fd92c7871e855db304625a02dce6",
+        "byteLength": 255133
       },
-      "sourceDigest": "0x16e0fb8fb43f295fa6c536607cb96be0d74d77b533ba7b6b7f5d85b2264e855a",
-      "recipeDigest": "0x8f1a2aac3020c11b32a5f7b7e3d400bdfcfef1e8ae434d1de8cda0db0448dda8",
-      "receiptDigest": "0xac28606bfd59f8c1c40984b80e743c16d2a475b7050c58cd366d689f2f3ba5f4",
+      "sourceDigest": "0x1bbf3dc0c88e8960eb11a3037decac756da371795d20b8600034816807b68b64",
+      "recipeDigest": "0x1def5a465d6afc984860af78cf40d99f8ebd6f063c28464ee6da488395a238aa",
+      "receiptDigest": "0x57e2dfb7d43d066db2f03531d55a9b41ccb087cb852f50e73f259f15ada4c7b1",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -2899,7 +2899,7 @@
         },
         {
           "path": "packages/render/src/pixel-renderer.ts",
-          "sha256": "0x5bad708567810eb9f0d3cecdcb38fa3c4e27ad15682a4ceffdef67c95282d643"
+          "sha256": "0xc69936d13ba35277d201574b773f9494a06ce11914d4ac23161c5c570793972d"
         },
         {
           "path": "packages/render/src/raster.ts",
@@ -2907,7 +2907,7 @@
         },
         {
           "path": "packages/render/src/shaders.ts",
-          "sha256": "0x90949520efe252780ba569e2cd274584121d4443681625078a0372ad7fdf43b0"
+          "sha256": "0x056de8304edeb1880275f7fa4eccb311eb44196bd4454fe3b7d3497db466548a"
         },
         {
           "path": "packages/render/src/sky.ts",
@@ -2922,17 +2922,17 @@
         "compactSelection": "gzip-9"
       },
       "output": {
-        "digest": "0x5cd9f0f2866c5c9f2586c805b53ba52c57b9ed87ba002a46319fed15d83d8d0e",
-        "byteLength": 63281
+        "digest": "0xf540cfb8a49f02347c75a3e8883cd3f5c361308825053f225e5c63080c0a3771",
+        "byteLength": 63723
       },
-      "sourceDigest": "0x026c53d1994e4d9b83d29fb83f24016074f1f6a5766201678a55fe6d0399e4a9",
-      "recipeDigest": "0x620798f792aa5a61865a064734e405dd036e4d9f6e8c2c13de0e5ca211cb3abe",
-      "receiptDigest": "0x474f1ecc137e7d696689d0b50731f1b502cb122408fe635ec39200399a3833f8",
+      "sourceDigest": "0xcf1f807263dc81f2387b4e287792488656b16ce29df06e06d09555ef21cf4704",
+      "recipeDigest": "0x1b059422c520bad6ff02078a71b82f2ef3135d6a9754c13b7ef6f889407047d7",
+      "receiptDigest": "0x6ce7921e52f38c910f0c7ab9617764c0341500d6024c2f2fa057bcd83c5dfff7",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/render/test/vectors.mjs",
-        "sha256": "0xb20f3c400ab590cac10a1e49f2f882c481f2534f16991c2a9821ca7f9e714b28"
+        "sha256": "0x516f91a220b716a97b42d649a5b8eb198a716dbf452125854950c3fc001d6387"
       },
       "deployments": [],
       "deployed": false
@@ -5080,8 +5080,12 @@
           "sha256": "0x5bac3cdf89b666d380accdc660a5acfc028f31a3e4fde088176fe5bb1fb22304"
         },
         {
+          "path": "packs/vehicles/src/glass.ts",
+          "sha256": "0x3ad5c1faa976a4af8344ada0d7696a9997efd9ccbe1f112cb281f0fad48cc8ae"
+        },
+        {
           "path": "packs/vehicles/src/index.ts",
-          "sha256": "0xf7bac586c72e7da5bdf6e1880ceb852533ef3c9bc8249930581e2948bd5ad7c8"
+          "sha256": "0x1f41803e3a9fd18c88a1d313e35c3fd0608c4a3591cd632d451dca024e606780"
         },
         {
           "path": "packs/vehicles/src/lights.ts",
@@ -5117,7 +5121,7 @@
         },
         {
           "path": "packs/vehicles/src/shapes.ts",
-          "sha256": "0xe971630a5b0b67fcb5f92d15c5f8a4d9d8023ec147cfd6775bdecc9e716aff27"
+          "sha256": "0xd9c687b4ea4f4845ff419ab4ab179aed3c2c233c4f272b94629148084706efdb"
         },
         {
           "path": "packs/vehicles/src/slots.ts",
@@ -5125,7 +5129,7 @@
         },
         {
           "path": "packs/vehicles/src/solids.ts",
-          "sha256": "0xeb93624d01b999bb0035979a5bf6b80d89b33e1b2e3eb73a67abaf8a502650cc"
+          "sha256": "0xdd2dcc35ac25b7ff1b6643724464f515853a420737c58b6eb6d82630dcc94531"
         },
         {
           "path": "packs/vehicles/src/stance.ts",
@@ -5144,17 +5148,17 @@
         ]
       },
       "output": {
-        "digest": "0xca24117245b9ea6cd445737fa18c8a9846d619a33cc8383b7b3095de6366cab2",
-        "byteLength": 130964
+        "digest": "0x025bfddeaf30355d06fa191d2fda37affd0f1f148c9407d190c5f28673a17cef",
+        "byteLength": 135501
       },
-      "sourceDigest": "0x514ee9d60374b9d16130b581322e12d64b3ef8d3098b4d437876b6e1ab7a754d",
-      "recipeDigest": "0x19b35c34a71072ca33e6ac5fe2a1f96b4c282df153acd319139323289586c62d",
-      "receiptDigest": "0xac8f0b36aeecf1e811d1c60c0d241b52878804bacc53a39383cec3069f75dfcc",
+      "sourceDigest": "0x8d2d8cc0c34bfe7d53e58a7aa1b6341f30163047c9ecad92a5e0a9c3d18225fe",
+      "recipeDigest": "0xf02173c8ac479eb66312ecfb110f7a5d7a9dc0b6f73e011789ac25f35c382612",
+      "receiptDigest": "0xbfea194e15130e912aa253ec07e71fe1d702ad32461cd5e6df28f988b0dacd42",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packs/vehicles/test/vectors.mjs",
-        "sha256": "0xaae78e2be86fa8d12fbdb281ad7a1261edd32f4d598105f2673d42b2b6bf19c0"
+        "sha256": "0x30be07693ad507673709da571c349c4292dbbdc7dd1129b03bff451e1f1a2c45"
       },
       "deployments": [],
       "deployed": false

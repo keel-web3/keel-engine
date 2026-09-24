@@ -113,6 +113,11 @@ vec3 map(vec3 p) {
     float c = cos(B.w), s = sin(B.w);
     q.xz = mat2(c, s, -s, c) * q.xz; // (the same turn as a box)
     float d = sdWedge(q, B.xyz, lo);
+    // (A tapered wedge: its right and left edges run from its span at the back, -z, in to the foot's full width.)
+    vec2 span = uWedge[3 * i + 2].zw * B.x;
+    float mr = (B.x - span.y) / max(0.0001, 2.0 * B.z), ml = (B.x + span.x) / max(0.0001, 2.0 * B.z);
+    d = max(d, (q.x - mr * q.z - (B.x + span.y) * 0.5) / sqrt(1.0 + mr * mr));
+    d = max(d, (-q.x - ml * q.z - (B.x - span.x) * 0.5) / sqrt(1.0 + ml * ml));
     float skin = uWedge[3 * i + 2].y;
     if (skin > 0.0) {
       float slope = -B.y * (1.0 - lo) / max(0.0001, B.z);

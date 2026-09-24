@@ -64,3 +64,6 @@ export { engineAccess, enginePanelPose, engineMotion, enginePivot } from "./engi
 export { mechanicalBounds } from "./shapes.ts";
 export { convertibleOf, convertiblePose } from "./roof.ts";
 export type { ConvertibleSpec, RoofPiece } from "./roof.ts";
+// The glasshouse: each pane's corners and the room inside them -- what cracks, wipers, cockpits and seated drivers fit to.
+export { GLASS_THICKNESS, cabinMargin, ceilingAt, glasshouse, keepInside, reachAt, standIn } from "./glass.ts";
+export type { CabinPlane, GlassCar, GlassPane, Glasshouse, PaneName, StandIn } from "./glass.ts";

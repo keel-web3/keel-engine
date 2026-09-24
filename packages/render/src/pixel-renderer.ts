@@ -42,6 +42,8 @@ export interface RenderBox {
   readonly lo?: number | undefined;
   /** Optional vertical thickness of a hollow sloping panel. */
   readonly skin?: number | undefined;
+  /** A wedge's span across at its full-height end (fractions of its half width; default [-1, 1]): a tapered pane. */
+  readonly top?: readonly [number, number] | undefined;
 }
 /** A wedge (a ramp): its cross-section rises from the foot at local +z (`lo` × its height) to full height at -z. */
 export interface RenderWedge {
@@ -51,6 +53,8 @@ export interface RenderWedge {
   readonly lo?: number | undefined;
   /** Optional vertical thickness of a hollow sloping panel. */
   readonly skin?: number | undefined;
+  /** Its span across at its full-height end (fractions of its half width; default [-1, 1]): a tapered pane. */
+  readonly top?: readonly [number, number] | undefined;
   readonly mat?: number | undefined;
 }
 export interface RenderCapsule {
@@ -583,7 +587,7 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
       nBoxes = Math.min(MAX_BOXES, bx.length);
       for (let i = 0; i < nBoxes; i += 1) { const b = bx[i]!; boxBlock.data.set([b.c[0], b.c[1], b.c[2], b.mat ?? 0, b.h[0], b.h[1], b.h[2], b.yaw ?? 0], i * 8); }
       nWedges = Math.min(MAX_WEDGES, wd.length);
-      for (let i = 0; i < nWedges; i += 1) { const w = wd[i]!; wedgeBlock.data.set([w.c[0], w.c[1], w.c[2], w.mat ?? 0, w.h[0], w.h[1], w.h[2], w.yaw ?? 0, Math.max(0, Math.min(0.98, w.lo ?? 0)), Math.max(0, w.skin ?? 0), 0, 0], i * 12); }
+      for (let i = 0; i < nWedges; i += 1) { const w = wd[i]!; wedgeBlock.data.set([w.c[0], w.c[1], w.c[2], w.mat ?? 0, w.h[0], w.h[1], w.h[2], w.yaw ?? 0, Math.max(0, Math.min(0.98, w.lo ?? 0)), Math.max(0, w.skin ?? 0), Math.max(-1, Math.min(1, w.top?.[0] ?? -1)), Math.max(-1, Math.min(1, w.top?.[1] ?? 1))], i * 12); }
       nCaps = Math.min(MAX_CAPS, capsules.length);
       for (let i = 0; i < nCaps; i += 1) { const c = capsules[i]!; capBlock.data.set([c.a[0], c.a[1], c.a[2], c.r, c.b[0], c.b[1], c.b[2], c.mat ?? 0], i * 8); }
       // (Only the used parts go up: a few KB a frame.)
