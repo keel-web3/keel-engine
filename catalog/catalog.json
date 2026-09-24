@@ -2024,7 +2024,7 @@
         },
         {
           "path": "packages/import/src/samples.ts",
-          "sha256": "0xb5bc5507db6c7bdd3ec7bd65b9ed3d1a2803490e3cdeb090757b5203d9676708"
+          "sha256": "0xf6cbbdaa3f2390032e8e4151bc7b658dad9c08b1a98e05b0031e14a07912237b"
         },
         {
           "path": "packages/import/src/scene.ts",
@@ -2064,12 +2064,12 @@
         ]
       },
       "output": {
-        "digest": "0xf66c56b1d871e2dc73f521f726f0857f6821091f2c1d1aac91256a02577ccfd5",
-        "byteLength": 112924
+        "digest": "0x3e2c929e6bffdbc3bf969b492ec1d6d9f6f8bf5813688f6476b58ceb1699dbda",
+        "byteLength": 112988
       },
-      "sourceDigest": "0x210ce6a15ea1817f5b06f2f0be65009ff0bba77b8a3af91482be006f56911516",
-      "recipeDigest": "0x4c09bb086e1e7cb684a0ad48621f0e032214ee1116dfda7a74450b5d5c96c358",
-      "receiptDigest": "0x05e20ba0fc2f5d559b222da739a06d62fc4b9feb2d316cb5391b07a919fd2698",
+      "sourceDigest": "0x8cfe8dd2ea63f70c288e4e7e0b6cbb9b11e7c7172cee74e4054b8cbff2abead4",
+      "recipeDigest": "0x3ad20e0437f330d9a93c57a9f04ea35f5b8803d343fe1b12e2c25294b8d815bf",
+      "receiptDigest": "0x477a8ba75118a08d1750662e22824acbedba7e8922b5c3d2e089ac9895368bff",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
