@@ -1259,7 +1259,7 @@
         },
         {
           "path": "packages/city/src/region.ts",
-          "sha256": "0xe8dded60774c13d206557642a6db87bd19e08b934bd6372d8abb250aee8e7ad1"
+          "sha256": "0x7014f7da3c98f916136f1b46931b3fd962584f3e5beee396b45f9b78dc08d0b9"
         },
         {
           "path": "packages/city/src/sidewalks.ts",
@@ -1296,12 +1296,12 @@
         ]
       },
       "output": {
-        "digest": "0x320e429e7bdc8dd0431962ba4129da720f279cc7016d6669b14e36a488e5f2fd",
-        "byteLength": 88095
+        "digest": "0x1899d3d49788d8d2d5aace1f84d49d41f25013a006de2de4351c65a9f1258911",
+        "byteLength": 88724
       },
-      "sourceDigest": "0x6998d191ce3850e36cfb495082adf1ab0cc987d95795529275b989d532b34585",
-      "recipeDigest": "0xe27d786f2608e759360dc825e5ba2a6019e490cf3d0468b7ed2c3df2d74d5d7b",
-      "receiptDigest": "0xf263ca637438609fda7a0bcf9931bbbb8261966da58c1a22bcb98dc9b77295ca",
+      "sourceDigest": "0xa14e119239443c7d3ec76b20b1e9f5331aa7ab09379d221f87fddb26ae82ebcb",
+      "recipeDigest": "0x2da0dad319a2011851801a75734c6066b977e96160d9636dd1eaf0634867d45b",
+      "receiptDigest": "0x9f4f689bc6b9af079c82cc66c09f732508ee1210f3b8736da4b45e98283dba52",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
