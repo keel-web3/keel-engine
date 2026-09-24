@@ -52,6 +52,11 @@ export interface BodyStyle {
   readonly crew?: boolean;
   /** A semi tractor (car.ts's semiRig): its own measurements and body (shapes.ts's semiSolids), not the car's. */
   readonly semi?: boolean;
+  /**
+   * Its own paint table, where its class's doesn't fit what it is (a special style only: a drawn style's paints are its
+   * class's, and they are what the paint odds count).
+   */
+  readonly paints?: ReadonlyArray<readonly [PaintKey, number]>;
 }
 
 export const BODY_STYLES: readonly BodyStyle[] = [
@@ -92,6 +97,9 @@ export const SPECIAL_STYLES: readonly BodyStyle[] = [
   // tandem of drive axles and a fifth wheel for a trailer: what pulls a billboard down the road.
   {
     name: "Semi Truck", cls: "pickup", weight: 0, dials: { length: 0.4, power: 0.6, mass: 1 }, semi: true,
+    // (A fleet's colours, not a pickup's earth tones: white the most by far, then black, silver and grey, the blues, and
+    // a red, a green, a yellow or an orange now and then -- the way the trucks on a real highway are painted.)
+    paints: [["white", 34], ["black", 14], ["silver", 10], ["gunmetal", 10], ["navy", 6], ["blue", 6], ["red", 6], ["burgundy", 3], ["forest", 4], ["yellow", 3], ["orange", 2], ["tan", 2]],
     force: {
       Stance: "Stock", Exhaust: "Stacks", Spoiler: "None", Splitter: "None", "Bull Bar": "None", "Light Pod": "None", Hood: "None", Diffuser: "None",
       Mudflaps: "Mudflaps", Roof: "Hardtop", "Roof Scoop": "None", "Roof Rack": "None", "Light Bar": "None", Cage: "None", Fin: "None", Snorkel: "None",

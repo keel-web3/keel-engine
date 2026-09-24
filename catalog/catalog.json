@@ -5061,7 +5061,7 @@
         },
         {
           "path": "packs/vehicles/src/car.ts",
-          "sha256": "0xffd54022329691c21f39a65ca84b948d39d8c4b172fba77315cc783913d74f4f"
+          "sha256": "0x86526be6d4f9720b4e4210b292cd9f0bf28cecc1a04fcd2f7c66f6755edfdb07"
         },
         {
           "path": "packs/vehicles/src/decals.ts",
@@ -5117,7 +5117,7 @@
         },
         {
           "path": "packs/vehicles/src/semi.ts",
-          "sha256": "0x7337ce281c337073a3d184df7b413759500467145f1485fda7c1d0b69f0191fa"
+          "sha256": "0xb5aa36fc073ea579cda42b548a98029fce45dbee8be448b4d701bff086f1a441"
         },
         {
           "path": "packs/vehicles/src/shapes.ts",
@@ -5137,7 +5137,7 @@
         },
         {
           "path": "packs/vehicles/src/traits.ts",
-          "sha256": "0x65dfb70f975347c604e9f9b3d90e7aa852ba84923bbd9168967034b68e46595d"
+          "sha256": "0x30106c928efcdb6505aed4f393594eb148b012333af84082da67770b5ad23b5a"
         }
       ],
       "build": {
@@ -5148,17 +5148,17 @@
         ]
       },
       "output": {
-        "digest": "0x9e09784f6fdee15db82c6318eae26ca9492c9b546b1e4d6407e2cbbeae52bf3d",
-        "byteLength": 135581
+        "digest": "0x5e02cae240631374028967547c8251d14b78f68d3286d98580a5d5fdf98bfcde",
+        "byteLength": 135863
       },
-      "sourceDigest": "0x4ce37504063095ac64f6728a5be23af52406abf4361865078295aa2f5bee850b",
-      "recipeDigest": "0xe5253ce12a4fea79bcb37a3957d42d3e8cd556d591a2c84492ff52f1dcb1075c",
-      "receiptDigest": "0xa7f59b7e5c28299f85bc6ec2e12bd495b7ea24102a15accbe1fe4f09133a9ad7",
+      "sourceDigest": "0x2f604e443953d8e9e64145131b206373161d4eb366c4c8bba62c23033e388def",
+      "recipeDigest": "0x6f0081fcad8dce38adc67c4fa724159a6ad2504aba2470408867c8786dca78e0",
+      "receiptDigest": "0xfb18a4f541b48ec6e7b63685aa095957ff04cdce2859ed5b9c21cb12127576f3",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packs/vehicles/test/vectors.mjs",
-        "sha256": "0x30be07693ad507673709da571c349c4292dbbdc7dd1129b03bff451e1f1a2c45"
+        "sha256": "0x6843003a7a47c26cb6a1386c1ee54cf04a44e4580cc259eb0d8cb7f7d1ac3bfe"
       },
       "deployments": [],
       "deployed": false

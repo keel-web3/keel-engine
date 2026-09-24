@@ -138,7 +138,12 @@ export function semiSolids(car: Car): Solids {
   if (p.grille === "chrome" || p.grille === "slat") for (const k of [0.3, 0.55, 0.8]) box(S, P.metal, -0.49, 0.93 + 0.94 * k - 0.012, nose + 0.03, 0.49, 0.93 + 0.94 * k + 0.012, nose + 0.05);
   box(S, P.accent, -0.09, 1.96, nose - 0.04, 0.09, 2.02, nose + 0.02);
   // (The bonnet: a long wedge from the cowl down to the grille's top, between the wings.)
-  sheet(S, P.hood, 0.6, zc, nose - 0.06, z => 2.06 - 0.13 * (z - zc) / (nose - 0.06 - zc));
+  const bonnet = (z: number): number => 2.06 - 0.13 * (z - zc) / (nose - 0.06 - zc);
+  sheet(S, P.hood, 0.6, zc, nose - 0.06, bonnet);
+  // (Its sides, down from under its skin to the grille shell's foot: the engine bay closed -- without them there is
+  // daylight right through the nose between the wings' tops and the bonnet, and the wheel arches open into it.)
+  const sideTop = (z: number): number => bonnet(z) - 0.02, SIDE_FOOT = 0.86;
+  both((s) => wedge(S, P.paint, s * 0.57, SIDE_FOOT, zc, s * 0.6, sideTop(zc), nose - 0.06, (sideTop(nose - 0.06) - SIDE_FOOT) / (sideTop(zc) - SIDE_FOOT), "front"));
 
   // ---- the front wings: swept over each wheel -- slice by slice, the arch cut round the tyre -- low at the nose.
   const Rf = R + 0.1;
