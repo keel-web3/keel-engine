@@ -15,7 +15,7 @@ export default defineParticleRecipe({
       particle: {
         life: [1, 1.8], size: [0.1, 0.2], light: [0.2, 0.45], ramp: "smoke", gravity: 9.8, ground: "bounce", bounce: 0.3, friction: 0.5,
         sub: [
-          { on: "live", rate: 18, inherit: 0.1, emit: { mode: "burst", count: [1, 1], shape: "point", speed: [0, 0.1], priority: 0, reach: 1, particle: { life: [0.3, 0.6], size: [0.12, 0.22], sizeCurve: [0.6, 1.4], light: [0.3, 0.5], alpha: [0.8, 0.4, 0], ramp: "smoke", soft: 0.5, drag: 2, gravity: -0.3, wind: 0.8 } } },
+          { on: "live", rate: 18, inherit: 0.1, emit: { mode: "burst", count: [1, 1], shape: "point", speed: [0, 0.1], priority: 0, reach: 1, particle: { life: [0.3, 0.6], size: [0.12, 0.22], sizeCurve: [0.6, 1.4], light: [0.3, 0.5], alpha: [0.8, 0.4, 0], ramp: "smoke", soft: 0.5, drag: 2, gravity: -0.3, wind: 0.8, turbulence: 0.6 } } },
           { on: "ground", count: [2, 3], inherit: 0, emit: "dust-puff" },
         ],
       },
@@ -25,7 +25,7 @@ export default defineParticleRecipe({
       mode: "burst", count: [10, 16], delay: 0.08, shape: "sphere", radius: 1, speed: [0.5, 1.5], up: [0.5, 1.5], priority: 1, reach: 10,
       particle: {
         life: [1.2, 2.2], size: [0.6, 1], sizeCurve: [0.6, 1.2, 1.5], light: [0.35, 0.6], lightCurve: [1.1, 0.8, 0.7], alpha: [1, 0.85, 0.4, 0],
-        ramp: "smoke", soft: 0.5, shade: 0.6, drag: 1.2, gravity: -0.6, wind: 0.8,
+        ramp: "smoke", soft: 0.5, shade: 0.6, drag: 1.2, gravity: -0.6, wind: 0.8, turbulence: 0.6,
       },
     },
     // Sparks.

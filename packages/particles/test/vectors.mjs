@@ -11,7 +11,7 @@ export default await engineVectors(import.meta.url, [
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "ed9006a7bd987729e5b79fdb374c2d9a9f09585170dfe3b7136bba1dd0aa6aa7",
+    expect: "881702c69ca8b42ad9f46b756a70292cd7fc57059280e688d80b1ddaae44b98a",
   },
   {
     name: "curves and hashing",

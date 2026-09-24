@@ -85,6 +85,8 @@ export class PoolState {
   readonly sDrag: Float64Array;
   readonly sWind: Float64Array;
   readonly sCurl: Float64Array;
+  readonly sTurb: Float64Array; // curl noise metres (negative: faded toward the ground)
+  readonly sTurbK: Float64Array; // 1 / its eddy size
   readonly sGround: Uint8Array;
   readonly sBounce: Float64Array;
   readonly sFric: Float64Array;
@@ -179,6 +181,8 @@ export class PoolState {
     this.sDrag = T(new Float64Array(MAX_STYLES));
     this.sWind = T(new Float64Array(MAX_STYLES));
     this.sCurl = T(new Float64Array(MAX_STYLES));
+    this.sTurb = T(new Float64Array(MAX_STYLES));
+    this.sTurbK = T(new Float64Array(MAX_STYLES));
     this.sGround = T(new Uint8Array(MAX_STYLES));
     this.sBounce = T(new Float64Array(MAX_STYLES));
     this.sFric = T(new Float64Array(MAX_STYLES));

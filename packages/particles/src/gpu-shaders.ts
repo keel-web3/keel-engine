@@ -1,6 +1,7 @@
 // Particle renderer shader sources. Kept separate from the GL setup so the programs stay easy to review.
 
 import { CURVE_SAMPLES } from "./pool.ts";
+import { CURL_GLSL } from "@keel-engine/core";
 import { SPRITE_CELL } from "./palette.ts";
 import { PARTICLE_SPRITES } from "./recipe.ts";
 
@@ -39,6 +40,7 @@ uniform highp sampler2D uT1;                  // v0, life
 uniform highp sampler2D uT2;                  // drift velocity, freeze (segment time)
 uniform highp sampler2D uT3;                  // style, random byte, size scale x16, birth
 uniform float uNow;                           // the frame's time (from the renderer's time base)
+uniform float uFlow;                          // the frame's time modulo the curl field's period (curl.ts)
 uniform vec3 uCenter, uRight, uUp, uForward;
 uniform float uK;                             // pixels per metre
 uniform vec2 uSize;                           // picture size in pixels
@@ -52,6 +54,7 @@ flat out float vStreak;
 flat out float vSoft;                         // the rim over which a round particle's dither thins (0..1 of its radius)
 out vec2 vLocal;                              // pixels within the quad
 ${MOTION_GLSL}
+${CURL_GLSL}
 void main() {
   ivec2 tc = ivec2(gl_InstanceID & ${STATE_WIDTH - 1}, gl_InstanceID >> ${Math.log2(STATE_WIDTH)});
   vec4 s0 = texelFetch(uT0, tc, 0), s1 = texelFetch(uT1, tc, 0), s2 = texelFetch(uT2, tc, 0), s3 = texelFetch(uT3, tc, 0);
@@ -70,6 +73,13 @@ void main() {
   vec4 k3 = texelFetch(uStyles, ivec2(${CURVE_SAMPLES + 3}, st), 0);
   vec3 p, vel;
   motion(s0.xyz, s1.xyz, s2.xyz, k3.x, k3.y, k3.z, uNow - s0.w, s2.w, p, vel);
+  // Curl noise (pool.ts turbSlot): carried off the path by the flow field, growing in over the first second;
+  // negative, faded toward the ground so what lands still lands.
+  if (k3.w != 0.0) {
+    float tk = abs(k3.w) * age / (age + 0.5);
+    if (k3.w < 0.0) tk *= clamp(p.y * 2.0, 0.0, 1.0);
+    p += curlNoise(p * k2.w, uFlow) * tk;
+  }
   uint rb = uint(s3.y + 0.5);
   float r1 = float(rb) / 255.0;
   float r2 = float((rb * 151u + 71u) & 255u) / 255.0;

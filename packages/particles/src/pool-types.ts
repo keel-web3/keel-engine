@@ -101,7 +101,8 @@ export interface ParticleStyles {
   /**
    * MAX_STYLES × STYLE_WIDTH × 4 floats: texels 0..31 (size, light, alpha, 0) over the life; 32 (size lo, size
    * hi, light lo, light hi); 33 (0, 0, sprite, shade) -- the renderer fills in the ramp; 34 (streak, depth bias,
-   * soft rim, 0); 35 (drag, curl, gravity, 0).
+   * soft rim, 1 / turbulence scale); 35 (drag, curl, gravity,
+   * turbulence -- negative: faded toward the ground).
    */
   readonly data: Float32Array;
   /** Each style's ramp name. */

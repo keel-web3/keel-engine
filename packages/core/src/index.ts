@@ -18,6 +18,9 @@ export {
 } from "./math.ts";
 export type { Vec3, Vec3Like } from "./math.ts";
 
+// Curl noise: a divergence-free flow field for what the air carries (presentation; CPU and GLSL twins).
+export { CURL_GLSL, FLOW_PERIOD, curlCore, curlNoise } from "./curl.ts";
+
 export { profile, sdBox, sdCapsule, sdCylinder, sdEllipsoid, sdHexPrism, sdLathe, sdPlanes, sdPolygon, sdSphere, sdTorus, smin } from "./sdf.ts";
 export type { Profile } from "./sdf.ts";
 

@@ -18,11 +18,11 @@ export default defineParticleRecipe({
     },
     {
       mode: "burst", count: [5, 8], shape: "disc", radius: 0.4, speed: [0.8, 1.6], up: [0.2, 0.5], priority: 1, reach: 4,
-      particle: { life: [0.5, 0.8], size: [0.25, 0.4], sizeCurve: [0.6, 1.2, 1.3], light: [0.5, 0.75], alpha: [1, 0.8, 0.4, 0], ramp: "dust", sprite: "puff", soft: 0.55, shade: 0.5, drag: 2.5, gravity: -0.15, wind: 0.5 },
+      particle: { life: [0.5, 0.8], size: [0.25, 0.4], sizeCurve: [0.6, 1.2, 1.3], light: [0.5, 0.75], alpha: [1, 0.8, 0.4, 0], ramp: "dust", sprite: "puff", soft: 0.55, shade: 0.5, drag: 2.5, gravity: -0.15, wind: 0.5, turbulence: 0.35 },
     },
     {
       mode: "burst", count: [2, 3], delay: 0.05, shape: "sphere", radius: 0.2, speed: [0.2, 0.5], up: [0.4, 0.8], priority: 1, reach: 4,
-      particle: { life: [0.6, 0.9], size: [0.25, 0.4], sizeCurve: [0.6, 1.2, 1.3], light: [0.15, 0.35], alpha: [0.9, 0.6, 0.2, 0], ramp: "smoke", sprite: "puff", soft: 0.55, shade: 0.5, drag: 1.2, gravity: -0.5, wind: 0.8 },
+      particle: { life: [0.6, 0.9], size: [0.25, 0.4], sizeCurve: [0.6, 1.2, 1.3], light: [0.15, 0.35], alpha: [0.9, 0.6, 0.2, 0], ramp: "smoke", sprite: "puff", soft: 0.55, shade: 0.5, drag: 1.2, gravity: -0.5, wind: 0.8, turbulence: 0.6 },
     },
   ],
 });

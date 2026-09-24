@@ -13,7 +13,7 @@ export default defineParticleRecipe({
       },
       {
         on: "death", chance: 0.8, count: [1, 1], inherit: 0,
-        emit: { mode: "burst", count: [1, 1], shape: "point", speed: [0, 0.1], up: [0.1, 0.3], priority: 0, reach: 4, particle: { life: [0.6, 1], size: [0.26, 0.4], sizeCurve: [0.6, 1.3, 1.5], light: [0.2, 0.4], alpha: [0.9, 0.6, 0.25, 0], ramp: "smoke", soft: 0.4, shade: 0.4, drag: 1.5, gravity: -0.3, wind: 0.7 } },
+        emit: { mode: "burst", count: [1, 1], shape: "point", speed: [0, 0.1], up: [0.1, 0.3], priority: 0, reach: 4, particle: { life: [0.6, 1], size: [0.26, 0.4], sizeCurve: [0.6, 1.3, 1.5], light: [0.2, 0.4], alpha: [0.9, 0.6, 0.25, 0], ramp: "smoke", soft: 0.4, shade: 0.4, drag: 1.5, gravity: -0.3, wind: 0.7, turbulence: 0.6 } },
       },
     ],
   },

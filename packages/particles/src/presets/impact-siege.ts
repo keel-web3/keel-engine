@@ -28,7 +28,7 @@ export default defineParticleRecipe({
       mode: "burst", count: [12, 18], delay: 0.06, shape: "sphere", radius: 1.2, speed: [0.5, 1.6], up: [0.6, 1.6], priority: 1, reach: 14,
       particle: {
         life: [1.5, 2.4], size: [0.8, 1.3], sizeCurve: [0.6, 1.2, 1.5], light: [0.2, 0.45], lightCurve: [1.1, 0.8, 0.75], alpha: [1, 0.9, 0.5, 0],
-        ramp: "smoke", sprite: "puff", shade: 0.6, drag: 1.2, gravity: -0.6, wind: 0.8,
+        ramp: "smoke", sprite: "puff", shade: 0.6, drag: 1.2, gravity: -0.6, wind: 0.8, turbulence: 0.6,
       },
     },
   ],

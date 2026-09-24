@@ -10,6 +10,6 @@ export default defineParticleRecipe({
   },
   also: [{
     mode: "burst", count: [1, 2], shape: "point", speed: [0.1, 0.4], up: [0.2, 0.5], priority: 1, reach: 1,
-    particle: { life: [0.25, 0.45], size: [0.12, 0.2], sizeCurve: [0.6, 1.2], light: [0.5, 0.75], alpha: [0.9, 0.5, 0], ramp: "dust", soft: 0.5, shade: 0.4, drag: 3, gravity: -0.2, wind: 0.5 },
+    particle: { life: [0.25, 0.45], size: [0.12, 0.2], sizeCurve: [0.6, 1.2], light: [0.5, 0.75], alpha: [0.9, 0.5, 0], ramp: "dust", soft: 0.5, shade: 0.4, drag: 3, gravity: -0.2, wind: 0.5, turbulence: 0.35 },
   }],
 });

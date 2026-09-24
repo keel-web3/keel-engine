@@ -8,6 +8,6 @@ export default defineParticleRecipe({
   particle: {
     life: [0.4, 0.8], size: [0.15, 0.3], sizeCurve: [0.7, 1.2],
     light: [0.5, 0.75], alpha: [0.9, 0.6, 0],
-    ramp: "dust", soft: 0.5, shade: 0.4, drag: 4, gravity: -0.1, wind: 0.6,
+    ramp: "dust", soft: 0.5, shade: 0.4, drag: 4, gravity: -0.1, wind: 0.6, turbulence: 0.35,
   },
 });
