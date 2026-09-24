@@ -9,7 +9,17 @@ import {generateFont,DEFAULT_FONT} from '../src/genfont.ts';
 import {textInto,textWidth} from '../src/gauges.ts';
 
 // Independent pre-cache renderer: preserve clipping, overlapping outlines and transparent writes.
-function directText(b: Bitmap, font: PixelFont, s: string, x: number, y: number, c: Rgba, o: { readonly outline?: Rgba; readonly align?: "left" | "center" | "right" } = {}): void {
+type DirectTextOptions = {
+ readonly bitmap: Bitmap;
+ readonly font: PixelFont;
+ readonly value: string;
+ readonly x: number;
+ readonly y: number;
+ readonly color: Rgba;
+ readonly style?: { readonly outline?: Rgba; readonly align?: "left" | "center" | "right" };
+};
+
+function directText({ bitmap: b, font, value: s, x, y, color: c, style: o = {} }: DirectTextOptions): void {
   const w = textWidth(font, s);
   const x0 = Math.round(o.align === "right" ? x - w : o.align === "center" ? x - w / 2 : x), base = y + font.ascent;
   const pass = (dx: number, dy: number, col: Rgba): void => {
@@ -33,20 +43,20 @@ let checks=0,seed=17;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)
 for(const font of fonts)for(const value of ['REDLINE','GRID 128 KM/H','AAA? AA','HELLO ⛽🚘',''])for(const align of ['left','center','right'] as const)for(const offset of [-15,-.5,0,.3,7,46])for(const outline of [undefined,0,0xff334455]){
  const a=createBitmap(93,51),b=createBitmap(93,51);for(let i=0;i<a.px.length;i++)a.px[i]=b.px[i]=random();
  const x=offset+35,y=offset,ink=checks%3===0?0:0x88776655;
- const style=outline===undefined?{align}:{align,outline};directText(a,font,value,x,y,ink,style);textInto(b,font,value,x,y,ink,style);
+ const style=outline===undefined?{align}:{align,outline};directText({bitmap:a,font,value,x,y,color:ink,style});textInto(b,font,value,x,y,ink,style);
  const mismatch=a.px.findIndex((v,i)=>v!==b.px[i]);if(mismatch!==-1)throw Error(JSON.stringify({checks,font:font.name,size:font.size,align,offset,outline,value,mismatch,expected:a.px[mismatch],actual:b.px[mismatch]}));checks++;
 }
 // Churn glyph identities, including empty masks, without retaining unlimited cache metadata or arrays.
 for(let i=0;i<80;i++){
  const f=makeFont({source:'grid',name:'churn',size:8,ascent:8,descent:1,lineHeight:9,glyphs:[{code:65,w:64,h:64,ox:-3,oy:-7,adv:8,bits:Uint8Array.from({length:4096},(_,n)=>i%2?n%2:0)}]});
- const a=createBitmap(93,71),b=createBitmap(93,71);directText(a,f,'AAA',0,0,0xffffffff,{outline:1});textInto(b,f,'AAA',0,0,0xffffffff,{outline:1});if(a.px.some((v,i)=>v!==b.px[i]))throw Error('Eviction changed pixels');checks++;
+ const a=createBitmap(93,71),b=createBitmap(93,71);directText({bitmap:a,font:f,value:'AAA',x:0,y:0,color:0xffffffff,style:{outline:1}});textInto(b,f,'AAA',0,0,0xffffffff,{outline:1});if(a.px.some((v,i)=>v!==b.px[i]))throw Error('Eviction changed pixels');checks++;
  
 }
 // Zero-area glyphs must also evict by entry count rather than retain unlimited metadata.
 for(let i=0;i<300;i++){
  const f=makeFont({source:'grid',name:'space'+i,size:7,ascent:7,descent:1,lineHeight:9,glyphs:[{code:65,w:0,h:0,ox:0,oy:0,adv:3,bits:new Uint8Array()}]});
  const a=createBitmap(11,9),b=createBitmap(11,9);a.px.fill(123);b.px.fill(123);
- directText(a,f,'AAA',0,0,456,{outline:789});textInto(b,f,'AAA',0,0,456,{outline:789});
+ directText({bitmap:a,font:f,value:'AAA',x:0,y:0,color:456,style:{outline:789}});textInto(b,f,'AAA',0,0,456,{outline:789});
  if(a.px.some((v,j)=>v!==b.px[j]))throw Error('Empty glyph changed pixels');checks++;
  
 }
@@ -54,7 +64,7 @@ for(let i=0;i<300;i++){
 for(let i=0;i<300;i++){
  const f=makeFont({source:'grid',name:'fractional',size:7,ascent:(i%11)/10,descent:1,lineHeight:9,glyphs:[{code:65,w:3,h:3,ox:(i%7)/10,oy:(i%13)/10,adv:(i%17)/10,bits:Uint8Array.from([1,1,1,1,0,1,1,1,1])}]});
  const a=createBitmap(27,21),b=createBitmap(27,21),y=(i%10)/10;
- directText(a,f,'AAAA',0,y,0xffaa1133,{outline:0xff224455});textInto(b,f,'AAAA',0,y,0xffaa1133,{outline:0xff224455});
+ directText({bitmap:a,font:f,value:'AAAA',x:0,y,color:0xffaa1133,style:{outline:0xff224455}});textInto(b,f,'AAAA',0,y,0xffaa1133,{outline:0xff224455});
  if(a.px.some((v,j)=>v!==b.px[j]))throw Error('Fractional mismatch '+i);checks++;
 }
 assert.equal(checks,3110);
