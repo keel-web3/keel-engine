@@ -509,7 +509,9 @@ export function generateCar(seed: string, options: CarOptions = {}): Car {
   const typeName = pins["Type"] ?? (D.u("gate.Type") < odds(TYPE_TABLE.chance) / ONE_PPM ? D.pick("pick.Type", lucky(TYPE_TABLE.entries)) : null);
   const type: CarType | null = typeName === null || typeName === "None" ? null : lookBy<CarType>({ "Gold Plated": "gold", Chrome: "chrome", "Full Carbon": "carbon", "Rust Bucket": "rust", Hologram: "hologram", Stealth: "stealth" }, typeName);
   // (A pinned Paint names a family -- the paint shop's choice; the draw is still made, so nothing after it moves.)
-  const drawnFamily: PaintKey = D.pick("family", PAINT_TABLES[cls]);
+  // (A special style may carry its own table -- a semi's fleet colours; the same draws, from its table.)
+  const paintTable = style.paints ?? PAINT_TABLES[cls];
+  const drawnFamily: PaintKey = D.pick("family", paintTable);
   const pinnedFamily = pins["Paint"] ? (Object.keys(PAINT_FAMILIES) as PaintKey[]).find((k) => PAINT_FAMILIES[k].name === pins["Paint"]) : undefined;
   const familyKey: PaintKey = pinnedFamily ?? drawnFamily;
   const fam = PAINT_FAMILIES[familyKey];
@@ -522,7 +524,7 @@ export function generateCar(seed: string, options: CarOptions = {}): Car {
   if (type) traits.push({ category: "Paint", name: typeName!, site: "Paint", ppm: entryPpm(TYPE_TABLE, typeName!) });
   else traits.push({ category: "Paint", name: fam.name, site: "Paint", ppm: traitPpm("Paint", fam.name) });
   const dark = bodyC.light < 0.4;
-  const others = PAINT_TABLES[cls].filter(([k]) => k !== familyKey);
+  const others = paintTable.filter(([k]) => k !== familyKey);
   const altKey: PaintKey = D.pick("altFamily", [[dark ? "white" : "black", 40], ["silver", 15], ["gunmetal", 15], [familyKey, 15], ...others.slice(0, 3).map(([k]) => [k, 6] as const)]);
   const altC = altKey === familyKey ? curve(fam, clamp(1 - D.u("altt"), 0, 1) * 0.3) : curve(PAINT_FAMILIES[altKey], D.u("altt"));
   const accentKey: PaintKey = D.pick("accentFamily", [[dark ? "white" : "black", 30], ["yellow", 10], ["red", 10], ["orange", 10], ["electric", 10], ["acid", 6], ["white", 10]]);
@@ -561,7 +563,7 @@ export function generateCar(seed: string, options: CarOptions = {}): Car {
   // Condition: panels off another car, primer, rust, sun.
   const panelsPainted: PanelPaint[] = [];
   const primer: Colour = { light: snap(at(D.flat("primer"), 0.46, 0.62), 0.02), chroma: 0.01, hue: D.u("primer.hue") < 0.3 ? 20 : 250 };
-  const oddColour = (tag: string): Colour => { const k = D.pick<PaintKey>(`odd.${tag}`, others.length ? others : PAINT_TABLES[cls]); return curve(PAINT_FAMILIES[k], D.u(`odd.${tag}.t`)); };
+  const oddColour = (tag: string): Colour => { const k = D.pick<PaintKey>(`odd.${tag}`, others.length ? others : paintTable); return curve(PAINT_FAMILIES[k], D.u(`odd.${tag}.t`)); };
   const side = (tag: string) => (D.u(tag) < 0.5 ? "L" : "R");
   const conditionName = type ? null : roll("Condition", (v) => {
     if (v === "Primer Hood") { panelsPainted.push({ panel: "hood", kind: "primer", colour: primer }); return "hood in primer"; }
