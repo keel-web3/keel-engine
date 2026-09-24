@@ -1215,15 +1215,15 @@
         },
         {
           "path": "packages/city/src/arterials.ts",
-          "sha256": "0x372df4484a352afc8fa8e7c7c62e9daa557c3d5bb352a1f69dc66cf7aa028a88"
+          "sha256": "0x0556e59bd8121ffcc7d4f8442687f80b5ad732439a0361e592eaee6ba24d354f"
         },
         {
           "path": "packages/city/src/blocks.ts",
-          "sha256": "0x9d0382fc97124a8316052dd63b31c42a8fc78205c388cacde39f9c2c6e8aaeba"
+          "sha256": "0xa0df470a9fcea2e741f0b288227d1fcfcf1921aca4bda02fe70e5896b84690b5"
         },
         {
           "path": "packages/city/src/city.ts",
-          "sha256": "0x194bf09bfac3b94b51d9bceb34e7a425508b38c9dd4ac39a81e3a7e5b35489c5"
+          "sha256": "0x6ac07be2a47769142892d8cc33ecca9bfd899abbbf69bf83571c5178c3607ee1"
         },
         {
           "path": "packages/city/src/climate.ts",
@@ -1239,7 +1239,7 @@
         },
         {
           "path": "packages/city/src/index.ts",
-          "sha256": "0x609288937353d64e0e4f084adcc89e578a05872b5ab6face9a544a267ed2ccbd"
+          "sha256": "0xcd86d2a1a59cbb39a10b70b9f8e888bfb03466b8f3e539a9dcb0a4f0cca97c70"
         },
         {
           "path": "packages/city/src/junctions.ts",
@@ -1259,7 +1259,7 @@
         },
         {
           "path": "packages/city/src/region.ts",
-          "sha256": "0x230685687bf2440a7126bf96e54bc253e62a7ec62f7c83eb7375d59c2a74c2ed"
+          "sha256": "0xe8dded60774c13d206557642a6db87bd19e08b934bd6372d8abb250aee8e7ad1"
         },
         {
           "path": "packages/city/src/sidewalks.ts",
@@ -1280,6 +1280,10 @@
         {
           "path": "packages/city/src/weather.ts",
           "sha256": "0x4fffae21d269073b79f442773db2b5e95652e8842d946e9774e7207d3d884b25"
+        },
+        {
+          "path": "packages/city/src/world.ts",
+          "sha256": "0x7056b71c8070a8f70a57055f18dee2f7c5f7a7f040b95582382746fff9d639ea"
         }
       ],
       "build": {
@@ -1292,17 +1296,17 @@
         ]
       },
       "output": {
-        "digest": "0x54f9b221a6aff666a710a1e77991ae29cb975358ee5ede7f27c9ce2a82ecd353",
-        "byteLength": 77863
+        "digest": "0x320e429e7bdc8dd0431962ba4129da720f279cc7016d6669b14e36a488e5f2fd",
+        "byteLength": 88095
       },
-      "sourceDigest": "0x695f91e7542b417d58ad9ebbd826ff5c30a990087817e3149c179491260afceb",
-      "recipeDigest": "0x85481ffe0781a71caaf7608b6e8d7b1cedca0daef2e3df9eee4a5e4ab3d87c96",
-      "receiptDigest": "0x59adec9ff03fb83c406e3b41f21857a265346586c273d192bf869224a218a685",
+      "sourceDigest": "0x6998d191ce3850e36cfb495082adf1ab0cc987d95795529275b989d532b34585",
+      "recipeDigest": "0xe27d786f2608e759360dc825e5ba2a6019e490cf3d0468b7ed2c3df2d74d5d7b",
+      "receiptDigest": "0xf263ca637438609fda7a0bcf9931bbbb8261966da58c1a22bcb98dc9b77295ca",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/city/test/vectors.mjs",
-        "sha256": "0xba336c7720e3fd6611466866d6d504075aea0d4971da29198174c82f63629133"
+        "sha256": "0x5134e6b3486d49650a4a4cb5fb07250700526afc193872ac57a67824bbfae9bf"
       },
       "deployments": [],
       "deployed": false
@@ -3037,7 +3041,7 @@
         },
         {
           "path": "packages/road/src/field.ts",
-          "sha256": "0xc4aaf9598d864b7388e7db9086e1178fa6dae612f42c1829caa3aae74c5af334"
+          "sha256": "0x06c2d2e2e9cbed4983dc53b2c6cd31e9ebe4bb865406591f9855715c662d1152"
         },
         {
           "path": "packages/road/src/graph.ts",
@@ -3064,12 +3068,12 @@
         ]
       },
       "output": {
-        "digest": "0xa78153c8fbc8d7d58f59186b31b09722eeab09cd3e90b7c1209eb8fa3386f2af",
-        "byteLength": 10018
+        "digest": "0x30e5cdb7fd8f4252fdf116750eee7fa8ea5ec0eb86e31fb7297109e1ede11b02",
+        "byteLength": 10301
       },
-      "sourceDigest": "0x5348975ec011f9c8a211846a738e4e33a9afbc8f0a79a3702fd7223e2c8637ad",
-      "recipeDigest": "0x47b0077eb82fdbcb43fb14b57e604568deab9a2b9d688e4920d0cce749851fe2",
-      "receiptDigest": "0xa8b1a15aa083e484b388fdbc230c3d1604491f9e4c41a9002739859ade6e5dc5",
+      "sourceDigest": "0x3ae4ae407f1f725d0c14716bf761121126c7bd2de34f0e188755a7dd111c418d",
+      "recipeDigest": "0xc33773c9591305f9751075b9caf9b39980ccddcfc847859736ed7a4dea17916a",
+      "receiptDigest": "0xb122ea56043eb4a8eda5d9f40755e2a539ff912fc66b5581dd1d793490916fd9",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
