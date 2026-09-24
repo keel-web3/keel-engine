@@ -9,6 +9,7 @@
 // a step: the steepest part of a block is its middle, and no steeper than the
 // roads round it make it. All of it arithmetic and square roots.
 
+import { dhypot } from "@keel-engine/core";
 import { cellX, cellZ } from "@keel-engine/elevation";
 import type { HeightGrid } from "@keel-engine/elevation";
 import { pointAt } from "@keel-engine/road";
@@ -114,7 +115,7 @@ export function terraceOf(roads: TerraceRoads, block: Block): Terrace | null {
     // (A side with no road found -- or too short to clear its corners -- is sampled off the road field along its chord.)
     if (xs.length < 2) {
       xs.length = 0; zs.length = 0; ys.length = 0;
-      const L = Math.hypot(bx - ax, bz - az), n = Math.max(2, Math.round(L / SPACING));
+      const L = dhypot(bx - ax, bz - az), n = Math.max(2, Math.round(L / SPACING));
       for (let i = 1; i < n; i += 1) {
         const cx = ax + ((bx - ax) * i) / n, cz = az + ((bz - az) * i) / n, at = roads.field.at(cx, cz);
         if (!at) continue;
@@ -134,25 +135,32 @@ export function terraceOf(roads: TerraceRoads, block: Block): Terrace | null {
 /** The ground at a point: each side's nearest pavement edge, weighted by the inverse square of the distance to it. */
 function blend(sides: readonly Side[], x: number, z: number): number {
   let sw = 0, sy = 0;
-  for (const S of sides) {
+  for (let n = 0; n < sides.length; n += 1) {
+    const S = sides[n]!, X = S.x, Z = S.z, Y = S.y, last = S.n - 1;
     // (The nearest sample: from where the point falls along the side's chord, walked downhill in distance.)
     const t = Math.max(0, Math.min(1, ((x - S.ax) * S.ex + (z - S.az) * S.ez) / S.l2));
-    let i = Math.round(t * (S.n - 1));
-    const d2 = (k: number): number => (S.x[k]! - x) ** 2 + (S.z[k]! - z) ** 2;
-    let best = d2(i);
-    for (;;) { if (i > 0 && d2(i - 1) < best) { i -= 1; best = d2(i); } else break; }
-    for (;;) { if (i < S.n - 1 && d2(i + 1) < best) { i += 1; best = d2(i); } else break; }
-    // (Then onto the segment either side of it.)
-    let dd = best, y = S.y[i]!;
-    for (const j of [i - 1, i + 1]) {
-      if (j < 0 || j >= S.n) continue;
-      const ux = S.x[j]! - S.x[i]!, uz = S.z[j]! - S.z[i]!, l2 = ux * ux + uz * uz;
-      if (l2 <= 0) continue;
-      const f = Math.max(0, Math.min(1, ((x - S.x[i]!) * ux + (z - S.z[i]!) * uz) / l2));
-      const e2 = (S.x[i]! + ux * f - x) ** 2 + (S.z[i]! + uz * f - z) ** 2;
-      if (e2 < dd) { dd = e2; y = S.y[i]! + (S.y[j]! - S.y[i]!) * f; }
+    let i = Math.round(t * last), best = (X[i]! - x) * (X[i]! - x) + (Z[i]! - z) * (Z[i]! - z);
+    for (;;) {
+      if (i > 0) { const e = (X[i - 1]! - x) * (X[i - 1]! - x) + (Z[i - 1]! - z) * (Z[i - 1]! - z); if (e < best) { i -= 1; best = e; continue; } }
+      break;
     }
-    const w = 1 / Math.max(dd, NEAR * NEAR);
+    for (;;) {
+      if (i < last) { const e = (X[i + 1]! - x) * (X[i + 1]! - x) + (Z[i + 1]! - z) * (Z[i + 1]! - z); if (e < best) { i += 1; best = e; continue; } }
+      break;
+    }
+    // (Then onto the segment either side of it.)
+    let dd = best, y = Y[i]!;
+    for (let side = -1; side <= 1; side += 2) {
+      const j = i + side;
+      if (j < 0 || j > last) continue;
+      const ux = X[j]! - X[i]!, uz = Z[j]! - Z[i]!, l2 = ux * ux + uz * uz;
+      if (l2 <= 0) continue;
+      const f = ((x - X[i]!) * ux + (z - Z[i]!) * uz) / l2;
+      if (f <= 0) continue;
+      const g = f < 1 ? f : 1, ex = X[i]! + ux * g - x, ez = Z[i]! + uz * g - z, e2 = ex * ex + ez * ez;
+      if (e2 < dd) { dd = e2; y = Y[i]! + (Y[j]! - Y[i]!) * g; }
+    }
+    const w = 1 / (dd > NEAR * NEAR ? dd : NEAR * NEAR);
     sw += w; sy += w * y;
   }
   return sy / sw;
@@ -161,7 +169,8 @@ function blend(sides: readonly Side[], x: number, z: number): number {
 /**
  * Lay a block's terrace on the grid: every cell of the block's own ground -- what's reached from its middle without
  * crossing a locked cell (a road, its pavements, a junction), within its corners and BOW -- set to the terrace, and
- * locked. Returns the cells it set.
+ * locked. Returns the cells it set. (Cells three and more from the block's edge, off the even lattice, are the bilinear
+ * mix of the even cells round them: the terrace is smooth there -- millimetres -- and it's most of a block.)
  */
 export function layTerrace(land: HeightGrid, lock: Uint8Array, block: Block, t: Terrace): number {
   const q = block.corners;
@@ -181,17 +190,39 @@ export function layTerrace(land: HeightGrid, lock: Uint8Array, block: Block, t: 
     }
   }
   if (seed < 0) return 0;
-  const stack = [seed], w = land.w;
+  // The block's cells: flooded from the seed over what's free.
+  const W = land.w, bw = i1 - i0 + 1, bh = j1 - j0 + 1, near = new Uint8Array(bw * bh), cells: number[] = [], stack = [seed];
   lock[seed] = 2;
-  let set = 0;
   while (stack.length) {
-    const k = stack.pop()!, i = k % w, j = (k - i) / w;
-    land.data[k] = t.at(cellX(land, i), cellZ(land, j));
-    set += 1;
+    const k = stack.pop()!, i = k % W, j = (k - i) / W;
+    cells.push(k); near[(j - j0) * bw + (i - i0)] = 3;
     if (i > i0 && !lock[k - 1]) { lock[k - 1] = 2; stack.push(k - 1); }
     if (i < i1 && !lock[k + 1]) { lock[k + 1] = 2; stack.push(k + 1); }
-    if (j > j0 && !lock[k - w]) { lock[k - w] = 2; stack.push(k - w); }
-    if (j < j1 && !lock[k + w]) { lock[k + w] = 2; stack.push(k + w); }
+    if (j > j0 && !lock[k - W]) { lock[k - W] = 2; stack.push(k - W); }
+    if (j < j1 && !lock[k + W]) { lock[k + W] = 2; stack.push(k + W); }
   }
-  return set;
+  // How near each is to the block's edge, in cells (a chessboard distance, 3 and over counted as 3).
+  const at = (a: number, b: number): number => (a < 0 || b < 0 || a >= bw || b >= bh ? 0 : near[b * bw + a]!);
+  for (let b = 0; b < bh; b += 1) for (let a = 0; a < bw; a += 1) {
+    const k = b * bw + a;
+    if (near[k]) near[k] = Math.min(near[k]!, at(a - 1, b) + 1, at(a, b - 1) + 1, at(a - 1, b - 1) + 1, at(a + 1, b - 1) + 1);
+  }
+  for (let b = bh - 1; b >= 0; b -= 1) for (let a = bw - 1; a >= 0; a -= 1) {
+    const k = b * bw + a;
+    if (near[k]) near[k] = Math.min(near[k]!, at(a + 1, b) + 1, at(a, b + 1) + 1, at(a + 1, b + 1) + 1, at(a - 1, b + 1) + 1);
+  }
+  // Exactly: every cell by the edge, and the even lattice; then the rest from the even cells round them.
+  const mixed: number[] = [];
+  for (const k of cells) {
+    const i = k % W, j = (k - i) / W;
+    if (near[(j - j0) * bw + (i - i0)]! < 3 || ((i | j) & 1) === 0) land.data[k] = t.at(cellX(land, i), cellZ(land, j));
+    else mixed.push(k);
+  }
+  for (const k of mixed) {
+    const i = k % W, j = (k - i) / W, ia = i & ~1, ja = j & ~1, ib = i & 1 ? ia + 2 : ia, jb = j & 1 ? ja + 2 : ja;
+    const d = land.data, a = d[ja * W + ia]!, b = d[ja * W + ib]!, c = d[jb * W + ia]!, e = d[jb * W + ib]!;
+    const fu = (i - ia) / 2, fv = (j - ja) / 2;
+    d[k] = (a * (1 - fu) + b * fu) * (1 - fv) + (c * (1 - fu) + e * fu) * fv;
+  }
+  return cells.length;
 }
