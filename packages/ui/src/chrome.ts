@@ -35,9 +35,33 @@ export function blend(b: Bitmap, x: number, y: number, c: Rgba): void {
   b.px[i] = rgba(Math.round(R(c) * s + R(d) * k), Math.round(G(c) * s + G(d) * k), Math.round(B(c) * s + B(d) * k), Math.round(oa * 255));
 }
 
+/**
+ * A rectangle laid OVER what's there, pixel for pixel as `blend` lays it -- but done a row at a time: an opaque colour
+ * is a fill, and a see-through one works its colour out once, then reuses the last pixel's answer while the pixels
+ * under it repeat (a panel over a cleared layer, or over another panel, is one colour row after row).
+ */
 export function blendRect(b: Bitmap, x: number, y: number, w: number, h: number, c: Rgba): void {
   const x0 = Math.max(0, Math.round(x)), y0 = Math.max(0, Math.round(y)), x1 = Math.min(b.w, Math.round(x + w)), y1 = Math.min(b.h, Math.round(y + h));
-  for (let yy = y0; yy < y1; yy += 1) for (let xx = x0; xx < x1; xx += 1) blend(b, xx, yy, c);
+  const sa = A(c) / 255;
+  if (x0 >= x1 || y0 >= y1 || sa <= 0) return;
+  const px = b.px, W = b.w;
+  if (sa >= 1) { for (let yy = y0; yy < y1; yy += 1) px.fill(c, yy * W + x0, yy * W + x1); return; }
+  const cr = R(c), cg = G(c), cb = B(c);
+  // (The last pixel under it and what it became: -1 is no pixel's value.)
+  let under = -1, over: Rgba = c;
+  for (let yy = y0; yy < y1; yy += 1) for (let i = yy * W + x0, end = yy * W + x1; i < end; i += 1) {
+    const d = px[i]!;
+    if (d !== under) {
+      under = d;
+      const da = A(d) / 255;
+      if (da <= 0) over = c;
+      else {
+        const oa = sa + da * (1 - sa), k = (da * (1 - sa)) / oa, s = sa / oa;
+        over = rgba(Math.round(cr * s + R(d) * k), Math.round(cg * s + G(d) * k), Math.round(cb * s + B(d) * k), Math.round(oa * 255));
+      }
+    }
+    px[i] = over;
+  }
 }
 
 // A 4x4 Bayer matrix: an ordered dither, fixed to the screen.
