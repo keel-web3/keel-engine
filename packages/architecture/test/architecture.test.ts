@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { cityHeight, generateCity, sidewalkReach, streetsOf } from "@keel-engine/city";
 import type { City, Lot } from "@keel-engine/city";
 import { roadField } from "@keel-engine/road";
-import { DOOR_LIFT, RISER, SLOT, blockWorld, districtPaint, frameOf, lookOf, planCity, planLot, planStreets } from "../src/index.ts";
+import { DOOR_LIFT, RISER, SLOT, blockWorld, districtPaint, frameOf, lookOf, planCity, planCitySteps, planLot, planStreets, planStreetsSteps } from "../src/index.ts";
 import type { Archetype, Catalogue, StreetCatalogue } from "../src/index.ts";
 
 // (A small catalogue of its own: the engine's tests never import a pack.)
@@ -96,6 +96,22 @@ test("planCity: a plan a lot, grouped by block, a look a block; blockWorld merge
   const w = blockWorld(blocks[0]!.plans, 0), far = blockWorld(blocks[0]!.plans, 2);
   assert.ok((w.boxes?.length ?? 0) > (far.boxes?.length ?? 0) && (far.boxes?.length ?? 0) > 0);
   assert.ok(blocks[0]!.look.key.startsWith("test@1|"));
+});
+
+test("city and street step plans yield and preserve their synchronous output for distinct seeds", () => {
+  for (const seed of ["neon", "docks"]) {
+    const c = seed === "neon" ? neon() : generateCity(seed);
+    const citySteps = planCitySteps(CAT, c);
+    let cityYields = 0, planned: ReturnType<typeof planCity>;
+    for (;;) { const r = citySteps.next(); if (r.done) { planned = r.value; break; } cityYields++; }
+    assert.ok(cityYields > 1, `${seed}: city lots must pause more than once`);
+    assert.deepEqual(planned, planCity(CAT, c));
+    const streetSteps = planStreetsSteps(STREETS, c);
+    let streetYields = 0, dressed: ReturnType<typeof planStreets>;
+    for (;;) { const r = streetSteps.next(); if (r.done) { dressed = r.value; break; } streetYields++; }
+    assert.ok(streetYields > 1, `${seed}: street placement must pause more than once`);
+    assert.deepEqual(dressed, planStreets(STREETS, c));
+  }
 });
 
 test("districtPaint: walls wear the windows pattern, lit at night and dark by day; neon burns in the district's hues", () => {

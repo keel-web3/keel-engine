@@ -87,14 +87,19 @@ export function* cityHeightSteps(city: City, cell = 2): Generator<number, CityHe
   for (const l of city.lots) kindOf.set(l.block, city.districts[l.district]!.kind);
   const hills = city.districts.filter((d) => d.kind === "suburb" || d.kind === "midtown");
   const over = new Set(hills.length ? hills[Math.floor(D.u("overlook") * hills.length)]!.blocks : []);
+  // A block's character is constant across the coarse grid; keep its original order for exact sums.
+  const relief = centres.flatMap(([cx, cz], b) => {
+    const kind = kindOf.get(b);
+    if (!kind) return [];
+    const overlook = over.has(b);
+    return [{ cx, cz, amplitude: overlook ? OVERLOOK_RELIEF : RELIEF[kind], lift: overlook ? OVERLOOK_LIFT : 0 }];
+  });
   /** Per point: the district's relief and the overlook's lift, weighted over the nearest blocks (inverse distance). */
   const character = (x: number, z: number): [number, number] => {
     let sw = 0, sa = 0, sl = 0;
-    centres.forEach(([cx, cz], b) => {
-      const k = kindOf.get(b);
-      if (!k) return;
+    relief.forEach(({ cx, cz, amplitude, lift }) => {
       const w = 1 / ((cx - x) * (cx - x) + (cz - z) * (cz - z) + 2500);
-      sw += w; sa += w * (over.has(b) ? OVERLOOK_RELIEF : RELIEF[k]); sl += w * (over.has(b) ? OVERLOOK_LIFT : 0);
+      sw += w; sa += w * amplitude; sl += w * lift;
     });
     return sw ? [sa / sw, sl / sw] : [6, 0];
   };

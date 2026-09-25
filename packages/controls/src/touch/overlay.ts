@@ -41,6 +41,7 @@ export function createTouchOverlay(host: HTMLElement, virtual: VirtualControls, 
   const root = doc.createElement("div");
   root.className = `keel-ctl${opts.className ? ` ${opts.className}` : ""}`;
   host.append(root);
+  let disposed = false, generation = 0;
   let current = layout, teardown: (() => void)[] = [];
   // Controls sharing an id add up (two arrows, two zones): each holds its own share, and the id gets the sum.
   const shares = new Map<string, Map<object, { v: number; digital: boolean }>>();
@@ -229,6 +230,7 @@ export function createTouchOverlay(host: HTMLElement, virtual: VirtualControls, 
   const tilt = (c: TiltControl): void => {
     const win = doc.defaultView as (Window & { DeviceOrientationEvent?: { requestPermission?: () => Promise<string> } }) | null;
     if (!win) return;
+    const layoutGeneration = generation;
     const onTilt = (e: DeviceOrientationEvent): void => {
       roll = rollOf(e.beta ?? 0, e.gamma ?? 0, win.screen?.orientation?.angle ?? 0);
       write(c.id, root, tiltValue(roll, zero, c.range, c.deadzone), false);
@@ -236,7 +238,7 @@ export function createTouchOverlay(host: HTMLElement, virtual: VirtualControls, 
     const ask = win.DeviceOrientationEvent?.requestPermission;
     const listen = (): void => win.addEventListener("deviceorientation", onTilt);
     if (ask) {
-      const once = (): void => { root.removeEventListener("pointerdown", once, true); void ask().then((p) => { if (p === "granted") listen(); }); };
+      const once = (): void => { root.removeEventListener("pointerdown", once, true); void ask().then((p) => { if (p === "granted" && !disposed && layoutGeneration === generation) listen(); }); };
       root.addEventListener("pointerdown", once, true);
       teardown.push(() => root.removeEventListener("pointerdown", once, true));
     } else listen();
@@ -244,9 +246,11 @@ export function createTouchOverlay(host: HTMLElement, virtual: VirtualControls, 
   };
 
   const build = (l: TouchLayout): void => {
+    if (disposed) return;
+    generation += 1;
     for (const t of teardown) t();
     teardown = [];
-    for (const id of shares.keys()) virtual.set(id, 0);
+    for (const id of shares.keys()) virtual.clear(id);
     shares.clear();
     slideGroups.clear();
     slidePointers.clear();
@@ -270,6 +274,15 @@ export function createTouchOverlay(host: HTMLElement, virtual: VirtualControls, 
     setLayout: build,
     force(on) { if (on) root.dataset.keelForce = ""; else delete root.dataset.keelForce; },
     calibrate() { zero = roll; },
-    destroy() { for (const t of teardown) t(); for (const id of shares.keys()) virtual.set(id, 0); root.remove(); },
+    destroy() {
+      if (disposed) return;
+      disposed = true;
+      generation += 1;
+      for (const t of teardown) t();
+      teardown = [];
+      for (const id of shares.keys()) virtual.clear(id);
+      shares.clear(); slideGroups.clear(); slidePointers.clear(); slideOwners.clear();
+      root.remove();
+    },
   };
 }
