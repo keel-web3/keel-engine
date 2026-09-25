@@ -11,7 +11,7 @@ export default await engineVectors(import.meta.url, [
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "3612208eaaf03cc1eb47bfd7c2b638efa8fee2fe02cb551df1a3952bd48f5be6",
+    expect: "23cbceb7320c303df04a40ebd94a7e918e3967c3a1f48bed04e456967d4767c2",
   },
   {
     name: "a seed makes the same car, trait for trait",
@@ -55,7 +55,7 @@ export default await engineVectors(import.meta.url, [
       const cars = [...Array.from({ length: 20 }, (_, i) => generateCar(`vector:pin:${i}`)), generateCar("vector:pin", { style: "Semi Truck" }), generateCar("vector:pin", { style: "Sports Sedan" })];
       return digest(cars.map((c) => [c, carDesigns(c).body.pose("still", 0), carLights(c, { night: true, braking: 1, neon: 1 })]));
     },
-    expect: "f5420e5a5884bd812d139e7884bfa9fe99930c1ef657be2265213e62c5d80ab5",
+    expect: "66b4fd7c4aef3491a3d4edff0e8b08f8afe306392c2f3bd7c6dd37366b81090d",
   },
   {
     name: "how many cars there are",
