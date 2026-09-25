@@ -482,7 +482,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/architecture/test/vectors.mjs",
-        "sha256": "0xd245db3a4c4a1f3d8bedbffde04b3b150a5cc38bda95cbbd97e6a5239a1f3573"
+        "sha256": "0x80bc20af118fbe017f369957f1fb8f6a722e2f9dfca1c2dbd7e3c0ff086ef55f"
       },
       "deployments": [],
       "deployed": false
@@ -5178,7 +5178,7 @@
       "verified": true,
       "vectors": {
         "path": "packs/vehicles/test/vectors.mjs",
-        "sha256": "0x1594e98a2846eb0a97931c8d330012e109937d5035b4c81998eb18f02f681649"
+        "sha256": "0xf18447eddaf1ad2c58e2368a16c590bf8522aaaf26280f2796c40ea822ab179d"
       },
       "deployments": [],
       "deployed": false
