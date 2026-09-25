@@ -11,6 +11,7 @@ import { addBox, addCapsule, addMass, addPlant, count, pick, toWorld, within } f
 import type { SlotName } from "./slots.ts";
 import type { MassOp } from "./types.ts";
 import { mast, vehicle } from "./business.ts";
+import { thing } from "./foundations.ts";
 
 type Op<K extends MassOp["op"]> = (b: Build, op: Extract<MassOp, { op: K }>) => void;
 type SolidArgs = { readonly x: number; readonly z: number; readonly hw: number; readonly hd: number; readonly y1: number; readonly slot?: SlotName };
@@ -23,7 +24,7 @@ const R2 = 0.7071067811865476;
 const OCT: readonly (readonly [number, number])[] = [[1, 0], [R2, R2], [0, 1], [-R2, R2], [-1, 0], [-R2, -R2], [0, -1], [R2, -R2]];
 
 /** A mass a car hits whose look is drawn apart: its record only. */
-const solid = (b: Build, { x, z, hw, hd, y1, slot = "metal" }: SolidArgs): void => { b.masses.push({ x, z, hw, hd, y0: 0, y1, slot }); };
+const solid = (b: Build, { x, z, hw, hd, y1, slot = "metal" }: SolidArgs): void => { b.masses.push(thing({ x, z, hw, hd, y0: 0, y1, slot })); };
 
 /** A gable whose ridge runs across the front (x): its ends face the sides. */
 function gableX(b: Build, { x, z, hw, hd, y, rise, slot }: GableArgs): void {

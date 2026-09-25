@@ -6,12 +6,12 @@ export default await engineVectors(import.meta.url, [
   {
     name: "the export surface is intact",
     run: async (api) => { const names = surface(api); return { count: names.length, digest: await digest(names) }; },
-    expect: {"count":95,"digest":"79e54c60340aa68683bff6320a94b15b6e7e817624481fe04fa920c474f76264"},
+    expect: {"count":99,"digest":"9e7110319b401aef3225bac87a82fac84e8ea97279ef6c09b3fe23ee9ee62d36"},
   },
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "d1966756d197604eec8e7b9e6c58a8bcb05d53c1bd18a09950215d65351e69f8",
+    expect: "23cbceb7320c303df04a40ebd94a7e918e3967c3a1f48bed04e456967d4767c2",
   },
   {
     name: "a seed makes the same car, trait for trait",
@@ -28,6 +28,34 @@ export default await engineVectors(import.meta.url, [
       return [semi.style, semi.mounts.length, semi.body.length, semi.parts.semi.sleeper, generateCar("vector:1").style];
     },
     expect: ["Semi Truck", 6, 6.65, 0, "Bubble Hyper"],
+  },
+  {
+    name: "the city's service vehicles are built only by name, never drawn",
+    run: ({ generateCar, SERVICE_STYLES }) => [
+      ...Object.values(SERVICE_STYLES).map((style) => {
+        const c = generateCar("vector:service", { style });
+        return [c.style, c.mounts.length, Math.round(c.body.length * 100) / 100, c.parts.service.kind, c.parts.service.form, !!c.parts.beacons];
+      }),
+      generateCar("vector:1").style,
+    ],
+    expect: [["City Bus", 4, 11.75, "bus", "diesel", false], ["Fire Engine", 4, 10.1, "fire", "pumper", true], ["Ambulance", 4, 7.3, "ambulance", "type3", true], ["Police Cruiser", 4, 4.78, "police", "cruiser", true], ["Dump Truck", 6, 8.6, "dump", "tipper", true], "Bubble Hyper"],
+  },
+  {
+    name: "beacons are dark without a phase, flash half against half with one, and touch no other car",
+    run: ({ generateCar, carLights }) => {
+      const cop = generateCar("vector:service", { style: "Police Cruiser" }), plain = generateCar("vector:1");
+      const lit = (c, beacon) => { const l = carLights(c, { night: true, braking: 0, neon: 0, ...(beacon === undefined ? {} : { beacon }) }); return [l.glow[30], l.glow[31], l.bloom[123], l.bloom[127]].map((v) => Math.round(v * 100)); };
+      return [lit(cop), lit(cop, 0.05), lit(cop, 0.55), lit(plain), lit(plain, 0.05)];
+    },
+    expect: [[-42, -42, 0, 0], [85, -42, 100, 0], [-42, 85, 0, 100], [0, 0, 0, 0], [0, 0, 0, 0]],
+  },
+  {
+    name: "the cars there were are the cars there are: data, bodies and lights (pinned before the service vehicles)",
+    run: async ({ generateCar, carDesigns, carLights }) => {
+      const cars = [...Array.from({ length: 20 }, (_, i) => generateCar(`vector:pin:${i}`)), generateCar("vector:pin", { style: "Semi Truck" }), generateCar("vector:pin", { style: "Sports Sedan" })];
+      return digest(cars.map((c) => [c, carDesigns(c).body.pose("still", 0), carLights(c, { night: true, braking: 1, neon: 1 })]));
+    },
+    expect: "66b4fd7c4aef3491a3d4edff0e8b08f8afe306392c2f3bd7c6dd37366b81090d",
   },
   {
     name: "how many cars there are",

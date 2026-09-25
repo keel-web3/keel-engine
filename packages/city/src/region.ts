@@ -21,7 +21,7 @@ import { SEA_LEVEL, groundAt } from "./terrain.ts";
 import type { City, EdgeTrait } from "./types.ts";
 import { VENUE_BOX, VENUE_KINDS, filletPath, nearsSelf, placeCourse, rallyControls, rallyProfile, venueLayout, venueLocal } from "./venues.ts";
 import type { RallyStage, Venue, VenueKind } from "./venues.ts";
-import type { Airport, Lake, Region, RegionGround, RegionLand, RegionLine, RegionRoad, RegionRoadKind, RegionSector, RegionSite, RegionSky, RegionWater, River, Settlement, SettlementKind, SiteKind } from "./region-types.ts";
+import type { Airport, Lake, Region, RegionAround, RegionGround, RegionLand, RegionLine, RegionRoad, RegionRoadKind, RegionSector, RegionSite, RegionSky, RegionWater, River, Settlement, SettlementKind, SiteKind } from "./region-types.ts";
 
 export type * from "./region-types.ts";
 
@@ -75,9 +75,25 @@ class Buckets {
   }
 }
 
-/** The region round a city. Made once a city (regionOf). */
-export function cityRegion(city: City): Region {
+/** The level a place of the world stands at, seen from another's region (m): a coast city's, just over the sea. */
+const PLACE_Y = 1.5;
+/** Past a place's own ground its land falls (or rises) back to the region's over this (m). */
+const PLACE_SHORE = 350;
+/**
+ * A world link over land runs down a valley of its own: within CORRIDOR m of it the land eases down to its deck (never
+ * up to it -- over a dip it stands on its viaduct), flat for CORRIDOR_FLOOR m either side. Found through a grid of
+ * CORRIDOR_CELL m cells, each holding the link sample nearest it: one lookup a height.
+ */
+const CORRIDOR = 320, CORRIDOR_FLOOR = 60, CORRIDOR_CELL = 40;
+
+/**
+ * The region round a city. Made once a city (regionOf). `around`: the world of places it stands in (keel/city
+ * world.ts regionAround) -- the other places stand on their own dry ground in it, over the sea if that's where they
+ * are, and the links to them are its freeways (their decks the world's), in place of the ones it would lay itself.
+ */
+export function cityRegion(city: City, around: RegionAround | null = null): Region {
   const site = city.site, D = drawsFor(site.seed, "region");
+  const places = around?.places ?? [];
   // (The land is the world's where the city is a cell of one -- neighbours share it -- else the city's own.)
   const landSeed = fnv(site.cell ? `world|${site.cell.world}` : `city|${site.seed}`);
   const ox = site.cell ? site.cell.x * site.size : 0, oz = site.cell ? site.cell.z * site.size : 0;
@@ -171,6 +187,26 @@ export function cityRegion(city: City): Region {
     for (let i = 0; i < count; i += 1) back += w[i]! * sectors[i]!.backdrop;
     return ramp(e, 2800, 6200) * back * (0.35 + ridged(15, x, z, 2300));
   };
+  const corridorCells = new Map<number, { x: number; z: number; y: number; d: number }>();
+  for (const road of (around?.roads ?? []).filter((q) => !q.bridge)) {
+    const reachCells = Math.ceil(CORRIDOR / CORRIDOR_CELL) + 1, cellKey = (i: number, j: number): number => (i + 32768) * 65536 + (j + 32768);
+    for (let k = 0; k < road.x.length; k += 10) {
+      const sx = road.x[k]!, sz = road.z[k]!, ci = Math.floor(sx / CORRIDOR_CELL), cj = Math.floor(sz / CORRIDOR_CELL);
+      for (let di = -reachCells; di <= reachCells; di += 1) for (let dj = -reachCells; dj <= reachCells; dj += 1) {
+        const d = dhypot((ci + di + 0.5) * CORRIDOR_CELL - sx, (cj + dj + 0.5) * CORRIDOR_CELL - sz);
+        if (d > CORRIDOR + CORRIDOR_CELL) continue;
+        const kk = cellKey(ci + di, cj + dj), had = corridorCells.get(kk);
+        if (!had || d < had.d) corridorCells.set(kk, { x: sx, z: sz, y: road.y[k]!, d });
+      }
+    }
+  }
+  /** The land eased down to a link's deck near it (its valley), else as it is. */
+  const corridorAt = (x: number, z: number, h: number): number => {
+    const c = corridorCells.get((Math.floor(x / CORRIDOR_CELL) + 32768) * 65536 + (Math.floor(z / CORRIDOR_CELL) + 32768));
+    if (!c) return h;
+    const floor = c.y - 1;
+    return h > floor ? floor + (h - floor) * ramp(dhypot(x - c.x, z - c.z), CORRIDOR_FLOOR, CORRIDOR) : h;
+  };
   const baseHeight = (x: number, z: number): number => {
     const r = dhypot(x, z), e = Math.max(0, r - edge);
     weights(x, z, w);
@@ -180,8 +216,17 @@ export function cityRegion(city: City): Region {
       if (wi < 0.01) continue;
       h += wi * landHeight(sectors[i]!.land, x, z, e, sectors[i]!.shore ?? 0);
     }
-    return h + groundAt(site, x, z).height + backdropAt(x, z, e);
+    h += groundAt(site, x, z).height + backdropAt(x, z, e);
+    if (corridorCells.size) h = corridorAt(x, z, h);
+    // (The world's other places stand on their own flat ground -- an island's, over the sea -- the land meeting it past.)
+    for (const p of places) {
+      const d = dhypot(x - p.x, z - p.z);
+      if (d < p.land + PLACE_SHORE) h = PLACE_Y + (h - PLACE_Y) * ramp(d, p.land, p.land + PLACE_SHORE);
+    }
+    return h;
   };
+  /** Whether a point is on (or by) one of the world's other places. */
+  const onPlace = (x: number, z: number, pad: number): boolean => places.some((p) => dhypot(x - p.x, z - p.z) < p.land + pad);
 
   // ---- lakes: on the open land, a few kilometres out, level with the ground where they lie.
   const lakes: Lake[] = [];
@@ -192,7 +237,7 @@ export function cityRegion(city: City): Region {
     const land = sectors[w.indexOf(Math.max(...w))]!.land;
     if (land === "ocean" || land === "desert" || land === "mountains") continue;
     const r = 160 + 520 * D.u("lakeSize", tries);
-    if (lakes.some((l) => dhypot(l.x - x, l.z - z) < l.r + r + 300)) continue;
+    if (lakes.some((l) => dhypot(l.x - x, l.z - z) < l.r + r + 300) || onPlace(x, z, r + PLACE_SHORE)) continue;
     lakes.push({ x, z, r, level: baseHeight(x, z) - 0.4 });
     k += 1;
   }
@@ -222,6 +267,7 @@ export function cityRegion(city: City): Region {
   const settledHeight = (x: number, z: number): number => {
     let h = wetHeight(x, z);
     for (const s of settlements) {
+      if (s.place !== undefined) continue;
       const d = dhypot(x - s.x, z - s.z);
       if (d < s.r * 2.2) h = s.y + (h - s.y) * ramp(d, s.r * 1.05, s.r * 2.2);
     }
@@ -252,14 +298,16 @@ export function cityRegion(city: City): Region {
   };
   const landAtPoint = (x: number, z: number): RegionLand => { weights(x, z, w); return sectors[w.indexOf(Math.max(...w))]!.land; };
 
-  // ---- the towns: where the land lets them stand -- dry, not too steep, apart. One far city on the skyline at least.
-  const want = 3 + Math.floor(D.u("towns") * 4) + Math.round(sprawl * 3);
+  // ---- the towns: the world's places first (each on its own ground, its skyline its own), then where the land lets them
+  // stand -- dry, not too steep, apart, clear of the places. One far city on the skyline at least.
+  for (const p of places) settlements.push({ kind: p.kind, x: p.x, z: p.z, y: PLACE_Y, r: p.r, top: p.top, seed: p.seed, place: p.place });
+  const want = places.length + 3 + Math.floor(D.u("towns") * 4) + Math.round(sprawl * 3);
   for (let tries = 0; tries < 80 && settlements.length < want; tries += 1) {
-    const far = settlements.length === 0;
+    const far = settlements.length === places.length;
     const b = D.u("townBearing", tries) * TAU, d = far ? 4800 + 3200 * D.u("farDist", tries) : edge + 900 + D.u("townDist", tries) * (reach - edge - 1400);
     const [x, z] = at(b, d);
     const land = landAtPoint(x, z);
-    if (land === "ocean" || wetAt(x, z)) continue;
+    if (land === "ocean" || wetAt(x, z) || onPlace(x, z, 900)) continue;
     const y = wetHeight(x, z) - backdropAt(x, z, dhypot(x, z) - edge);
     if (y > 90 || flatAt(x, z, 250) - backdropAt(x, z, dhypot(x, z) - edge) * 0.2 > 30) continue;
     const u = D.u("townKind", tries);
@@ -273,7 +321,7 @@ export function cityRegion(city: City): Region {
   const sprawlTowns = Math.round(sprawl * 5);
   for (let k = 0, tries = 0; k < sprawlTowns && tries < 30; tries += 1) {
     const b = D.u("sprawlBearing", tries) * TAU, d = edge + 350 + 900 * D.u("sprawlDist", tries), [x, z] = at(b, d);
-    if (wetAt(x, z) || landAtPoint(x, z) === "ocean" || flatAt(x, z, 150) > 18) continue;
+    if (wetAt(x, z) || landAtPoint(x, z) === "ocean" || flatAt(x, z, 150) > 18 || onPlace(x, z, 500)) continue;
     if (settlements.some((s) => dhypot(s.x - x, s.z - z) < s.r + 400)) continue;
     settlements.push({ kind: "town", x, z, y: wetHeight(x, z), r: 180 + 200 * D.u("sprawlR", tries), top: 10 + 16 * D.u("sprawlTop", tries), seed: `${site.seed}|sprawl|${tries}` });
     k += 1;
@@ -289,7 +337,7 @@ export function cityRegion(city: City): Region {
     for (let t = 0; t < 60; t += 1) {
       const b = D.u("airB", t) * TAU, d = edge + 1300 + length * 0.4 + 3600 * D.u("airD", t), [x, z] = at(b, d), yaw = D.u("airYaw", t) * Math.PI;
       const land = landAtPoint(x, z);
-      if (land === "ocean" || wetAt(x, z) || settlements.some((s) => dhypot(s.x - x, s.z - z) < s.r + length * 0.6 + 300)) continue;
+      if (land === "ocean" || wetAt(x, z) || onPlace(x, z, length * 0.6 + 300) || settlements.some((s) => dhypot(s.x - x, s.z - z) < s.r + length * 0.6 + 300)) continue;
       const hx = dsin(yaw) * length / 2, hz = dcos(yaw) * length / 2;
       if (wetAt(x + hx, z + hz) || wetAt(x - hx, z - hz)) continue;
       const hs = [-1, -0.5, 0, 0.5, 1].map((k) => wetHeight(x + hx * k, z + hz * k) - backdropAt(x + hx * k, z + hz * k, dhypot(x + hx * k, z + hz * k) - edge));
@@ -321,7 +369,8 @@ export function cityRegion(city: City): Region {
   });
 
   // ---- roads: freeways from the city's edge to the cities and off over the horizon; country roads to the towns.
-  const lines0: { kind: RegionRoadKind; xs: number[]; zs: number[]; half: number }[] = [];
+  /** `ys`: a world link's (its deck is the world's, not graded here); `link`: which, for Region.links. */
+  const lines0: { kind: RegionRoadKind; xs: number[]; zs: number[]; half: number; ys?: number[]; link?: { id: number; portal: number } }[] = [];
   const exits: number[] = [];
   const route = (kind: RegionRoadKind, x0: number, z0: number, x1: number, z1: number, half: number, s: number): { xs: number[]; zs: number[] } => {
     const len = dhypot(x1 - x0, z1 - z0), steps = Math.max(2, Math.ceil(len / 20));
@@ -335,7 +384,7 @@ export function cityRegion(city: City): Region {
     return { xs, zs };
   };
   const fromEdge = (b: number): [number, number] => at(b, edge - 30);
-  const big = settlements.filter((s) => s.kind === "metro" || s.kind === "city");
+  const big = settlements.filter((s) => s.place === undefined && (s.kind === "metro" || s.kind === "city"));
   // The city's own freeway spurs (keel/city arterials: a freeway road ending in nothing): each carries on from its end.
   const g = city.graph, deg = new Map<number, number>();
   for (const e of g.edges) for (const n of [e.a, e.b]) deg.set(n, (deg.get(n) ?? 0) + 1);
@@ -343,6 +392,20 @@ export function cityRegion(city: City): Region {
     const end = deg.get(e.b) === 1 ? e.b : e.a, n = g.nodes.find((q) => q.id === end)!;
     return { x: n.x, z: n.z, b: bearingOf(n.x, n.z), used: false };
   });
+  // The world's links: each out of the portal it leaves this city by (that spur's end), its line and its deck the
+  // world's -- the same road the place at its other end draws. A link that only passes by is drawn as it lies.
+  for (const r of around?.roads ?? []) {
+    const n = r.x.length, xs: number[] = [], zs: number[] = [], ys: number[] = [];
+    for (let i = 0; i < n; i += 20) { xs.push(r.x[i]!); zs.push(r.z[i]!); ys.push(r.y[i]!); }
+    if ((n - 1) % 20) { xs.push(r.x[n - 1]!); zs.push(r.z[n - 1]!); ys.push(r.y[n - 1]!); }
+    if (r.portal >= 0) {
+      let best = -1, bd = 40;
+      spurs.forEach((sp, k) => { const d = dhypot(sp.x - xs[0]!, sp.z - zs[0]!); if (!sp.used && d < bd) { bd = d; best = k; } });
+      if (best >= 0) spurs[best]!.used = true;
+      exits.push(bearingOf(xs[0]!, zs[0]!));
+    }
+    lines0.push({ kind: "freeway", xs, zs, half: 12, ys, link: { id: r.link, portal: r.portal } });
+  }
   big.forEach((s, i) => {
     const b = bearingOf(s.x, s.z);
     let best = -1, bd = 1.3;
@@ -386,7 +449,7 @@ export function cityRegion(city: City): Region {
         if ([0, 1, 2, 3, 4, 5].some((k) => wetAt(x + dsin((k * TAU) / 6) * r * 1.2, z + dcos((k * TAU) / 6) * r * 1.2))) return false;
         return flatAt(x, z, r) < 16 && settlements.every((s) => dhypot(s.x - x, s.z - z) > s.r + r + 500) && airOut(x, z) > r * 2.2 + 150;
       };
-      const fws = lines0.filter((l) => l.kind === "freeway");
+      const fws = lines0.filter((l) => l.kind === "freeway" && !l.link);
       for (let t = 0; t < 48 && !industry && fws.length; t += 1) {
         const l = fws[Math.floor(ID.u("fw", t) * fws.length)]!, i = 2 + Math.floor(ID.u("fwI", t) * (l.xs.length - 4));
         const x = l.xs[i]!, z = l.zs[i]!;
@@ -613,6 +676,15 @@ export function cityRegion(city: City): Region {
   const deckOf = (l: (typeof lines0)[number], id: number, base: (x: number, z: number) => number): RegionRoad => {
     const n = l.xs.length, ground = new Float64Array(n), y = new Float64Array(n), pier = new Uint8Array(n);
     const dirt = l.kind === "dirt", fords = new Uint8Array(n);
+    if (l.ys) {
+      // (A world link: its deck is the world's; on its piers where it stands well over the land here, or over water.)
+      for (let i = 0; i < n; i += 1) {
+        y[i] = l.ys[i]!;
+        if (y[i]! - settledHeight(l.xs[i]!, l.zs[i]!) > 5 || wetAt(l.xs[i]!, l.zs[i]!)) pier[i] = 1;
+        bucket.add(l.xs[i]!, l.zs[i]!, id, i);
+      }
+      return { kind: l.kind, x: Float64Array.from(l.xs), z: Float64Array.from(l.zs), y, pier, half: l.half };
+    }
     for (let i = 0; i < n; i += 1) {
       let g = base(l.xs[i]!, l.zs[i]!);
       // (The rally stage fords the river -- down through the water, never over it; every other road bridges water.)
@@ -941,13 +1013,14 @@ export function cityRegion(city: City): Region {
   }
   const sky: RegionSky = { wind: [dsin(windA) * windS, dcos(windA) * windS], cover, clouds };
 
-  return { seed: site.seed, edge, reach, sprawl, sectors, water: { sea, lakes, river }, settlements, sites, roads, lines, airport: port, venues: { dirt: venueList[0]!, drift: venueList[1]!, derby: venueList[2]! }, rally, industry, pipes, sky, exits, heightAt, ground };
+  const links = lines0.flatMap((l, road) => (l.link ? [{ link: l.link.id, road, portal: l.link.portal }] : []));
+  return { seed: site.seed, edge, reach, sprawl, sectors, water: { sea, lakes, river }, settlements, sites, roads, lines, airport: port, venues: { dirt: venueList[0]!, drift: venueList[1]!, derby: venueList[2]! }, rally, industry, pipes, sky, exits, links, heightAt, ground };
 }
 
 const regions = new WeakMap<City, Region>();
 /** A city's region, made once a city. */
-export function regionOf(city: City): Region {
+export function regionOf(city: City, around: RegionAround | null = null): Region {
   let r = regions.get(city);
-  if (!r) { r = cityRegion(city); regions.set(city, r); }
+  if (!r) { r = cityRegion(city, around); regions.set(city, r); }
   return r;
 }

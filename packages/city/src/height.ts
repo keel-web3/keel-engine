@@ -4,19 +4,22 @@
 // the edge traits past the core (mountains climb, the sea drops); then every
 // road graded along its line (highways and arterials first, then the streets
 // that meet them), flat across its carriageway and pavements, each end pinned
-// to its junction's height; the junctions levelled; each lot levelled to a pad
-// at its road's height. All a pure function of the city.
+// to its junction's height; the junctions levelled; each block's ground a
+// terrace graded to the pavements round it (terraces.ts). All a pure function of
+// the city.
 
 import { dcos, dsin } from "@keel-engine/core";
 import { addHills, cellX, cellZ, elevationOf, gradeCorridor, gridOver, levelDisc, levelRect, lockGrid, rangeUnder } from "@keel-engine/elevation";
 import type { Elevation, HeightGrid } from "@keel-engine/elevation";
-import { roadField } from "@keel-engine/road";
+import { locate, roadField } from "@keel-engine/road";
 import type { RoadClass } from "@keel-engine/road";
 import { blockCentre } from "./districts.ts";
 import { junctionsOf } from "./junctions.ts";
 import { junctionRadius, sidewalkReach } from "./sidewalks.ts";
 import { drawsFor } from "./site.ts";
 import { SEA_LEVEL, groundAt } from "./terrain.ts";
+import { layTerrace, terraceOf } from "./terraces.ts";
+import type { Terrace } from "./terraces.ts";
 import type { City, DistrictKind, Lot } from "./types.ts";
 
 export interface CityHeight {
@@ -28,13 +31,23 @@ export interface CityHeight {
   readonly elevation: Elevation;
   /** The land as it lies, before roads and pads (what a building's plinth steps down to). */
   natural(x: number, z: number): number;
-  /** A lot's pad: the level its building (or park) stands on. */
+  /**
+   * A lot's pad: the ground at its middle. Its block is a terrace graded to the pavements round it (terraces.ts), so
+   * the lot is level across near its road and follows the road's grade along it: a building's floor is set by its
+   * door (the pavement's height there: pavementAt), not by this.
+   */
   pad(lot: Lot): number;
+  /**
+   * The pavement's height abreast of a point: its road's graded height where the point stands beside it (what a door
+   * opens onto) -- on the road given (an edge id: the one a building faces), or else the nearest.
+   */
+  pavementAt(x: number, z: number, edge?: number): number;
   /** A road's height along it (m, at arc length s): what its whole width stands at. */
   roadAt(edge: number, s: number): number;
   /**
    * The lowest and highest ground under an oriented box (centre, half extents, yaw): exact for the surface as drawn.
-   * A building's floor goes at the highest (the ground never comes up through it), its foundation down to the lowest.
+   * A building's plinth goes down past the lowest (keel/architecture foundations); where the highest is over its floor,
+   * it's set into the slope.
    */
   under(x: number, z: number, hw: number, hd: number, yaw: number): [number, number];
 }
@@ -74,14 +87,19 @@ export function* cityHeightSteps(city: City, cell = 2): Generator<number, CityHe
   for (const l of city.lots) kindOf.set(l.block, city.districts[l.district]!.kind);
   const hills = city.districts.filter((d) => d.kind === "suburb" || d.kind === "midtown");
   const over = new Set(hills.length ? hills[Math.floor(D.u("overlook") * hills.length)]!.blocks : []);
+  // A block's character is constant across the coarse grid; keep its original order for exact sums.
+  const relief = centres.flatMap(([cx, cz], b) => {
+    const kind = kindOf.get(b);
+    if (!kind) return [];
+    const overlook = over.has(b);
+    return [{ cx, cz, amplitude: overlook ? OVERLOOK_RELIEF : RELIEF[kind], lift: overlook ? OVERLOOK_LIFT : 0 }];
+  });
   /** Per point: the district's relief and the overlook's lift, weighted over the nearest blocks (inverse distance). */
   const character = (x: number, z: number): [number, number] => {
     let sw = 0, sa = 0, sl = 0;
-    centres.forEach(([cx, cz], b) => {
-      const k = kindOf.get(b);
-      if (!k) return;
+    relief.forEach(({ cx, cz, amplitude, lift }) => {
       const w = 1 / ((cx - x) * (cx - x) + (cz - z) * (cz - z) + 2500);
-      sw += w; sa += w * (over.has(b) ? OVERLOOK_RELIEF : RELIEF[k]); sl += w * (over.has(b) ? OVERLOOK_LIFT : 0);
+      sw += w; sa += w * amplitude; sl += w * lift;
     });
     return sw ? [sa / sw, sl / sw] : [6, 0];
   };
@@ -155,14 +173,24 @@ export function* cityHeightSteps(city: City, cell = 2): Generator<number, CityHe
     const t = (s - ss[lo]!) / (ss[hi]! - ss[lo]! || 1);
     return y[lo]! + (y[hi]! - y[lo]!) * t;
   };
-  // ---- lots: each a level pad at its nearest road's height.
-  const field = roadField(g), pads = new Map<string, number>();
-  let levelled = 0;
+  // ---- the blocks: each one's ground a terrace graded to the pavements round it (terraces.ts) -- flush with every
+  // pavement's back edge, following each road's grade along its frontage, level across near it and easing to the next
+  // road's level across the middle of the block. (A landmark's block is its own ground: left as the land lies.)
+  const field = roadField(g), roads = { graph: g, field, roadAt }, terraces = new Map<number, Terrace>();
+  const claimed = new Set(city.landmarks.map((l) => l.block));
+  let laid = 0;
+  for (const block of city.blocks) {
+    if (++laid % 8 === 0) yield 0.85 + 0.14 * (laid / city.blocks.length);
+    if (claimed.has(block.id)) continue;
+    const t = terraceOf(roads, block);
+    if (t && layTerrace(land, lock, block, t) > 0) terraces.set(block.id, t);
+  }
+  // (A lot whose block had no terrace -- its sides not found -- is levelled the old way: a pad at its nearest road's height.)
+  const pads = new Map<string, number>();
   for (const lot of city.lots) {
-    if (++levelled % 32 === 0) yield 0.85 + 0.14 * (levelled / city.lots.length);
-    const at = field.at(lot.obb.x, lot.obb.z), { x, z, hw, hd, yaw } = lot.obb;
-    const want = at ? roadAt(at.edge, at.s) : natural.heightAt(x, z);
-    // (Levelled a metre past the lot -- half the gap to its neighbour -- so the ground is flat right up to its edge.)
+    const t = terraces.get(lot.block), { x, z, hw, hd, yaw } = lot.obb;
+    if (t) { pads.set(lot.key, t.at(x, z)); continue; }
+    const at = field.at(x, z), want = at ? roadAt(at.edge, at.s) : natural.heightAt(x, z);
     pads.set(lot.key, levelRect(land, x, z, hw * 2 + 2 * PAD_MARGIN, hd * 2 + 2 * PAD_MARGIN, yaw, { height: want, blend: PAD_BLEND, lock }));
   }
   // (The ground's ray march steps by the steepest slope anywhere: a bridge deck's flanks are cliffs, and counted they'd
@@ -173,6 +201,13 @@ export function* cityHeightSteps(city: City, cell = 2): Generator<number, CityHe
     heightAt: elevation.heightAt, grid: land, elevation, natural: natural.heightAt, roadAt,
     under: (x, z, hw, hd, yaw) => rangeUnder(land, x, z, hw, hd, dcos(yaw), dsin(yaw)),
     pad: (lot) => pads.get(lot.key) ?? elevation.heightAt(lot.obb.x, lot.obb.z),
+    pavementAt: (x, z, edge) => {
+      // (On a road asked for by name -- the one a building faces -- or else the nearest.)
+      const e = edge === undefined ? undefined : g.edges[edge];
+      if (e) return roadAt(e.id, locate(e.path, x, z).s);
+      const at = field.at(x, z);
+      return at ? roadAt(at.edge, at.s) : elevation.heightAt(x, z);
+    },
   };
 }
 

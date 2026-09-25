@@ -15,6 +15,8 @@ import { groundAt } from "./terrain.ts";
 import { drawsFor, gatesOf } from "./site.ts";
 import type { CityOptions, CitySite } from "./types.ts";
 
+const TAU = Math.PI * 2;
+
 /** A lattice cell's street, if it has one: which way it runs, and the junctions at its ends. */
 export interface CellStreet { readonly along: "i" | "j"; readonly from: number; readonly to: number }
 
@@ -27,6 +29,8 @@ export interface Network {
   readonly mids: ReadonlyMap<string, number>;
   /** Per cell "i,j" with four corners, its street (or null). */
   readonly streets: ReadonlyMap<string, CellStreet | null>;
+  /** Per CityOptions.links entry, the node its freeway ends at (-1: none could be laid). */
+  readonly portals: readonly number[];
 }
 
 const key = (...n: number[]): string => n.join(",");
@@ -36,9 +40,11 @@ function splitAt(p: Path, k: number): [Path, Path] {
   return [withShape(p.x.slice(0, k + 1), p.z.slice(0, k + 1), false), withShape(p.x.slice(k), p.z.slice(k), false)];
 }
 
-/** A spoke out to the ring: from a lattice junction or a gate to `end` on it. */
+/** A spoke out to the ring: from a lattice junction or a gate to `end` on it (or a link's, which has no road of its own). */
 interface Spoke {
   readonly node: number;
+  /** A link's (CityOptions.links index): only a junction on the ring at its bearing, for its freeway to leave from. */
+  readonly link?: number;
   readonly angle: number;
   readonly end: [number, number];
   /** A grid spoke's control points (see spokeLine); a gate's road has none. */
@@ -165,7 +171,7 @@ export function layRoads(site: CitySite, options: CityOptions = {}): Network {
   }
 
   // ---- the ring: a highway round the core, met by the grid's rows and columns run out to it.
-  const R = Math.min(site.core + 70, site.size / 2 - 40);
+  const R = ringRadius(site);
   const radiusAt = (a: number): number => R * (1 + 0.035 * dsin(a * 3 + D.u("ring1") * 6.28) + 0.02 * dsin(a * 5 + D.u("ring2") * 6.28));
   const spokes: Spoke[] = [];
   const out = (from: RoadNode, dirX: number, dirZ: number): void => {
@@ -197,6 +203,11 @@ export function layRoads(site: CitySite, options: CityOptions = {}): Network {
   const gap = (a: number, b: number): number => { const d = Math.abs(a - b) % (Math.PI * 2); return Math.min(d, Math.PI * 2 - d); };
   const kept: Spoke[] = [];
   for (const sp of gateSpokes) if (kept.every((k) => gap(k.angle, sp.angle) > 0.1)) kept.push(sp);
+  // (A link to another place is a promise too: a junction on the ring right on its bearing, its freeway's way out.)
+  (site.cell ? [] : options.links ?? []).forEach((l, k) => {
+    const r = radiusAt(l.bearing), sp: Spoke = { node: -1, link: k, angle: datan2(dsin(l.bearing), dcos(l.bearing)), end: [dsin(l.bearing) * r, dcos(l.bearing) * r] };
+    if (kept.every((q) => gap(q.angle, sp.angle) > 0.1)) kept.push(sp);
+  });
   spokes.sort((p, q) => p.angle - q.angle || p.node - q.node);
   for (const sp of spokes) if (kept.every((k) => gap(k.angle, sp.angle) > 0.14)) kept.push(sp);
   // A grid spoke leaves its junction along the grid and bends to meet the ring square on (a shallow mouth there would be
@@ -240,7 +251,7 @@ export function layRoads(site: CitySite, options: CityOptions = {}): Network {
     lines[q] = pathThrough([from.x, nodes[node]!.x], [from.z, nodes[node]!.z]);
     laid.push(q);
   }
-  // What reaches the ring: every gate, and every grid spoke laid whole.
+  // What reaches the ring: every gate and link, and every grid spoke laid whole.
   const full = kept.map((sp, q) => ({ sp, q })).filter(({ sp, q }) => !sp.line || (laid.includes(q) && !stub.has(q)));
   full.sort((p, q) => p.sp.angle - q.sp.angle || p.sp.node - q.sp.node);
   const ringNodes = full.map(({ sp }) => addNode(sp.end[0], sp.end[1]));
@@ -271,6 +282,7 @@ export function layRoads(site: CitySite, options: CityOptions = {}): Network {
     specs.push({ a: ringNodes[q]!, b: ringNodes[(q + 1) % at.length]!, cls: "highway", path: withShape(px, pz, false) });
   });
   full.forEach(({ sp, q: kq }, q) => {
+    if (sp.link !== undefined) return;
     const from = nodes[sp.node]!, to = nodes[ringNodes[q]!]!;
     if ((to.x - from.x) ** 2 + (to.z - from.z) ** 2 <= 9) return;
     // (A gate road runs in square to its border for its last stretch, so the neighbour's road meets it head on.)
@@ -299,10 +311,17 @@ export function layRoads(site: CitySite, options: CityOptions = {}): Network {
   // roads by id). A few exits off the ring's spoke junctions, each a freeway connector out to a beltway round the city on
   // its land (never over the sea), slip ramps from each connector onto the beltway both ways, and a spur out past it where
   // the region's freeway carries on to the horizon. A city in a world of cities keeps its gates instead.
-  if (!site.cell) layFreeway(site, nodes, specs, ringNodes, R, addNode, options);
+  const portals: number[] = (options.links ?? []).map(() => -1);
+  if (!site.cell) {
+    const linkRing = portals.map((_, k) => { const q = full.findIndex(({ sp }) => sp.link === k); return q < 0 ? -1 : ringNodes[q]!; });
+    layFreeway(site, nodes, specs, ringNodes, R, addNode, options, linkRing, portals);
+  }
 
-  return { graph: roadGraph(nodes, specs), lattice, mids, streets };
+  return { graph: roadGraph(nodes, specs), lattice, mids, streets, portals };
 }
+
+/** The ring highway's radius (m) before its wobble: just past the core, inside the slab. */
+const ringRadius = (site: CitySite): number => Math.min(site.core + 70, site.size / 2 - 40);
 
 /** How far out the beltway runs past the ring (m), and how far along it a ramp meets it from its exit. */
 const BELT_GAP = 230, RAMP_ALONG = 230, RAMP_IN = 110, SPUR = 150;
@@ -313,21 +332,42 @@ const RAMP_ANGLE = (70 * Math.PI) / 180, RAMP_REACH = 70;
 /** A freeway's and a ramp's half widths (m): three lanes and a shoulder each way; one lane and its shoulders. */
 export const FREEWAY_HALF = 12, RAMP_HALF = 4.4;
 
-function layFreeway(site: CitySite, nodes: RoadNode[], specs: EdgeSpec[], ringNodes: readonly number[], R: number, addNode: (x: number, z: number) => number, options: CityOptions): void {
+/** The beltway's radius on a bearing (m): past the ring by its gap, gently out of round -- the seed's, before a road is laid. */
+function beltRadius(site: CitySite, a: number): number {
   const F = drawsFor(site.seed, "freeway");
-  const TAU = Math.PI * 2;
+  return (ringRadius(site) + BELT_GAP + 50 * F.u("beltGap")) * (1 + 0.025 * dsin(2 * a + F.u("beltPhase") * TAU));
+}
+
+/**
+ * Where a link on `bearing` leaves the city (m from its middle): the end of its freeway's spur, out past the beltway.
+ * A pure function of the site, so a world of places can join two cities' links without building either.
+ */
+export const portalRadius = (site: CitySite, bearing: number): number => beltRadius(site, bearing) + SPUR;
+
+/** The farthest out any of a city's roads can run (m from its middle): its beltway's widest, and a bridge's swing or a spur past it. */
+export function cityReach(site: CitySite): number {
+  const F = drawsFor(site.seed, "freeway");
+  return (ringRadius(site) + BELT_GAP + 50 * F.u("beltGap")) * 1.025 + Math.max(SPUR, BRIDGE_OUT);
+}
+
+function layFreeway(site: CitySite, nodes: RoadNode[], specs: EdgeSpec[], ringNodes: readonly number[], R: number, addNode: (x: number, z: number) => number, options: CityOptions, linkRing: readonly number[], portals: number[]): void {
+  const F = drawsFor(site.seed, "freeway");
   const phase = F.u("beltPhase") * TAU;
   const rb = (a: number): number => (R + BELT_GAP + 50 * F.u("beltGap")) * (1 + 0.025 * dsin(2 * a + phase));
   const P = (a: number, r: number): [number, number] => [dsin(a) * r, dcos(a) * r];
-  const dry = (a: number, r: number): boolean => { const [x, z] = P(a, r); const g = groundAt(site, x, z); return g.height > -1 && g.biome !== "ocean" && g.biome !== "river"; };
+  const dryAt = (x: number, z: number): boolean => { const g = groundAt(site, x, z); return g.height > -1 && g.biome !== "ocean" && g.biome !== "river"; };
+  const dry = (a: number, r: number): boolean => dryAt(...P(a, r));
   const norm = (a: number): number => ((a % TAU) + TAU) % TAU;
-  // The exits: spoke junctions on the ring whose way out is dry, well apart, chosen by the seed.
-  const cands = ringNodes.map((id) => ({ id, a: norm(datan2(nodes[id]!.x, nodes[id]!.z)) }))
+  // The links' exits first (a link's own junction on the ring, on its bearing): a bridge link's way out is over the
+  // water, so it needn't be dry. Then the seed's own: spoke junctions on the ring whose way out is dry, well apart.
+  const links = options.links ?? [];
+  const forced = linkRing.flatMap((id, k) => (id < 0 ? [] : [{ id, a: norm(links[k]!.bearing), link: k }]));
+  const cands = ringNodes.filter((id) => !forced.some((f) => f.id === id)).map((id) => ({ id, a: norm(datan2(nodes[id]!.x, nodes[id]!.z)) }))
     .filter((c) => dry(c.a, rb(c.a)) && dry(c.a, rb(c.a) + SPUR) && dry(c.a, R + 40))
     .sort((p, q) => F.u("exit", p.id) - F.u("exit", q.id));
-  const want = 3 + Math.floor(F.u("exits") * 3);
+  const want = Math.max(3 + Math.floor(F.u("exits") * 3), forced.length);
   const gap = (a: number, b: number): number => { const d = Math.abs(norm(a) - norm(b)); return Math.min(d, TAU - d); };
-  const picked: { id: number; a: number }[] = [];
+  const picked: { id: number; a: number; link?: number }[] = [...forced];
   for (const c of cands) if (picked.length < want && picked.every((p) => gap(p.a, c.a) > 0.8)) picked.push(c);
   if (!picked.length) return;
   picked.sort((p, q) => p.a - q.a);
@@ -371,11 +411,15 @@ function layFreeway(site: CitySite, nodes: RoadNode[], specs: EdgeSpec[], ringNo
   });
   for (const e of ex) {
     const ring = nodes[e.id]!, K = nodes[e.K]!, J = nodes[e.J]!;
-    // The connector, from the ring out to the beltway (its ramps' junction partway), and the spur on out past it.
-    free(e.id, e.K, pathThrough([ring.x, K.x], [ring.z, K.z]));
-    free(e.K, e.J, pathThrough([K.x, J.x], [K.z, J.z]));
-    const [sx, sz] = P(e.a, e.r + SPUR);
-    free(e.J, addNode(sx, sz), pathThrough([J.x, sx], [J.z, sz]));
+    // The connector, from the ring out to the beltway (its ramps' junction partway), and the spur on out past it -- to
+    // its link's portal, for a link's exit. Where a link's way out crosses water, that stretch is a deck.
+    const deckOver = (p: Path): boolean => e.link !== undefined && links[e.link]!.bridge && [0, 0.5, 1].some((t) => !dryAt(p.x[Math.round((p.length - 1) * t)]!, p.z[Math.round((p.length - 1) * t)]!));
+    const lay = (a: number, b: number, path: Path): void => { if (deckOver(path)) specs.push({ a, b, cls: "freeway", path, half: FREEWAY_HALF, bridge: true }); else free(a, b, path); };
+    lay(e.id, e.K, pathThrough([ring.x, K.x], [ring.z, K.z]));
+    lay(e.K, e.J, pathThrough([K.x, J.x], [K.z, J.z]));
+    const [sx, sz] = P(e.a, e.r + SPUR), end = addNode(sx, sz);
+    lay(e.J, end, pathThrough([J.x, sx], [J.z, sz]));
+    if (e.link !== undefined) portals[e.link] = end;
     // The slip ramps (one way): off the connector onto the beltway heading +, and off the beltway heading - back onto it.
     const out: [number, number] = [dsin(e.a), dcos(e.a)];
     const ramp = (node: number, toward: 1 | -1, onto: boolean): void => {

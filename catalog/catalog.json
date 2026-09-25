@@ -376,19 +376,23 @@
         },
         {
           "path": "packages/architecture/src/business.ts",
-          "sha256": "0x355340ff775fcd2aff245e1e29b52ec5f5380ad2fd4d72e237be2bdf6174a85f"
+          "sha256": "0x9b3c1afe0a41bc8d4969b6a49e2792006bbf6537c6baab9878b05eca73675248"
         },
         {
           "path": "packages/architecture/src/city.ts",
-          "sha256": "0xd485d6e9effc9bf2636188ad24c37dfe569de883931a61cdd397997a910895f6"
+          "sha256": "0xb1db234f5569d04b92e2e0b246063e726fc7a40e322e339416006e8eb26ec6e2"
         },
         {
           "path": "packages/architecture/src/civic.ts",
-          "sha256": "0x56b2de36f9cc808d8c24f00181e5d2d0bdf128d58ef7daa2ef7332f054df2822"
+          "sha256": "0x08c268b1d06e9aef2623ac29bb2a164d2d9fb1ea73bb6de3954a682654745b9b"
         },
         {
           "path": "packages/architecture/src/commons.ts",
-          "sha256": "0xc462272f97b0736586a4c4ff23ee4c7e3be0833c9948089f673b325a8f7b070a"
+          "sha256": "0x241375af5a43d7838aa246c530f159f18519d5fad41b7a8df68301567861daa5"
+        },
+        {
+          "path": "packages/architecture/src/foundations.ts",
+          "sha256": "0xe51d0a67eee22b4f0068a9e798445c924e907b5d41e0288080fb3e0be3e0a3e0"
         },
         {
           "path": "packages/architecture/src/frame.ts",
@@ -396,7 +400,7 @@
         },
         {
           "path": "packages/architecture/src/index.ts",
-          "sha256": "0xc083dd02bd1c59debc2613922cd822cdbd82e6bf0af9177da5d94c3aed76cb1c"
+          "sha256": "0x35f17e16dfd2977fa026d4226ac35de710fdac55bf705fdda61ad0e409513443"
         },
         {
           "path": "packages/architecture/src/massing.ts",
@@ -412,7 +416,7 @@
         },
         {
           "path": "packages/architecture/src/plan.ts",
-          "sha256": "0xfd854fbe0e9ce0eb8e3e65e813b3dfa83505e41a487ae56f7a63ec3aa4d91c86"
+          "sha256": "0x93c8e6835731dcf31f071f62e22c8faca371d1afa6e445b1c694ed5187511d45"
         },
         {
           "path": "packages/architecture/src/roofs.ts",
@@ -436,7 +440,7 @@
         },
         {
           "path": "packages/architecture/src/street/infra.ts",
-          "sha256": "0x146bb0f106990634e521d34ba69e5b36846b76246bdf4138144e823d62ff2a84"
+          "sha256": "0x76f0fc4c41a837a12d2d9560f507c1cf8374df6a5c8b80ab8a3f12cdaf260715"
         },
         {
           "path": "packages/architecture/src/street/parks.ts",
@@ -444,7 +448,7 @@
         },
         {
           "path": "packages/architecture/src/street/plan.ts",
-          "sha256": "0xf2d03e6b7f5e139e3870137eb3500687f59d56860da24acedb50e0b327a9b3eb"
+          "sha256": "0x36d16142926e3d52b9a477debd0ee65a4c3a1a7d533386eb2e3d5f85f043cd90"
         },
         {
           "path": "packages/architecture/src/street/roadside.ts",
@@ -456,7 +460,7 @@
         },
         {
           "path": "packages/architecture/src/zoning.ts",
-          "sha256": "0xdd8a39a232da2f9d825ac71dc59d490e8015f56363114779a487ab2a0ffe493b"
+          "sha256": "0xf665f25610320f5e83184ee18d0c37bef38da4b38d6e77258fcf33e4a0849535"
         }
       ],
       "build": {
@@ -468,17 +472,17 @@
         ]
       },
       "output": {
-        "digest": "0x13b46a6fe63a5b0a153639b984659d237a37816f976e0124fc2e8addb5b27548",
-        "byteLength": 96868
+        "digest": "0x3a8d61429c0342dbbe5796b8300a544350873f043cf36fd8cd0a4692dff685f7",
+        "byteLength": 104482
       },
-      "sourceDigest": "0xd8e2fea6ca669acb4d8722fc8fd11b907e179ac76c4bdb15fd7add5e0bf53924",
-      "recipeDigest": "0x28a49eae3719765faa0987ed16702ec70705bf4e9e4d147efb0e538ddb7740ea",
-      "receiptDigest": "0xb620f76d2f4e42763169fbe5135ae85fffb4a5a69ae0fcc6be11782e1c778958",
+      "sourceDigest": "0xc88ad1ac5179f3b9fa4a7e694c7e8416a7ae8c6c9d7ad06777e9c61d82a743e7",
+      "recipeDigest": "0xb293589683c6207a25d391bef848e948b560c7954b88b249551727ee5f827e0e",
+      "receiptDigest": "0xac53bdb6c81327c1ead7638ea0635a73da386fadfa06f0f7ffe4ff71d8ee8367",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/architecture/test/vectors.mjs",
-        "sha256": "0xb67f1451924f5f327541e699c2bf6c7a0ca21b8a23434c2d002831b0e7ebba74"
+        "sha256": "0x80bc20af118fbe017f369957f1fb8f6a722e2f9dfca1c2dbd7e3c0ff086ef55f"
       },
       "deployments": [],
       "deployed": false
@@ -1215,15 +1219,15 @@
         },
         {
           "path": "packages/city/src/arterials.ts",
-          "sha256": "0x372df4484a352afc8fa8e7c7c62e9daa557c3d5bb352a1f69dc66cf7aa028a88"
+          "sha256": "0x0556e59bd8121ffcc7d4f8442687f80b5ad732439a0361e592eaee6ba24d354f"
         },
         {
           "path": "packages/city/src/blocks.ts",
-          "sha256": "0x9d0382fc97124a8316052dd63b31c42a8fc78205c388cacde39f9c2c6e8aaeba"
+          "sha256": "0xa0df470a9fcea2e741f0b288227d1fcfcf1921aca4bda02fe70e5896b84690b5"
         },
         {
           "path": "packages/city/src/city.ts",
-          "sha256": "0x194bf09bfac3b94b51d9bceb34e7a425508b38c9dd4ac39a81e3a7e5b35489c5"
+          "sha256": "0x6ac07be2a47769142892d8cc33ecca9bfd899abbbf69bf83571c5178c3607ee1"
         },
         {
           "path": "packages/city/src/climate.ts",
@@ -1235,11 +1239,11 @@
         },
         {
           "path": "packages/city/src/height.ts",
-          "sha256": "0x25f76a8797c87d924fd01f2fcfb8c869fa027bbf187472a97f32ccf106e2d46c"
+          "sha256": "0x95dc09ca1c5b28043963e62165f747792e8999cc75a3a12765b33343d6db56ae"
         },
         {
           "path": "packages/city/src/index.ts",
-          "sha256": "0x609288937353d64e0e4f084adcc89e578a05872b5ab6face9a544a267ed2ccbd"
+          "sha256": "0xcd86d2a1a59cbb39a10b70b9f8e888bfb03466b8f3e539a9dcb0a4f0cca97c70"
         },
         {
           "path": "packages/city/src/junctions.ts",
@@ -1259,7 +1263,7 @@
         },
         {
           "path": "packages/city/src/region.ts",
-          "sha256": "0x230685687bf2440a7126bf96e54bc253e62a7ec62f7c83eb7375d59c2a74c2ed"
+          "sha256": "0x7014f7da3c98f916136f1b46931b3fd962584f3e5beee396b45f9b78dc08d0b9"
         },
         {
           "path": "packages/city/src/sidewalks.ts",
@@ -1268,6 +1272,10 @@
         {
           "path": "packages/city/src/site.ts",
           "sha256": "0xe157e4665aaaf96b55acdfb2a5ce305305821c5d085f4206ac27adcb4f9cac89"
+        },
+        {
+          "path": "packages/city/src/terraces.ts",
+          "sha256": "0x7c11106bb4c32eaa15a934f49918c623d3d9255c5db1fcf0012a9fec537a7737"
         },
         {
           "path": "packages/city/src/terrain.ts",
@@ -1280,6 +1288,10 @@
         {
           "path": "packages/city/src/weather.ts",
           "sha256": "0x4fffae21d269073b79f442773db2b5e95652e8842d946e9774e7207d3d884b25"
+        },
+        {
+          "path": "packages/city/src/world.ts",
+          "sha256": "0x7056b71c8070a8f70a57055f18dee2f7c5f7a7f040b95582382746fff9d639ea"
         }
       ],
       "build": {
@@ -1292,17 +1304,17 @@
         ]
       },
       "output": {
-        "digest": "0x54f9b221a6aff666a710a1e77991ae29cb975358ee5ede7f27c9ce2a82ecd353",
-        "byteLength": 77863
+        "digest": "0xac1d89208c5c13c3c894bad2c4fb53cba10e5fb80946cee2605b5969dc7bd63e",
+        "byteLength": 93890
       },
-      "sourceDigest": "0x695f91e7542b417d58ad9ebbd826ff5c30a990087817e3149c179491260afceb",
-      "recipeDigest": "0x85481ffe0781a71caaf7608b6e8d7b1cedca0daef2e3df9eee4a5e4ab3d87c96",
-      "receiptDigest": "0x59adec9ff03fb83c406e3b41f21857a265346586c273d192bf869224a218a685",
+      "sourceDigest": "0xe0a591aca65fd52b8f39a5d9cf4c86f829b78747e51fa01852446afe7cc955c5",
+      "recipeDigest": "0xd3b75d4793ee5fb07e561bbc0225465227828c9ba88734a2e4c45067f39b23cb",
+      "receiptDigest": "0xb673e997725127aca442fc4180f25bfa3b18142fd6362aebaea6ab2135f84ece",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/city/test/vectors.mjs",
-        "sha256": "0xba336c7720e3fd6611466866d6d504075aea0d4971da29198174c82f63629133"
+        "sha256": "0xbf9212c291347c5866f87dc85b6382a36721732e83f43e9d61aa467d1f98cdc9"
       },
       "deployments": [],
       "deployed": false
@@ -1506,7 +1518,7 @@
         },
         {
           "path": "packages/controls/src/touch/overlay.ts",
-          "sha256": "0x6e647a2fb6bced84f3f72f691e77d7681b9c307473dd6b20df8559c654435de9"
+          "sha256": "0xb947160c9566a479eef453e6d5730785a4746f0cc13e9479be387786f53964c2"
         },
         {
           "path": "packages/controls/src/touch/styles.ts",
@@ -1520,12 +1532,12 @@
         ]
       },
       "output": {
-        "digest": "0x386bb4dc5bf69a2bc2143c33e08ddde5bac85ed40d7b42b6747edcb0ad0cd580",
-        "byteLength": 23200
+        "digest": "0x3e3e686a25cf8e2a0d73f0cf1157a78b427a662093fb20fd0544f7e5647cdf18",
+        "byteLength": 23300
       },
-      "sourceDigest": "0x327eb1d72f4212a9f3e5567cc2ce34c4a42683d8888f67961e2841e8aebc20ca",
-      "recipeDigest": "0x5860a4190627683d35bf2dba3b0c2ba7874a82020b0c150249ea5979d4c5030c",
-      "receiptDigest": "0xac9bb2353e384355d8f58965edf31748f352f0232192124477d305bc62626e35",
+      "sourceDigest": "0x59bc6b0431546120fd131c4fbe56a227e369df6a76d5baddcd43fe474e4513f7",
+      "recipeDigest": "0x976cf27c11b67f903babcdfd2e8b7cab9c44eccfab95d8d97e1ffd67f8c34a35",
+      "receiptDigest": "0xa6cb9461185c52761b5dc266eb57316e7fda98ad78056d2ea0f409d26d71ff1e",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -3041,7 +3053,7 @@
         },
         {
           "path": "packages/road/src/field.ts",
-          "sha256": "0xc4aaf9598d864b7388e7db9086e1178fa6dae612f42c1829caa3aae74c5af334"
+          "sha256": "0x23ab87ce32d487cef801f00359b6896ad49a0f760df4aa3a0631c90e4d5bdbe4"
         },
         {
           "path": "packages/road/src/graph.ts",
@@ -3068,12 +3080,12 @@
         ]
       },
       "output": {
-        "digest": "0xa78153c8fbc8d7d58f59186b31b09722eeab09cd3e90b7c1209eb8fa3386f2af",
-        "byteLength": 10018
+        "digest": "0x0fdd8f04f2884c13ed27859a21f12ffdc3d506d14a39bf398d58dee162e952f8",
+        "byteLength": 10461
       },
-      "sourceDigest": "0x5348975ec011f9c8a211846a738e4e33a9afbc8f0a79a3702fd7223e2c8637ad",
-      "recipeDigest": "0x47b0077eb82fdbcb43fb14b57e604568deab9a2b9d688e4920d0cce749851fe2",
-      "receiptDigest": "0xa8b1a15aa083e484b388fdbc230c3d1604491f9e4c41a9002739859ade6e5dc5",
+      "sourceDigest": "0x8788292a2767c67ec68692510418c9fbb0ff5b53ef9ab818617cf5866ec0131d",
+      "recipeDigest": "0x32c56bc9eff30dedef21ec41f3991bbdd85ab8e0719a07d471c2c248719940ee",
+      "receiptDigest": "0xc629a081352ec2c4068ea6b8dca4b27dcf8622af54d858f5201a5d3880d92303",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -4169,7 +4181,7 @@
         },
         {
           "path": "packs/buildings/src/city/archetypes.ts",
-          "sha256": "0x499625377ab0c84139643a613b4d727ad36ec2a692316575f51d44e6d655f6a9"
+          "sha256": "0x1d589c01cc83fed480059820c1c250f99a6c3c26760a01479fe5c4e9ff583605"
         },
         {
           "path": "packs/buildings/src/city/index.ts",
@@ -4300,17 +4312,17 @@
         ]
       },
       "output": {
-        "digest": "0x774e58baef807f25013bc96e1a580e797bd201610e63940589c7571d196940c8",
-        "byteLength": 102974
+        "digest": "0x6d3d52f36b9d1c404137a90ecf5a36e9812818a79084ed28e24c301c3486f977",
+        "byteLength": 103046
       },
-      "sourceDigest": "0x0f31e2255300187bbf36704778865fdb8f05a45acb9a54c5e357faf541d3f19f",
-      "recipeDigest": "0x7c1c6fda7a3e13cd2de7f752a15f1ed3d8edbd00c8edf1ef061fb7d343254103",
-      "receiptDigest": "0x08bdc5f73e0d971fbee18c80fff7f8330f60e5dd2d08c7f56a702d1c0f7a38af",
+      "sourceDigest": "0xf6861535b8adf85eab821fe9138cd438d1282e56239e70f0d15045b77cff2beb",
+      "recipeDigest": "0x6cd1e62a5b2b609c45b1c571ca8bc2fe91f4f4692b994f42fbb20c10508e0a76",
+      "receiptDigest": "0xd213b5c8ec4021e025d537f8cbb1adfc13ac4b20127d317099d124ab5a692063",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packs/buildings/test/vectors.mjs",
-        "sha256": "0xf58a081e0ea9711db50ddefa2459882388fec3cfa552786fbcb72c9931e0f532"
+        "sha256": "0xa4affd60ebe53de85eb6fb5f06e77bc2b8b509661b6e8e1e4fa897cf4fce5202"
       },
       "deployments": [],
       "deployed": false
@@ -5065,11 +5077,11 @@
         },
         {
           "path": "packs/vehicles/src/car.ts",
-          "sha256": "0x86526be6d4f9720b4e4210b292cd9f0bf28cecc1a04fcd2f7c66f6755edfdb07"
+          "sha256": "0x53f96f343291bfee917bb22909679c8f7762e6cd73bbd9894ba73cf21560c619"
         },
         {
           "path": "packs/vehicles/src/decals.ts",
-          "sha256": "0xb64e5ba93e49829be7c7df028e098892ade51f4b7689b80f48e36a251ab1a93a"
+          "sha256": "0x2ce1d52816c5fd9f26122fdef6122910aba092a98f2d6122003a6df5a4a42be0"
         },
         {
           "path": "packs/vehicles/src/draws.ts",
@@ -5085,19 +5097,19 @@
         },
         {
           "path": "packs/vehicles/src/glass.ts",
-          "sha256": "0x3ad5c1faa976a4af8344ada0d7696a9997efd9ccbe1f112cb281f0fad48cc8ae"
+          "sha256": "0x1e740d0dda5daf8e24cce45903dc0b45bdb8a3be086c66e6fb69ad0d5ad0390d"
         },
         {
           "path": "packs/vehicles/src/index.ts",
-          "sha256": "0x1f41803e3a9fd18c88a1d313e35c3fd0608c4a3591cd632d451dca024e606780"
+          "sha256": "0x36e59dc35bebf0114e1362b783f591da9ac82971f15efb1239e7d55402ebfe8b"
         },
         {
           "path": "packs/vehicles/src/lights.ts",
-          "sha256": "0xe80878f93743a0ad05be475f4630e5572afbcde641e1727e954cb356c1e4cc54"
+          "sha256": "0x2e7eec51c7ec6e7268867031d086619a114d04c26a88d12280976a3ba2649c90"
         },
         {
           "path": "packs/vehicles/src/mechanics.ts",
-          "sha256": "0xcf8a29a91de9a21504bd88d574f49fec8cb028c7f8ddd472cb667287f6a4c38d"
+          "sha256": "0x8bbebf66242b3745f327845510afce7c07498fb92755adab172690535bc560a6"
         },
         {
           "path": "packs/vehicles/src/metadata.ts",
@@ -5105,15 +5117,15 @@
         },
         {
           "path": "packs/vehicles/src/paint.ts",
-          "sha256": "0x7ca7a1b8cb02634d62cbfb89fefc03abfde1169d83278c159d58161d5b97eb44"
+          "sha256": "0x2bcbb76cb63e2964f965b9accc0dc5f5e92cbb0841301cd06c221139852f6b51"
         },
         {
           "path": "packs/vehicles/src/physics.ts",
-          "sha256": "0x16c7f5f0b8360a0d9862ee8765091854ce4a1323449e8a27f1e454d20dc1485a"
+          "sha256": "0x57986defbf62d8a585bd1e1d11c934ddfa6039e692fe66bf7167ae0d666a72fd"
         },
         {
           "path": "packs/vehicles/src/plate.ts",
-          "sha256": "0x90cd0a29b253760948a9e42c2e3d3ff4ff4093bf3615c0229e8d7ae2e4d21ed0"
+          "sha256": "0x219e1b2bfa7c3c412b62289fbd4ec0ec41069165a40813fd960686f7141a8b51"
         },
         {
           "path": "packs/vehicles/src/roof.ts",
@@ -5124,12 +5136,16 @@
           "sha256": "0xb5aa36fc073ea579cda42b548a98029fce45dbee8be448b4d701bff086f1a441"
         },
         {
+          "path": "packs/vehicles/src/service.ts",
+          "sha256": "0x0ffca66449ed3798b7976ce6b95a56cd428a0f4ee657e0cb2343b762e280a2a3"
+        },
+        {
           "path": "packs/vehicles/src/shapes.ts",
-          "sha256": "0x12c041a88724e0684f2336142f84e1c622a5fee4a8511762978ecb98a5bb88d4"
+          "sha256": "0xa93202c7add529c5bb65b53b447a79d3efa83494cc0fd21f788fed950e213513"
         },
         {
           "path": "packs/vehicles/src/slots.ts",
-          "sha256": "0xd988c3fa7a17601990a33c96e8d94fa7ef76cdef75ba00f1cbbddd6b841145f9"
+          "sha256": "0xe363bd0a832bea8d06c5b761d4eb85b95c72081ac0a181791d21983e5336e002"
         },
         {
           "path": "packs/vehicles/src/solids.ts",
@@ -5141,7 +5157,7 @@
         },
         {
           "path": "packs/vehicles/src/traits.ts",
-          "sha256": "0x30106c928efcdb6505aed4f393594eb148b012333af84082da67770b5ad23b5a"
+          "sha256": "0xcc4c66472e569e98ee826c5da630c9465e1c14a4c1d5f23278b6697a92b68a16"
         }
       ],
       "build": {
@@ -5152,17 +5168,17 @@
         ]
       },
       "output": {
-        "digest": "0x5e02cae240631374028967547c8251d14b78f68d3286d98580a5d5fdf98bfcde",
-        "byteLength": 135863
+        "digest": "0xf860485dcfdb382dcc84f8d0fbdab47d59e363849178a262258d34b51db57cec",
+        "byteLength": 175308
       },
-      "sourceDigest": "0x2f604e443953d8e9e64145131b206373161d4eb366c4c8bba62c23033e388def",
-      "recipeDigest": "0x6f0081fcad8dce38adc67c4fa724159a6ad2504aba2470408867c8786dca78e0",
-      "receiptDigest": "0xfb18a4f541b48ec6e7b63685aa095957ff04cdce2859ed5b9c21cb12127576f3",
+      "sourceDigest": "0x631cac88f61949803535c5deba7df5df18cbc243ddc28c1c014c66169cd28fe6",
+      "recipeDigest": "0x4a07612e907d83394708436c8e6ec90201ad6ae8759cde0f99cb33fe16e7725d",
+      "receiptDigest": "0xfc7d88797094df48e9f30d31fbe39947f00af2ccdee7fbd552beafd584dac966",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packs/vehicles/test/vectors.mjs",
-        "sha256": "0x6843003a7a47c26cb6a1386c1ee54cf04a44e4580cc259eb0d8cb7f7d1ac3bfe"
+        "sha256": "0xf18447eddaf1ad2c58e2368a16c590bf8522aaaf26280f2796c40ea822ab179d"
       },
       "deployments": [],
       "deployed": false

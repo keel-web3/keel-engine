@@ -22,6 +22,9 @@ const ENGINE: Readonly<Record<string, { peak: number; drive: ReadonlyArray<reado
 };
 /** A semi tractor's: a diesel's low peak, driving its rear tandem. */
 const SEMI_ENGINE: { peak: number; drive: ReadonlyArray<readonly [Drivetrain, number]> } = { peak: 1800, drive: [["rwd", 1]] };
+/** A service truck's diesel (the ambulance's revs higher) and where its weight sits (m): a low-floor bus's low, a loaded fire engine's high. */
+const SERVICE_ENGINE: Readonly<Record<string, number>> = { bus: 1900, fire: 2100, ambulance: 3200, dump: 1800 };
+const SERVICE_COM: Readonly<Record<string, number>> = { bus: 1.05, fire: 1.3, ambulance: 1.0, dump: 1.35 };
 /** Six forward ratios, first to top (the final drive sets the car's own reach). */
 const GEARS = [3.4, 2.25, 1.62, 1.26, 1.0, 0.8] as const;
 
@@ -45,7 +48,9 @@ export function physicsOf(car: Car): CarPhysics {
   const roof = Math.max(g.belt + 0.2, g.roof);
   // (A semi tractor's sits low on its frame for all the cab over it: an engine, a gearbox and the rails, ~1.1 m.)
   const semi = !!car.parts.semi;
-  const comHeight = semi ? 1.1 : g.ride + (roof - g.ride) * (truck ? 0.42 : buggy ? 0.36 : low ? 0.3 : 0.34);
+  // (So does a service truck's -- a bus, a fire engine, an ambulance, a dump truck: service.ts. The cruiser is a sedan.)
+  const svc = car.parts.service && car.parts.service.kind !== "police" ? car.parts.service.kind : null;
+  const comHeight = semi ? 1.1 : svc ? SERVICE_COM[svc]! : g.ride + (roof - g.ride) * (truck ? 0.42 : buggy ? 0.36 : low ? 0.3 : 0.34);
   // (And a little ahead of the axles' middle -- an engine up front, as most cars carry theirs; a mid-engined car's
   // sits nearer the middle. A car heavier at the front is stable flat out; one heavier at the back wants to swap ends.)
   const wheelbase = g.frontAxle - g.rearAxle;
@@ -57,7 +62,7 @@ export function physicsOf(car: Car): CarPhysics {
   const tyre = car.wheels[1].tyre;
   // (Street rubber: ~0.9 of a g on a road car, a semi-slick hypercar ~1.15 -- a corner taken too fast is not taken.)
   const grip = clamp((h.grip / 10.2) * 0.85, 0.7, 1.12) * (tyre === "knobby" ? 0.92 : tyre === "slick" ? 1.05 : 1);
-  const engine = semi ? SEMI_ENGINE : ENGINE[cls] ?? { peak: 6500, drive: [["rwd", 1]] as const };
+  const engine = semi ? SEMI_ENGINE : svc ? { peak: SERVICE_ENGINE[svc]!, drive: SEMI_ENGINE.drive } : ENGINE[cls] ?? { peak: 6500, drive: [["rwd", 1]] as const };
   const peakRpm = engine.peak, redline = peakRpm + 700;
   // Gearing: top gear tops out a little past where the car's power meets its drag (so it pulls its last gear to the end).
   const vmax = dcbrt((power * 0.88) / Math.max(0.05, drag)) * 1.06;

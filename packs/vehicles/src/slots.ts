@@ -12,4 +12,7 @@ export const BODY_SLOT = {
   plate: 28,
   /** Enamel on the engine's covers and intake: coordinated with this car's paint. */
   engine: 29,
+  /** A service vehicle's beacons, the two halves of its flash (service.ts; lights.ts flashes them): unused on any other car. */
+  beaconA: 30,
+  beaconB: 31,
 } as const;

@@ -7,15 +7,17 @@
 
 import { dcos, dsin } from "@keel-engine/core";
 import type { CityHeight, Draws, Lot, Obb } from "@keel-engine/city";
-import { addBox, createBuild, count, frameOf, mainFront, pick, toWorld, within } from "./frame.ts";
+import { createBuild, count, frameOf, mainFront, pick, toWorld, within } from "./frame.ts";
 import type { Build, Frame } from "./frame.ts";
+import { DOOR_LIFT, floorOf, groundMasses, plinths, settle, stoopSteps } from "./foundations.ts";
+import { lakeLevel } from "./commons.ts";
 import { mass } from "./massing.ts";
 import { bands, cornice, crown, rooftop, roof } from "./roofs.ts";
 import { signs } from "./signs.ts";
 import { mural } from "./street/parks.ts";
 import { NEON_SLOTS } from "./slots.ts";
 import type { SlotName } from "./slots.ts";
-import type { Archetype, BuildingPlan, Catalogue, CityLike, Condition } from "./types.ts";
+import type { Archetype, BuildingPlan, Catalogue, CityLike, Condition, Door } from "./types.ts";
 import { drawsOf, fits, zoningOf } from "./zoning.ts";
 import type { Blend, CommonsSite } from "./zoning.ts";
 
@@ -99,37 +101,6 @@ function sideOnRoad(lot: Lot): 1 | -1 | null {
   return null;
 }
 
-/**
- * The foundation: under the whole envelope, from below the lowest ground there up to just over the floor -- a plinth
- * course where the ground's level with the floor, a retaining base where the land falls away from it.
- */
-function foundation(b: Build, foot: number): void {
-  const s = b.site, y = b.frame.y ?? 0, drop = y - foot;
-  // (Its top a hand UNDER the 6 cm the lot's own slabs are laid to -- a service apron, a car park (business.ts, civic.ts):
-  // at exactly their height the two faces z-fought, the apron strobing in bands against the plinth with every hair the
-  // camera moved.)
-  addBox(b, 2, s.x, (FOUNDATION_TOP - drop - 0.4) / 2, s.z, s.hw + 0.12, (drop + 0.4 + FOUNDATION_TOP) / 2, s.hd + 0.12, "concreteDark");
-}
-/** How far over the floor the foundation stands (m): clear of the ground, and under every slab laid on the lot (0.06 up). */
-const FOUNDATION_TOP = 0.045;
-
-/**
- * Retaining walls: along each side and the back of the lot where the ground beyond it stands higher than the floor --
- * the lot cut into a slope, or a terrace above it -- a concrete wall at the lot's edge holding it back, up to the
- * highest ground there. (Not across the front: that's the way in from the street.)
- */
-function retaining(b: Build, height: CityHeight): void {
-  const f = b.frame, y = f.y ?? 0, c = dcos(f.yaw), sn = dsin(f.yaw);
-  const sides: [number, number, number, number][] = [[f.hw + 1.7, 0, 0.5, f.hd], [-f.hw - 1.7, 0, 0.5, f.hd], [0, -f.hd - 1.7, f.hw, 0.5]];
-  for (const [u, v, hw, hd] of sides) {
-    const hi = height.under(f.x + u * c + v * sn, f.z - u * sn + v * c, hw, hd, f.yaw)[1], rise = hi - y;
-    if (rise < 0.35) continue;
-    // (The wall stands just inside the lot's levelled margin, its top a hand over the ground behind it.)
-    const wx = u === 0 ? 0 : Math.sign(u) * (f.hw + 0.8), wz = v === 0 ? 0 : -(f.hd + 0.8), top = rise + 0.1;
-    addBox(b, 2, wx, (top - 0.3) / 2, wz, u === 0 ? f.hw + 1 : 0.18, (top + 0.3) / 2, u === 0 ? 0.18 : f.hd + 1, "concreteDark");
-  }
-}
-
 /** Where a lot's building's footprint (the envelope after setbacks) sits in its frame. */
 function envelope(a: Archetype, f: Frame): Build["site"] {
   const [front, side, rear] = a.setbacks;
@@ -165,22 +136,24 @@ export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityH
   const lo = Math.min(Math.max(a.storeys[0], band[0]), a.storeys[1]), hi = Math.max(lo, Math.min(a.storeys[1], band[1]));
   const r = D.u("storeys"), s = D.u("hero") < 0.12 ? 0.9 + 0.1 * r : r * r;
   const storeys = Math.round(lo + (hi - lo) * s);
-  // On a city's ground: the floor at the highest ground under the envelope, the foundation's foot at the lowest.
+  // On a city's ground (its blocks graded to their pavements, keel/city terraces.ts): the floor set by the door --
+  // level with the pavement abreast of it, or up the archetype's stoop -- the building standing level on the sloped
+  // terrace (foundations.ts). Open space stands on the ground at its middle; all it lays is set on the ground after.
   // (A commons lot is laid out in its block's axes, not turned to its road: its block is one park.)
   const f0: Frame = commons ? { x: lot.obb.x, z: lot.obb.z, yaw: lot.obb.yaw, hw: lot.obb.hw, hd: lot.obb.hd } : frameOf(lot), site = envelope(a, f0);
-  let base = 0, foot = 0;
+  let base = 0, rise = 0, door: Door | undefined;
   if (height) {
-    const c = dcos(f0.yaw), sn = dsin(f0.yaw), [lo, hi] = height.under(f0.x + site.x * c + site.z * sn, f0.z - site.x * sn + site.z * c, site.hw + 0.12, site.hd + 0.12, f0.yaw);
-    base = Math.max(hi, height.pad(lot)) + 0.02; foot = lo;
+    if (commons || open(a)) base = height.pad(lot) + DOOR_LIFT;
+    else ({ base, rise, door } = floorOf(height, { frame: f0, site }, D, a.stoop, mainFront(lot)?.edge));
   }
   const storey = within(D, "storey", facade.storey), f = { ...f0, y: base };
   let site2: CommonsSite | undefined;
   if (commons) {
     const r = commons.lots.get(lot.key)!;
-    // (The lake stands level across its block: a hand over the highest of its lots' pads.)
-    let level = 0.1;
-    if (height && commons.water) { let top = -Infinity; for (const k of commons.lots.keys()) { const l = byKey(city, k); if (l) top = Math.max(top, height.pad(l)); } level = Math.max(0.1, top + 0.1 - base); }
-    site2 = { info: commons, u: (r.x0 + r.x1) / 2, v: (r.z0 + r.z1) / 2, level };
+    // (The lake stands level across its block, a hand over the highest ground under it; its basin reaches the lowest.)
+    let level = 0.1, floor = -0.2;
+    if (height && commons.water) { const [lo, hi] = lakeLevel(commons, height); level = hi - base; floor = lo - base; }
+    site2 = { info: commons, u: (r.x0 + r.x1) / 2, v: (r.z0 + r.z1) / 2, level, floor };
   }
   const hues = district?.hues.length ?? 1;
   const b = createBuild({
@@ -189,7 +162,6 @@ export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityH
     neon: NEON_SLOTS[count(D, "neon", [0, Math.min(3, hues - 1)])]!,
     ...(site2 ? { commons: site2 } : {}),
   });
-  if (height) { foundation(b, foot); retaining(b, height); }
   for (const op of a.massing) {
     if (mass(b, op)) continue;
     if (op.op === "roof") roof(b, op);
@@ -204,6 +176,10 @@ export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityH
   const turn = sideOnRoad(lot);
   const main = b.masses[0];
   if (turn && main && main.hw >= 3 && main.hd >= 3 && !b.derelict && !GLASS.has(wall) && D.u("muralRoll") < muralChance) mural(b, turn);
+  // On the ground: what stands free on the lot set down on the terrace; a plinth under each building mass down past
+  // the lowest ground round it; the stoop's steps down from the door.
+  let foot = base;
+  if (height) { settle(b, height); foot = plinths(b, height); stoopSteps(b, height, rise); }
   // Collision: the masses standing on the ground (a tower on its podium is inside it) -- within the envelope, the
   // ground its floor was levelled for (what a mass overhangs past it -- a canopy's post, a boathouse over the water --
   // stands on its foundation's edge, not on the ground beyond).
@@ -221,5 +197,5 @@ export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityH
     const [x, , z] = toWorld(b, (x0 + x1) / 2, 0, (z0 + z1) / 2);
     footprint.push({ x, z, hw: (x1 - x0) / 2, hd: (z1 - z0) / 2, yaw: f.yaw });
   }
-  return { key: lot.key, archetype: a.id, condition, wall, solids: b.solids, footprint, height: b.top, ...(height ? { base, foot } : {}), lights: b.lights, props: b.props, plants: b.plants, ads: b.ads, ...(b.water.length ? { water: b.water } : {}), ...(b.anchors.length ? { anchors: b.anchors } : {}) };
+  return { key: lot.key, archetype: a.id, condition, wall, solids: b.solids, footprint, height: b.top, ...(height ? { base, foot } : {}), ...(door ? { door } : {}), lights: b.lights, props: b.props, plants: b.plants, ads: b.ads, ...(b.water.length ? { water: b.water } : {}), ...(b.anchors.length ? { anchors: b.anchors } : {}) };
 }

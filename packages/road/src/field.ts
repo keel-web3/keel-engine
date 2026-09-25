@@ -92,7 +92,16 @@ export function roadField(graph: RoadGraph): RoadField {
   const segs = indexSegments(graph);
   const junctions = junctionsOf(graph);
   const chunks = new Map<string, FieldChunk>();
-  const inJunction = (x: number, z: number): boolean => junctions.some((j) => (x - j.x) ** 2 + (z - j.z) ** 2 < j.r2);
+  // (The junctions by chunk -- every chunk each one's round reaches into -- so a lookup only tries the few near it.)
+  const near = new Map<string, { x: number; z: number; r2: number }[]>();
+  for (const j of junctions) {
+    const r = Math.sqrt(j.r2);
+    for (let cz = Math.floor((j.z - r) / CHUNK); cz <= Math.floor((j.z + r) / CHUNK); cz += 1) for (let cx = Math.floor((j.x - r) / CHUNK); cx <= Math.floor((j.x + r) / CHUNK); cx += 1) {
+      const k = `${cx},${cz}`, list = near.get(k);
+      if (list) list.push(j); else near.set(k, [j]);
+    }
+  }
+  const inJunction = (x: number, z: number): boolean => (near.get(`${Math.floor(x / CHUNK)},${Math.floor(z / CHUNK)}`) ?? []).some((j) => (x - j.x) ** 2 + (z - j.z) ** 2 < j.r2);
 
   /** The nearest segment to a point among a chunk's list: [dist2, edge, sample, t] (ties to the lower edge, then sample). */
   const nearest = (list: readonly number[], px: number, pz: number): [number, number, number, number] => {
@@ -176,7 +185,7 @@ export function fieldWindow(graph: RoadGraph, x0: number, z0: number, width: num
  * fieldWindow a road at a time, for a caller that must keep a frame going while a whole city's is made: it yields how
  * far through the roads it is (0..1) after each one, and returns the window. Drained in one go it is fieldWindow.
  */
-export function* fieldWindowSteps(graph: RoadGraph, x0: number, z0: number, width: number, height: number, tpm = 1, reach = REACH): Generator<number, FieldWindow, void> {
+export function* fieldWindowSteps(graph: RoadGraph, x0: number, z0: number, width: number, height: number, tpm = 1, reach = REACH, yieldEvery = 1): Generator<number, FieldWindow, void> {
   const n = width * height, data = new Float32Array(n * 4), edge = new Int32Array(n).fill(-1), best = new Float64Array(n).fill(Infinity);
   for (let k = 0; k < n; k += 1) data[k * 4] = FAR;
   const junctions = junctionsOf(graph);
@@ -196,7 +205,14 @@ export function* fieldWindowSteps(graph: RoadGraph, x0: number, z0: number, widt
     };
     for (let i = 0; i < segs; i += 1) {
       const j = (i + 1) % L;
-      const ax = p.x[i]!, az = p.z[i]!, ex = p.x[j]! - ax, ez = p.z[j]! - az, e2 = ex * ex + ez * ez || 1, len = Math.sqrt(e2);
+      const ax = p.x[i]!, az = p.z[i]!, ex = p.x[j]! - ax, ez = p.z[j]! - az;
+      // The sweep extends by at most r+2 along the segment and r+1.5/tpm
+      // across it. Reject a segment only when even that expanded box cannot
+      // touch this window; tile rasters then produce the same winning texels.
+      const margin = 2 * r + 3 + 3 / tpm;
+      if (Math.max(ax, ax + ex) + margin < x0 || Math.min(ax, ax + ex) - margin > x0 + width / tpm ||
+          Math.max(az, az + ez) + margin < z0 || Math.min(az, az + ez) - margin > z0 + height / tpm) continue;
+      const e2 = ex * ex + ez * ez || 1, len = Math.sqrt(e2);
       const dx = ex / len, dz = ez / len, nx = -dz, nz = dx;
       const back = Math.min(r + 2, r * Math.min(2, turnAt(i)) + 2), ahead = Math.min(r + 2, r * Math.min(2, turnAt(j)) + 2);
       stamp += 1;
@@ -220,7 +236,8 @@ export function* fieldWindowSteps(graph: RoadGraph, x0: number, z0: number, widt
         }
       }
     }
-    yield ++roads / graph.edges.length;
+    roads += 1;
+    if (roads % yieldEvery === 0 || roads === graph.edges.length) yield roads / graph.edges.length;
   }
   // Junctions last, each only over the texels round it: the road's width goes negative there (tarmac, no lines).
   for (const q of junctions) {
