@@ -163,7 +163,11 @@ export function gradeCorridor(g: HeightGrid, xs: ArrayLike<number>, zs: ArrayLik
         const ex = ax + dx * t - cx, ez = az + dz * t - cz, d = Math.sqrt(ex * ex + ez * ez);
         if (d > reach) continue;
         const k = j * g.w + i, was = best.get(k);
-        if (!was || d < was.d) best.set(k, { d, y: y[n - 1]! + (y[n]! - y[n - 1]!) * t });
+        if (!was || d < was.d) {
+          const height = y[n - 1]! + (y[n]! - y[n - 1]!) * t;
+          if (was) { was.d = d; was.y = height; }
+          else best.set(k, { d, y: height });
+        }
       }
     }
   }
