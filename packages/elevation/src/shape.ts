@@ -82,6 +82,34 @@ function lockedAt(g: HeightGrid, lock: Uint8Array, x: number, z: number): number
   return wt > 0 ? sum / wt : sample(g, x, z);
 }
 
+// One bounded scratch window, shared by synchronous corridor calls. The city
+// grid itself can have millions of cells; only the corridor's bounding window
+// is indexed here, and windows over this cap use the original Map path.
+const MAX_CORRIDOR_CELLS = 1 << 18;
+interface CorridorScratch {
+  readonly seen: Uint32Array;
+  readonly d: Float64Array;
+  readonly y: Float64Array;
+  readonly local: Int32Array;
+  readonly global: Float64Array;
+  epoch: number;
+  busy: boolean;
+}
+let corridorScratch: CorridorScratch | null = null;
+function borrowCorridorScratch(cells: number): CorridorScratch | null {
+  if (!Number.isSafeInteger(cells) || cells < 1 || cells > MAX_CORRIDOR_CELLS || corridorScratch?.busy) return null;
+  if (!corridorScratch || corridorScratch.seen.length < cells) {
+    const capacity = Math.min(MAX_CORRIDOR_CELLS, Math.max(cells, (corridorScratch?.seen.length ?? 512) * 2));
+    corridorScratch = { seen: new Uint32Array(capacity), d: new Float64Array(capacity), y: new Float64Array(capacity),
+      local: new Int32Array(capacity), global: new Float64Array(capacity), epoch: 0, busy: false };
+  }
+  const scratch = corridorScratch;
+  scratch.busy = true;
+  scratch.epoch = (scratch.epoch + 1) >>> 0;
+  if (scratch.epoch === 0) { scratch.seen.fill(0); scratch.epoch = 1; }
+  return scratch;
+}
+
 /**
  * Grade a corridor along a polyline (a road): its height follows the land, smoothed along the line and limited to
  * `maxGrade`, flat across its width, cut and filled into the land either side. Returns the line's graded profile
@@ -152,32 +180,65 @@ export function gradeCorridor(g: HeightGrid, xs: ArrayLike<number>, zs: ArrayLik
     }
   }
   // Onto the grid: each cell near the line takes the height of its nearest point on it, as much as the corridor owns it.
-  const reach = o.half + o.blend, best = new Map<number, { d: number; y: number }>();
-  for (let n = 1; n < m; n += 1) {
-    const ax = px[n - 1]!, az = pz[n - 1]!, dx = px[n]! - ax, dz = pz[n]! - az, l2 = dx * dx + dz * dz || 1;
-    const i0 = Math.max(0, Math.floor((Math.min(ax, px[n]!) - reach - g.x0) / g.cell)), i1 = Math.min(g.w - 1, Math.ceil((Math.max(ax, px[n]!) + reach - g.x0) / g.cell));
-    const j0 = Math.max(0, Math.floor((Math.min(az, pz[n]!) - reach - g.z0) / g.cell)), j1 = Math.min(g.h - 1, Math.ceil((Math.max(az, pz[n]!) + reach - g.z0) / g.cell));
-    for (let j = j0; j <= j1; j += 1) {
-      for (let i = i0; i <= i1; i += 1) {
-        const cx = cellX(g, i), cz = cellZ(g, j), t = Math.max(0, Math.min(1, ((cx - ax) * dx + (cz - az) * dz) / l2));
-        const ex = ax + dx * t - cx, ez = az + dz * t - cz, d = Math.sqrt(ex * ex + ez * ez);
-        if (d > reach) continue;
-        const k = j * g.w + i, was = best.get(k);
-        if (!was || d < was.d) {
-          const height = y[n - 1]! + (y[n]! - y[n - 1]!) * t;
-          if (was) { was.d = d; was.y = height; }
-          else best.set(k, { d, y: height });
+  const reach = o.half + o.blend;
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  for (let n = 0; n < m; n += 1) {
+    minX = Math.min(minX, px[n]!); maxX = Math.max(maxX, px[n]!);
+    minZ = Math.min(minZ, pz[n]!); maxZ = Math.max(maxZ, pz[n]!);
+  }
+  const wi0 = Math.max(0, Math.floor((minX - reach - g.x0) / g.cell)), wi1 = Math.min(g.w - 1, Math.ceil((maxX + reach - g.x0) / g.cell));
+  const wj0 = Math.max(0, Math.floor((minZ - reach - g.z0) / g.cell)), wj1 = Math.min(g.h - 1, Math.ceil((maxZ + reach - g.z0) / g.cell));
+  const ww = wi1 - wi0 + 1, wh = wj1 - wj0 + 1;
+  const scratch = Number.isFinite(reach) && reach >= 0 && ww > 0 && wh > 0 ? borrowCorridorScratch(ww * wh) : null;
+  const best = scratch ? null : new Map<number, { d: number; y: number }>();
+  let count = 0;
+  try {
+    for (let n = 1; n < m; n += 1) {
+      const ax = px[n - 1]!, az = pz[n - 1]!, dx = px[n]! - ax, dz = pz[n]! - az, l2 = dx * dx + dz * dz || 1;
+      const i0 = Math.max(0, Math.floor((Math.min(ax, px[n]!) - reach - g.x0) / g.cell)), i1 = Math.min(g.w - 1, Math.ceil((Math.max(ax, px[n]!) + reach - g.x0) / g.cell));
+      const j0 = Math.max(0, Math.floor((Math.min(az, pz[n]!) - reach - g.z0) / g.cell)), j1 = Math.min(g.h - 1, Math.ceil((Math.max(az, pz[n]!) + reach - g.z0) / g.cell));
+      for (let j = j0; j <= j1; j += 1) {
+        const row = (j - wj0) * ww;
+        for (let i = i0; i <= i1; i += 1) {
+          const cx = cellX(g, i), cz = cellZ(g, j), t = Math.max(0, Math.min(1, ((cx - ax) * dx + (cz - az) * dz) / l2));
+          const ex = ax + dx * t - cx, ez = az + dz * t - cz, d = Math.sqrt(ex * ex + ez * ez);
+          if (d > reach) continue;
+          if (scratch) {
+            const at = row + i - wi0, was = scratch.seen[at] === scratch.epoch;
+            if (!was || d < scratch.d[at]!) {
+              const height = y[n - 1]! + (y[n]! - y[n - 1]!) * t;
+              if (!was) { scratch.seen[at] = scratch.epoch; scratch.local[count] = at; scratch.global[count] = j * g.w + i; count += 1; }
+              scratch.d[at] = d; scratch.y[at] = height;
+            }
+          } else {
+            const k = j * g.w + i, was = best!.get(k);
+            if (!was || d < was.d) {
+              const height = y[n - 1]! + (y[n]! - y[n - 1]!) * t;
+              if (was) { was.d = d; was.y = height; }
+              else best!.set(k, { d, y: height });
+            }
+          }
         }
       }
     }
-  }
-  const lock = o.lock;
-  for (const [k, v] of best) {
-    if (lock && lock[k]) continue;
-    const w = own(v.d - o.half, o.blend);
-    g.data[k] = g.data[k]! + (v.y - g.data[k]!) * w;
-  }
-  if (lock) for (const [k, v] of best) if (v.d <= o.half) lock[k] = 1;
+    const lock = o.lock;
+    if (scratch) {
+      for (let p = 0; p < count; p += 1) {
+        const k = scratch.global[p]!, at = scratch.local[p]!;
+        if (lock && lock[k]) continue;
+        const w = own(scratch.d[at]! - o.half, o.blend);
+        g.data[k] = g.data[k]! + (scratch.y[at]! - g.data[k]!) * w;
+      }
+      if (lock) for (let p = 0; p < count; p += 1) if (scratch.d[scratch.local[p]!]! <= o.half) lock[scratch.global[p]!] = 1;
+    } else {
+      for (const [k, v] of best!) {
+        if (lock && lock[k]) continue;
+        const w = own(v.d - o.half, o.blend);
+        g.data[k] = g.data[k]! + (v.y - g.data[k]!) * w;
+      }
+      if (lock) for (const [k, v] of best!) if (v.d <= o.half) lock[k] = 1;
+    }
+  } finally { if (scratch) scratch.busy = false; }
   return { s, y };
 }
 
