@@ -10,8 +10,8 @@ export type {
 } from "./car.ts";
 export { BODY_STYLES, SPECIAL_STYLES, CATEGORIES, EFFECT_TABLE, LIGHT_TABLE, NEON_TABLE, ONE_PPM, RIM_SIZE_TABLE, SPINNER_TABLE, PAINT_FAMILIES, SITES, TIER_LADDER, TYPE_TABLE, chipsOf, points, possibleCars, scoreOf, tierOf, traitPpm } from "./traits.ts";
 export type { BodyStyle, Category, Site, Table, Tier, Trait } from "./traits.ts";
-export { BODY_SLOT, SPIN_FRAMES, WHEEL_CLIPS, WHEEL_SLOT, bodyDesign, geometryKey, glassDesign, panelFace, panelSlot, exhaustTips, spinFrame, stackTops, tailLamps, tailSpan, backPanelOf, spinPeriod, spinnerDesign, wheelDesign } from "./shapes.ts";
-export type { PanelFace, VehicleDesign } from "./shapes.ts";
+export { BODY_SLOT, SPIN_FRAMES, WHEEL_CLIPS, WHEEL_SLOT, bodyDesign, geometryKey, glassDesign, panelFace, panelSlot, exhaustTips, spinFrame, stackTops, tailLamps, tailSpan, backPanelOf, signalLamps, signalLit, signalStyle, SWEEP_SEGMENTS, spinPeriod, spinnerDesign, wheelDesign } from "./shapes.ts";
+export type { PanelFace, SignalForm, SignalLamp, SignalLampKind, SignalStyle, VehicleDesign } from "./shapes.ts";
 export { FINISH_LOOK, bodyPaint, wheelPaint } from "./paint.ts";
 export type { PaintOptions } from "./paint.ts";
 export { carDecals, sprayDecal } from "./decals.ts";
