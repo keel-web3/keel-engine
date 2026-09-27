@@ -25,7 +25,7 @@ export default await engineVectors(import.meta.url, [
       for (let i = 0; i < 300; i += 1) stepVehicle(car, { throttle: 1, brake: 0, steer: ((i % 120) - 60) / 60, handbrake: i % 100 < 10 ? 1 : 0 }, 1 / 60);
       return digest([car.p, car.q, car.v, car.w]);
     },
-    expect: "19c2d04eca23adbc61b078d50d2e768cb5c992dca3450814b83647e485582bce",
+    expect: "dba98bf268725c7ff5f5c7881cd85dbb315a706298086d1ebcf75e30d0ed2ca5",
   },
   {
     name: "the same weave with the handling assists on, nitrous and a wall scrape, lands on the same bits",
@@ -37,6 +37,6 @@ export default await engineVectors(import.meta.url, [
       }
       return digest([car.p, car.q, car.v, car.w]);
     },
-    expect: "9c8e6348080b862df7c8c3aea1cdb09a2fd9589c52b7c363ce00e23ef35debec",
+    expect: "c7d8ba5ae2ba3bd29976e0102cb8c09d49059d0b4dc73c6fe53e844cd30e20b4",
   },
 ]);

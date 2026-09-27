@@ -175,6 +175,8 @@ export function createVehicle(spec: VehicleSpec, x: number, z: number, yaw: numb
 const LOAD_SENS = 0.15, TRIP_SLIDE = 1.5, TRIP_MU = 1.2;
 /** A kerb strike: a step up of more than this (m) met by a wheel sliding sideways faster than this (m/s). */
 const STRIKE_STEP = 0.08, STRIKE_SLIDE = 2;
+/** A burnout's walk: the side push at the lit-up axle, as a share of its grip, per unit of steering -- and its shimmy. */
+const BURNOUT_WALK = 0.3, BURNOUT_SHIMMY = 0.06;
 const derived = new WeakMap<VehicleSpec, { invI: V3; mounts: V3[]; wheelI: number; corners: V3[]; tanLock: number; staticLoad: number }>();
 function derive(s: VehicleSpec) {
   let d = derived.get(s);
@@ -238,8 +240,14 @@ function substep(car: Vehicle, input: VehicleInput, h: number, ground: Ground): 
   // it stops and pulls away instead of coasting on with neither drive nor brakes.)
   const against = car.pt.shifting > 0 && (car.pt.gear < 0 ? forward > 0 : car.pt.gear > 0 && forward < 0);
   const brake = input.hold ? 1 : clamp((rev ? input.throttle : input.brake) + (against ? (rev ? input.brake : input.throttle) : 0), 0, 1);
-  // A burnout: both pedals down, barely rolling -- the brakes hold the fronts alone (a line lock) and the rears light up.
-  const lineLock = car.pt.gear > 0 && throttle > 0.5 && brake > 0.5 && Math.abs(forward) < 4;
+  // A burnout: barely rolling, the gas down against a brake that holds the axle that ISN'T driven, so the driven one
+  // lights up -- the brake pedal (a line lock: a rear-driver's fronts held) or the handbrake (a front-driver's rears; a
+  // rear-driver's handbrake is put on its fronts, the way a line lock is). An all-wheel-drive car has no free axle to
+  // hold: both pedals down, it stands on its brakes and revs -- it doesn't burn.
+  // (Held on a race's grid -- input.hold -- the staging burnout is the line lock as it always was, every drivetrain
+  // included and no walk: a race's start, and every tape of one, plays out exactly as before.)
+  const staged = !!input.hold, held = staged ? brake : Math.max(brake, clamp(input.handbrake, 0, 1));
+  const lineLock = car.pt.gear > 0 && throttle > 0.5 && held > 0.5 && Math.abs(forward) < 4 && (staged || s.drivetrain !== "awd");
   // Traction control: the engine never sends the driven wheels more than their tyres can put down (their grip under
   // the load they carried last sub-step, and a little over -- a tyre pulls hardest just past the start of a slip).
   const assist = lineLock || input.handbrake > 0.2 ? 0 : clamp(input.traction ?? 0, 0, 1);
@@ -356,14 +364,16 @@ function substep(car: Vehicle, input: VehicleInput, h: number, ground: Ground): 
     const drive = (split[k]! * axleTorque) / splitSum;
     // (ABS: the pedal never asks more of a wheel than its tyre can hold -- a car stops straight and short. The
     // handbrake has none: locking the rears is the point of it.)
-    const full = lineLock && (s.drivetrain === "fwd" ? k < 2 : k >= 2) ? 0 : brake * s.brakeTorque * (k < 2 ? s.brakeBias : 1 - s.brakeBias) * 2;
+    const drivenK = s.drivetrain === "fwd" ? k < 2 : k >= 2;
+    const full = (lineLock ? (drivenK ? 0 : held) : brake) * s.brakeTorque * (k < 2 ? s.brakeBias : 1 - s.brakeBias) * 2;
     const locking = s.abs && ratio * sign(vLong) < -s.peakRatio;
     // (It holds the tyre just under its peak, not at it: some grip is left over to turn with while braking.)
     // (And the rears are asked less than the fronts -- brake distribution: a rear at its limit has nothing left to hold
     // the tail with, and a car braking into a corner would swap ends.)
     const pedal = locking ? Math.min(full, Math.abs(tyre.fx) * s.wheelRadius * 0.7) : Math.min(full, s.abs ? tyreGrip * s.wheelRadius * (k < 2 ? 0.85 : 0.55) : Infinity);
     // (With the assists the handbrake slides the rears -- held near a slip, not locked dead: they keep some bite.)
-    const handbrake = k >= 2 ? input.handbrake * s.handbrakeTorque * (t && ratio * sign(vLong) < t.handbrakeSlip ? 0.15 : 1) : 0;
+    // (In a rear-driver's burnout the handbrake is holding the fronts -- above -- not the rears it would lock.)
+    const handbrake = k >= 2 && !(lineLock && drivenK) ? input.handbrake * s.handbrakeTorque * (t && ratio * sign(vLong) < t.handbrakeSlip ? 0.15 : 1) : 0;
     const brakeT = pedal + handbrake;
     // (Implicit in the tyre: the road's pull on the wheel is stiff -- stepped plainly it rings -- so the step is
     // taken against the curve's slope at the centre, which holds steady at any sub-step.)
@@ -382,6 +392,16 @@ function substep(car: Vehicle, input: VehicleInput, h: number, ground: Ground): 
     const l = W[k]!, r = W[k + 1]!, pull = ((r.spin - l.spin) / 2) * s.diffLock;
     l.spin += pull;
     r.spin -= pull;
+  }
+  // ---- a burnout walks. The lit-up tyres have next to no side grip left, so the wheel turned swings the free end round
+  // the held one -- a rear-driver's tail out the other way, a front-driver's nose the way it's turned -- and even left
+  // alone the spinning pair shimmies from side to side. (Off their own turning, so the same inputs are the same walk.)
+  if (lineLock && !staged) {
+    const front = s.drivetrain === "fwd", a = front ? 0 : 2, axle = front ? s.frontAxle : s.rearAxle;
+    const load = W[a]!.load + W[a + 1]!.load;
+    const shimmy = BURNOUT_SHIMMY * Math.sin(W[a]!.turned * 0.021);
+    const side = (BURNOUT_WALK * clamp(input.steer, -1, 1) * (front ? 1 : -1) + shimmy) * s.grip * ground.grip(car.p[0], car.p[2]) * load * clamp(throttle, 0, 1);
+    push(F, T, car.p, add(car.p, rotate(car.q, [0, -s.comHeight * 0.5, axle])), scale([right[0], 0, right[2]], side));
   }
   // ---- the body itself touching the ground: a car on its side or its roof slides on it, and stops.
   const rolled = up[1] < 0.5, localDown = rolled ? unrotate(car.q, [0, -1, 0]) : null;

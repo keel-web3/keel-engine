@@ -3661,7 +3661,7 @@
         },
         {
           "path": "packages/vehicle/src/vehicle.ts",
-          "sha256": "0xa9713646f6b9f457ca6d74134934044a61201ec93b0702547c737c9e13b995dd"
+          "sha256": "0xa68e8fe31a557b041194eb9e53be884517e9f5043ab935d910f7c05befa076c2"
         }
       ],
       "build": {
@@ -3672,17 +3672,17 @@
         ]
       },
       "output": {
-        "digest": "0xd368f90f9a6bd7be1bec9d8ac289fe77aa2577581416628a4d4ced5c6e0ed9c5",
-        "byteLength": 23037
+        "digest": "0x17f5c9d90243508ba7700857a0ad000e8b55e159e33bb306182231709524d0d3",
+        "byteLength": 23427
       },
-      "sourceDigest": "0xf3e6c809ed83bb230cc14c34cd8f3502cf5e71d48c2184101d70832550b92855",
-      "recipeDigest": "0x42645d7b2814bddde3b4593851f4c10f0acca69d70fb7736e54880f9370e7bd2",
-      "receiptDigest": "0x3676dfbeb0dd9126aa5d4ae27c7f1881c770382df3c02a302b98a217903d8b11",
+      "sourceDigest": "0x9614d2b1e402c90c1d55fba9bc77b73afe4a777834186780c6d39149b19709cf",
+      "recipeDigest": "0x41f73cf33c98814ed83c1eea8d688306f5d8cb2d308020ce0409c44951073ed2",
+      "receiptDigest": "0xa24718a531743e8c7a0be9119f8d529105340e340acada8cbe07200718ddfed5",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/vehicle/test/vectors.mjs",
-        "sha256": "0x6788a0dd1afc52c2df36040bae6304b835e5bd384d5cc61dbe3c9b2f0ff01e26"
+        "sha256": "0x35c1bf92a5fb56254a83e9d1d33c8939ef892bc4ffa96d3c9c715078ad3daa58"
       },
       "deployments": [],
       "deployed": false
