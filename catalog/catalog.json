@@ -3661,7 +3661,7 @@
         },
         {
           "path": "packages/vehicle/src/vehicle.ts",
-          "sha256": "0xca38ba598be5d761a30e3956ea75ea747a32a3ae83280759a6b87f7ea401f00c"
+          "sha256": "0xa9713646f6b9f457ca6d74134934044a61201ec93b0702547c737c9e13b995dd"
         }
       ],
       "build": {
@@ -3672,12 +3672,12 @@
         ]
       },
       "output": {
-        "digest": "0x825fc33ba0b1e14bea26930c51304c1c2da470f7ecb9b44132920c2cae109c9b",
-        "byteLength": 22924
+        "digest": "0xd368f90f9a6bd7be1bec9d8ac289fe77aa2577581416628a4d4ced5c6e0ed9c5",
+        "byteLength": 23037
       },
-      "sourceDigest": "0x81776a03a7adf8a45da41fa6ac8275aed5787bb4c42f266a66894203f4e55cf2",
-      "recipeDigest": "0xb169e296259e61a23727309e28a3c760074e59e3ab4592aa9c9029e1e97dc5fa",
-      "receiptDigest": "0x38bf466faf2c7237c39a0f6bc04d11641ed13062caab2c939b1e41c3dda4aa7b",
+      "sourceDigest": "0xf3e6c809ed83bb230cc14c34cd8f3502cf5e71d48c2184101d70832550b92855",
+      "recipeDigest": "0x42645d7b2814bddde3b4593851f4c10f0acca69d70fb7736e54880f9370e7bd2",
+      "receiptDigest": "0x3676dfbeb0dd9126aa5d4ae27c7f1881c770382df3c02a302b98a217903d8b11",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
