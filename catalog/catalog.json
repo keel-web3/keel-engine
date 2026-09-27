@@ -596,7 +596,7 @@
         },
         {
           "path": "packages/audio/src/car-player.ts",
-          "sha256": "0xd22985e869f5e1a1f0506f49cdbdc1964e5183c662722208db04bbb1b0a4e52f"
+          "sha256": "0x19a258496e24fbe15b2893ee72e4a0cc14f8179ae9b0fd3463251a45545e7953"
         },
         {
           "path": "packages/audio/src/car.ts",
@@ -662,12 +662,12 @@
         ]
       },
       "output": {
-        "digest": "0x8b2e6aef7371777e7b43683163c349f962b53cd77d6905107251286c13415ddf",
-        "byteLength": 98330
+        "digest": "0x9dfffc14592145271111f49825d6305013b5dcd3217b4eda514fbc1008d4b1ff",
+        "byteLength": 98411
       },
-      "sourceDigest": "0x7a719a85bbc83354f16c0f487e1cc51cf78d9762373f9b707da3cf374cc8e270",
-      "recipeDigest": "0xfb75486576b23f3c7008ab4f933a30039774940365f7c6036878e7a8008163b2",
-      "receiptDigest": "0x0cd961ebe97a6c3727c8332f5af4b7eb14256191f910d35a0efdfd4b7e6bfaa1",
+      "sourceDigest": "0x3313305dda89e9b3eb9121946deee6996bb1da3a1ce5706d276de669f58c2a41",
+      "recipeDigest": "0xfbc853f7df796c0045611d81f8d2025d402a2ab24d01f46f8c8070478ad920fb",
+      "receiptDigest": "0x428f290f8e58f85c901d89428c5275fdb878941f78ca78bd5f4665e37ac71042",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
