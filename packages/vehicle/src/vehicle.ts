@@ -399,7 +399,7 @@ function substep(car: Vehicle, input: VehicleInput, h: number, ground: Ground): 
   if (lineLock && !staged) {
     const front = s.drivetrain === "fwd", a = front ? 0 : 2, axle = front ? s.frontAxle : s.rearAxle;
     const load = W[a]!.load + W[a + 1]!.load;
-    const shimmy = BURNOUT_SHIMMY * Math.sin(W[a]!.turned * 0.021);
+    const shimmy = BURNOUT_SHIMMY * dsin(W[a]!.turned * 0.021);
     const side = (BURNOUT_WALK * clamp(input.steer, -1, 1) * (front ? 1 : -1) + shimmy) * s.grip * ground.grip(car.p[0], car.p[2]) * load * clamp(throttle, 0, 1);
     push(F, T, car.p, add(car.p, rotate(car.q, [0, -s.comHeight * 0.5, axle])), scale([right[0], 0, right[2]], side));
   }
