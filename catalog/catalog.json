@@ -1925,8 +1925,12 @@
           "sha256": "0x4381f59c630d3615ca82600bdb0a4d1f6b512698688c0ef7e2ae89aeadad030e"
         },
         {
+          "path": "packages/entity/src/idles.ts",
+          "sha256": "0x4ddd56267b95b4b87224dc54231a7c21f65847709350a64eef30c994584b1c7c"
+        },
+        {
           "path": "packages/entity/src/index.ts",
-          "sha256": "0x4adcd625d2bb3790c8563f4e1f83414d962af25e8c73e18eb13ee160b2372780"
+          "sha256": "0x8076b96db03a2a368f0eeb96f865aff8b439a0216ad73f4581b940e48a1b4500"
         },
         {
           "path": "packages/entity/src/rig.ts",
@@ -1950,17 +1954,17 @@
         ]
       },
       "output": {
-        "digest": "0x2bafda5c13de4c9b9a314f8e2e7c6ce2f0bb8cade3bbd31cf0153d8c61707d73",
-        "byteLength": 57278
+        "digest": "0xd8a7df7490eb67c19bb7d79592fb0d4ecce2cb56e0ec4347c13bffa65068a4ee",
+        "byteLength": 61419
       },
-      "sourceDigest": "0xaf57a0b814b9022eb9d0785f1616e7d57feca7f41877a5abaa648f38154e7315",
-      "recipeDigest": "0xd61de2a1f2d9938988c1b166c54ba59532a3785794a6530ea0498ac47d2bc339",
-      "receiptDigest": "0xbad56171e078657fdadff20941116741584e427bc3bb12d86f93a5ee5e5ee32d",
+      "sourceDigest": "0x98fe3c7896556b21dec337803e0ff04ae0f421decd2c0a91fd7602ed247cfe80",
+      "recipeDigest": "0x6cbd2759c540e08db48de169026be778a8172f1c5fb08c138ae54b078f7ccf96",
+      "receiptDigest": "0xd032d138fd554564f8392bab035578d3a54c18bbb29f4ac65884848f6a42381a",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/entity/test/vectors.mjs",
-        "sha256": "0x79471ca0a6766d44de609729e0815e87d0179dd34dce9942fe6d7b2e0490ff8e"
+        "sha256": "0x89d10950af8a5d0f0422538d8f43c0b4261b980dcdcef7078902eebcd83d66ab"
       },
       "deployments": [],
       "deployed": false

@@ -34,6 +34,9 @@ export type {
 export { ACTION_CLIPS, ACTION_PERIOD, actionPose, clipOf, isAction } from "./actions.ts";
 export type { ActionClipName } from "./actions.ts";
 
+export { IDLE_ACTS, IDLE_PERIOD, idleActFor, idleActPose, posedIdle } from "./idles.ts";
+export type { IdleAct } from "./idles.ts";
+
 export { animator } from "./animator.ts";
 export type { Animator, AnimatorBody, AnimatorOptions, AnimatorSave, AnimatorState, BodyMode, Layer, StepOptions } from "./animator.ts";
 
