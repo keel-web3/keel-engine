@@ -5178,7 +5178,7 @@
       "verified": true,
       "vectors": {
         "path": "packs/vehicles/test/vectors.mjs",
-        "sha256": "0xf18447eddaf1ad2c58e2368a16c590bf8522aaaf26280f2796c40ea822ab179d"
+        "sha256": "0xd0e1c86c71fb4b2d6666ff1d543b934edc364caa5e5deca13fcb0de9b086adda"
       },
       "deployments": [],
       "deployed": false
