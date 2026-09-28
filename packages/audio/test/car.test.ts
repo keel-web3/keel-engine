@@ -76,3 +76,12 @@ test("nearby engines can start at independent loop phases without skipping one-s
   assert.equal(starts[1]![3], 6.3); assert.equal(starts[2]![3], 0); assert.equal(starts[3]![3], 0);
   player.dispose();
 });
+
+test("a full pool steals a lower-priority voice and plays the new sound -- it doesn't stop one and drop the other", () => {
+  polyfillAudioBuffer(); const r = recorder({ sampleRate: 8000 });
+  const player = createCarAudio(r.tone as unknown as ToneLike, { maxVoices: 4, maxCache: 8 });
+  for (const name of ["engine.4", "wind", "nos", "fire"] as const) assert.ok(player.loop(name));
+  assert.ok(player.play("hit.metal"), "the impact plays in a full pool");
+  assert.ok(player.play("land"), "and the next one too: a fading voice isn't a sounding one");
+  assert.ok(player.stats.active <= 4 + 8);
+});

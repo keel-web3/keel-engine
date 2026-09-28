@@ -50,11 +50,15 @@ export function createCarAudio(target: ToneLike | BaseAudioContext, options: Car
     if (disposed || bounded(p.gain, 1, 0, 1) <= 0) return null;
     const now = ctx.currentTime, priority = p.priority ?? (name.startsWith("ui.") ? 4 : loop ? 2 : 3);
     if (!loop && now - (gaps.get(name) ?? -Infinity) < (name.startsWith("ui.") ? .04 : .065)) { stats.limited++; return null; }
-    if (active.size >= max) {
-      const victim = [...active].find(v => v.priority < priority);
-      if (victim) { victim.voice.stop(.008); } else { stats.dropped++; return null; }
-      // Fading voices still count. Never exceed the cap to fit the replacement.
-      stats.dropped++; return null;
+    // The cap counts the voices still sounding; one already fading out is on its way (a few ms) and makes room. Full,
+    // the lowest-priority voice below this one (the oldest of those) makes way and THIS one plays -- it used to be stopped and the new
+    // sound dropped anyway, so in a pile-up the fresh impacts went silent. Fading tails are held to a little headroom.
+    const sounding = [...active].filter(v => v.voice.playing);
+    if (sounding.length >= max || active.size >= max + 8) {
+      let victim: (typeof sounding)[number] | undefined;
+      for (const v of sounding) if (v.priority < priority && (!victim || v.priority < victim.priority)) victim = v;
+      if (!victim || active.size >= max + 8) { stats.dropped++; return null; }
+      victim.voice.stop(.008);
     }
     const turn = turns.get(name) ?? 0, variant = bounded(p.variant, loop || name.startsWith("ui.") ? 0 : turn % 4, 0, 3) | 0;
     const buffer = sample(name, variant, p.profile);
@@ -64,7 +68,8 @@ export function createCarAudio(target: ToneLike | BaseAudioContext, options: Car
     filter.type = "lowpass"; filter.Q.value = .55;
     source.connect(filter).connect(gain).connect(pan).connect(output);
     const level = bounded(p.gain, 1, 0, 1);
-    source.playbackRate.value = bounded(p.rate, 1, .2, 6) * (!loop && p.profile === "effects" ? [.98, 1.015, .995, 1.03][turn % 4]! : 1);
+    // (A recorded effect a touch different every time: +-6%, not the same four steps round.)
+    source.playbackRate.value = bounded(p.rate, 1, .2, 6) * (!loop && p.profile === "effects" ? .94 + Math.random() * .12 : 1);
     filter.frequency.value = bounded(p.cutoff, 16000, 60, ctx.sampleRate * .45);
     pan.pan.value = bounded(p.pan, 0, -1, 1);
     gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(level, now + .012);

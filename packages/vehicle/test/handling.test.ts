@@ -113,3 +113,62 @@ test("handling: a key asks for the lock the tyres can use -- a tap at 110 km/h i
   assert.ok(slip < 0.2, `slip ${slip}`);
   assert.ok(lockAt(DEFAULT_SPEC, 30) > usefulLock(DEFAULT_SPEC, 30));
 });
+
+test("handling: traction control holds a reversing car's driven wheels too -- no burnout backwards", () => {
+  const car = createVehicle(DEFAULT_SPEC, 0, 0, 0);
+  let worst = 0;
+  for (let i = 0; i < 120; i += 1) {
+    stepVehicle(car, { throttle: 0, brake: 1, steer: 0, handbrake: 0, traction: 1 }, DT);
+    if (i > 30) worst = Math.max(worst, Math.abs(car.wheels[2]!.spinSlip), Math.abs(car.wheels[3]!.spinSlip));
+  }
+  assert.equal(car.pt.gear, -1);
+  assert.ok(worst < 1.2, `driven wheels spin at ${worst.toFixed(2)}x their peak slip`);
+  assert.ok(car.tcCut > 0, "the cut is reported in reverse as well");
+});
+
+test("handling: braking into reverse, the car stops and pulls back -- it doesn't coast on through the shift", () => {
+  const car = rolling(8);
+  let forwardAfterShift = 0;
+  for (let i = 0; i < 180; i += 1) {
+    stepVehicle(car, { throttle: 0, brake: 1, steer: 0, handbrake: 0, traction: 1 }, DT);
+    const forward = car.v[2];
+    if (car.pt.gear < 0 && forward > 0) forwardAfterShift += forward * DT;
+  }
+  assert.ok(forwardAfterShift < 0.05, `rolled ${forwardAfterShift.toFixed(3)} m on in reverse gear`);
+  assert.ok(car.v[2] < -1, "and it is backing up");
+});
+
+/** A burnout from a standstill: `hold` seconds of gas against the brake pedal or the handbrake, steering as asked. */
+function burnout(drivetrain: "rwd" | "fwd" | "awd", by: "pedal" | "handbrake", steer = 0, seconds = 3) {
+  const car = createVehicle({ ...DEFAULT_SPEC, drivetrain }, 0, 0, 0);
+  let front = 0, rear = 0, yaw = 0;
+  for (let i = 0; i < seconds * 60; i += 1) {
+    stepVehicle(car, { throttle: 1, brake: by === "pedal" ? 1 : 0, steer, handbrake: by === "handbrake" ? 1 : 0, traction: 1 }, DT);
+    yaw += car.w[1] * DT;
+    if (i > 30) { front = Math.max(front, car.wheels[0]!.spinSlip, car.wheels[1]!.spinSlip); rear = Math.max(rear, car.wheels[2]!.spinSlip, car.wheels[3]!.spinSlip); }
+  }
+  // (Yaw added up turn by turn: a donut goes past half a turn, where a heading would wrap.)
+  return { front, rear, moved: Math.hypot(car.p[0], car.p[2]), yaw };
+}
+
+test("handling: a burnout is gas against the brake that holds the axle that isn't driven -- pedal or handbrake", () => {
+  for (const by of ["pedal", "handbrake"] as const) {
+    const r = burnout("rwd", by), f = burnout("fwd", by);
+    assert.ok(r.rear > 5 && r.front < 1, `rear-driver, ${by}: rears ${r.rear.toFixed(1)}x, fronts ${r.front.toFixed(1)}x`);
+    assert.ok(f.front > 5 && f.rear < 1, `front-driver, ${by}: fronts ${f.front.toFixed(1)}x, rears ${f.rear.toFixed(1)}x`);
+    assert.ok(r.moved < 1.5 && f.moved < 1.5, "and it stays on its spot");
+  }
+});
+
+test("handling: an all-wheel-drive car can't burn out -- it stands on its brakes", () => {
+  for (const by of ["pedal", "handbrake"] as const) {
+    const a = burnout("awd", by);
+    assert.ok(a.front < 1.5 && a.rear < 1.5, `${by}: fronts ${a.front.toFixed(1)}x, rears ${a.rear.toFixed(1)}x`);
+  }
+});
+
+test("handling: a burnout walks -- the wheel held over swings it round the held axle, the other way for the other lock", () => {
+  const still = burnout("rwd", "pedal", 0), right = burnout("rwd", "pedal", 1), left = burnout("rwd", "pedal", -1);
+  assert.ok(Math.abs(still.yaw) < 0.15, `left alone it shimmies (${(still.yaw * 57.3).toFixed(0)} deg), it doesn't turn`);
+  assert.ok(Math.abs(right.yaw) > 0.8 && Math.sign(right.yaw) === -Math.sign(left.yaw), `held over it swings ${(right.yaw * 57.3).toFixed(0)} / ${(left.yaw * 57.3).toFixed(0)} deg`);
+});
