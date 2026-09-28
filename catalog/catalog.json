@@ -1964,7 +1964,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/entity/test/vectors.mjs",
-        "sha256": "0x79471ca0a6766d44de609729e0815e87d0179dd34dce9942fe6d7b2e0490ff8e"
+        "sha256": "0x89d10950af8a5d0f0422538d8f43c0b4261b980dcdcef7078902eebcd83d66ab"
       },
       "deployments": [],
       "deployed": false
