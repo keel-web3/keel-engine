@@ -579,7 +579,30 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
    */
   const sent = new Float64Array(18), sentGlow = new Float32Array(SLOTS);
   let glowSent = false;
-  const unsent = (): void => { sent.fill(NaN); glowSent = false; };
+  const sentModel = new Float64Array(16);
+  let lastModel: Float32List | null = null;
+  let modelSent = false, modelLocation: WebGLUniformLocation | null = null;
+  const unsent = (): void => { sent.fill(NaN); glowSent = false; modelSent = false; lastModel = null; };
+  /** Compare values, not array identity: shared matrices can be mutated between draws. */
+  const modelTo = (loc: WebGLUniformLocation | null, matrix: Float32List): void => {
+    // Moving draws usually supply distinct arrays. Do not scan or snapshot them.
+    // The second consecutive use establishes a snapshot; later uses compare values.
+    if (lastModel !== matrix || modelLocation !== loc) {
+      lastModel = matrix; modelLocation = loc; modelSent = false;
+      gl.uniformMatrix4fv(loc, false, matrix);
+      return;
+    }
+    let valid = matrix.length === 16, same = modelSent;
+    for (let j = 0; valid && j < 16; j += 1) {
+      const v = matrix[j]!;
+      valid = Number.isFinite(v);
+      if (!Object.is(sentModel[j], v)) same = false;
+    }
+    if (valid && same) return;
+    gl.uniformMatrix4fv(loc, false, matrix);
+    modelSent = valid; modelLocation = loc;
+    if (valid) for (let j = 0; j < 16; j += 1) sentModel[j] = matrix[j]!;
+  };
   const u1 = (k: number, loc: WebGLUniformLocation | null, v: number, int: boolean): void => {
     if (sent[k] === v) return;
     sent[k] = v;
@@ -728,11 +751,14 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
         gl.vertexAttrib1f(4, -1);
         gl.uniform1i(M.su.shadowPass, 1);
         gl.uniformMatrix4fv(M.su.shadowMat, false, sunMat);
+        // The shadow program shares pose flags across consecutive casters.
+        // Reset the existing uniform cache at this pass boundary, as below.
+        unsent();
         for (const { draw: d } of shadow!.casters) {
           const g = M.meshes.get(d.mesh);
           if (!g || (d.fade ?? 1) <= 0) continue;
-          gl.uniformMatrix4fv(M.su.model, false, d.matrix as Float32List);
-          if (d.parts && d.parts.length >= 16) { poseTexture(M, d.parts); gl.uniform1i(M.su.parts, 12); gl.uniform1i(M.su.posed, 1); } else gl.uniform1i(M.su.posed, 0);
+          modelTo(M.su.model, d.matrix as Float32List);
+          if (d.parts && d.parts.length >= 16) { poseTexture(M, d.parts); u1(1, M.su.parts, 12, true); u1(0, M.su.posed, 1, true); } else u1(0, M.su.posed, 0, true);
           gl.bindVertexArray(g.vao);
           // (A range draws that stretch of the indices only: a level's prefix, or a fading delta.)
           const [off, cnt] = d.range ?? [0, g.count];
@@ -794,7 +820,7 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
         // to that whole pixel, so a moving car never crawls; a perspective draw doesn't -- nothing there is pixel-locked.)
         const [ax, ay] = proj.project([at[0], at[1], at[2]]);
         const sx = Math.floor(ax + 0.5), sy = Math.floor(ay + 0.5);
-        gl.uniformMatrix4fv(G.model, false, m as Float32List);
+        modelTo(G.model, m as Float32List);
         // (The rest only when it differs from the draw before's: see `sent`.)
         u2(0, G.snap, persp ? 0 : sx - ax, persp ? 0 : -(sy - ay), false);
         u2(2, G.anchor, sx, sy, true);
