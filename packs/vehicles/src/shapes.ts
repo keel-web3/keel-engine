@@ -22,7 +22,8 @@
 
 import { dcos, dhypot, dsin } from "@keel-engine/core";
 import type { BakeWorld, ClipSpec, DesignSpec, IndexedSource } from "@keel-engine/bake";
-import type { Car, Panel, WheelSpec } from "./car.ts";
+import type { Car, Colour, Panel, WheelSpec } from "./car.ts";
+import { hash32 } from "./draws.ts";
 import { both, box, cap, component, pane, sheet, solids, wedge, wedgeX } from "./solids.ts";
 import { ceilingAt, glasshouse, keepInside, reachAt, standIn } from "./glass.ts";
 import type { Solids, V3 } from "./solids.ts";
@@ -120,6 +121,116 @@ export function tailSpan(car: Car): { centre: number; half: number; single: bool
 export function tailLamps(car: Car): Array<{ x: number; y: number; z: number }> {
   const b = backPanelOf(car), k = { bar: 0.62, slim: 0.62, blocks: 0.76, round: 0.7, quad: 0.68, split: 0.58 }[car.parts.tail];
   return [-1, 1].map((s) => ({ x: s * b.half * k, y: b.lampY - 0.01, z: -car.body.length / 2 - 0.02 }));
+}
+
+/** Where an indicator lamp sits: a tiny repeater on a wing mirror (or on the front fender, a car with no mirrors), or a corner lamp front or back. */
+export type SignalLampKind = "mirror" | "side" | "front" | "rear";
+/**
+ * How a car's indicators look and flash: an old bulb's soft block, a crisp LED, an LED strip that GROWS outward in
+ * segments (a modern sequential sweep), or a small round dot.
+ */
+export type SignalForm = "bulb" | "led" | "sweep" | "dot";
+/** A car's indicators: their form, their flash rate (Hz), and the colour each end burns. */
+export interface SignalStyle { readonly form: SignalForm; readonly hz: number; readonly front: Colour; readonly rear: Colour; readonly side: Colour }
+
+const unit32 = (car: Car, tag: string): number => hash32(car.seed, `signal.${tag}`) / 0x1_0000_0000;
+const pickBy = <T>(u: number, table: ReadonlyArray<readonly [T, number]>): T => {
+  const total = table.reduce((a, [, w]) => a + w, 0);
+  let r = u * total;
+  for (const [v, w] of table) { r -= w; if (r < 0) return v; }
+  return table[table.length - 1]![0];
+};
+
+/**
+ * A car's indicators, from its seed (their own draws, `signal.*`: no trait, no rarity and nothing else about the car
+ * moves). Modern and exotic bodies lean to LEDs and sweeps, old muscle and trucks to bulbs; most burn amber, in its
+ * shades; some old-school rears flash red; a car with a neon kit may flash its neon's colour.
+ */
+export function signalStyle(car: Car): SignalStyle {
+  const a = car.archetype;
+  const form = pickBy<SignalForm>(unit32(car, "form"),
+    a === "hyper" || a === "proto" ? [["sweep", 5], ["led", 4], ["bulb", 1], ["dot", 1]]
+      : a === "gt" ? [["sweep", 3], ["led", 4], ["bulb", 2], ["dot", 1]]
+        : a === "muscle" || a === "pickup" ? [["bulb", 6], ["led", 2], ["sweep", 1], ["dot", 1]]
+          : a === "buggy" || a === "rally" ? [["dot", 4], ["bulb", 3], ["led", 3]]
+            : [["bulb", 3], ["led", 3], ["dot", 2], ["sweep", 2]]);
+  const hz = (form === "bulb" ? 1.25 : 1.45) + unit32(car, "hz") * 0.55;
+  const amber = pickBy<Colour>(unit32(car, "amber"), [
+    [{ light: 0.8, chroma: 0.17, hue: 66 }, 6],
+    [{ light: 0.74, chroma: 0.19, hue: 54 }, 3],
+    [{ light: 0.86, chroma: 0.16, hue: 84 }, 2],
+  ]);
+  const neon = car.paints.neon || car.paints.effect === "neon" || car.paints.effect === "underglow";
+  const custom = neon && unit32(car, "custom") < 0.3 ? { light: Math.max(0.72, car.paints.glow.light), chroma: Math.max(0.14, car.paints.glow.chroma), hue: car.paints.glow.hue } : null;
+  if (custom) return { form, hz, front: custom, rear: custom, side: custom };
+  const redRear = (a === "muscle" || a === "pickup" ? 0.35 : 0.08) > unit32(car, "red");
+  return { form, hz, front: amber, rear: redRear ? { light: 0.64, chroma: 0.21, hue: 25 } : amber, side: amber };
+}
+
+/** Half sizes (m) of one lens of each kind, by form. A sweep's front and rear are strips, cut into SWEEP_SEGMENTS. */
+const LENS: Readonly<Record<SignalForm, Readonly<Record<SignalLampKind, readonly [number, number, number]>>>> = {
+  bulb: { mirror: [0.012, 0.012, 0.03], side: [0.014, 0.02, 0.035], front: [0.05, 0.028, 0.014], rear: [0.05, 0.032, 0.014] },
+  led: { mirror: [0.01, 0.008, 0.036], side: [0.01, 0.01, 0.045], front: [0.06, 0.012, 0.012], rear: [0.055, 0.014, 0.012] },
+  sweep: { mirror: [0.01, 0.007, 0.04], side: [0.01, 0.009, 0.05], front: [0.02, 0.011, 0.012], rear: [0.022, 0.012, 0.012] },
+  dot: { mirror: [0.011, 0.011, 0.014], side: [0.015, 0.015, 0.015], front: [0.022, 0.022, 0.014], rear: [0.024, 0.024, 0.014] },
+};
+/** How many segments a sweep's strip is cut into (lit innermost first, growing outward). */
+export const SWEEP_SEGMENTS = 5;
+
+/** One indicator lens: where it sits (car frame), its half size, and -- a sweep's strip -- which segment it is (0 innermost) of how many. */
+export interface SignalLamp { readonly kind: SignalLampKind; readonly x: number; readonly y: number; readonly z: number; readonly h: readonly [number, number, number]; readonly seg: number; readonly of: number }
+
+/**
+ * Where one side's indicators sit (car frame: +x right, +z its nose, y up; `side` -1 left, +1 right), as a real car's:
+ * a repeater on the outer end of its wing mirror, and a lamp at the outer corner of its nose and of its tail (just
+ * under the head lamp, beside the tail lamp) -- a sweep's a strip there, running inward. The same figures the body is
+ * built with (bodySolids' mirrors, lights and back panel). A semi or a service body is built its own way: its
+ * corners, from its box.
+ */
+export function signalLamps(car: Car, side: -1 | 1, style: SignalStyle = signalStyle(car)): SignalLamp[] {
+  const g = car.body, p = car.parts, s = side, L2 = g.length / 2, hull = g.belt - g.ride;
+  const buggy = car.archetype === "buggy";
+  const hw = buggy ? (g.width / 2) * 0.62 : g.width / 2;
+  const lens = LENS[style.form];
+  const out: SignalLamp[] = [];
+  const one = (kind: SignalLampKind, x: number, y: number, z: number): void => { out.push({ kind, x, y, z, h: lens[kind], seg: 0, of: 1 }); };
+  // (A corner lamp whose outer edge is at `edge` (m out from the middle): one lens, or a sweep's strip of segments.)
+  const corner = (kind: "front" | "rear", edge: number, y: number, z: number): void => {
+    const h = lens[kind];
+    if (style.form !== "sweep") { one(kind, s * (edge - h[0]), y, z); return; }
+    for (let i = 0; i < SWEEP_SEGMENTS; i += 1) out.push({ kind, x: s * (edge - h[0] * (2 * (SWEEP_SEGMENTS - 1 - i) + 1) - 0.004 * (SWEEP_SEGMENTS - 1 - i)), y, z, h: [h[0] - 0.002, h[1], h[2]], seg: i, of: SWEEP_SEGMENTS });
+  };
+  if (p.semi || ownBody(car)) {
+    const y = g.ride + hull * 0.45;
+    corner("front", hw - 0.03, y, L2 + 0.03); corner("rear", hw - 0.03, y, -L2 - 0.03);
+    return out;
+  }
+  // The mirror's repeater: on its outer end, facing out and a little forward (bodySolids' mirrors).
+  const C2 = g.cabWidth / 2, my = g.belt + 0.08, mz = g.cabFront - 0.12;
+  if (p.mirrors === "wing" && !buggy) one("mirror", s * (C2 + 0.152), my + 0.045, mz - 0.01);
+  else if (p.mirrors === "aero" && !buggy) one("mirror", s * (C2 + 0.162), my + 0.045, mz + 0.02);
+  // (No mirrors: a side repeater on the front fender, behind the wheel arch.)
+  else { const W = wellsOf(car); one("side", s * (hw + 0.008), Math.min(g.belt - 0.06, W.front.top + 0.05), W.front.z0 - 0.12); }
+  // The front corner: across the nose's face just over the bumper, under the head lamp's outer end.
+  const bumperH = Math.min(0.2, hull * 0.42), noseTop = g.ride + hull * g.noseLo;
+  const faceTop = noseTop - 0.025, faceBottom = g.ride + bumperH + 0.015;
+  corner("front", hw * 0.93, faceBottom + Math.min(lens.front[1], Math.max(0, faceTop - faceBottom) / 2), L2 + 0.034);
+  // The back corner: beside the tail lamp, at the back panel's outer edge, at the lamps' height.
+  const b = backPanelOf(car);
+  corner("rear", b.half * 0.95, b.lampY - 0.01, -L2 - 0.034);
+  return out;
+}
+
+/**
+ * How lit one lens is (0..1) `seconds` into the flashing: on for the first half of each beat -- a bulb warming up and
+ * dying away, an LED snapping on and off, a sweep's segments lighting one after another outward, then all out together.
+ */
+export function signalLit(style: SignalStyle, lamp: Pick<SignalLamp, "seg" | "of">, seconds: number): number {
+  const ph = (seconds * style.hz) % 1;
+  if (ph >= 0.5) return style.form === "bulb" ? Math.max(0, 1 - (ph - 0.5) / 0.08) : 0;
+  if (style.form === "bulb") return Math.min(1, ph / 0.07);
+  if (style.form === "sweep" && lamp.of > 1) return ph >= (lamp.seg / lamp.of) * 0.3 ? 1 : 0;
+  return 1;
 }
 
 /** The wheel wells: each axle's opening along z and how high it reaches (the band of panel above it). */
