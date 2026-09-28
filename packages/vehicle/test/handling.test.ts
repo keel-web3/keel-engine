@@ -113,3 +113,27 @@ test("handling: a key asks for the lock the tyres can use -- a tap at 110 km/h i
   assert.ok(slip < 0.2, `slip ${slip}`);
   assert.ok(lockAt(DEFAULT_SPEC, 30) > usefulLock(DEFAULT_SPEC, 30));
 });
+
+test("handling: traction control holds a reversing car's driven wheels too -- no burnout backwards", () => {
+  const car = createVehicle(DEFAULT_SPEC, 0, 0, 0);
+  let worst = 0;
+  for (let i = 0; i < 120; i += 1) {
+    stepVehicle(car, { throttle: 0, brake: 1, steer: 0, handbrake: 0, traction: 1 }, DT);
+    if (i > 30) worst = Math.max(worst, Math.abs(car.wheels[2]!.spinSlip), Math.abs(car.wheels[3]!.spinSlip));
+  }
+  assert.equal(car.pt.gear, -1);
+  assert.ok(worst < 1.2, `driven wheels spin at ${worst.toFixed(2)}x their peak slip`);
+  assert.ok(car.tcCut > 0, "the cut is reported in reverse as well");
+});
+
+test("handling: braking into reverse, the car stops and pulls back -- it doesn't coast on through the shift", () => {
+  const car = rolling(8);
+  let forwardAfterShift = 0;
+  for (let i = 0; i < 180; i += 1) {
+    stepVehicle(car, { throttle: 0, brake: 1, steer: 0, handbrake: 0, traction: 1 }, DT);
+    const forward = car.v[2];
+    if (car.pt.gear < 0 && forward > 0) forwardAfterShift += forward * DT;
+  }
+  assert.ok(forwardAfterShift < 0.05, `rolled ${forwardAfterShift.toFixed(3)} m on in reverse gear`);
+  assert.ok(car.v[2] < -1, "and it is backing up");
+});

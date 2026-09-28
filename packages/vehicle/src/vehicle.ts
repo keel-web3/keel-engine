@@ -234,7 +234,10 @@ function substep(car: Vehicle, input: VehicleInput, h: number, ground: Ground): 
   // Pedals, with reverse arcade-style: in reverse the brake pedal drives and the throttle brakes.
   const rev = car.pt.gear < 0 && (!input.manual || !!car.pt.brakeReverse);
   const throttle = clamp(rev ? input.brake : input.throttle, 0, 1);
-  const brake = input.hold ? 1 : clamp(rev ? input.throttle : input.brake, 0, 1);
+  // (Changing direction, the car still rolling the old way: the held pedal keeps the brakes on through the shift, so
+  // it stops and pulls away instead of coasting on with neither drive nor brakes.)
+  const against = car.pt.shifting > 0 && (car.pt.gear < 0 ? forward > 0 : car.pt.gear > 0 && forward < 0);
+  const brake = input.hold ? 1 : clamp((rev ? input.throttle : input.brake) + (against ? (rev ? input.brake : input.throttle) : 0), 0, 1);
   // A burnout: both pedals down, barely rolling -- the brakes hold the fronts alone (a line lock) and the rears light up.
   const lineLock = car.pt.gear > 0 && throttle > 0.5 && brake > 0.5 && Math.abs(forward) < 4;
   // Traction control: the engine never sends the driven wheels more than their tyres can put down (their grip under
@@ -246,8 +249,9 @@ function substep(car: Vehicle, input: VehicleInput, h: number, ground: Ground): 
   const C = car.condition;
   if (C) drive *= C.power;
   car.tcCut = 0;
-  if (assist > 0 && drive > 0) {
-    const mu = s.grip * ground.grip(car.p[0], car.p[2]);
+  // (Either way round: reverse drives with negative torque, and it spins a tyre up just the same.)
+  if (assist > 0 && drive !== 0) {
+    const mu = s.grip * ground.grip(car.p[0], car.p[2]), dir = sign(drive), asked = Math.abs(drive);
     // (What a tyre has for driving is what cornering leaves it -- the friction circle -- so a car powering out of a bend
     // keeps its tail. And a wheel already spinning near its peak gets cut deeper until it hooks up.)
     let holds = 0, spinning = 0;
@@ -257,12 +261,12 @@ function substep(car: Vehicle, input: VehicleInput, h: number, ground: Ground): 
       // can't be floored into a spin with TC on, as a real car's can't.)
       const w = W[k]!, side = curve(Math.min(1, Math.abs(w.sideSlip)));
       holds += mu * w.load * s.wheelRadius * Math.sqrt(Math.max(0.0025, 1 - side * side)) * 0.92;
-      spinning = Math.max(spinning, w.spinSlip - 0.8);
+      spinning = Math.max(spinning, dir * w.spinSlip - 0.8);
     }
     holds *= spinning > 0 ? clamp(1 - spinning * 1.5, 0.3, 1) : 1;
-    const capped = Math.min(drive, holds + (1 - assist) * drive);
-    car.tcCut = 1 - capped / drive;
-    drive = capped;
+    const capped = Math.min(asked, holds + (1 - assist) * asked);
+    car.tcCut = 1 - capped / asked;
+    drive = dir * capped;
   }
   const axleTorque = drive;
   const split = lineLock && s.drivetrain !== "fwd" ? [0, 0, 1, 1] : s.drivetrain === "awd" ? [0.4, 0.4, 0.6, 0.6] : s.drivetrain === "fwd" ? [1, 1, 0, 0] : [0, 0, 1, 1];
