@@ -1,0 +1,18 @@
+/** Experimental exact normal reconstruction. Two native passes currently resolve
+ * position/index dependencies; runtime cost is shared and replay time is measured. */
+import{buildAsset as native}from'./asset-replay-v4.ts';import{buildAsset as topology}from'./asset-replay-topology.ts';import{preflightNativeRecipe}from'./asset-compiler-v3.ts';import{replayGeometricNormals}from'./optimization/geometric-normals.ts';
+const build=(r:any)=>r?.format==='KEEL-NATIVE-V4'?native(r):r?.format==='KEEL-TOPOLOGY-ATTRIBUTES-V1'?topology(r):Promise.reject(Error('Invalid geometric-normal base'));
+export async function buildGeometricNormals(wrapper:any){
+ if(wrapper?.format!=='KEEL-GEOMETRIC-NORMALS-V1'||!Array.isArray(wrapper.normals)||wrapper.normals.length>100000)throw Error('Invalid geometric-normal package');
+ const root=structuredClone(wrapper.base),legacy=root.format==='KEEL-TOPOLOGY-ATTRIBUTES-V1'?root.base:root,base=legacy?.native?.base;if(!base||!Array.isArray(base.descriptors)||!Array.isArray(base.surfaces))throw Error('Invalid normal native tables');const seen=new Set<number>();let normalBytes=0;
+ for(const item of wrapper.normals){const id=item?.accessor,d=base.descriptors[id],p=base.json?.meshes?.[item?.mesh]?.primitives?.[item?.primitive],pos=base.descriptors[item?.positionAccessor],r=item?.recipe;
+  if(!Number.isSafeInteger(id)||id<0||seen.has(id)||!p||p.attributes?.NORMAL!==id||p.attributes?.POSITION!==item.positionAccessor||(p.indices??null)!==item.indexAccessor||(p.mode??4)!==4||!d||d.componentType!==5126||d.type!=='VEC3'||d.normalized!==r?.normalized||!Number.isSafeInteger(d.count)||d.count<1||d.count>1048576||d.count!==r?.count||!pos||pos.type!=='VEC3'||pos.componentType!==5126||pos.count!==d.count||base.surfaces.some((s:any)=>s.positionAccessor===id||s.indexAccessor===id)||base.residualAccessors[id]?.kind!=='geometric-normal-marker'||base.residualAccessors[id].accessor!==id)throw Error('Geometric-normal dependency differs');
+  if(item.indexAccessor!==null){const index=base.descriptors[item.indexAccessor];if(!Number.isSafeInteger(item.indexAccessor)||item.indexAccessor<0||!index||index.type!=='SCALAR'||![5121,5123,5125].includes(index.componentType)||index.normalized!==false||!Number.isSafeInteger(index.count)||index.count<0||index.count%3||index.count>6291456)throw Error('Invalid geometric-normal index descriptor');}else if(d.count%3)throw Error('Invalid unindexed geometric-normal triangle count');
+  seen.add(id);normalBytes+=d.count*12;}
+ if(normalBytes>64*1024*1024)throw Error('Geometric-normal budget exceeded');const widths:any={SCALAR:1,VEC2:2,VEC3:3,VEC4:4,MAT2:4,MAT3:9,MAT4:16},sizes:any={5120:1,5121:1,5122:2,5123:2,5125:4,5126:4};let reserve=normalBytes*3;
+ for(const d of base.descriptors){if(!Number.isSafeInteger(d?.count)||d.count<0||!widths[d.type]||!sizes[d.componentType])throw Error('Normal base descriptor invalid');reserve+=d.count*widths[d.type]*sizes[d.componentType];}preflightNativeRecipe(legacy.native,reserve);
+ for(const item of wrapper.normals){const length=base.descriptors[item.accessor].count*12;base.residualAccessors[item.accessor]={codec:'raw',parameters:{version:1},sourceLength:length,data:new Uint8Array(length)};}
+ const geometry=await build(root);
+ for(const item of wrapper.normals){const positions=geometry.accessors[item.positionAccessor],indices=item.indexAccessor===null?Uint32Array.from({length:item.recipe.count},(_,i)=>i):geometry.accessors[item.indexAccessor],normals=replayGeometricNormals(item.recipe,positions,indices),data=new Uint8Array(normals.buffer);base.residualAccessors[item.accessor]={codec:'raw',parameters:{version:1},sourceLength:data.length,data};}
+ return build(root);
+}

@@ -1,0 +1,12 @@
+/** Shared-module accounting. The caller supplies already fidelity-validated
+ * complete asset payloads, never component estimates or incomplete data slices. */
+export interface AssetPayloadCandidate {id:string;data:Uint8Array;representation:'native-code'|'original-preserved'}
+export interface PinnedBrotliCodec {id:string;quality:number;window:number;compress(data:Uint8Array):Uint8Array|Promise<Uint8Array>;decompress(data:Uint8Array):Uint8Array|Promise<Uint8Array>}
+export async function selectSharedAssetPayload(candidates:AssetPayloadCandidate[],codec:PinnedBrotliCodec){
+ if(!candidates.length||candidates.length>16)throw Error('Expected one to sixteen validated asset candidates');
+ if(!codec.id||!Number.isInteger(codec.quality)||codec.quality<0||codec.quality>11||!Number.isInteger(codec.window)||codec.window<10||codec.window>24)throw Error('Brotli encoder identity and settings must be pinned');
+ const seen=new Set<string>(),ordered=[...candidates].sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0),measured:Array<{candidate:AssetPayloadCandidate;compressed:Uint8Array}>=[];
+ for(const candidate of ordered){if(!candidate.id||seen.has(candidate.id)||!(candidate.data instanceof Uint8Array)||!['native-code','original-preserved'].includes(candidate.representation))throw Error('Invalid or duplicate asset candidate');seen.add(candidate.id);const compressed=await codec.compress(candidate.data);if(!(compressed instanceof Uint8Array))throw Error('Brotli encoder must return delivered bytes');const restored=await codec.decompress(compressed);if(!(restored instanceof Uint8Array)||restored.length!==candidate.data.length||!restored.every((v,i)=>v===candidate.data[i]))throw Error('Brotli payload roundtrip failed');measured.push({candidate,compressed});}
+ measured.sort((a,b)=>a.compressed.length-b.compressed.length||(a.candidate.id<b.candidate.id?-1:a.candidate.id>b.candidate.id?1:0));const chosen=measured[0]!;
+ return{candidate:chosen.candidate,compressed:chosen.compressed,report:{objective:'required-per-asset-brotli',encoder:{id:codec.id,quality:codec.quality,window:codec.window},sharedModuleCostIncluded:false,fidelity:'Caller must validate every complete candidate before selection; byte compression does not validate scene equivalence.',selected:chosen.candidate.id,representation:chosen.candidate.representation,candidates:measured.map(x=>({id:x.candidate.id,representation:x.candidate.representation,assetBytes:x.candidate.data.length,assetBrotliBytes:x.compressed.length}))}};
+}

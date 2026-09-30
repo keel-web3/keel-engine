@@ -1,0 +1,104 @@
+# Styled assets
+
+The tooling entry `@keel-engine/import/styled-asset` imports the converter's
+`.keelasset` files. It is deliberately separate from the verified/on-chain
+`@keel-engine/import` module entry. This feature does not claim an on-chain
+module ID or deployment, and does not add arbitrary glTF support to KEEL's
+palette raster renderer.
+
+## Data and replay
+
+`createStyledAsset({packageBytes, style, name?, sourceBounds?, voxel?})` returns
+compact binary bytes through KEEL's existing KAP container. The versioned
+`KEEL-STYLED-ASSET` envelope embeds native KAP
+bytes, their SHA-256 digest and length, pinned dependency versions, and a style:
+
+```ts
+const style = {
+  kind: 'dither', // original | pixel | dither | voxel
+  pixelSize: 4,
+  toneLevels: 8,
+  screen: 'bayer4', // any of KEEL core's 13 screens
+};
+```
+
+`importStyledAsset(bytes, {dracoDecoder?})` validates the envelope and replays
+native KAP with the v6 shared runtime. It returns `glb`, `sourceGlb`, source
+`nativeScene`, `style`, `animation`, `sourceBounds`, and `voxelMesh` when relevant.
+The source native records remain intact even when the displayed voxel snapshot
+has no rig. The importer never evaluates an uploaded script, imports a URL from
+the file, or executes code stored in the envelope. Dependency versions and
+unknown top-level fields fail closed. SHA-256 detects corruption of embedded
+native data; it is not an authenticity signature.
+
+The canonical carrier stores `native.data` as a binary byte block, avoiding
+base64 expansion. `styledAssetJson(bytes)` optionally emits readable JSON with
+base64 KAP for inspection; both carriers are accepted by the same importer.
+`isStyledAsset(bytes)` recognizes both forms and distinguishes them from an
+ordinary native KAP file. Recognition is not validation; import still validates
+the full schema, dependency versions and integrity.
+
+Pixel and dither preserve the reconstructed source scene, skinning, morphs and
+animation clips. Their colors are processed live after the host's scene
+render, tone mapping and output color conversion. Pixel size determines the
+low-resolution render target; output is enlarged with nearest sampling. Dither
+uses KEEL core's actual screens through a 192×192 float32 tile with top-left
+coordinates. Per-channel quantization is in sRGB, with alpha unassociated for
+quantization and reassociated afterward.
+
+Voxel style requires a `keel-static-voxel-style` version-1 recipe with explicit
+occupied grid indices, linear RGB colors, origin, size and unit. Import rebuilds
+all colored cubes using KEEL `meshData`, `addBox` and `writeGlb`; it does not
+reuse a saved voxel GLB. At most 50,000 cubes are accepted. The displayed result
+is explicitly a static pose with zero animation clips and skins; the source
+model remains in `sourceGlb`/`nativeScene`.
+
+Optional `sourceBounds` is `{min:[x,y,z], max:[x,y,z]}` in source-world space.
+It is only a static camera hint. It does not assert bounds over all animation
+times. The player computes a Three Box3 when an imported model is available.
+
+## Host consumer
+
+```ts
+import { importStyledAsset, createStyledAssetPlayer }
+  from '@keel-engine/import/styled-asset';
+
+const asset = await importStyledAsset(bytes);
+const player = await createStyledAssetPlayer({ THREE, GLTFLoader, renderer, asset });
+player.play(0);
+player.render(camera, { width: 800, height: 600, time: 0.5 });
+```
+
+The host supplies Three.js 0.180.0, its GLTFLoader, and a renderer. They are not
+bundled into the engine import module. The trusted player parses the rebuilt
+GLB, constructs the real scene, creates an AnimationMixer, and applies the
+saved style on every draw. Three owns the full glTF material/skinning path;
+KEEL owns native reconstruction, recipe validation, and screen maps.
+
+The result exposes `scene`, `model`, `clips`, `mixer`, `bounds`, `play`, `seek`,
+`setStyle`, `render`, and `dispose`. With no `scene` argument it creates a scene
+with neutral hemisphere/directional lights. Pass the host's scene to retain its
+lighting. The host may transform `model` for framing. `setStyle` permits changing
+original/pixel/dither settings. A change into or out of voxel topology requires
+a new import. `dispose` removes the model and releases its owned materials,
+textures, geometry, render targets and animation mixer; the host renderer stays
+owned by the host.
+
+`makeStyledAssetArchive(bytes, {runtime, licenses, dracoFiles?})` packages an
+adjacent-data fixed loader. Keep `asset.generated.mjs`, `asset.keelasset` and
+`styled-asset-runtime.mjs` together. `build()` reconstructs data; `createPlayer`
+creates the trusted host consumer. Include the supplied pinned Draco files for
+KAP assets that need shared Draco replay. Three remains a pinned host dependency.
+
+## Verification
+
+```sh
+node --test packages/import/test/styled-asset.test.ts
+node tools/build-styled-asset.mjs styled-asset-dist
+node tools/check-styled-player.mjs /path/to/three styled-player-check
+```
+
+The player check uses the real Three/GLTFLoader/AnimationMixer with a renderer
+spy: it verifies scene loading, animated bone samples, render targets and style
+uniforms. It does not verify GPU pixel output. The unit tests also check all 13
+screen thresholds, malformed data rejection and independent voxel rebuilding.

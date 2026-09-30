@@ -80,6 +80,10 @@ The SDK's `examples/game-engine/` holds working games (hello, garden, zoo,
 army, wallrun, worlds, ui-demo, level-demo). The KEEL desktop editor builds
 and runs the same projects.
 
+## Native asset conversion
+
+Use the deterministic [native asset compiler](packages/import/NATIVE-ASSET-COMPILER-V4.md) to convert GLB/glTF into executable native surfaces and exact residual data, retaining materials, rigs, animation and morphs. Lossless mode preserves decoded content; bounded-lossy can reduce triangles and textures under explicit sampled-surface and image-error settings. Run `npm run compile:native-asset -- model.glb output`, or use `@keel-engine/import/native-asset-compiler`. These browser/Node import tools are separate from the on-chain runtime barrel. Complete package sizes and phase timings are reported; smaller output is not guaranteed.
+
 ## Retro targets
 
 The renderer can switch 8/16/32/64-bit visual profiles and Game Boy/Color/Chromatic
@@ -188,7 +192,10 @@ npm run typecheck && npm test
 ```
 
 Node 22.18 or later runs the TypeScript directly, so the tests need no build
-step.
+step. Use the exact version in `.node-version` when generating or checking the
+verified module catalog. The render recipe records its gzip encoder version
+and compressed candidate sizes, so changing Node/zlib changes that receipt even
+when the shipped JavaScript is identical. Both CI module gates use this pin.
 
 Some tests compare the engine with its reference implementations: the
 JavaScript proof of concept (`../keel-pixel-engine`, or `KEEL_POC=path`) and

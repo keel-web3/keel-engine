@@ -486,7 +486,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/architecture/test/vectors.mjs",
-        "sha256": "0x80bc20af118fbe017f369957f1fb8f6a722e2f9dfca1c2dbd7e3c0ff086ef55f"
+        "sha256": "0xd02ec1f2946d312e64db216ad91a2b7458c762a75a262e87860e7241054ef13a"
       },
       "deployments": [],
       "deployed": false
@@ -914,7 +914,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/bake/test/vectors.mjs",
-        "sha256": "0xa5abcba8c755661132fd11ab8c3927b68f8efbe641c0b42f3f3c8282dbefd1cd"
+        "sha256": "0x725e5595d244bf3e94c6c3f605c4339c602ef9e0b61bca65632482a23b6d1d74"
       },
       "deployments": [],
       "deployed": false
@@ -1192,7 +1192,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/capture/test/vectors.mjs",
-        "sha256": "0x475aae1284c1f964a8f728e805452af5c09ba9f3b6789a9757c9c69d3be38e75"
+        "sha256": "0xa379f1126c29e192f0cc4f5e68093e8e4da6df834e6c3cf04bbbb9119ff72144"
       },
       "deployments": [],
       "deployed": false
@@ -1326,7 +1326,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/city/test/vectors.mjs",
-        "sha256": "0xbf9212c291347c5866f87dc85b6382a36721732e83f43e9d61aa467d1f98cdc9"
+        "sha256": "0xc5ac179af15b1eafcda26198b9a51b9137f1a05585802eefad399bbdeec7cf29"
       },
       "deployments": [],
       "deployed": false
@@ -1654,7 +1654,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/core/test/vectors.mjs",
-        "sha256": "0xb8cc7d479abac25297c4ee9f3fd7a82886cc04e7fbd31fdda216ad97089153ff"
+        "sha256": "0x4846e4af49af8d4e5c63bf4fda99475f145f38cd79332c373e47435b40b648aa"
       },
       "deployments": [],
       "deployed": false
@@ -1884,7 +1884,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/elevation/test/vectors.mjs",
-        "sha256": "0x6ed30db1b8c2eb115e43a2fb1c68249bc211294d0e5f37d28136e1b569dba8f3"
+        "sha256": "0x20f25b31d152838fe0add4a9faa4cf2e32067f388841bc9e202d0790cbd7be48"
       },
       "deployments": [],
       "deployed": false
@@ -2974,8 +2974,8 @@
         "byteLength": 64512
       },
       "sourceDigest": "0xbaee34b0cc390d12ce739c08892b07ebd7eb2ad256e32d78857d1413abf8d20c",
-      "recipeDigest": "0x5d8f507c5750b78c4c15c50169450fe3df85139e0483d47bb22e25e56dbf6f4f",
-      "receiptDigest": "0xa3f810436a229757cd1ff5bdf08aa414368403e52a4948fb5b4613c3c6799ff9",
+      "recipeDigest": "0x5bdf1b4ead3351157787e3e43a9d6deedfce2b8962e92b0c4ebf34dac6b8abff",
+      "receiptDigest": "0x716ea7a084f45a26a2943f0ab1c50781220e631610761084640e23f1d6c9ba1b",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -3122,7 +3122,7 @@
       "verified": true,
       "vectors": {
         "path": "packages/road/test/vectors.mjs",
-        "sha256": "0x12ce5b518527ad01477df100358fdd19368a140f5de011d768e0ae74d092a836"
+        "sha256": "0xcce130f58c04c0fcb94a50d9325d9a48e845faa4205ff65959fe8e3942996eb5"
       },
       "deployments": [],
       "deployed": false
@@ -4354,7 +4354,7 @@
       "verified": true,
       "vectors": {
         "path": "packs/buildings/test/vectors.mjs",
-        "sha256": "0xa4affd60ebe53de85eb6fb5f06e77bc2b8b509661b6e8e1e4fa897cf4fce5202"
+        "sha256": "0xa2bcbb49ff13287a16569dc56c54b71af55fa7b55b0eea099dc921865e3d91bc"
       },
       "deployments": [],
       "deployed": false
