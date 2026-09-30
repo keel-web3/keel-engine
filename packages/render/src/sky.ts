@@ -12,6 +12,7 @@
 
 import { DIRECT_MAT } from "./raster.ts";
 import type { RasterContext } from "./raster.ts";
+import { linkProgram } from "./link-program.ts";
 
 export interface SkyOptions {
   /** The sky's ramp: [base, length] in the palette (dark .. light, at most 15 long). */
@@ -97,18 +98,7 @@ void main() {
 
 /** The sky pass (compiled once; draws one full-screen triangle behind everything). */
 export function createSkyPass(gl: WebGL2RenderingContext): SkyPass {
-  const sh = (type: number, src: string): WebGLShader => {
-    const s = gl.createShader(type)!;
-    gl.shaderSource(s, src);
-    gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(`Sky: ${gl.getShaderInfoLog(s) ?? "?"}`);
-    return s;
-  };
-  const prog = gl.createProgram()!;
-  gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
-  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
-  gl.linkProgram(prog);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(`Sky: ${gl.getProgramInfoLog(prog) ?? "?"}`);
+  const prog = linkProgram(gl, VS, FS, "Sky");
   const u = (n: string): WebGLUniformLocation | null => gl.getUniformLocation(prog, n);
   const vao = gl.createVertexArray()!;
   gl.bindVertexArray(vao);

@@ -28,6 +28,7 @@ import {
 import { BAKE_WORLD_FS, DEPTH_FS, HEIGHT_FS, INDEX_FS, unpackDepth } from "./indexed.ts";
 import { DEPTH_OUT_FS, DIRECT_PIXEL_FS, RASTER_FLOATS, RASTER_FS, RASTER_VS, boxTemplate, capsuleTemplate } from "./raster.ts";
 import type { DepthOut, RasterFrame, RasterMesh, RasterTemplate } from "./raster.ts";
+import { linkProgram } from "./link-program.ts";
 
 // ---------------------------------------------------------------- types
 
@@ -247,25 +248,19 @@ interface Program<N extends string> {
 }
 
 function program<N extends string>(gl: WebGL2RenderingContext, vs: string, fs: string): Program<N> {
-  const make = (type: GLenum, src: string): WebGLShader => {
-    const s = gl.createShader(type) as WebGLShader;
-    gl.shaderSource(s, src);
-    gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s) ?? "shader compile failed");
-    return s;
-  };
-  const p = gl.createProgram();
-  gl.attachShader(p, make(gl.VERTEX_SHADER, vs));
-  gl.attachShader(p, make(gl.FRAGMENT_SHADER, fs));
-  gl.linkProgram(p);
-  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p) ?? "program link failed");
-  const loc: Record<string, WebGLUniformLocation | null> = {};
-  const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS) as number;
-  for (let i = 0; i < n; i += 1) {
-    const u = gl.getActiveUniform(p, i);
-    if (u) loc[u.name.replace(/\[0\]$/, "")] = gl.getUniformLocation(p, u.name);
+  const p = linkProgram(gl, vs, fs, "Pixel renderer");
+  try {
+    const loc: Record<string, WebGLUniformLocation | null> = {};
+    const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS) as number;
+    for (let i = 0; i < n; i += 1) {
+      const u = gl.getActiveUniform(p, i);
+      if (u) loc[u.name.replace(/\[0\]$/, "")] = gl.getUniformLocation(p, u.name);
+    }
+    return { p, loc: loc as Record<N, WebGLUniformLocation | null> };
+  } catch (error) {
+    gl.deleteProgram(p);
+    throw error;
   }
-  return { p, loc: loc as Record<N, WebGLUniformLocation | null> };
 }
 
 const norm = (a: Vec3Like): Vec3 => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };

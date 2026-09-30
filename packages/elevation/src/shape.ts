@@ -8,6 +8,7 @@
 import { dcos, dsin, fbm2, smooth } from "@keel-engine/core";
 import { cellX, cellZ, sample } from "./grid.ts";
 import type { HeightGrid } from "./grid.ts";
+import { roadRasterAccelerator } from "./road-raster-wasm.ts";
 
 /** A seed as the noise's integer. */
 const seedInt = (seed: string | number): number => {
@@ -31,13 +32,25 @@ export function addHills(g: HeightGrid, seed: string | number, o: HillOptions): 
   for (;;) { const next = steps.next(); if (next.done) return next.value; }
 }
 
-/** Identical grid, with bounded row batches for interactive generators. */
-export function* addHillsSteps(g: HeightGrid, seed: string | number, o: HillOptions): Generator<number, HeightGrid, void> {
+/**
+ * The same row-major hill pass in bounded cell-count advances. A yield means
+ * exactly `maxCells` more cells have been written; callers may present progress
+ * before asking for the next batch. There is no timing-dependent work split.
+ */
+export function* addHillsSteps(g: HeightGrid, seed: string | number, o: HillOptions, maxCells = 8192): Generator<number, HeightGrid, void> {
+  if (!Number.isSafeInteger(maxCells) || maxCells < 1) throw new RangeError("Hill slice must contain a positive whole number of cells");
   const s = seedInt(seed), k = 1 / (o.scale ?? 300), oct = o.octaves ?? 4;
+  const total = g.w * g.h;
+  let done = 0, left = maxCells;
   for (let j = 0; j < g.h; j += 1) {
-    for (let i = 0; i < g.w; i += 1) {
-      const x = cellX(g, i), z = cellZ(g, j), amp = typeof o.amplitude === "number" ? o.amplitude : o.amplitude(x, z);
-      g.data[j * g.w + i]! += (fbm2(x * k, z * k, s, oct) - 0.5) * 2 * amp;
+    for (let i = 0; i < g.w;) {
+      const end = Math.min(g.w, i + left), count = end - i;
+      for (; i < end; i += 1) {
+        const x = cellX(g, i), z = cellZ(g, j), amp = typeof o.amplitude === "number" ? o.amplitude : o.amplitude(x, z);
+        g.data[j * g.w + i]! += (fbm2(x * k, z * k, s, oct) - 0.5) * 2 * amp;
+      }
+      done += count; left -= count;
+      if (left === 0 && done < total) { yield done / total; left = maxCells; }
     }
     if (j % 4 === 3) yield (j + 1) / g.h;
   }
@@ -93,6 +106,9 @@ function lockedAt(g: HeightGrid, lock: Uint8Array, x: number, z: number): number
 // grid itself can have millions of cells; only the corridor's bounding window
 // is indexed here, and windows over this cap use the original Map path.
 const MAX_CORRIDOR_CELLS = 1 << 18;
+// When WASM can retain its own linear memory, keep the companion JS fallback
+// small. If WASM is unavailable or has failed, JS keeps its original full cap.
+const MAX_COMPANION_JS_CELLS = 1 << 15;
 interface CorridorScratch {
   readonly seen: Uint32Array;
   readonly d: Float64Array;
@@ -103,10 +119,10 @@ interface CorridorScratch {
   busy: boolean;
 }
 let corridorScratch: CorridorScratch | null = null;
-function borrowCorridorScratch(cells: number): CorridorScratch | null {
-  if (!Number.isSafeInteger(cells) || cells < 1 || cells > MAX_CORRIDOR_CELLS || corridorScratch?.busy) return null;
+function borrowCorridorScratch(cells: number, cap: number): CorridorScratch | null {
+  if (!Number.isSafeInteger(cells) || cells < 1 || cells > cap || corridorScratch?.busy) return null;
   if (!corridorScratch || corridorScratch.seen.length < cells) {
-    const capacity = Math.min(MAX_CORRIDOR_CELLS, Math.max(cells, (corridorScratch?.seen.length ?? 512) * 2));
+    const capacity = Math.min(cap, Math.max(cells, (corridorScratch?.seen.length ?? 512) * 2));
     corridorScratch = { seen: new Uint32Array(capacity), d: new Float64Array(capacity), y: new Float64Array(capacity),
       local: new Int32Array(capacity), global: new Float64Array(capacity), epoch: 0, busy: false };
   }
@@ -202,11 +218,14 @@ export function* gradeCorridorSteps(g: HeightGrid, xs: ArrayLike<number>, zs: Ar
   const wi0 = Math.max(0, Math.floor((minX - reach - g.x0) / g.cell)), wi1 = Math.min(g.w - 1, Math.ceil((maxX + reach - g.x0) / g.cell));
   const wj0 = Math.max(0, Math.floor((minZ - reach - g.z0) / g.cell)), wj1 = Math.min(g.h - 1, Math.ceil((maxZ + reach - g.z0) / g.cell));
   const ww = wi1 - wi0 + 1, wh = wj1 - wj0 + 1;
-  const scratch = Number.isFinite(reach) && reach >= 0 && ww > 0 && wh > 0 ? borrowCorridorScratch(ww * wh) : null;
-  const best = scratch ? null : new Map<number, { d: number; y: number }>();
+  const eligible = Number.isFinite(reach) && reach >= 0 && ww > 0 && wh > 0;
+  const wasm = eligible ? roadRasterAccelerator.borrow(g, px, pz, y, reach, wi0, wj0, ww, wh) : null;
+  const scratch = eligible && !wasm ? borrowCorridorScratch(ww * wh,
+    roadRasterAccelerator.mayUse() ? MAX_COMPANION_JS_CELLS : MAX_CORRIDOR_CELLS) : null;
+  const best = wasm || scratch ? null : new Map<number, { d: number; y: number }>();
   let count = 0;
   try {
-    for (let n = 1; n < m; n += 1) {
+    if (!wasm) for (let n = 1; n < m; n += 1) {
       const ax = px[n - 1]!, az = pz[n - 1]!, dx = px[n]! - ax, dz = pz[n]! - az, l2 = dx * dx + dz * dz || 1;
       const i0 = Math.max(0, Math.floor((Math.min(ax, px[n]!) - reach - g.x0) / g.cell)), i1 = Math.min(g.w - 1, Math.ceil((Math.max(ax, px[n]!) + reach - g.x0) / g.cell));
       const j0 = Math.max(0, Math.floor((Math.min(az, pz[n]!) - reach - g.z0) / g.cell)), j1 = Math.min(g.h - 1, Math.ceil((Math.max(az, pz[n]!) + reach - g.z0) / g.cell));
@@ -235,14 +254,15 @@ export function* gradeCorridorSteps(g: HeightGrid, xs: ArrayLike<number>, zs: Ar
       }
     }
     const lock = o.lock;
-    if (scratch) {
-      for (let p = 0; p < count; p += 1) {
-        const k = scratch.global[p]!, at = scratch.local[p]!;
+    const records = wasm ?? scratch, recordCount = wasm ? wasm.count : count;
+    if (records) {
+      for (let p = 0; p < recordCount; p += 1) {
+        const k = records.global[p]!, at = records.local[p]!;
         if (lock && lock[k]) continue;
-        const w = own(scratch.d[at]! - o.half, o.blend);
-        g.data[k] = g.data[k]! + (scratch.y[at]! - g.data[k]!) * w;
+        const w = own(records.d[at]! - o.half, o.blend);
+        g.data[k] = g.data[k]! + (records.y[at]! - g.data[k]!) * w;
       }
-      if (lock) for (let p = 0; p < count; p += 1) if (scratch.d[scratch.local[p]!]! <= o.half) lock[scratch.global[p]!] = 1;
+      if (lock) for (let p = 0; p < recordCount; p += 1) if (records.d[records.local[p]!]! <= o.half) lock[records.global[p]!] = 1;
     } else {
       for (const [k, v] of best!) {
         if (lock && lock[k]) continue;
@@ -251,7 +271,7 @@ export function* gradeCorridorSteps(g: HeightGrid, xs: ArrayLike<number>, zs: Ar
       }
       if (lock) for (const [k, v] of best!) if (v.d <= o.half) lock[k] = 1;
     }
-  } finally { if (scratch) scratch.busy = false; }
+  } finally { wasm?.release(); if (scratch) scratch.busy = false; }
   return { s, y };
 }
 

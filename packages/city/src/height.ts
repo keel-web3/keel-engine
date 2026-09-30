@@ -76,7 +76,8 @@ export function cityHeight(city: City, cell = 2): CityHeight {
 
 /**
  * cityHeight a stretch at a time, for a caller that must keep a frame going while a whole city's land is made: it
- * yields how far through it is (0..1) -- between the land's rows, the roads it grades, the lots it levels -- and
+ * yields how far through it is (0..1) -- now also between bounded batches of the base hills, as well as the land's
+ * remaining rows, the roads it grades, and the lots it levels -- and
  * returns the height. Drained in one go it is cityHeight, to the bit.
  */
 export function* cityHeightSteps(city: City, cell = 2): Generator<number, CityHeight, void> {
