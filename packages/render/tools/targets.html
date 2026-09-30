@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KEEL Engine · Target preview</title>
+  <style>
+    :root { color-scheme: dark; font: 16px/1.5 system-ui, sans-serif; background: #101318; color: #e1e6ec; }
+    body { margin: 0; padding: 24px; }
+    main { max-width: 1100px; margin: auto; }
+    h1 { font-size: 24px; margin: 0 0 8px; } h2 { font-size: 16px; font-weight: 500; }
+    p { color: #a9b4c0; } label { display: inline-flex; gap: 10px; align-items: center; }
+    select, button { font: inherit; color: inherit; background: #202731; border: 1px solid #465262; padding: 8px 12px; border-radius: 6px; }
+    button:disabled { opacity: .4; } .controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+    .views { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: 24px; }
+    figure { margin: 0; min-width: 0; } canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #080a0d; }
+    figcaption { color: #a9b4c0; font-size: 14px; margin-top: 8px; } [hidden] { display: none !important; }
+    #status { min-height: 24px; } .note { font-size: 14px; max-width: 850px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>KEEL Engine · Target preview</h1>
+  <p>One engine scene. Switch its resolution, palette and pixel-art style.</p>
+  <div class="controls">
+    <label for="target">View as <select id="target">
+      <option value="native">Original</option><option value="8-bit">8-bit style</option><option value="16-bit">16-bit style</option>
+      <option value="32-bit">32-bit style</option><option value="64-bit">64-bit style</option>
+      <option value="game-boy">Game Boy</option><option value="game-boy-color">Game Boy Color</option><option value="chromatic" selected>ModRetro Chromatic</option>
+    </select></label>
+    <label for="export-target">Export for <select id="export-target">
+      <option value="chromatic">ModRetro Chromatic</option><option value="game-boy">Game Boy</option><option value="game-boy-color">Game Boy Color</option>
+    </select></label>
+  </div>
+  <div class="views">
+    <figure><h2>Engine preview</h2><canvas id="engine" aria-label="Engine scene preview"></canvas><figcaption id="engine-caption"></figcaption></figure>
+    <figure><h2>Native asset preview</h2><canvas id="hardware" width="160" height="144" aria-label="Decoded native asset preview"></canvas><figcaption id="hardware-caption"></figcaption></figure>
+  </div>
+  <p id="status" role="status">Loading engine…</p>
+  <div class="controls">
+    <label for="file">Native asset <select id="file" disabled></select></label>
+    <button id="download" disabled>Download asset</button>
+  </div>
+  <p class="note">The native preview shows the exported background graphics after hardware color and tile limits. Download the C file for all arrays together, or individual tile, map and palette files.</p>
+  <p class="note">8 / 16 / 32 / 64-bit are visual styles. Chromatic uses Game Boy Color assets. A playable cartridge also needs native game logic and a ROM build.</p>
+</main>
+<script type="module" src="dist/targets.js"></script>
+</body>
+</html>

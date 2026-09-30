@@ -1,0 +1,14 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"],
+    "paths": {
+      "@keel-engine/core": ["../../core/src/index.ts"],
+      "@keel-engine/render": ["../src/index.ts"],
+      "@keel-engine/capture": ["../../capture/src/index.ts"],
+      "@keel-engine/runtime": ["../../runtime/src/index.ts"]
+    }
+  },
+  "include": ["../src", "../test", "../../core/src", "../../core/test", "../../capture/src", "../../capture/test", "./targets.ts"]
+}
