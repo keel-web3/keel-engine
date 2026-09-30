@@ -174,7 +174,7 @@ export async function buildVerifiedModule(mod: WorkspaceModule, workspace: reado
     inputs: built.recipe.inputs.map((i) => ({ path: i.path, sha256: i.integrity.digest })),
     format: built.recipe.options.format,
     external: built.recipe.options.external ?? [],
-    ...(built.recipe.compact?.selection === "gzip-9" ? { compactSelection: "gzip-9" as const } : {}),
+    ...(built.recipe.compact && "selection" in built.recipe.compact && built.recipe.compact.selection === "gzip-9" ? { compactSelection: "gzip-9" as const } : {}),
   };
   cache.set(prepared.dir, { key, result });
   return result;

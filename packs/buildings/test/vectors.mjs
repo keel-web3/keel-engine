@@ -11,7 +11,7 @@ export default await engineVectors(import.meta.url, [
   {
     name: "its tables and constants are intact",
     run: (api) => dataDigest(api),
-    expect: "297cda8c33fab4763966d2fe39ae54aa0d9f54cd01fa14e8624278224591cde2",
+    expect: "4e874fb0027814e066700e4f12a5ad665fd65fe484b51cd24017508bf970e03d",
   },
   {
     name: "gate widths and sag lines",

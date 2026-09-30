@@ -189,6 +189,7 @@ export function* cityHeightSteps(city: City, cell = 2): Generator<number, CityHe
   }
   // (A lot whose block had no terrace -- its sides not found -- is levelled the old way: a pad at its nearest road's height.)
   const pads = new Map<string, number>();
+  let levelled = 0;
   for (const lot of city.lots) {
     if (++levelled % 4 === 0) yield 0.85 + 0.14 * (levelled / city.lots.length);
     const t = terraces.get(lot.block), { x, z, hw, hd, yaw } = lot.obb;

@@ -280,7 +280,7 @@ const bays: Op<"bays"> = (b, op) => {
       }
     } else {
       addBox(b, 1, x, dh / 2, front + 0.06, dw, dh / 2, 0.06, slot);
-      solid(b, x, front, dw, 0.15, dh, slot);
+      solid(b, { x, z: front, hw: dw, hd: 0.15, y1: dh, slot });
     }
     if (!b.derelict) addBox(b, 0, x, dh + 0.35, front + 0.25, 0.35, 0.12, 0.25, kind === "tuning" ? b.neon : "sodium");
     // (What's in the bay: a car waiting its turn, an engine, a bus nosed in.)

@@ -52,7 +52,9 @@ test("real mesh pass culls each shared range, then submits only adjacent visible
 });
 
 test("look and unmarked range boundaries stay separate; unrelated draws keep their IDs", () => {
-  const input: MeshDraw[] = [region(0, 20), { ...region(1, 20), look: 3 }, { ...region(2, 21), regionLandBatch: undefined }, { ...region(3, 22), seam: undefined, regionLandBatch: undefined }];
+  const { regionLandBatch: _batch, ...unbatched } = region(2, 21);
+  const { seam: _seam, regionLandBatch: _batch2, ...separate } = region(3, 22);
+  const input: MeshDraw[] = [region(0, 20), { ...region(1, 20), look: 3 }, unbatched, separate];
   const result = render(input, { cull: false });
   assert.deepEqual(submissions(result.calls), [[3, 0], [3, 12], [3, 24], [3, 36]]);
   const ids = result.calls.filter(([name, args]) => name === "uniform1i" && String(args[0]).endsWith(":uDraw")).map(([, args]) => args[1]);

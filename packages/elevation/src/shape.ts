@@ -52,7 +52,6 @@ export function* addHillsSteps(g: HeightGrid, seed: string | number, o: HillOpti
       done += count; left -= count;
       if (left === 0 && done < total) { yield done / total; left = maxCells; }
     }
-    if (j % 4 === 3) yield (j + 1) / g.h;
   }
   return g;
 }

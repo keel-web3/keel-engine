@@ -156,7 +156,7 @@ const decks: Op<"decks"> = (b) => {
     const raised = { ...b, top: 0, frame: { ...b.frame, y: (b.frame.y ?? 0) + k * rise } };
     // Six metres at either end stay free for ramp turns; the central spine serves every bay.
     const firstBay=b.parking.length;
-    parkingRows(raised, floorLeft+.4, x1-1, z0+(levels>1?6:1), z1-(levels>1?6:1), b.derelict ? .1 : .62, false);
+    parkingRows(raised, { x0: floorLeft+.4, x1: x1-1, z0: z0+(levels>1?6:1), z1: z1-(levels>1?6:1), fill: b.derelict ? .1 : .62, lamps: false });
     // Every upper bay is reached from the SAME ground-floor entrance, then via successive ramps.
     if(k) {
       const mid=(floorLeft+.4+x1-1)/2;

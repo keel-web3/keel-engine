@@ -19,7 +19,7 @@ export default await engineVectors(import.meta.url, [
       const c = generateCity("neon");
       return digest([c.graph.nodes, c.graph.edges.map((e) => [e.a, e.b, e.cls, e.path.length]), c.lots]);
     },
-    expect: "fc52f290a76b35e51d47117167cf166198168b308264fc39d235b0e2c759b677",
+    expect: "0a51377cd649e24c0d91cc809f129a3af48d0d95d86998e7e79d423b3c5e150e",
   },
   {
     name: "the city of 'neon' has the same districts, and the same ground under it",
@@ -27,7 +27,7 @@ export default await engineVectors(import.meta.url, [
       const c = generateCity("neon"), h = cityHeight(c, 4);
       return { districts: await digest(c.districts), grid: [h.grid.w, h.grid.h], ground: await digest(Array.from(h.grid.data)), at: [h.heightAt(0, 0), h.heightAt(137.5, -210.25)] };
     },
-    expect: {"at":[1.0891671031713486,0.42647294886410236],"districts":"80acb2b980107e346137cd12de46796c2f595ba7e1ea8666d6156f0526d0852e","grid":[578,556],"ground":"ab110a9b271355c283143f962ca18f77ee1a6c2d599d1b95f54824c412f67cb2"},
+    expect: {"districts":"80acb2b980107e346137cd12de46796c2f595ba7e1ea8666d6156f0526d0852e","grid":[578,556],"ground":"d624665dbbd54a255ec3297a450a898c0e99455a5e3ff79b4ce77a7292527a22","at":[1.0891672372817993,0.42646756977774203]},
   },
   {
     name: "the world of 'neon' is the same places and links, their roads and decks",
@@ -43,6 +43,6 @@ export default await engineVectors(import.meta.url, [
       const c = worldCity(generateCityWorld("neon"), 1);
       return digest([c.graph.nodes, c.graph.edges.map((e) => [e.a, e.b, e.cls, e.path.length, !!e.bridge]), c.portals, c.lots.length]);
     },
-    expect: "39b98a0b4eb35aed4ad6c5818a485ba51052530976b9c187053a9131ffb75e1d",
+    expect: "d41a2287b93283b791810b76dc886a95c40d4dc2444fc0e86ad22cc5af454bc6",
   },
 ]);

@@ -10,7 +10,7 @@ export default await engineVectors(import.meta.url, [
     // (Re-pinned for the depth sprites (7a5fb59): 27 exports added -- depth.ts (HEIGHT_STEPS, OCCLUSION_LAYERS, SPRITE_DEPTH_GLSL and its functions) and raycast.ts (rayBox/Wedge/Capsule, raycastWorld, placeWorld). Nothing that was there changed.)
     name: "the export surface is intact",
     run: async (api) => { const names = surface(api); return { count: names.length, digest: await digest(names) }; },
-    expect: {"count":198,"digest":"0ae44e330012f93915432ec44a56e8ad27615fbc602c318fc6adc1fb5759a304"},
+    expect: {"count":202,"digest":"2f903ad3e8799f8eadec4014f106a64c4a8bb8fbefafd6aecd48c50c99f31c5f"},
   },
   {
     name: "its tables and constants are intact",

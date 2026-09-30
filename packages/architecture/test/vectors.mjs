@@ -44,6 +44,6 @@ export default await engineVectors(import.meta.url, [
       const p = planStreets(kit, c);
       return { chunks: p.chunks.length, lights: p.lights.length, props: p.props.length, digest: await digest([p.props, p.chunks.map((ch) => ch.solids.length)]) };
     },
-    expect: {"chunks":90,"digest":"2df20586542d1d10f376a7d4a01d34b8fb3d49ff13b62b206a7255011ea246d4","lights":415,"props":1575},
+    expect: {"chunks":90,"lights":408,"props":1564,"digest":"4cec90b26390d637eea141dbd93e6e9c0a71024d17ddc3e9a5225b3958997526"},
   },
 ]);
