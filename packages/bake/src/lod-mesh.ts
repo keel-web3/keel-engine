@@ -10,7 +10,7 @@
 //   sr.drawMeshes(view, [{ mesh: key, matrix, look, range: [0, levels[1]] }]);
 
 import type { BakeBox, BakeCapsule, BakeWorld } from "./bake.ts";
-import { bodySpace, lookMesh, meshBounds, mergeMeshes, worldsBounds } from "./mesh.ts";
+import { bodySpace, lookMesh, lookMeshSteps, meshBounds, mergeMeshes, worldsBounds } from "./mesh.ts";
 import type { LookMesh, LookMeshOptions } from "./mesh.ts";
 
 /** Where a run ends: the index and vertex counts of every run up to and including it. */
@@ -33,6 +33,27 @@ export function layeredMesh(runs: readonly BakeWorld[], options: LookMeshOptions
   for (const p of parts) { indices += p.indices.length; vertices += p.positions.length / 3; layers.push({ indices, vertices }); }
   const bodies = bodySpace(merged.positions, options.bounds ?? meshBounds(merged.positions));
   return { ...merged, bodies, layers };
+}
+
+/** Layered geometry with exactly the same output, built in interruptible solid batches. */
+export function* layeredMeshSteps(runs: readonly BakeWorld[], options: LookMeshOptions = {}): Generator<void, LayeredMesh, void> {
+  const parts: LookMesh[] = [], layers: MeshLayer[] = [];
+  let indices = 0, vertices = 0;
+  for (const world of runs) {
+    const mesh = yield* lookMeshSteps(world, options);
+    parts.push(mesh); indices += mesh.indices.length; vertices += mesh.positions.length / 3;
+    layers.push({ indices, vertices }); yield;
+  }
+  const merged = mergeMeshes(parts);
+  const bodies = bodySpace(merged.positions, options.bounds ?? meshBounds(merged.positions));
+  return { ...merged, bodies, layers };
+}
+
+/** Generate just the first run, preserving the complete recipe's paint coordinates and empty detail levels.
+ * Works with any generator's worlds; no game, catalogue, seed or renderer assumptions. */
+export function coarseLayerMesh(runs: readonly BakeWorld[], options: LookMeshOptions = {}): LayeredMesh {
+  const bounds = options.bounds ?? worldsBounds(runs, options);
+  return layeredMesh(runs.map((run, i) => i === 0 ? run : {}), { ...options, bounds });
 }
 
 /** A layered mesh cut to its first `count` runs: a coarse level on its own (a far tile's share), nothing copied twice. */

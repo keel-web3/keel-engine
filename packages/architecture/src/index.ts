@@ -1,6 +1,6 @@
 export { manifest } from "./module.ts";
 export type {
-  Archetype, BuildingPlan, Catalogue, CityLike, Condition, CrownKind, DistrictLook, FacadeStyle, LookSpec, Lod, MassOp, MaterialSpec,
+  Archetype, BuildingPlan, ParkedVehicle, ParkingBay, GarageSurface, Catalogue, CityLike, Condition, CrownKind, DistrictLook, FacadeStyle, LookSpec, Lod, MassOp, MaterialSpec,
   Range, RoofItem, RoofKind, RoofRule, SignKind, SignRule, Solid, Weights, WindowType,
   AdSlotSpec, ArtKind, FurnitureKind, PlantKind, PlantSpot, FurnitureRule, LampKind, LampStyle, LightSpot, PropKind, PropPart, PropSpot, StreetCatalogue,
   InfraSpec, StreetSign,
@@ -11,8 +11,8 @@ export { frameOf, planLot } from "./plan.ts";
 export { blockWorld, worldOf } from "./world.ts";
 export { blockVariant, districtPaint, lookOf, streetPaint } from "./paint.ts";
 export type { StreetChunk, StreetGrid, StreetPlan } from "./street/plan.ts";
-export { planStreets } from "./street/plan.ts";
+export { planStreets, planStreetsSteps } from "./street/plan.ts";
 export { trafficSignSolids } from "./street/roadside.ts";
 export type { TrafficSignKind, TrafficSignOptions, TrafficSignSpec } from "./street/roadside.ts";
 export type { BlockPlan } from "./city.ts";
-export { planCity } from "./city.ts";
+export { planCity, planCitySteps } from "./city.ts";

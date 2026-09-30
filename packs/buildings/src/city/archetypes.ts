@@ -127,7 +127,17 @@ export const CITY_ARCHETYPES: readonly Archetype[] = [
     signs: [], roof: [{ kind: "chimney", chance: 0.5 }],
   },
   {
-    id: "parking_garage", fits: { minFront: 24, minDepth: 28 }, storeys: [3, 6], setbacks: [0, 0, 0],
+    id: "residential_garage", fits: { minFront: 18, minDepth: 22 }, storeys: [1, 2], setbacks: [5, 1, 3],
+    massing: [{ op: "houseGarage" }],
+    facades: ["house"], materials: { siding: 5, redBrick: 2, stucco: 2 }, signs: [], roof: [],
+  },
+  {
+    id: "urban_garage", fits: { minFront: 18, minDepth: 22 }, storeys: [2, 4], setbacks: [4, 1, 2],
+    massing: [{ op: "houseGarage", urban: true }],
+    facades: ["house"], materials: { redBrick: 4, buffBrick: 3, stucco: 2 }, signs: [], roof: [],
+  },
+  {
+    id: "parking_garage", fits: { minFront: 30, minDepth: 42 }, storeys: [3, 6], setbacks: [0, 0, 0],
     massing: [{ op: "decks" }],
     facades: ["garage"], materials: { concreteLight: 1 },
     signs: [{ kind: "rooftop", chance: 0.3 }], roof: [],

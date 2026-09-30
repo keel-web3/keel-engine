@@ -1,5 +1,10 @@
 # `@keel-engine/capture`
 
+Native Game Boy/Color and Chromatic background graphics are available through
+`exportGameBoyBackground()`, `gameBoyCSource()` and `gameBoyFiles()`. See
+[engine targets](../../docs/TARGETS.md) for conversion, native formats and the
+distinction between asset export and a playable cartridge build.
+
 Getting pictures out of a running project: a still, a video, a GIF. Module
 `keel/capture@0.1.0` (`kind: "runtime"`, needs `keel/core@^0.1` — its GIF
 encoder, loaded on first use). It is **optional**: no game needs it, the

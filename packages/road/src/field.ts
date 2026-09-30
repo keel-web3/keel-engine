@@ -194,6 +194,7 @@ export function* fieldWindowSteps(graph: RoadGraph, x0: number, z0: number, widt
       return Math.acos(Math.max(-1, Math.min(1, (ux * vx + uz * vz) / (lu * lv))));
     };
     for (let i = 0; i < segs; i += 1) {
+      if (i % 32 === 0) yield (roads + i / segs) / graph.edges.length;
       const j = (i + 1) % L;
       const ax = p.x[i]!, az = p.z[i]!, ex = p.x[j]! - ax, ez = p.z[j]! - az, e2 = ex * ex + ez * ez || 1, len = Math.sqrt(e2);
       const dx = ex / len, dz = ez / len, nx = -dz, nz = dx;

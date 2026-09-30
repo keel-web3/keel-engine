@@ -4,3 +4,6 @@
 
 export { createCapture, flipRows, gifIndexer, pickMime, videoScale } from "./capture.ts";
 export type { Capture, CaptureOptions, GifIndexer, GifOptions, PixelSource, VideoOptions } from "./capture.ts";
+
+export { exportGameBoyBackground, gameBoyCSource, gameBoyFiles } from "./gameboy.ts";
+export type { GameBoyBackground, GameBoyExportOptions, GameBoyTarget, RgbaImage } from "./gameboy.ts";

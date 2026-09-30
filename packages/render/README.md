@@ -75,6 +75,11 @@ A TypeScript port of the proof of concept's `src/gpu` and `src/fx`
 
 ## Renderer API
 
+The engine can switch 8/16/32/64-bit visual presets and Game Boy/Color/Chromatic
+preview targets with `setProfile()`. Native background asset export lives in
+`@keel-engine/capture`. See [targets and conversion](../../docs/TARGETS.md) for
+the API, hardware limits and interactive preview.
+
 ```ts
 const px = createPixelRenderer(canvas, { width: 128, height: 128 });
 px.setPalette(colours, ramps);        // [[r,g,b], ...] 0-255; { name: [base, length] } in ramp order

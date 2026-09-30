@@ -47,3 +47,6 @@ export type { AccentSample, LayerKey, Quantize, QuantizeInput, QuantizeRamps, Qu
 // (Optional: a GIF export. Its TRANSPARENT is the same 31 as the palette's, so it isn't re-exported under that name.)
 export { PALETTE_SIZE, encodeGif, encodeGifSteps } from "./gif.ts";
 export type { GifFrame, GifSpec } from "./gif.ts";
+
+export { TARGET_PROFILES, adaptTargetPalette, fromRgb555, nearestColour, reduceColours, rgb555, targetProfile } from "./targets.ts";
+export type { RetroBits, TargetColour, TargetId, TargetInput, TargetProfile } from "./targets.ts";

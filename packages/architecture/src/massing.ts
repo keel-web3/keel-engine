@@ -9,11 +9,11 @@
 // and civic.ts's; a block kept whole as a park or a lake is commons.ts's.)
 
 import type { Build, Mass } from "./frame.ts";
-import { addBox, addCapsule, addMass, count, pick, within } from "./frame.ts";
+import { addBox, addCapsule, addMass, count, pick, within, toWorld } from "./frame.ts";
 import type { SlotName } from "./slots.ts";
 import type { MassOp } from "./types.ts";
 import { park, plaza } from "./street/parks.ts";
-import { BUSINESS_OPS } from "./business.ts";
+import { BUSINESS_OPS, parkingRows } from "./business.ts";
 import { CIVIC_OPS } from "./civic.ts";
 import { commons } from "./commons.ts";
 
@@ -131,18 +131,78 @@ const canopy: Op<"canopy"> = (b) => {
   for (const px of [-0.5, 0.5]) addBox(b, 0, s.x + px * cw, 0.8, cz, 0.4, 0.8, 0.9, "backlit");
 };
 
-/** A parking garage: open decks on a column grid, sodium-lit, a stair tower at one corner. */
+/** Parking decks with paired switchback ramps, open turning landings, and height-aware barriers. */
 const decks: Op<"decks"> = (b) => {
-  const s = b.site, n = Math.max(2, b.storeys), deck = 3;
-  for (let k = 1; k <= n; k += 1) {
-    addBox(b, 2, s.x, k * deck, s.z, s.hw, 0.25, s.hd, "concreteLight");
-    addBox(b, 1, s.x, k * deck - 0.35, s.z, s.hw - 0.6, 0.06, s.hd - 0.6, "sodium");
-    // (The parapet: a low band round the deck's edge.)
-    addBox(b, 1, s.x, k * deck + 0.75, s.z + s.hd - 0.1, s.hw, 0.5, 0.1, "concreteLight");
+  const s = b.site, rise = 3.6, x0 = s.x - s.hw, x1 = s.x + s.hw, z0 = s.z - s.hd, z1 = s.z + s.hd;
+  // A small site gets a covered ground floor; never squeeze an unusable ramp into it.
+  const levels = s.hd >= 20 && s.hw >= 13 ? Math.max(2, Math.min(6, b.storeys)) : 1;
+  const rampRight = x0 + 8.5, floorLeft = levels > 1 ? rampRight + 0.3 : x0 + 1;
+  const surface = (x: number, z: number, hw: number, hd: number, back: number, front = back): void => {
+    const p = toWorld(b, x, 0, z), base = b.frame.y ?? 0;
+    b.surfaces.push({ x: p[0], z: p[2], yaw: b.frame.yaw, hw, hd, back: base + back, front: base + front });
+  };
+  const barrier = (x: number, z: number, hw: number, hd: number, y: number): void => {
+    addBox(b, 1, x, y + .5, z, hw, .5, hd, "concreteLight");
+    const p = toWorld(b, x, y, z);
+    b.barriers.push({ x: p[0], z: p[2], hw, hd, yaw: b.frame.yaw, yMin: p[1], yMax: p[1] + 1 });
+  };
+  for (let k = 0; k < levels; k++) {
+    const y = k * rise + .06;
+    // Main parking floor, and full-width landings at both ends for turning onto the next ramp.
+    for (const [cx, cz, hw, hd] of [[(floorLeft+x1)/2,s.z,(x1-floorLeft)/2,s.hd],[(x0+floorLeft)/2,z0+3,(floorLeft-x0)/2,3],[(x0+floorLeft)/2,z1-3,(floorLeft-x0)/2,3]]) {
+      if (k) addBox(b, 2, cx!, y-.12, cz!, hw!, .12, hd!, "concreteLight");
+      surface(cx!, cz!, hw!, hd!, y);
+    }
+    const raised = { ...b, top: 0, frame: { ...b.frame, y: (b.frame.y ?? 0) + k * rise } };
+    // Six metres at either end stay free for ramp turns; the central spine serves every bay.
+    const firstBay=b.parking.length;
+    parkingRows(raised, floorLeft+.4, x1-1, z0+(levels>1?6:1), z1-(levels>1?6:1), b.derelict ? .1 : .62, false);
+    // Every upper bay is reached from the SAME ground-floor entrance, then via successive ramps.
+    if(k) {
+      const mid=(floorLeft+.4+x1-1)/2;
+      const route: (readonly [number,number,number])[]=[];
+      const point=(x:number,z:number,y:number)=>{const p=toWorld(b,x,y,z);route.push([p[0],p[2],p[1]]);};
+      point(mid,b.frame.hd+1,.06); point(mid,z1-3,.06);
+      for(let level=0;level<k;level++) {
+        const cx=x0+(level%2?6.3:2.1), start=level%2?z0+6:z1-6, end=level%2?z1-6:z0+6;
+        point(cx,level%2?z0+3:z1-3,level*rise+.06);
+        point(cx,start,level*rise+.06);point(cx,end,(level+1)*rise+.06);
+        point(cx,level%2?z1-3:z0+3,(level+1)*rise+.06);
+      }
+      point(mid,k%2?z0+3:z1-3,y);
+      for(let i=firstBay;i<b.parking.length;i++) {
+        const bay=b.parking[i]!;
+        b.parking[i]={...bay,route:[...route,...bay.route.slice(1).map(p=>[p[0],p[1],(b.frame.y??0)+y] as const)]};
+      }
+    }
+    b.top = Math.max(b.top, raised.top + k*rise);
+    if (k) {
+      barrier(floorLeft,s.z,.08,s.hd-6,y);
+      for (const x of [x0+.1,x1-.1]) barrier(x,s.z,.1,s.hd,y);
+      for (const z of [z0+.1,z1-.1]) barrier(s.x,z,s.hw,.1,y);
+    }
+    if (k < levels-1) {
+      const cx = x0 + (k%2 ? 6.3 : 2.1), hd = s.hd-6, back = k%2 ? y : y+rise, front = k%2 ? y+rise : y;
+      surface(cx,s.z,2,hd,back,front);
+      // Thin ramp slabs preserve headroom underneath; the physical surface is the continuous incline above them.
+      const count = Math.ceil(hd*2);
+      for (let j=0;j<count;j++) {
+        const t=(j+.5)/count, z=z0+6+t*hd*2, h=back+(front-back)*t;
+        addBox(b,2,cx,h-.12,z,2,.12,hd/count,"concreteLight");
+        for(const side of [-1,1]) barrier(cx+side*1.95,z,.05,hd/count,h);
+
+      }
+    }
   }
-  for (let cx = -1; cx <= 1; cx += 1) for (const cz of [-1, 1]) addBox(b, 1, s.x + cx * (s.hw - 0.5), (n * deck) / 2, s.z + cz * (s.hd - 0.5), 0.35, (n * deck) / 2, 0.35, "concreteLight");
-  b.masses.push({ ...s, y0: 0, y1: n * deck + 0.25, slot: "concreteLight" });
-  addBox(b, 1, s.x - s.hw + 2.5, (n * deck + 3) / 2, s.z - s.hd + 2.5, 2.5, (n * deck + 3) / 2, 2.5, b.wall, { grid: true });
+  const roof = levels===1 ? rise : (levels-1)*rise;
+  if (levels===1) addBox(b,2,s.x,roof,s.z,s.hw,.22,s.hd,"concreteLight");
+  for (const side of [-1,1]) for(let z=z0+.5;z<=z1-.5;z+=8) addMass(b,{x:s.x+side*(s.hw-.45),z,hw:.3,hd:.3,y0:0,y1:roof,slot:"concreteLight"},1);
+  for(let z=z0+3;z<z1;z+=10) addBox(b,0,(floorLeft+x1)/2,rise-.25,z,1.5,.035,.15,"sodium");
+  const signX=(floorLeft+x1)/2;
+  addBox(b,1,signX,rise+.35,z1,1.1,.7,.15,"glassBlue");
+  // The parking P is geometry so it stays legible in both world renderers.
+  for(const [x,y,hw,hh] of [[-.35,0,.1,.5],[0,.4,.35,.1],[0,0,.35,.1],[.35,.2,.1,.2]])
+    addBox(b,1,signX+x!,rise+.35+y!,z1+.17,hw!,hh!,.035,"backlit");
 };
 
 /** A diner: a low box with rounded ends, glass all round, chrome. */

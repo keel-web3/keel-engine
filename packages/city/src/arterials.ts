@@ -160,7 +160,7 @@ export function layRoads(site: CitySite, options: CityOptions = {}): Network {
     const wob = D.flat("streetBend", i, j) * s * 0.06;
     const dx = b.x - a.x, dz = b.z - a.z, len = Math.sqrt(dx * dx + dz * dz);
     const mx = (a.x + b.x) / 2 + (dz / len) * wob, mz = (a.z + b.z) / 2 - (dx / len) * wob;
-    specs.push({ a: from, b: to, cls: "street", path: pathThrough([a.x, mx, b.x], [a.z, mz, b.z]) });
+    specs.push({ a: from, b: to, cls: "street", half: D.u("streetWidth", i, j) < 0.18 ? 4.5 : 6.2, path: pathThrough([a.x, mx, b.x], [a.z, mz, b.z]) });
     streets.set(ck, { along: st.along, from, to });
   }
 

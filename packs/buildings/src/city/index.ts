@@ -27,11 +27,11 @@ export const CITY_CATALOGUE: Catalogue = {
   // with the odd corner store; industry has its garages and tuners; the old town its bars. Borders blend: zoning.ts.)
   weights: {
     core: { plaza: 4, walkup: 2, loft: 2, deco_tower: 12, intl_box: 12, brutalist: 5, glass_tower: 30, hotel: 8, church: 1.5, parking_garage: 6, parking_lot: 3, cinema: 1.5, bar: 0.5, library: 0.3 },
-    midtown: {
+    midtown: { urban_garage: 10,
       plaza: 3, park: 3, walkup: 10, loft: 8, deco_tower: 14, intl_box: 12, brutalist: 6, glass_tower: 10, hotel: 10, church: 3, gas_station: 1, diner: 1, parking_garage: 6, rowhouse: 4,
       parking_lot: 4, apartments: 6, cinema: 2, bar: 2, corner_store: 1.5, laundromat: 1.5, fast_food: 1.5, car_dealership: 1.5, auto_shop: 1, library: 0.8, hospital: 0.3, police_station: 0.3,
     },
-    oldtown: {
+    oldtown: { urban_garage: 18,
       plaza: 3, park: 2, walkup: 36, loft: 10, deco_tower: 3, intl_box: 2, brutalist: 1, hotel: 3, church: 6, warehouse: 2, gas_station: 1, diner: 3, parking_garage: 2, rowhouse: 22,
       bar: 7, nightclub: 2, corner_store: 3, laundromat: 3, cinema: 2, auto_shop: 3, tuning_shop: 2, apartments: 4, library: 0.8, fast_food: 1, parking_lot: 1.5,
     },
@@ -44,7 +44,7 @@ export const CITY_CATALOGUE: Catalogue = {
       intl_box: 1, hotel: 2, church: 1, warehouse: 2, strip_mall: 24, gas_station: 12, diner: 6, motel: 10, parking_garage: 1, suburban: 3, car_dealership: 12, big_box: 7, fast_food: 14,
       auto_shop: 6, tuning_shop: 3, car_wash: 6, parts_store: 4, trailer_park: 2, cinema: 1, corner_store: 2, laundromat: 2, chapel: 1, bar: 1,
     },
-    suburb: {
+    suburb: { residential_garage: 24,
       park: 6, church: 3, chapel: 3, strip_mall: 5, gas_station: 3, diner: 2, motel: 1, rowhouse: 10, suburban: 70, fast_food: 3, car_dealership: 2.5, big_box: 1, car_wash: 1.5, auto_shop: 2, tuning_shop: 1, parts_store: 1,
       corner_store: 1.2, laundromat: 1, apartments: 3, library: 0.3, cemetery: 0.4, trailer_park: 0.8,
     },
