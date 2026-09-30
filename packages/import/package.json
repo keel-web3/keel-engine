@@ -5,17 +5,37 @@
   "type": "module",
   "description": "3D model import: glTF/GLB, OBJ+MTL, STL and MagicaVoxel .vox parsed, voxelised, clustered into roles, segmented into parts, split into a rigged body and socket attributes, fitted with primitives -- all as builder data and a replayable op list.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./asset-compiler": "./src/asset-compiler.ts",
+    "./native-asset-compiler": "./src/asset-compiler-v6.ts",
+    "./native-asset-compiler-v3": "./src/asset-compiler-v3.ts",
+    "./native-asset-compiler-v2": "./src/asset-compiler-v2.ts",
+    "./native-asset-compiler-v4": "./src/asset-compiler-v4.ts",
+    "./visual-asset-compiler": "./src/asset-compiler-visual.ts",
+    "./topology-asset-compiler": "./src/asset-compiler-topology.ts",
+    "./shared-asset-runtime": "./src/asset-replay-shared.ts",
+    "./shared-asset-transport": "./src/asset-shared-transport.ts",
+    "./asset-payload-selection": "./src/asset-payload-selection.ts",
+    "./optimize-geometric-normals": "./src/asset-optimize-geometric-normals.ts",
+    "./native-asset-compiler-v5": "./src/asset-compiler-v5.ts",
+    "./preserved-asset-runtime": "./src/asset-replay-v5.ts",
+    "./native-asset-compiler-v6": "./src/asset-compiler-v6.ts",
+    "./native-asset-runtime": "./src/asset-replay-v6.ts"
   },
   "dependencies": {
+    "@keel-engine/builder": "workspace:*",
     "@keel-engine/core": "workspace:*",
-    "@keel-engine/runtime": "workspace:*",
     "@keel-engine/entity": "workspace:*",
     "@keel-engine/object": "workspace:*",
-    "@keel-engine/builder": "workspace:*"
+    "@keel-engine/runtime": "workspace:*",
+    "buffer": "6.0.3",
+    "fast-png": "6.2.0",
+    "fflate": "0.8.2",
+    "jpeg-js": "0.4.4",
+    "meshoptimizer": "0.25.0"
   },
   "devDependencies": {
-    "@keel-engine/render": "workspace:*",
-    "@keel-engine/keel": "workspace:*"
+    "@keel-engine/keel": "workspace:*",
+    "@keel-engine/render": "workspace:*"
   }
 }

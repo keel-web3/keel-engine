@@ -1,0 +1,15 @@
+import {crc32} from './png.ts';
+export interface ArchiveFile{name:string;data:string|Uint8Array}
+const te=new TextEncoder();
+/** Deterministic ZIP_STORED, fixed DOS epoch; no locale, clock or filesystem metadata. */
+export function makeAssetZip(files:ArchiveFile[]):Uint8Array{
+ if(files.length>65535)throw Error('Too many ZIP entries');const names=new Set<string>();const rows=files.map(f=>{if(!f.name||names.has(f.name)||f.name.startsWith('/')||f.name.split('/').some(x=>x==='..'))throw Error('Invalid ZIP entry');names.add(f.name);const name=te.encode(f.name),data=typeof f.data==='string'?te.encode(f.data):f.data;if(name.length>65535)throw Error('ZIP name too long');return{name,data,crc:crc32(data)}});
+ const local=rows.reduce((n,r)=>n+30+r.name.length+r.data.length,0),central=rows.reduce((n,r)=>n+46+r.name.length,0);if(local+central+22>512*1024*1024)throw Error('ZIP size limit');const out=new Uint8Array(local+central+22),v=new DataView(out.buffer);let at=0,c=local;
+ for(const r of rows){v.setUint32(at,0x04034b50,true);v.setUint16(at+4,20,true);v.setUint16(at+6,0x800,true);v.setUint16(at+12,33,true);v.setUint32(at+14,r.crc,true);v.setUint32(at+18,r.data.length,true);v.setUint32(at+22,r.data.length,true);v.setUint16(at+26,r.name.length,true);out.set(r.name,at+30);out.set(r.data,at+30+r.name.length);v.setUint32(c,0x02014b50,true);v.setUint16(c+4,20,true);v.setUint16(c+6,20,true);v.setUint16(c+8,0x800,true);v.setUint16(c+14,33,true);v.setUint32(c+16,r.crc,true);v.setUint32(c+20,r.data.length,true);v.setUint32(c+24,r.data.length,true);v.setUint16(c+28,r.name.length,true);v.setUint32(c+42,at,true);out.set(r.name,c+46);c+=46+r.name.length;at+=30+r.name.length+r.data.length}
+ v.setUint32(c,0x06054b50,true);v.setUint16(c+8,rows.length,true);v.setUint16(c+10,rows.length,true);v.setUint32(c+12,central,true);v.setUint32(c+16,local,true);return out;
+}
+export function makeNativeArchive(candidate:any,support:{decoder:Uint8Array;licenses:ArchiveFile[]}):Uint8Array{
+ for(const required of['LICENSE-KEEL.txt','LICENSE-fflate.txt','LICENSE-Draco-Apache-2.0.txt'])if(!support.licenses.some(x=>x.name===required))throw Error('Missing distribution license '+required);
+ const readme='KEEL native asset compiler v0.3\n\nKeep asset.generated.mjs, asset-data.kap and asset-decoder.mjs together. Import build from the generated module; await build() reconstructs native MeshData, scene records and a generated GLB. The binary file contains explicitly declared attributes, images and geometric rules, including residual data. Lossless preserves decoded values/pixels, not original container bytes. Bounded-lossy changes only base positions under the reported mesh-space budget. A sampled world gate, when present, is not a continuous-time or pixel guarantee. Read manifest.json for exact scope and selection.\n';
+ return makeAssetZip([{name:'asset.generated.mjs',data:candidate.program},{name:'asset-data.kap',data:candidate.packageBytes},{name:'asset-decoder.mjs',data:support.decoder},{name:'manifest.json',data:JSON.stringify(candidate.manifest,null,2)},{name:'README.txt',data:readme},...support.licenses]);
+}

@@ -29,11 +29,24 @@
     "modules:test": "node packages/keel/src/cli.ts test",
     "modules:index": "node packages/keel/src/cli.ts index",
     "modules:reproduce": "node packages/keel/src/cli.ts reproduce",
-    "modules:plan": "node packages/keel/src/cli.ts plan"
+    "modules:plan": "node packages/keel/src/cli.ts plan",
+    "compile:asset": "node tools/compile-asset.mjs",
+    "compile:native-asset": "node tools/compile-native-v6.mjs",
+    "compile:native-v3": "node tools/compile-native-v3.mjs",
+    "compile:native-v4": "node tools/compile-native-v4.mjs",
+    "build:native-visual": "node tools/build-native-visual.mjs",
+    "build:native-topology": "node tools/build-native-topology.mjs",
+    "build:shared-native": "node tools/build-shared-native.mjs",
+    "optimize:shared-native": "node tools/optimize-shared-native.mjs",
+    "compile:native-v5": "node tools/compile-native-v5.mjs",
+    "build:native-v5": "node tools/build-native-v5.mjs",
+    "compile:native-v6": "node tools/compile-native-v6.mjs",
+    "build:native-v6": "node tools/build-native-v6.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.2",
     "@types/node": "^22.18.0",
-    "esbuild": "^0.25.9"
+    "esbuild": "^0.25.9",
+    "draco3dgltf": "1.5.7"
   }
 }

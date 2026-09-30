@@ -1,0 +1,19 @@
+/** Native v4 replay: exact source-derived affine rules plus the audited native IR. */
+import {unpackAsset} from './asset-binary-v3.ts';
+import {buildAsset as buildV3,preflightNativeRecipe} from './asset-compiler-v3.ts';
+import {replayAffineHint} from './optimization/draco-transforms.ts';
+export const COMPILER_VERSION='keel-native-asset-compiler-0.4.0';
+const raw=(a:ArrayBufferView)=>new Uint8Array(a.buffer,a.byteOffset,a.byteLength);
+export async function buildAsset(recipe:any){
+ if(recipe?.format!=='KEEL-NATIVE-V4'||recipe.compilerVersion!==COMPILER_VERSION||!['lossless','bounded-lossy'].includes(recipe.mode))throw Error('Unsupported native v4 recipe');
+ const native=structuredClone(recipe.native),base=native?.base,descriptors=base?.descriptors;if(!Array.isArray(descriptors)||!Array.isArray(recipe.affine)||recipe.affine.length>descriptors.length)throw Error('Invalid affine table');
+ if(!Array.isArray(recipe.indices)||recipe.indices.length)throw Error('Core runtime requires empty meshopt index table');
+ const indexSeen=new Set<number>();let indexBytes=0;for(const item of recipe.indices){const r=item?.recipe,d=descriptors[item?.accessor];if(!Number.isSafeInteger(item?.accessor)||item.accessor<0||!d||indexSeen.has(item.accessor)||d.type!=='SCALAR'||d.componentType!==r?.componentType||d.count!==r?.count)throw Error('Exact index descriptor mismatch');indexSeen.add(item.accessor);indexBytes+=d.count*8;if(!Number.isSafeInteger(indexBytes)||indexBytes>128*1024*1024)throw Error('Exact index output budget exceeded');}
+ const seen=new Set<number>();let bytes=0;for(const r of recipe.affine){const d=descriptors[r.accessor];if(!Number.isSafeInteger(r.accessor)||r.accessor<0||!d||seen.has(r.accessor)||d.componentType!==5126||d.count!==r.count||!['SCALAR','VEC2','VEC3','VEC4'].includes(d.type)||r.width!==({SCALAR:1,VEC2:2,VEC3:3,VEC4:4}as any)[d.type])throw Error('Affine descriptor mismatch');seen.add(r.accessor);bytes+=r.count*r.width*4;if(!Number.isSafeInteger(bytes)||bytes>128*1024*1024)throw Error('Affine output budget exceeded');}
+ preflightNativeRecipe(native,bytes+indexBytes);
+ for(const r of recipe.affine){const owners=base.surfaces.filter((s:any)=>s.positionAccessor===r.accessor);if(owners.length){if(base.residualAccessors[r.accessor]!==null)throw Error('Affine surface overlaps residual');for(const s of owners)if(s.recipe.positions?.kind!=='v4-affine'||s.recipe.positions.accessor!==r.accessor)throw Error('Affine surface marker differs');}else if(base.residualAccessors[r.accessor]?.kind!=='v4-affine'||base.residualAccessors[r.accessor].accessor!==r.accessor)throw Error('Affine attribute marker differs');}
+ for(const r of recipe.affine){const decoded=replayAffineHint(r),wire={codec:'raw',parameters:{version:1},sourceLength:decoded.byteLength,data:raw(decoded)},owners=base.surfaces.filter((s:any)=>s.positionAccessor===r.accessor);if(owners.length){if(base.residualAccessors[r.accessor]!==null)throw Error('Affine surface overlaps residual');for(const s of owners){if(s.recipe.positions?.kind!=='v4-affine'||s.recipe.positions.accessor!==r.accessor)throw Error('Affine surface marker differs');s.recipe.positions={kind:'residual',buffer:wire};}}else{if(base.residualAccessors[r.accessor]?.kind!=='v4-affine'||base.residualAccessors[r.accessor].accessor!==r.accessor)throw Error('Affine attribute marker differs');base.residualAccessors[r.accessor]=wire;}}
+ return buildV3(native);
+}
+export async function buildFromPackage(bytes:Uint8Array){return buildAsset(unpackAsset(bytes))}
+export async function decodePackage(bytes:Uint8Array){const b=await buildFromPackage(bytes);return{entry:'asset.glb',files:[{name:'asset.glb',data:b.glb}],nativeScene:b.scene,representation:'native-code'}}
