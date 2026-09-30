@@ -7,7 +7,7 @@ export { manifest } from "./module.ts";
 export type { Elevation, HeightGrid } from "./grid.ts";
 export { FLAT_ELEVATION, cellX, cellZ, createGrid, elevationOf, gridOver, rangeUnder, sample } from "./grid.ts";
 export type { CorridorOptions, HillOptions, LevelOptions } from "./shape.ts";
-export { addHills, gradeCorridor, levelDisc, levelRect, lockGrid } from "./shape.ts";
+export { addHills, addHillsSteps, gradeCorridor, levelDisc, levelRect, lockGrid } from "./shape.ts";
 export { raycast } from "./raycast.ts";
 export type { ElevationTexture } from "./glsl.ts";
 export { ELEVATION_GLSL, uploadElevation } from "./glsl.ts";

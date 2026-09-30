@@ -10,7 +10,7 @@
 // chunks came before it: any order, the same bytes.
 
 import { dacos, dhypot } from "@keel-engine/core";
-import type { RoadGraph } from "./graph.ts";
+import type { RoadEdge, RoadGraph } from "./graph.ts";
 
 /** A chunk's side (m), and texels a metre. */
 export const CHUNK = 64;
@@ -171,6 +171,117 @@ export interface FieldWindow {
   readonly edge: Int32Array;
 }
 
+/** Scratch-owner for repeated bounded field windows; outputs remain owned by each returned FieldWindow. */
+export interface FieldWindowWorkspace {
+  /** Stop future borrows and release scratch after any active window has closed. */
+  dispose(): void;
+}
+
+const FIELD_WINDOW_WORKSPACE_STATE = Symbol("field-window-workspace-state");
+const MAX_FIELD_WINDOW_WORKSPACE_CELLS = 512 * 512;
+interface FieldWindowWorkspaceState {
+  readonly capacityCells: number;
+  buffer: ArrayBuffer | null;
+  best: Float64Array | null;
+  seen: Int32Array | null;
+  busy: boolean;
+  disposed: boolean;
+}
+interface OwnedFieldWindowWorkspace extends FieldWindowWorkspace {
+  readonly [FIELD_WINDOW_WORKSPACE_STATE]: FieldWindowWorkspaceState;
+}
+interface FieldWindowScratchLease {
+  readonly best: Float64Array;
+  readonly seen: Int32Array;
+  release(): void;
+}
+
+/**
+ * Own at most one lazily allocated scratch buffer for a serial sweep of field windows. Capacity is capped at 512²
+ * cells; a busy, disposed, or oversized borrow uses fresh per-window scratch instead. This is caller-owned state,
+ * never a module-wide cache.
+ */
+export function createFieldWindowWorkspace(capacityCells: number): FieldWindowWorkspace {
+  const capacity = Number.isFinite(capacityCells)
+    ? Math.max(0, Math.min(MAX_FIELD_WINDOW_WORKSPACE_CELLS, Math.floor(capacityCells)))
+    : 0;
+  const state: FieldWindowWorkspaceState = {
+    capacityCells: capacity, buffer: null, best: null, seen: null, busy: false, disposed: false,
+  };
+  const workspace: OwnedFieldWindowWorkspace = {
+    [FIELD_WINDOW_WORKSPACE_STATE]: state,
+    dispose() {
+      if (state.disposed) return;
+      state.disposed = true;
+      if (!state.busy) { state.buffer = null; state.best = null; state.seen = null; }
+    },
+  };
+  return workspace;
+}
+
+function borrowFieldWindowScratch(workspace: FieldWindowWorkspace, n: number): FieldWindowScratchLease | null {
+  const state = (workspace as OwnedFieldWindowWorkspace)[FIELD_WINDOW_WORKSPACE_STATE];
+  if (!state || state.disposed || state.busy || !Number.isInteger(n) || n <= 0 || n > state.capacityCells) return null;
+  let buffer = state.buffer, best = state.best, seen = state.seen;
+  if (!buffer) {
+    buffer = new ArrayBuffer(state.capacityCells * 12);
+    best = new Float64Array(buffer, 0, state.capacityCells);
+    seen = new Int32Array(buffer, state.capacityCells * 8, state.capacityCells);
+    state.buffer = buffer; state.best = best; state.seen = seen;
+  }
+  let released = false;
+  const lease = {
+    best: best!, seen: seen!,
+    release() {
+      if (released) return;
+      released = true;
+      state.busy = false;
+      if (state.disposed) { state.buffer = null; state.best = null; state.seen = null; }
+    },
+  };
+  state.busy = true;
+  return lease;
+}
+
+interface StripTarget {
+  readonly data: Float32Array;
+  readonly edge: Int32Array;
+  readonly best: Float64Array;
+  readonly seen: Int32Array;
+  readonly x0: number;
+  readonly z0: number;
+  readonly width: number;
+  readonly height: number;
+  readonly tpm: number;
+  readonly reach: number;
+}
+
+/** Keep the numeric strip traversal in an ordinary function; the caller still owns road order, yields and scratch. */
+function rasterStrip(target: StripTarget, e: RoadEdge, p: RoadEdge["path"], i: number,
+  ax: number, az: number, ex: number, ez: number, e2: number, len: number,
+  dx: number, dz: number, nx: number, nz: number, back: number, ahead: number,
+  step: number, span: number, stamp: number): void {
+  const { data, edge, best, seen, x0, z0, width, height, tpm, reach } = target;
+  for (let a = -back; a <= len + ahead; a += step) {
+    for (let b = -span; b <= span; b += step) {
+      const u = Math.floor((ax + dx * a + nx * b - x0) * tpm), v = Math.floor((az + dz * a + nz * b - z0) * tpm);
+      if (u < 0 || v < 0 || u >= width || v >= height) continue;
+      const k = v * width + u;
+      if (seen[k] === stamp) continue;
+      seen[k] = stamp;
+      const px = x0 + (u + 0.5) / tpm, pz = z0 + (v + 0.5) / tpm;
+      const t = Math.max(0, Math.min(1, ((px - ax) * ex + (pz - az) * ez) / e2));
+      const qx = px - (ax + ex * t), qz = pz - (az + ez * t), dist = Math.sqrt(qx * qx + qz * qz), fromEdge = dist - e.half;
+      if (fromEdge > reach) continue;
+      const prev = edge[k]!;
+      if (fromEdge > best[k]! || (fromEdge === best[k]! && prev >= 0 && prev < e.id)) continue;
+      best[k] = fromEdge; edge[k] = e.id;
+      const side = (qx * ez - qz * ex) / len >= 0 ? 1 : -1;
+      data[k * 4] = dist * side; data[k * 4 + 1] = e.half; data[k * 4 + 2] = i + t; data[k * 4 + 3] = p.curve[i]!;
+    }
+  }
+}
+
 /**
  * Rasterise a graph's roads into a window [x0, z0, x0 + width / tpm, z0 + height / tpm] -- road by road, each segment
  * only touching the texels within `reach` of it, so a whole city is quick. Texels past every road's reach say FAR.
@@ -183,71 +294,64 @@ export function fieldWindow(graph: RoadGraph, x0: number, z0: number, width: num
 
 /**
  * fieldWindow a road at a time, for a caller that must keep a frame going while a whole city's is made: it yields how
- * far through the roads it is (0..1) after each one, and returns the window. Drained in one go it is fieldWindow.
+ * far through the roads it is (0..1) after each one, and returns the window. Drained in one go it is fieldWindow. A
+ * caller that stops early after passing a workspace must call `return()` so its scratch lease is released.
  */
-export function* fieldWindowSteps(graph: RoadGraph, x0: number, z0: number, width: number, height: number, tpm = 1, reach = REACH, yieldEvery = 1): Generator<number, FieldWindow, void> {
-  const n = width * height, data = new Float32Array(n * 4), edge = new Int32Array(n).fill(-1), best = new Float64Array(n).fill(Infinity);
-  for (let k = 0; k < n; k += 1) data[k * 4] = FAR;
-  const junctions = junctionsOf(graph);
-  // (Each segment sweeps only its own strip -- the texels whose nearest point on it lies along it, out to its reach --
-  // widened at a bend by what the turn opens on its outside, and by the whole reach at an open road's ends. The same
-  // texels win the same way as a box round every segment would give, at a fraction of the visits.)
-  const seen = new Int32Array(n).fill(-1);
-  let stamp = 0, roads = 0;
-  for (const e of graph.edges) {
-    const p = e.path, L = p.length, segs = p.closed ? L : L - 1, r = reach + e.half;
-    const turnAt = (i: number): number => {
-      if (!p.closed && (i <= 0 || i >= L - 1)) return Infinity;
-      const a = (i - 1 + L) % L, b = i % L, c = (i + 1) % L;
-      const ux = p.x[b]! - p.x[a]!, uz = p.z[b]! - p.z[a]!, vx = p.x[c]! - p.x[b]!, vz = p.z[c]! - p.z[b]!;
-      const lu = dhypot(ux, uz) || 1, lv = dhypot(vx, vz) || 1;
-      return dacos(Math.max(-1, Math.min(1, (ux * vx + uz * vz) / (lu * lv))));
-    };
-    for (let i = 0; i < segs; i += 1) {
-      const j = (i + 1) % L;
-      const ax = p.x[i]!, az = p.z[i]!, ex = p.x[j]! - ax, ez = p.z[j]! - az;
-      // The sweep extends by at most r+2 along the segment and r+1.5/tpm
-      // across it. Reject a segment only when even that expanded box cannot
-      // touch this window; tile rasters then produce the same winning texels.
-      const margin = 2 * r + 3 + 3 / tpm;
-      if (Math.max(ax, ax + ex) + margin < x0 || Math.min(ax, ax + ex) - margin > x0 + width / tpm ||
-          Math.max(az, az + ez) + margin < z0 || Math.min(az, az + ez) - margin > z0 + height / tpm) continue;
-      const e2 = ex * ex + ez * ez || 1, len = Math.sqrt(e2);
-      const dx = ex / len, dz = ez / len, nx = -dz, nz = dx;
-      const back = Math.min(r + 2, r * Math.min(2, turnAt(i)) + 2), ahead = Math.min(r + 2, r * Math.min(2, turnAt(j)) + 2);
-      stamp += 1;
-      const step = 0.5 / tpm, span = r + 1.5 / tpm;
-      for (let a = -back; a <= len + ahead; a += step) {
-        for (let b = -span; b <= span; b += step) {
-          const u = Math.floor((ax + dx * a + nx * b - x0) * tpm), v = Math.floor((az + dz * a + nz * b - z0) * tpm);
-          if (u < 0 || v < 0 || u >= width || v >= height) continue;
-          const k = v * width + u;
-          if (seen[k] === stamp) continue;
-          seen[k] = stamp;
-          const px = x0 + (u + 0.5) / tpm, pz = z0 + (v + 0.5) / tpm;
-          const t = Math.max(0, Math.min(1, ((px - ax) * ex + (pz - az) * ez) / e2));
-          const qx = px - (ax + ex * t), qz = pz - (az + ez * t), dist = Math.sqrt(qx * qx + qz * qz), fromEdge = dist - e.half;
-          if (fromEdge > reach) continue;
-          const prev = edge[k]!;
-          if (fromEdge > best[k]! || (fromEdge === best[k]! && prev >= 0 && prev < e.id)) continue;
-          best[k] = fromEdge; edge[k] = e.id;
-          const side = (qx * ez - qz * ex) / len >= 0 ? 1 : -1;
-          data[k * 4] = dist * side; data[k * 4 + 1] = e.half; data[k * 4 + 2] = i + t; data[k * 4 + 3] = p.curve[i]!;
-        }
+export function* fieldWindowSteps(graph: RoadGraph, x0: number, z0: number, width: number, height: number, tpm = 1, reach = REACH, yieldEvery = 1, workspace?: FieldWindowWorkspace): Generator<number, FieldWindow, void> {
+  const n = width * height, data = new Float32Array(n * 4), edge = new Int32Array(n).fill(-1);
+  const lease = workspace ? borrowFieldWindowScratch(workspace, n) : null;
+  try {
+    const best = lease?.best ?? new Float64Array(n).fill(Infinity);
+    if (lease) best.fill(Infinity, 0, n);
+    for (let k = 0; k < n; k += 1) data[k * 4] = FAR;
+    const junctions = junctionsOf(graph);
+    // (Each segment sweeps only its own strip -- the texels whose nearest point on it lies along it, out to its reach --
+    // widened at a bend by what the turn opens on its outside, and by the whole reach at an open road's ends. The same
+    // texels win the same way as a box round every segment would give, at a fraction of the visits.)
+    const seen = lease?.seen ?? new Int32Array(n).fill(-1);
+    if (lease) seen.fill(-1, 0, n);
+    const target: StripTarget = { data, edge, best, seen, x0, z0, width, height, tpm, reach };
+    let stamp = 0, roads = 0;
+    for (const e of graph.edges) {
+      const p = e.path, L = p.length, segs = p.closed ? L : L - 1, r = reach + e.half;
+      const turnAt = (i: number): number => {
+        if (!p.closed && (i <= 0 || i >= L - 1)) return Infinity;
+        const a = (i - 1 + L) % L, b = i % L, c = (i + 1) % L;
+        const ux = p.x[b]! - p.x[a]!, uz = p.z[b]! - p.z[a]!, vx = p.x[c]! - p.x[b]!, vz = p.z[c]! - p.z[b]!;
+        const lu = dhypot(ux, uz) || 1, lv = dhypot(vx, vz) || 1;
+        return dacos(Math.max(-1, Math.min(1, (ux * vx + uz * vz) / (lu * lv))));
+      };
+      for (let i = 0; i < segs; i += 1) {
+        const j = (i + 1) % L;
+        const ax = p.x[i]!, az = p.z[i]!, ex = p.x[j]! - ax, ez = p.z[j]! - az;
+        // The sweep extends by at most r+2 along the segment and r+1.5/tpm
+        // across it. Reject a segment only when even that expanded box cannot
+        // touch this window; tile rasters then produce the same winning texels.
+        const margin = 2 * r + 3 + 3 / tpm;
+        if (Math.max(ax, ax + ex) + margin < x0 || Math.min(ax, ax + ex) - margin > x0 + width / tpm ||
+            Math.max(az, az + ez) + margin < z0 || Math.min(az, az + ez) - margin > z0 + height / tpm) continue;
+        const e2 = ex * ex + ez * ez || 1, len = Math.sqrt(e2);
+        const dx = ex / len, dz = ez / len, nx = -dz, nz = dx;
+        const back = Math.min(r + 2, r * Math.min(2, turnAt(i)) + 2), ahead = Math.min(r + 2, r * Math.min(2, turnAt(j)) + 2);
+        stamp += 1;
+        const step = 0.5 / tpm, span = r + 1.5 / tpm;
+        rasterStrip(target, e, p, i, ax, az, ex, ez, e2, len, dx, dz, nx, nz, back, ahead, step, span, stamp);
+      }
+      roads += 1;
+      if (roads % yieldEvery === 0 || roads === graph.edges.length) yield roads / graph.edges.length;
+    }
+    // Junctions last, each only over the texels round it: the road's width goes negative there (tarmac, no lines).
+    for (const q of junctions) {
+      const r = Math.sqrt(q.r2);
+      const u0 = Math.max(0, Math.floor((q.x - r - x0) * tpm)), u1 = Math.min(width - 1, Math.ceil((q.x + r - x0) * tpm));
+      const v0 = Math.max(0, Math.floor((q.z - r - z0) * tpm)), v1 = Math.min(height - 1, Math.ceil((q.z + r - z0) * tpm));
+      for (let v = v0; v <= v1; v += 1) for (let u = u0; u <= u1; u += 1) {
+        const px = x0 + (u + 0.5) / tpm, pz = z0 + (v + 0.5) / tpm, k = v * width + u;
+        if (edge[k]! >= 0 && (px - q.x) ** 2 + (pz - q.z) ** 2 < q.r2) data[k * 4 + 1] = -Math.abs(data[k * 4 + 1]!);
       }
     }
-    roads += 1;
-    if (roads % yieldEvery === 0 || roads === graph.edges.length) yield roads / graph.edges.length;
+    return { x0, z0, width, height, tpm, data, edge };
+  } finally {
+    lease?.release();
   }
-  // Junctions last, each only over the texels round it: the road's width goes negative there (tarmac, no lines).
-  for (const q of junctions) {
-    const r = Math.sqrt(q.r2);
-    const u0 = Math.max(0, Math.floor((q.x - r - x0) * tpm)), u1 = Math.min(width - 1, Math.ceil((q.x + r - x0) * tpm));
-    const v0 = Math.max(0, Math.floor((q.z - r - z0) * tpm)), v1 = Math.min(height - 1, Math.ceil((q.z + r - z0) * tpm));
-    for (let v = v0; v <= v1; v += 1) for (let u = u0; u <= u1; u += 1) {
-      const px = x0 + (u + 0.5) / tpm, pz = z0 + (v + 0.5) / tpm, k = v * width + u;
-      if (edge[k]! >= 0 && (px - q.x) ** 2 + (pz - q.z) ** 2 < q.r2) data[k * 4 + 1] = -Math.abs(data[k * 4 + 1]!);
-    }
-  }
-  return { x0, z0, width, height, tpm, data, edge };
 }

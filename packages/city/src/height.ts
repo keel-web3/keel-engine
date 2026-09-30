@@ -9,7 +9,7 @@
 // the city.
 
 import { dcos, dsin } from "@keel-engine/core";
-import { addHills, cellX, cellZ, elevationOf, gradeCorridor, gridOver, levelDisc, levelRect, lockGrid, rangeUnder } from "@keel-engine/elevation";
+import { addHillsSteps, cellX, cellZ, elevationOf, gradeCorridor, gridOver, levelDisc, levelRect, lockGrid, rangeUnder } from "@keel-engine/elevation";
 import type { Elevation, HeightGrid } from "@keel-engine/elevation";
 import { locate, roadField } from "@keel-engine/road";
 import type { RoadClass } from "@keel-engine/road";
@@ -76,7 +76,8 @@ export function cityHeight(city: City, cell = 2): CityHeight {
 
 /**
  * cityHeight a stretch at a time, for a caller that must keep a frame going while a whole city's land is made: it
- * yields how far through it is (0..1) -- between the land's rows, the roads it grades, the lots it levels -- and
+ * yields how far through it is (0..1) -- now also between bounded batches of the base hills, as well as the land's
+ * remaining rows, the roads it grades, and the lots it levels -- and
  * returns the height. Drained in one go it is cityHeight, to the bit.
  */
 export function* cityHeightSteps(city: City, cell = 2): Generator<number, CityHeight, void> {
@@ -111,7 +112,7 @@ export function* cityHeightSteps(city: City, cell = 2): Generator<number, CityHe
   yield 0.1;
   const liftGrid: HeightGrid = { ...coarse, data: lift };
   const reliefAt = elevationOf(coarse), liftAt = elevationOf(liftGrid);
-  addHills(land, `${site.seed}|city-hills`, { amplitude: reliefAt.heightAt, scale: HILL_SCALE, octaves: 2 });
+  for (const part of addHillsSteps(land, `${site.seed}|city-hills`, { amplitude: reliefAt.heightAt, scale: HILL_SCALE, octaves: 2 })) yield 0.1 + 0.15 * part;
   yield 0.25;
   for (let j = 0; j < land.h; j += 1) {
     for (let i = 0; i < land.w; i += 1) {
