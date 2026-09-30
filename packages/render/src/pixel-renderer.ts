@@ -17,8 +17,8 @@
 // colours, 256 ramps, 255 materials. Every pixel is still a palette entry
 // (there is no full-colour path: palette ramps through a screen is the model).
 
-import { cameraBasis } from "@keel-engine/core";
-import type { Palette, RGB, Vec3, Vec3Like } from "@keel-engine/core";
+import { adaptTargetPalette, cameraBasis, targetProfile } from "@keel-engine/core";
+import type { Palette, RGB, TargetInput, TargetProfile, Vec3, Vec3Like } from "@keel-engine/core";
 import { ALL_FX, fxUniforms, resolveFx, screenTile, toggleFx } from "./fx.ts";
 import type { FxEntry, FxList, FxName, FxResolved, FxUniforms, RenderStyle } from "./fx.ts";
 import {
@@ -152,6 +152,9 @@ export interface PixelRenderer {
   readonly limits: RendererLimits;
   /** The target size (the picture's own pixels; at least 8). */
   setTarget(width: number, height: number): void;
+  /** Switch art/hardware preview profiles; original restores the authored size, palette and style. */
+  setProfile(profile: TargetInput): void;
+  readonly profile: TargetProfile;
   /** Colours ([[r,g,b],...] 0-255) and ramps ({ name: [base, length] }), ramps in order 0..255. */
   setPalette(colours: readonly Colour[], ramps: Ramps): void;
   /** The palette as set: what a palette-true frame's pixels must all be. */
@@ -280,7 +283,7 @@ interface Block {
 
 // ---------------------------------------------------------------- the renderer
 
-export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height = 128, bakeOnly = false }: { width?: number; height?: number; bakeOnly?: boolean } = {}): PixelRenderer {
+export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height = 128, bakeOnly = false, profile }: { width?: number; height?: number; bakeOnly?: boolean; profile?: TargetInput } = {}): PixelRenderer {
   const ctx = canvas.getContext("webgl2", { antialias: false, preserveDrawingBuffer: true });
   if (!ctx) throw new Error("WebGL2 is not available");
   const gl: WebGL2RenderingContext = ctx;
@@ -375,6 +378,11 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
   let nWedges = 0;
   let nCaps = 0;
   let style: RenderStyle = { screen: 4, dither: 0.9, outline: 1 };
+  let activeProfile = targetProfile("native");
+  let authoredSize = [width, height];
+  let authoredStyle = { ...style };
+  let authoredPalette: RGB[] = [];
+  let authoredRamps: Ramps = {};
   let fxList: FxEntry[] = [];
   let fxResolved: FxResolved[] = [];
   let fxU: FxUniforms | null = null;
@@ -548,9 +556,24 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
       boxes: MAX_BOXES, wedges: MAX_WEDGES, capsules: MAX_CAPS, ramps: MAX_RAMPS, materials: MAX_MATERIALS, colours: MAX_COLOURS,
       fragmentUniformVectors: gl.getParameter(gl.MAX_FRAGMENT_UNIFORM_VECTORS) as number, maxTexture: gl.getParameter(gl.MAX_TEXTURE_SIZE) as number,
     },
-    setTarget(w, h) { target(Math.max(8, w | 0), Math.max(8, h | 0)); },
+    setTarget(w, h) {
+      if (activeProfile.kind === "hardware" && (w !== activeProfile.width || h !== activeProfile.height)) throw new RangeError(`${activeProfile.label} preview requires ${activeProfile.width} × ${activeProfile.height}`);
+      target(Math.max(8, w | 0), Math.max(8, h | 0));
+      if (activeProfile.kind === "native") authoredSize = [W, H];
+    },
+    get profile() { return activeProfile; },
+    setProfile(input) {
+      const next = targetProfile(input);
+      activeProfile = next;
+      if (next.kind === "native") { target(authoredSize[0]!, authoredSize[1]!); style = { ...authoredStyle }; }
+      else { target(next.width, next.height); style = { ...authoredStyle, screen: next.screen, dither: next.dither }; }
+      if (authoredPalette.length) api.setPalette(authoredPalette, authoredRamps);
+      fxDirty = true;
+    },
     setPalette(colours, ramps) {
       if (colours.length > MAX_COLOURS) throw new RangeError(`${colours.length} colours: at most ${MAX_COLOURS}`);
+      const sourceColours: RGB[] = colours.map((c) => [c[0] ?? 0, c[1] ?? 0, c[2] ?? 0]);
+      if (activeProfile.kind !== "native") colours = adaptTargetPalette(sourceColours, activeProfile.id);
       palette = colours.map((c) => [c[0] ?? 0, c[1] ?? 0, c[2] ?? 0]);
       const rows = Math.max(1, Math.ceil(colours.length / PALETTE_WIDTH));
       const bytes = new Uint8Array(PALETTE_WIDTH * rows * 4);
@@ -563,6 +586,8 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
       nearest();
       const entries = Object.entries(ramps);
       if (entries.length > MAX_RAMPS) throw new RangeError(`${entries.length} ramps: at most ${MAX_RAMPS}`);
+      authoredPalette = sourceColours;
+      authoredRamps = Object.fromEntries(entries.map(([name, slot]) => [name, [...slot] as [number, number]]));
       rampIndex = new Map();
       rampList = entries.map(([name, [base, len]], i) => { rampIndex.set(name, i); return [base, len]; });
       fxDirty = true;
@@ -578,6 +603,7 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
     },
     setStyle({ screen: s = style.screen, dither: d = style.dither, outline: o = style.outline } = {}) {
       style = { screen: s, dither: d, outline: o ? 1 : 0 };
+      authoredStyle = { ...style };
       fxDirty = true;
     },
     setWorld({ boxes = [], wedges = [], capsules = [] }) {
@@ -794,5 +820,6 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
       return off;
     },
   };
+  if (profile !== undefined) api.setProfile(profile);
   return api;
 }

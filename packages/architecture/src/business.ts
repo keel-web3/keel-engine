@@ -37,9 +37,14 @@ function solid(b: Build, { x, z, hw, hd, y1, slot = "metal" }: SolidArgs): void 
 export function vehicle(b: Build, { kind, x, z, turn, i, y = 0, paint }: VehiclePlacement): void {
   const c = Math.abs(dcos(turn)), s = Math.abs(dsin(turn)), o = { turn };
   // (Nothing parks off its lot: a vehicle that would stand outside the envelope isn't there.)
-  const [lw, ld] = kind === "truck" ? [1.25, 7.5] : kind === "bus" ? [1.3, 6] : kind === "ambulance" ? [1.05, 2.9] : [0.9, 2.2];
+  const [lw, ld] = kind === "truck" ? [1.25, 7.5] : kind === "bus" ? [1.3, 6] : kind === "ambulance" ? [1.05, 2.9] : kind === "car" ? [1.35, 2.8] : [0.9, 2.2];
   const ew = lw * c + ld * s, ed = lw * s + ld * c, site = b.site;
   if (Math.abs(x - site.x) + ew > site.hw + 0.01 || Math.abs(z - site.z) + ed > site.hd + 0.01) return;
+  if (kind === "car") {
+    const [wx, wy, wz] = toWorld(b, x, y, z);
+    b.vehicles.push({ key: `${b.key}:car:${i}:${x}:${z}`, x: wx, y: wy, z: wz, yaw: b.frame.yaw + turn, hw: 1.35, hd: 2.8 });
+    return;
+  }
   const slot = paint ?? pick(b.D, "paint", PAINTS, i) ?? "metal";
   let hw = 0.9, hd = 2.2, h = 1.45;
   switch (kind) {
@@ -90,20 +95,25 @@ export function mast(b: Build, { x, z, h, head = "sodium" }: LotMast): void {
  * ways, `fill` of them taken), lamp masts on the row ends. Returns how many rows it laid.
  */
 export function parkingRows(b: Build, { x0, x1, z0, z1, fill, lamps = true }: ParkingRows): number {
-  if (x1 - x0 < 6 || z1 - z0 < 5.4) return 0;
+  // Two 3 m entry lanes connect every 6 m cross aisle. A row needs a full 5.6 m bay AND its aisle.
+  if (x1 - x0 < 19.2 || z1 - z0 < 11.6) return 0;
   addBox(b, 1, (x0 + x1) / 2, 0.03, (z0 + z1) / 2, (x1 - x0) / 2, 0.03, (z1 - z0) / 2, "roof");
-  const rows = Math.max(1, Math.floor((z1 - z0 + 1) / 6.4)), cols = Math.max(1, Math.floor((x1 - x0 - 1) / 2.8));
-  const pitch = (z1 - z0) / rows, w = (x1 - x0) / cols;
-  for (let r = 0; r < rows; r += 1) {
-    const z = z0 + pitch * (r + 0.5), turn = r % 2 ? Math.PI : 0;
-    for (let k = 0; k < cols; k += 1) {
-      const x = x0 + w * (k + 0.5), i = r * 64 + k;
-      // (The bay's painted line on its left.)
-      addBox(b, 0, x - w / 2, 0.07, z, 0.06, 0.02, 2.4, "trim");
-      if (b.D.u("bayTaken", i) < fill) vehicle(b, { kind: "car", x, z: z + (b.D.flat("bayJog", i) * 0.25), turn: turn + b.D.flat("bayYaw", i) * 0.05, i });
+  const mid = (x0 + x1) / 2, rows = Math.floor((z1 - z0) / 11.6);
+  const cols = Math.floor(((x1 - x0) / 2 - 6.4) / 3.2);
+  for (let r = 0; r < rows; r++) {
+    const z = z0 + r * 11.6 + 2.8, aisleZ = z + 5.8;
+    for (const side of [-1, 1]) for (let k = 0; k < cols; k++) {
+      const x = mid + side * (4.8 + k * 3.2), i = r * 128 + (side > 0 ? 64 : 0) + k;
+      const [wx, wy, wz] = toWorld(b, x, 0.06, z);
+      const occupied = b.D.u("bayTaken", i) < fill;
+      const route = [[mid, b.frame.hd + 1], [mid, aisleZ], [x, aisleZ], [x, z]].map(([u, v]) => { const p = toWorld(b, u!, 0, v!); return [p[0], p[2]] as const; });
+      b.parking.push({ key: `${b.key}:bay:${b.frame.y ?? 0}:${i}`, x: wx, y: wy, z: wz, yaw: b.frame.yaw + Math.PI, hw: 1.45, hd: 2.8, occupied, route });
+      for (const edge of [-1, 1]) addBox(b, 0, x + edge * 1.6, 0.075, z, 0.05, 0.015, 2.8, "trim");
+      addBox(b, 0, x, 0.075, z - 2.8, 1.6, 0.015, 0.05, "trim");
     }
   }
-  if (lamps) for (let r = 0; r < rows; r += 2) for (const x of [x0 + 0.4, x1 - 0.4]) if (x1 - x0 > 16 || x === x0 + 0.4) mast(b, { x, z: z0 + pitch * (r + 0.5), h: 9 });
+  // Lamps sit beyond the bays, never in a driving aisle.
+  if (lamps) for (const x of [x0 + 0.2, x1 - 0.2]) mast(b, { x, z: z0 + 0.2, h: 9 });
   return rows;
 }
 
@@ -120,26 +130,9 @@ const showroom: Op<"showroom"> = (b) => {
   const px = s.x + (b.D.u("portal") < 0.5 ? -1 : 1) * hw * 0.5;
   for (const sx of [-1, 1]) addBox(b, 1, px + sx * 2.2, (h + 0.6) / 2, front + 1, 0.25, (h + 0.6) / 2, 0.9, "trim");
   addBox(b, 1, px, h + 0.3, front + 1, 2.45, 0.3, 0.95, "trim");
-  // The forecourt: rows of cars angled to the road, a gap for the drive; one up on a plinth at the front.
-  const za = front + 3.2, zb = s.z + s.hd - 3.2, cols = Math.max(1, Math.floor((2 * s.hw - 3) / 2.9));
-  const pitch = (2 * s.hw - 3) / cols, rows = Math.max(0, Math.floor((zb - za) / 5.6) + 1), aisle = count(b.D, "aisle", [0, cols - 1]);
-  for (let r = 0; r < rows; r += 1) {
-    const z = za + r * 5.6, turn = (r % 2 ? 1 : -1) * 0.35;
-    for (let k = 0; k < cols; k += 1) {
-      if (k === aisle && cols > 3) continue;
-      const i = r * 64 + k, x = s.x - s.hw + 1.5 + pitch * (k + 0.5);
-      if (r === rows - 1 && k === (aisle === 0 ? cols - 1 : 0) && s.hw > 7) {
-        // (The plinth: a low stage with the car of the month on it.)
-        solid(b, { x, z, hw: 2.2, hd: 2.9, y1: 0.55, slot: "concreteLight" });
-        addBox(b, 1, x, 0.275, z, 2.2, 0.275, 2.9, "concreteLight");
-        vehicle(b, { kind: "car", x, z, turn: 0.6, i, y: 0.55 });
-        if (!b.derelict) addBox(b, 0, x, 0.6, z + 2.95, 2.2, 0.05, 0.05, b.neon);
-        continue;
-      }
-      if (b.D.u("onShow", i) < (b.derelict ? 0.85 : 0.12)) continue;
-      vehicle(b, { kind: "car", x, z, turn, i });
-    }
-  }
+  // Display inventory uses the same accessible bays and six-metre aisles as public parking.
+  const za = front + 2, zb = s.z + s.hd - 1;
+  const rows = parkingRows(b, { x0: s.x - s.hw + 0.5, x1: s.x + s.hw - 0.5, z0: za, z1: zb, fill: b.derelict ? 0.12 : 0.8, lamps: false });
   // Bunting: poles along the front, pennant lines strung between them, flags on top.
   if (!b.derelict) {
     const n = clamp(Math.round(s.hw / 6), 2, 5), zf = s.z + s.hd - 0.6, ph = 6.5;
@@ -224,6 +217,32 @@ const drivethru: Op<"drivethru"> = (b) => {
   }
 };
 
+/** A home and its attached garage share a wall; only the garage opens onto the driveway. */
+const houseGarage: Op<"houseGarage"> = (b, op) => {
+  const s=b.site, total=Math.min(9,s.hw), gx=s.x+total-2.6, hx=s.x-2.6, hw=total-2.6;
+  const hd=Math.min(6,s.hd-1), z=Math.max(s.z,s.z+s.hd-hd-3), front=z+hd, h=op.urban?Math.max(2,b.storeys)*3:b.storeys>1?6:3;
+  addMass(b,{x:hx,z,hw,hd,y0:0,y1:h,slot:b.wall});
+  // A pitched residential roof, windows and a front door distinguish the home from a workshop.
+  if(op.urban) addBox(b,2,hx,h+.12,z,hw+.15,.12,hd+.15,"roof");
+  else for(const side of [-1,1]) addBox(b,2,hx,h+.85,z+side*hd/2,hw+.2,.85,hd/2+.15,"roof",{wedge:true,turn:side>0?0:Math.PI});
+  for(let y=1.7;y<h;y+=3) for(const x of [hx-hw*.55,hx+hw*.55]) addBox(b,1,x,y,front+.04,.75,.65,.06,b.derelict?"boarded":"shopWarm");
+  addBox(b,1,hx,.99,front+.08,.5,.99,.08,"trim");
+  addBox(b,1,hx,.04,(front+b.frame.hd)/2,.8,.04,(b.frame.hd-front)/2,"concreteLight");
+  const gf=front+.4, back=gf-7.5, gh=3.2, dw=1.7;
+  // The garage's left wall is the house's right wall; the right and rear walls are solid.
+  addMass(b,{x:gx+2.45,z:(back+gf)/2,hw:.15,hd:3.75,y0:0,y1:gh,slot:b.wall});
+  addMass(b,{x:gx,z:back+.15,hw:2.6,hd:.15,y0:0,y1:gh,slot:b.wall});
+  for(const side of [-1,1]) addMass(b,{x:gx+side*(dw+(2.6-dw)/2),z:gf,hw:(2.6-dw)/2,hd:.15,y0:0,y1:gh,slot:b.wall});
+  addBox(b,2,gx,gh,gf-3.75,2.65,.15,3.9,"roof");
+  addBox(b,1,gx,2.9,gf,dw,.3,.15,b.wall);
+  addBox(b,1,gx,2.5,gf-.1,dw,.1,.12,"corrugated");
+  addBox(b,1,gx,.025,(back+b.frame.hd)/2,2.4,.025,(b.frame.hd-back)/2,"concreteLight");
+  const p=toWorld(b,gx,.06,gf-3.2),door=toWorld(b,gx,0,gf);
+  b.doors.push({x:door[0],z:door[2],hw:dw,h:2.6});
+  const route=[[gx,b.frame.hd+1],[gx,gf+4],[gx,gf-3.2]].map(([x,z])=>{const q=toWorld(b,x!,0,z!);return [q[0],q[2]] as const;});
+  b.parking.push({key:`${b.key}:home-garage`,x:p[0],y:p[1],z:p[2],yaw:b.frame.yaw+Math.PI,hw:dw-.15,hd:2.8,occupied:false,route});
+};
+
 /** Service bays: a low box with roll-up doors onto an apron (a garage's cars, a tuner's neon, a fire station's engines, a depot's buses). */
 const bays: Op<"bays"> = (b, op) => {
   const s = b.site, kind = op.kind, bus = kind === "bus", fire = kind === "fire";
@@ -231,22 +250,45 @@ const bays: Op<"bays"> = (b, op) => {
   const apron = bus ? clamp(s.hd * 0.9, 8, 26) : clamp(s.hd * 0.5, 5, 11);
   const hd = Math.max(4, s.hd - apron / 2), z0 = s.z - s.hd + hd, front = z0 + hd, hw = Math.max(4, s.hw - 0.5);
   if (s.z + s.hd - front > 0.5) addBox(b, 1, s.x, 0.03, (front + s.z + s.hd) / 2, s.hw, 0.03, (s.z + s.hd - front) / 2, "roof");
-  addMass(b, { x: s.x, z: z0, hw, hd, y0: 0, y1: h, slot: b.derelict ? "derelict" : b.wall });
+  // Walls and roof, with actual holes at the bay doors.
+  const wall = b.derelict ? "derelict" : b.wall;
+  for (const side of [-1, 1]) addMass(b, { x: s.x + side * (hw - 0.15), z: z0, hw: 0.15, hd, y0: 0, y1: h, slot: wall });
+  addMass(b, { x: s.x, z: z0 - hd + 0.15, hw, hd: 0.15, y0: 0, y1: h, slot: wall });
+  addBox(b, 2, s.x, h - 0.15, z0, hw, 0.15, hd, wall);
+  addBox(b, 1, s.x, (dh + h) / 2, front, hw, (h - dh) / 2, 0.15, wall);
   const most = Math.max(1, Math.floor((2 * hw - 5) / (2 * dw + 1.2))), n = Math.min(most, count(b.D, "doors", op.doors));
   const off = (b.D.u("doorsAt") - 0.5) * Math.max(0, 2 * hw - 5 - n * (2 * dw + 1.2));
   const doors: number[] = [];
   for (let k = 0; k < n; k += 1) doors.push(s.x + off + (k - (n - 1) / 2) * (2 * dw + 1.2));
+  let wallFrom = s.x - hw;
+  for (const x of [...doors, s.x + hw + dw]) {
+    const wallTo = x - dw;
+    if (wallTo > wallFrom) addMass(b, { x: (wallFrom + wallTo) / 2, z: front, hw: (wallTo - wallFrom) / 2, hd: 0.15, y0: 0, y1: dh, slot: wall });
+    wallFrom = x + dw;
+  }
   doors.forEach((x, k) => {
-    const openDoor = !b.derelict && b.D.u("open", k) < (kind === "tuning" ? 0.7 : fire ? 0.25 : 0.45);
+    const openDoor = !b.derelict && (k === 0 || b.D.u("open", k) < (kind === "tuning" ? 0.7 : fire ? 0.25 : 0.45));
     const slot: SlotName = b.derelict ? "boarded" : openDoor ? (kind === "tuning" ? "shopCool" : "concreteDark") : fire ? "redBrick" : "corrugated";
-    addBox(b, 1, x, dh / 2, front + 0.06, dw, dh / 2, 0.06, slot);
+    const door = toWorld(b, x, 0, front + 0.12);
+    b.doors.push({ x: door[0], z: door[2], hw: dw, h: dh });
+    if (openDoor) {
+      addBox(b, 1, x, dh - 0.25, front + 0.06, dw, 0.25, 0.06, "corrugated");
+      if (!bus && !fire && hd >= 4) {
+        const p = toWorld(b, x, 0.06, front - 3.2);
+        const route = [[x, b.frame.hd + 1], [x, front + 4], [x, front - 3.2]].map(([u, v]) => { const q = toWorld(b, u!, 0, v!); return [q[0], q[2]] as const; });
+        b.parking.push({ key: `${b.key}:garage:${k}`, x: p[0], y: p[1], z: p[2], yaw: b.frame.yaw + Math.PI, hw: dw - 0.15, hd: 2.8, occupied: k > 0 && b.D.u("insideBay", k) < 0.4, route });
+      }
+    } else {
+      addBox(b, 1, x, dh / 2, front + 0.06, dw, dh / 2, 0.06, slot);
+      solid(b, x, front, dw, 0.15, dh, slot);
+    }
     if (!b.derelict) addBox(b, 0, x, dh + 0.35, front + 0.25, 0.35, 0.12, 0.25, kind === "tuning" ? b.neon : "sodium");
     // (What's in the bay: a car waiting its turn, an engine, a bus nosed in.)
     if (b.derelict) return;
     const ahead = b.D.u("waiting", k);
     if (bus) { if (ahead < 0.7) vehicle(b, { kind: "bus", x, z: front + 6.6, turn: Math.PI, i: 500 + k }); }
     else if (fire) { if (openDoor || ahead < 0.2) vehicle(b, { kind: "truck", x, z: front + 7.8, turn: 0, i: 500 + k, paint: "redBrick" }); }
-    else if (ahead < 0.6) vehicle(b, { kind: "car", x, z: front + 3, turn: Math.PI + b.D.flat("wait", k) * 0.15, i: 500 + k });
+    else if (!openDoor && ahead < 0.6) vehicle(b, { kind: "car", x, z: front + 3, turn: Math.PI + b.D.flat("wait", k) * 0.15, i: 500 + k });
   });
   if (fire && !b.derelict) {
     // (Red trim along the top, the hose tower at one end.)
@@ -342,4 +384,4 @@ const trailers: Op<"trailers"> = (b) => {
   }
 };
 
-export const BUSINESS_OPS = { showroom, bigbox, drivethru, bays, carwash, parking, forecourt, trailers };
+export const BUSINESS_OPS = { houseGarage, showroom, bigbox, drivethru, bays, carwash, parking, forecourt, trailers };

@@ -427,6 +427,7 @@ export function* planInfraSteps(c: InfraContext): Generator<number, void, void> 
       cands.push({ x: jx, z: jz, y: c.height ? c.yAt(jx, jz) + D.u("tie", Math.round(jx), Math.round(jz)) * 0.01 : D.u("tie", Math.round(jx), Math.round(jz)) });
       }
     }
+    }
     cands.sort((a, b) => b.y - a.y || a.x - b.x || a.z - b.z);
     const chosen: { x: number; z: number }[] = [];
     for (const q of cands) {

@@ -80,6 +80,16 @@ The SDK's `examples/game-engine/` holds working games (hello, garden, zoo,
 army, wallrun, worlds, ui-demo, level-demo). The KEEL desktop editor builds
 and runs the same projects.
 
+## Retro targets
+
+The renderer can switch 8/16/32/64-bit visual profiles and Game Boy/Color/Chromatic
+preview targets through `setProfile()`. The capture package exports native
+Game Boy/Color background tiles, maps, palettes and C arrays. See
+[engine targets](docs/TARGETS.md) for the interactive preview and hardware limits.
+
+Era profiles are visual styles; native graphics export is separate from porting
+game logic and compiling a playable cartridge.
+
 ## The verified module model
 
 Each package carries four small files for `keel module build` (the SDK's

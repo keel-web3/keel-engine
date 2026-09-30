@@ -48,6 +48,7 @@ export interface StreetPlan {
 
 /** What the city's grid hands the streets (none of it needed): substations to run a line in to, feeds from the land round it. */
 export interface StreetGrid {
+  readonly driveways?: readonly { x:number; z:number; fx:number; fz:number }[];
   readonly substations?: readonly { readonly x: number; readonly z: number }[];
   readonly feeds?: readonly { readonly x: number; readonly z: number }[];
 }
@@ -140,6 +141,7 @@ export function* planStreetsSteps(sc: StreetCatalogue, city: City, height?: City
     const f = frameOf(lot), fx = dsin(f.yaw), fz = dcos(f.yaw);
     doors.push({ x: f.x + fx * f.hd, z: f.z + fz * f.hd, fx, fz });
   }
+  doors.push(...(grid.driveways ?? []));
   const doorHash = new Map<string, number[]>();
   doors.forEach((d, i) => { const k = `${Math.floor(d.x / 32)},${Math.floor(d.z / 32)}`, l = doorHash.get(k) ?? []; l.push(i); doorHash.set(k, l); });
   yield 0.08;

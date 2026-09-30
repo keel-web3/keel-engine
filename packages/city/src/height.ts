@@ -9,7 +9,7 @@
 // the city.
 
 import { dcos, dsin } from "@keel-engine/core";
-import { addHills, cellX, cellZ, elevationOf, gradeCorridor, gridOver, levelDisc, levelRect, lockGrid, rangeUnder } from "@keel-engine/elevation";
+import { addHillsSteps, cellX, cellZ, elevationOf, gradeCorridorSteps, gridOver, levelDisc, levelRect, lockGrid, rangeUnder } from "@keel-engine/elevation";
 import type { Elevation, HeightGrid } from "@keel-engine/elevation";
 import { locate, roadField } from "@keel-engine/road";
 import type { RoadClass } from "@keel-engine/road";
@@ -111,14 +111,14 @@ export function* cityHeightSteps(city: City, cell = 2): Generator<number, CityHe
   yield 0.1;
   const liftGrid: HeightGrid = { ...coarse, data: lift };
   const reliefAt = elevationOf(coarse), liftAt = elevationOf(liftGrid);
-  addHills(land, `${site.seed}|city-hills`, { amplitude: reliefAt.heightAt, scale: HILL_SCALE, octaves: 2 });
+  for (const part of addHillsSteps(land, `${site.seed}|city-hills`, { amplitude: reliefAt.heightAt, scale: HILL_SCALE, octaves: 2 })) yield 0.1 + 0.15 * part;
   yield 0.25;
   for (let j = 0; j < land.h; j += 1) {
     for (let i = 0; i < land.w; i += 1) {
       const x = cellX(land, i), z = cellZ(land, j);
       land.data[j * land.w + i] = land.data[j * land.w + i]! + liftAt.heightAt(x, z) + groundAt(site, x, z).height;
     }
-    if (j % 16 === 15) yield 0.25 + 0.25 * (j / land.h);
+    if (j % 4 === 3) yield 0.25 + 0.25 * (j / land.h);
   }
   yield 0.5;
   // ---- bridges: a deck raised along each over the water -- to BRIDGE_CLEAR over the sea at most, climbing to it at its
@@ -161,7 +161,8 @@ export function* cityHeightSteps(city: City, cell = 2): Generator<number, CityHe
     const ends: [number | undefined, number | undefined] = [nodeH[nodeIndex.get(e.a)!], nodeH[nodeIndex.get(e.b)!]];
     // (Level across each junction's pad it leaves or meets -- the pad's radius -- so the road and the pad meet flush.)
     const endFlat: [number, number] = [padOf(e.a), padOf(e.b)];
-    profiles[e.id] = gradeCorridor(land, e.path.x, e.path.z, { half: sidewalkReach(e.cls, e.half), blend: e.bridge ? BRIDGE_BLEND : ROAD_BLEND, maxGrade: MAX_GRADE[e.cls], smoothing: 40, ends: e.path.closed ? [ends[0], ends[0]] : ends, endFlat, lock });
+    const grading = gradeCorridorSteps(land, e.path.x, e.path.z, { half: sidewalkReach(e.cls, e.half), blend: e.bridge ? BRIDGE_BLEND : ROAD_BLEND, maxGrade: MAX_GRADE[e.cls], smoothing: 40, ends: e.path.closed ? [ends[0], ends[0]] : ends, endFlat, lock });
+    for (;;) { const next = grading.next(); if (next.done) { profiles[e.id] = next.value; break; } yield 0.6 + 0.25 * graded / order.length; }
     yield 0.6 + 0.25 * (++graded / order.length);
   }
   const roadAt = (edge: number, s: number): number => {
@@ -188,6 +189,7 @@ export function* cityHeightSteps(city: City, cell = 2): Generator<number, CityHe
   // (A lot whose block had no terrace -- its sides not found -- is levelled the old way: a pad at its nearest road's height.)
   const pads = new Map<string, number>();
   for (const lot of city.lots) {
+    if (++levelled % 4 === 0) yield 0.85 + 0.14 * (levelled / city.lots.length);
     const t = terraces.get(lot.block), { x, z, hw, hd, yaw } = lot.obb;
     if (t) { pads.set(lot.key, t.at(x, z)); continue; }
     const at = field.at(x, z), want = at ? roadAt(at.edge, at.s) : natural.heightAt(x, z);

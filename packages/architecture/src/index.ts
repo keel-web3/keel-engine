@@ -1,6 +1,6 @@
 export { manifest } from "./module.ts";
 export type {
-  Archetype, BuildingPlan, Catalogue, CityLike, Condition, CrownKind, DistrictLook, FacadeStyle, LookSpec, Lod, MassOp, MaterialSpec,
+  Archetype, BuildingPlan, ParkedVehicle, ParkingBay, GarageSurface, Catalogue, CityLike, Condition, CrownKind, DistrictLook, FacadeStyle, LookSpec, Lod, MassOp, MaterialSpec,
   Range, RoofItem, RoofKind, RoofRule, SignKind, SignRule, Solid, Weights, WindowType,
   AdSlotSpec, ArtKind, FurnitureKind, PlantKind, PlantSpot, FurnitureRule, LampKind, LampStyle, LightSpot, PropKind, PropPart, PropSpot, StreetCatalogue,
   InfraSpec, StreetSign, Door,

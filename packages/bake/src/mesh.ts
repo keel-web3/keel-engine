@@ -279,6 +279,20 @@ export function lookMesh(world: BakeWorld, { around = 12, rings = 3, bounds, cho
   return B.grid ? { ...mesh, facade: Float32Array.from(B.f) } : mesh;
 }
 
+/** Same mesh bytes, yielding between small batches of solids when workers are unavailable. */
+export function* lookMeshSteps(world: BakeWorld, { around = 12, rings = 3, bounds, chordError }: LookMeshOptions = {}): Generator<void, LookMesh, void> {
+  const B = new Builder();
+  let count = 0;
+  for (const kind of ["boxes", "wedges", "capsules"] as const) for (const solid of world[kind] ?? []) {
+    appendWorld(B, { [kind]: [solid] } as BakeWorld, around, rings, chordError);
+    if (++count % 32 === 0) yield;
+  }
+  yield;
+  const positions = Float32Array.from(B.p), attrs = Float32Array.from(B.a);
+  const mesh = { positions, normals: Float32Array.from(B.n), attrs, bodies: bodySpace(positions, bounds ?? meshBounds(positions)), indices: cleanTriangles(positions, Uint32Array.from(B.i), attrs) };
+  return B.grid ? { ...mesh, facade: Float32Array.from(B.f) } : mesh;
+}
+
 /** A mesh's own bounds: [minX, minY, minZ, maxX, maxY, maxZ] (what to pass every mesh of one thing). */
 export function meshBounds(positions: Float32Array): [number, number, number, number, number, number] {
   const b: [number, number, number, number, number, number] = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];

@@ -27,12 +27,19 @@ export interface HillOptions {
 
 /** Add rolling hills to a grid (centred on 0: as much below as above). */
 export function addHills(g: HeightGrid, seed: string | number, o: HillOptions): HeightGrid {
+  const steps = addHillsSteps(g, seed, o);
+  for (;;) { const next = steps.next(); if (next.done) return next.value; }
+}
+
+/** Identical grid, with bounded row batches for interactive generators. */
+export function* addHillsSteps(g: HeightGrid, seed: string | number, o: HillOptions): Generator<number, HeightGrid, void> {
   const s = seedInt(seed), k = 1 / (o.scale ?? 300), oct = o.octaves ?? 4;
   for (let j = 0; j < g.h; j += 1) {
     for (let i = 0; i < g.w; i += 1) {
       const x = cellX(g, i), z = cellZ(g, j), amp = typeof o.amplitude === "number" ? o.amplitude : o.amplitude(x, z);
       g.data[j * g.w + i]! += (fbm2(x * k, z * k, s, oct) - 0.5) * 2 * amp;
     }
+    if (j % 4 === 3) yield (j + 1) / g.h;
   }
   return g;
 }
@@ -116,6 +123,12 @@ function borrowCorridorScratch(cells: number): CorridorScratch | null {
  * (metres along it and the height there), what a road renderer or a car's route reads.
  */
 export function gradeCorridor(g: HeightGrid, xs: ArrayLike<number>, zs: ArrayLike<number>, o: CorridorOptions): { s: Float64Array; y: Float64Array } {
+  const steps = gradeCorridorSteps(g, xs, zs, o);
+  for (;;) { const next = steps.next(); if (next.done) return next.value; }
+}
+
+/** Preserve grading order while yielding inside long roads. */
+export function* gradeCorridorSteps(g: HeightGrid, xs: ArrayLike<number>, zs: ArrayLike<number>, o: CorridorOptions): Generator<void, { s: Float64Array; y: Float64Array }, void> {
   // The line, resampled every cell: its length along, and the land's height under it.
   const px: number[] = [], pz: number[] = [], ps: number[] = [];
   let run = 0;
