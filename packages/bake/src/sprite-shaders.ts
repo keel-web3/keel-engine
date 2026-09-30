@@ -262,6 +262,10 @@ export interface MeshDraw {
    * keel/lod rangesOf). Absent: the whole mesh.
    */
   readonly range?: readonly [number, number];
+  /** Exact local bounds of `range` in a shared static mesh. Without this the whole mesh is culled as one box. */
+  readonly rangeBounds?: readonly [number, number, number, number, number, number];
+  /** Only static region land uses this narrow submission-coalescing path; logical draws stay separate. */
+  readonly regionLandBatch?: true;
   /**
    * How much of the style's weather snow this draw takes (0..1, default 1): 0 for what snow never lies on -- a lit sign,
    * a cloud, a plane in the sky. Only read when the style has weather.
@@ -298,6 +302,8 @@ export interface MeshStyle extends Omit<LayerStyle, "heights"> {
   readonly gap?: number;
   /** Skip meshes the frustum can't see (default true; false draws everything, for a debug shot). */
   readonly cull?: boolean;
+  /** Diagnostic reference: false keeps each logical region-land range as its own indexed submission. */
+  readonly regionLandBatch?: boolean;
   /**
    * The sun's own shadow (default on): the meshes drawn once from the sun into a depth map, so a roof shades its cabin
    * and a car shades the one beside it. `strength` 0..1 (default 0.75), `size` the map's pixels (default 1024).
@@ -385,4 +391,3 @@ export interface MeshGBuffer {
  * bands (default 4) -- pixel art has no blending, so a far wall takes a dithered share of the haze colour instead.
  */
 export interface MeshFog { readonly colour: readonly [number, number, number]; readonly near: number; readonly far: number; readonly max?: number; readonly steps?: number }
-
