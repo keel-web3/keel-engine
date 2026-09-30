@@ -20,7 +20,8 @@
     "./native-asset-compiler-v5": "./src/asset-compiler-v5.ts",
     "./preserved-asset-runtime": "./src/asset-replay-v5.ts",
     "./native-asset-compiler-v6": "./src/asset-compiler-v6.ts",
-    "./native-asset-runtime": "./src/asset-replay-v6.ts"
+    "./native-asset-runtime": "./src/asset-replay-v6.ts",
+    "./styled-asset": "./src/styled-asset-runtime.ts"
   },
   "dependencies": {
     "@keel-engine/builder": "workspace:*",
