@@ -481,6 +481,18 @@ uniform vec3 uWxAlt;`],
 const FULLSCREEN_VS = `#version 300 es
 void main() { vec2 p = vec2(gl_VertexID == 1 ? 3.0 : -1.0, gl_VertexID == 2 ? 3.0 : -1.0); gl_Position = vec4(p, 0.0, 1.0); }`;
 
+// Only the static land packer creates these draws. Keep the logical draw list (IDs,
+// seams and bloom rows) intact; combine GPU submissions only when every shader
+// input is the same and the next visible range begins at this one's end.
+const REGION_LAND_FIELDS = new Set(["mesh", "matrix", "look", "bloom", "seam", "chunk", "range", "rangeBounds", "regionLandBatch"]);
+function sameRegionLandState(a: MeshDraw, b: MeshDraw, count: number): boolean {
+  if (!a.regionLandBatch || !b.regionLandBatch || !a.seam || a.seam !== b.seam || !a.range || !b.range) return false;
+  if (a.mesh !== b.mesh || a.matrix !== b.matrix || a.look !== b.look || a.bloom !== b.bloom || a.chunk !== b.chunk) return false;
+  if (!Object.keys(a).every((k) => REGION_LAND_FIELDS.has(k)) || !Object.keys(b).every((k) => REGION_LAND_FIELDS.has(k))) return false;
+  const [ao, an] = a.range, [bo, bn] = b.range;
+  return ao >= 0 && an > 0 && bo >= 0 && bn > 0 && ao + an === bo && bo + bn <= count;
+}
+
 export function createMeshPass(deps: MeshPassDeps): MeshPass {
   const { gl, link } = deps;
   const stats = { meshes: 0, drawn: 0, culled: 0, triangles: 0, bloomPixels: 0, reduced: 0, shadowDrawn: 0, shadowTriangles: 0 };
@@ -650,6 +662,10 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
     const posed = new Map<MeshDraw, { lo: number[]; hi: number[]; bounds: Bounds }>();
     const boundsFor = (d: MeshDraw) => {
       const g = M0.meshes.get(d.mesh)!;
+      if (d.range && d.rangeBounds && !d.parts) {
+        const bounds = d.rangeBounds;
+        return { lo: bounds.slice(0, 3), hi: bounds.slice(3), bounds };
+      }
       if (!d.parts || d.parts.length < 16) return g;
       let b = posed.get(d);
       if (!b) { const bounds = posedBounds(g.parts, d.parts); b = { lo: bounds.slice(0, 3), hi: bounds.slice(3), bounds }; posed.set(d, b); }
@@ -785,9 +801,10 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
       const seams = new Map<number, number>();
       draws.forEach((d, i) => { if (d.seam && !seams.has(d.seam)) seams.set(d.seam, i); });
       unsent();
-      draws.forEach((d, i) => {
+      for (let i = 0; i < draws.length; i += 1) {
+        const d = draws[i]!;
         const g = M.meshes.get(d.mesh);
-        if (!g || (d.fade ?? 1) <= 0) return;
+        if (!g || (d.fade ?? 1) <= 0) continue;
         const m = d.matrix;
         const at = d.anchor ?? [m[12]!, m[13]!, m[14]!];
         // (Where the thing sits in the picture: its dither's anchor. An orthographic draw also snaps its whole picture
@@ -808,10 +825,16 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
         if (d.parts && d.parts.length >= 16) { poseTexture(M, d.parts); u1(16, G.parts, 12, true); u1(17, G.posed, 1, true); } else u1(17, G.posed, 0, true);
         gl.bindVertexArray(g.vao);
         const [off, cnt] = d.range ?? [0, g.count];
-        const n = Math.max(0, Math.min(cnt, g.count - off));
+        let n = Math.max(0, Math.min(cnt, g.count - off));
+        if (style.regionLandBatch !== false && d.regionLandBatch && d.range && n === cnt) {
+          while (i + 1 < draws.length && sameRegionLandState(draws[i]!, draws[i + 1]!, g.count)) {
+            i += 1;
+            n += draws[i]!.range![1];
+          }
+        }
         gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_INT, off * 4);
         triangles += n / 3;
-      });
+      }
       stats.triangles = triangles;
       gl.bindVertexArray(null);
       // Pass 2: paint the G-buffer through the looks, into what was bound.
