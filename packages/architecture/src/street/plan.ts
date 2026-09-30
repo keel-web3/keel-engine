@@ -21,6 +21,7 @@ import type { AdSlotSpec, FurnitureKind, LightSpot, PlantKind, PlantSpot, PropPa
 import { furniture, lamp, signal, signpost, tree } from "./furniture.ts";
 import { planInfraSteps } from "./infra.ts";
 import { trafficSign, trafficSignRadius } from "./roadside.ts";
+import { districtBlockIndex } from "./district-index.ts";
 import type { TrafficSignKind } from "./roadside.ts";
 
 export interface StreetChunk {
@@ -85,10 +86,10 @@ export function* planStreetsSteps(sc: StreetCatalogue, city: City, height?: City
   const centres = city.blocks.map(blockCentre);
   const blockDistrict = new Map<number, number>();
   for (const l of city.lots) blockDistrict.set(l.block, l.district);
+  const nearestDistrictBlock = districtBlockIndex(centres, blockDistrict);
   /** The district a point is in: its nearest block's. */
   const districtAt = (x: number, z: number): District => {
-    let best = 0, d2 = Infinity;
-    centres.forEach(([cx, cz], i) => { const d = (cx - x) * (cx - x) + (cz - z) * (cz - z); if (d < d2 && blockDistrict.has(i)) { d2 = d; best = i; } });
+    const best = nearestDistrictBlock(x, z);
     return city.districts[blockDistrict.get(best) ?? 0]!;
   };
   const chunks = new Map<string, { district: number; solids: Solid[] }>();
