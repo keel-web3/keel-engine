@@ -221,5 +221,5 @@ export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityH
     const [x, , z] = toWorld(b, (x0 + x1) / 2, 0, (z0 + z1) / 2);
     footprint.push({ x, z, hw: (x1 - x0) / 2, hd: (z1 - z0) / 2, yaw: f.yaw });
   }
-  return { key: lot.key, archetype: a.id, condition, wall, solids: b.solids, footprint, height: b.top, ...(height ? { base, foot } : {}), lights: b.lights, props: b.props, plants: b.plants, ads: b.ads, ...(b.water.length ? { water: b.water } : {}), ...(b.anchors.length ? { anchors: b.anchors } : {}) };
+  return { key: lot.key, archetype: a.id, condition, wall, solids: b.solids, surfaces: b.surfaces, barriers: b.barriers, doors: b.doors, vehicles: b.vehicles, parking: b.parking, footprint, height: b.top, ...(height ? { base, foot } : {}), lights: b.lights, props: b.props, plants: b.plants, ads: b.ads, ...(b.water.length ? { water: b.water } : {}), ...(b.anchors.length ? { anchors: b.anchors } : {}) };
 }

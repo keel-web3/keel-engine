@@ -19,7 +19,7 @@ import { placerAt } from "../frame.ts";
 import { frameOf } from "../plan.ts";
 import type { AdSlotSpec, FurnitureKind, LightSpot, PlantKind, PlantSpot, PropPart, PropSpot, Solid, StreetCatalogue, StreetSign } from "../types.ts";
 import { furniture, lamp, signal, signpost, tree } from "./furniture.ts";
-import { planInfra } from "./infra.ts";
+import { planInfraSteps } from "./infra.ts";
 import { trafficSign, trafficSignRadius } from "./roadside.ts";
 import type { TrafficSignKind } from "./roadside.ts";
 
@@ -47,6 +47,7 @@ export interface StreetPlan {
 
 /** What the city's grid hands the streets (none of it needed): substations to run a line in to, feeds from the land round it. */
 export interface StreetGrid {
+  readonly driveways?: readonly { x:number; z:number; fx:number; fz:number }[];
   readonly substations?: readonly { readonly x: number; readonly z: number }[];
   readonly feeds?: readonly { readonly x: number; readonly z: number }[];
 }
@@ -74,6 +75,13 @@ const along = (e: RoadEdge, s: number): { x: number; z: number; yaw: number } =>
 const motorway = (cls: RoadEdge["cls"]): boolean => cls === "highway" || cls === "freeway" || cls === "ramp";
 
 export function planStreets(sc: StreetCatalogue, city: City, height?: CityHeight, grid: StreetGrid = {}): StreetPlan {
+  const steps = planStreetsSteps(sc, city, height, grid);
+  for (;;) { const next = steps.next(); if (next.done) return next.value; }
+}
+
+/** Same deterministic street plan, yielding between roads and junctions. */
+export function* planStreetsSteps(sc: StreetCatalogue, city: City, height?: CityHeight, grid: StreetGrid = {}): Generator<number, StreetPlan, void> {
+  let progress = 0;
   const yAt = (x: number, z: number): number => (height ? height.heightAt(x, z) : 0);
   const g = city.graph, streets = streetsOf(g);
   const centres = city.blocks.map(blockCentre);
@@ -133,6 +141,7 @@ export function planStreets(sc: StreetCatalogue, city: City, height?: CityHeight
     const f = frameOf(lot), fx = dsin(f.yaw), fz = dcos(f.yaw);
     doors.push({ x: f.x + fx * f.hd, z: f.z + fz * f.hd, fx, fz });
   }
+  doors.push(...(grid.driveways ?? []));
   const doorHash = new Map<string, number[]>();
   doors.forEach((d, i) => { const k = `${Math.floor(d.x / 32)},${Math.floor(d.z / 32)}`, l = doorHash.get(k) ?? []; l.push(i); doorHash.set(k, l); });
   const byDoor = (x: number, z: number, r: number): boolean => {
@@ -167,6 +176,7 @@ export function planStreets(sc: StreetCatalogue, city: City, height?: CityHeight
 
   // ---------------------------------------------------------------- junctions: signals and signposts on the corners.
   for (const j of streets.junctions) {
+    yield 0;
     const D = drawsFor(city.site.seed, `junction|${j.node}`);
     // (Signals where two arterials cross; where a street meets one, its stop line and a post will do.)
     const arterialRoads = new Set(j.arms.filter((a) => a.cls === "arterial").map((a) => a.group));
@@ -232,6 +242,7 @@ export function planStreets(sc: StreetCatalogue, city: City, height?: CityHeight
 
   // Lamps: staggered side to side at the class's spacing, at the kerb (a highway's masts out on its verge).
   for (const run of runs) {
+    yield Math.min(0.99, ++progress / (city.graph.edges.length * 8));
     const { e, kind, D } = run;
     const spacing = sc.spacing[e.cls], style = sc.lampStyles[(kind !== "highway" ? sc.lampsBy?.[kind]?.[e.cls] : undefined) ?? sc.lamps[kind]];
     if (!(spacing > 0) || !style || run.lampS1 - run.lampS0 < 4) continue;
@@ -252,6 +263,7 @@ export function planStreets(sc: StreetCatalogue, city: City, height?: CityHeight
   // Road signs repeat through long stretches, with separate seeded designs at every placement.
   // Endpoints follow the junction/one-way data; bends follow the road, and parking belongs to ordinary streets.
   for (const run of runs) {
+    yield Math.min(0.99, ++progress / (city.graph.edges.length * 8));
     const { e } = run, highway = motorway(e.cls), kerbW = SIDEWALK[e.cls].kerb;
     const every = sc.signEvery?.[e.cls] ?? (highway ? 180 : e.cls === "arterial" ? 95 : 75);
     if (!(every > 0) || e.bridge) continue;
@@ -291,6 +303,7 @@ export function planStreets(sc: StreetCatalogue, city: City, height?: CityHeight
   const order: FurnitureKind[] = ["busStop", "tree", "bench", "planter", "newsBoxes", "bin", "hydrant", "bollards"];
   for (const want of order) {
     for (const run of runs) {
+    yield Math.min(0.99, ++progress / (city.graph.edges.length * 8));
       const { e, kind, D } = run;
       if (kind === "highway") continue;
       const kerbW = SIDEWALK[e.cls].kerb, slabW = SIDEWALK[e.cls].slab;
@@ -345,10 +358,10 @@ export function planStreets(sc: StreetCatalogue, city: City, height?: CityHeight
       }
       return best;
     };
-    planInfra({
+    for (const _ of planInfraSteps({
       city, spec: sc.infra, crowns: sc.crowns ?? {}, streets, height, runs, substations: grid.substations ?? [], feeds: grid.feeds ?? [],
       along, spot, fits, roomAt, claim, clear, byDoor, chunkAt, yAt, districtAt, blockDist, props, plants, ads, barriers, signs, note,
-    });
+    })) yield 0.99;
   }
 
   return {

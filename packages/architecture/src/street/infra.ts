@@ -71,6 +71,10 @@ const EXIT_NAME: Readonly<Record<DistrictKind, string>> = {
 const RAIL_OUT = 0.8, SIGN_OUT = 2.9, WALL_OUT = 4.2, BILLBOARD_OUT = 11;
 
 export function planInfra(c: InfraContext): void {
+  for (const _ of planInfraSteps(c)) { /* synchronous consumer */ }
+}
+
+export function* planInfraSteps(c: InfraContext): Generator<void, void, void> {
   const { city, spec, streets } = c, g = city.graph, seed = city.site.seed;
   const place = (D: Draws, x: number, z: number, yaw: number): Placer => placerAt(D, x, z, yaw, c.chunkAt(x, z), c.plants, c.ads, c.yAt(x, z));
   const prop = (kind: PropKind, x: number, z: number, r: number, breaks: boolean): void => { const q: PropSpot = { kind, x, z, r, breaks }; c.props.push(q); c.note?.(q); };
@@ -135,6 +139,7 @@ export function planInfra(c: InfraContext): void {
   if (H) {
     // ---- sign gantries: one mid-way along each long ring stretch, its boards naming the exits ahead either way.
     for (const run of highwayRuns) {
+      yield;
       const { e, D } = run, L = e.path.length - 1;
       if (!ringIds.has(e.id) || L < H.gantryMin) continue;
       const reach = e.half + kerbHw + 1.4;
@@ -153,6 +158,7 @@ export function planInfra(c: InfraContext): void {
     }
     // ---- cameras on some highway stretches (road signs are placed by planStreets).
     for (const run of highwayRuns) {
+      yield;
       const { e, D } = run, L = e.path.length - 1;
       if (L < 120) continue;
       if (D.u("camera") < H.cameras) {
@@ -169,6 +175,7 @@ export function planInfra(c: InfraContext): void {
     }
     // ---- sound walls: along the highway where the districts behind it are ones that asked for them.
     for (const run of highwayRuns) {
+      yield;
       const { e, D } = run, L = e.path.length - 1, STEP = 8;
       for (const side of [1, -1] as const) {
         const segs: { a: { x: number; z: number }; b: { x: number; z: number } }[][] = [[]];
@@ -194,6 +201,7 @@ export function planInfra(c: InfraContext): void {
     }
     // ---- billboards: on monopoles out on the verges, every few hundred metres, a side by the seed.
     for (const run of highwayRuns) {
+      yield;
       const { e, D } = run, L = e.path.length - 1, [lo, hi] = H.billboards;
       for (let s = 60 + D.u("bbPhase") * lo * 0.5, n = 0; s < L - 60; s += lo + (hi - lo) * D.u("bbGap", n), n += 1) {
         const side: 1 | -1 = D.u("bbSide", n) < 0.62 ? outside(e, s) : (-outside(e, s) as 1 | -1);
@@ -317,6 +325,7 @@ export function planInfra(c: InfraContext): void {
   const U = spec.poles;
   if (U) {
     for (const run of c.runs) {
+      yield;
       const { e, kind, D } = run;
       if (kind === "highway" || !U.districts.includes(kind) || !U.roads.includes(e.cls) || run.s1 - run.s0 < U.every) continue;
       const sw = SIDEWALK[e.cls], out = sw.kerb + sw.slab - 0.45, side: 1 | -1 = D.u("poleSide") < 0.5 ? 1 : -1;
@@ -352,6 +361,7 @@ export function planInfra(c: InfraContext): void {
   // ---- guard rails: round the outside of the highway's tighter bends (last: they fit round everything else).
   if (H) {
     for (const run of highwayRuns) {
+      yield;
       const { e, D } = run, L = e.path.length - 1, SEG = 4;
       const bent: (1 | -1 | 0)[] = [];
       for (let s = 0; s <= L; s += 1) {
@@ -387,11 +397,14 @@ export function planInfra(c: InfraContext): void {
   if (M) {
     const D = drawsFor(seed, "infra|masts"), want = M.count[0] + Math.floor((M.count[1] - M.count[0] + 1) * D.u("count"));
     const [x0, z0, x1, z1] = g.bounds, cands: { x: number; z: number; y: number }[] = [];
-    for (let z = z0 + 30; z < z1 - 30; z += 24) for (let x = x0 + 30; x < x1 - 30; x += 24) {
+    for (let z = z0 + 30; z < z1 - 30; z += 24) {
+      yield;
+      for (let x = x0 + 30; x < x1 - 30; x += 24) {
       const jx = x + (D.u("mx", Math.round(x), Math.round(z)) - 0.5) * 12, jz = z + (D.u("mz", Math.round(x), Math.round(z)) - 0.5) * 12;
       if (dhypot(jx, jz) > city.site.size / 2 - 20 || !open(jx, jz, 4, 6) || !c.roomAt(jx, jz, 4, 4)) continue;
       // (Flat ground has no high point: a seeded one then.)
       cands.push({ x: jx, z: jz, y: c.height ? c.yAt(jx, jz) + D.u("tie", Math.round(jx), Math.round(jz)) * 0.01 : D.u("tie", Math.round(jx), Math.round(jz)) });
+    }
     }
     cands.sort((a, b) => b.y - a.y || a.x - b.x || a.z - b.z);
     const chosen: { x: number; z: number }[] = [];
@@ -405,7 +418,7 @@ export function planInfra(c: InfraContext): void {
     }
   }
 
-  if (spec.cover) groundCover(c, onLot);
+  if (spec.cover) yield* groundCover(c, onLot);
 }
 
 /**
@@ -416,7 +429,7 @@ export function planInfra(c: InfraContext): void {
  * none downtown. Every plant's spread stays off the carriageway and the pavement's walk, off crossings, off lots, and
  * (anything taller than grass) out of the junctions' sight lines.
  */
-function groundCover(c: InfraContext, onLot: (x: number, z: number, r: number) => boolean): void {
+function* groundCover(c: InfraContext, onLot: (x: number, z: number, r: number) => boolean): Generator<void, void, void> {
   const { city, streets } = c, spec = c.spec.cover!, crowns = c.crowns, D = drawsFor(city.site.seed, "infra|cover");
   const density = (x: number, z: number, highway = false): number => (highway ? spec.density.highway ?? 0 : spec.density[c.districtAt(x, z).kind] ?? 0);
   const lush = (x: number, z: number): boolean => spec.lush.includes(c.districtAt(x, z).kind);
@@ -473,6 +486,7 @@ function groundCover(c: InfraContext, onLot: (x: number, z: number, r: number) =
   }
   // ---- along every road: tufts at the pavement's back edge; scrub down a highway's shoulders.
   for (const run of c.runs) {
+      yield;
     const { e } = run, L = e.path.length - 1, hw = e.cls === "highway", sw = SIDEWALK[e.cls];
     const step = hw ? 9 : 14;
     for (let s = run.s0 + 2, i = 0; s < run.s1 - 2; s += step, i += 1) for (const side of [1, -1] as const) {

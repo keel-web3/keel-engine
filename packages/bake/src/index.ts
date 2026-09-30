@@ -19,7 +19,7 @@ export type { CardKind, CardSpot, CardsOptions } from "./cards.ts";
 export { DEPTH_RANGE, NEAR, axesOf, defaultMeshSun, orthoDepthRange, projectionOf, shotOfView } from "./project.ts";
 export type { ClipPlanes, OrthoShot, PerspShot, Projection, Shot } from "./project.ts";
 // Levels of detail as one mesh: nested prefixes a draw picks by index range (keel/lod chooses which).
-export { layeredMesh, prefixMesh, solidSize, worldError, prepareMeshDetail } from "./lod-mesh.ts";
+export { coarseLayerMesh, layeredMesh, layeredMeshSteps, prefixMesh, solidSize, worldError, prepareMeshDetail } from "./lod-mesh.ts";
 export type { LayeredMesh, MeshLayer, MeshDetail, MeshHolder } from "./lod-mesh.ts";
 export { boundsOf, boxCorners, frustumOf, visible } from "./cull.ts";
 export type { Planes } from "./cull.ts";
@@ -89,3 +89,6 @@ export type { PortraitPlan, PortraitSheet, PortraitSprite, PortraitState, Portra
 export { softBake, softMask, type SoftMask, type SoftMaskOptions, type SoftSprite } from "./soft.ts";
 export { BLOOM_REACH, createBloomPass } from "./bloom.ts";
 export type { BloomPass } from "./bloom.ts";
+
+export { createMeshWorker, serveMeshWorker } from "./mesh-worker.ts";
+export type { MeshWorker } from "./mesh-worker.ts";

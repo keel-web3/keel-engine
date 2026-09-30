@@ -27,12 +27,19 @@ export interface HillOptions {
 
 /** Add rolling hills to a grid (centred on 0: as much below as above). */
 export function addHills(g: HeightGrid, seed: string | number, o: HillOptions): HeightGrid {
+  const steps = addHillsSteps(g, seed, o);
+  for (;;) { const next = steps.next(); if (next.done) return next.value; }
+}
+
+/** Identical grid, with bounded row batches for interactive generators. */
+export function* addHillsSteps(g: HeightGrid, seed: string | number, o: HillOptions): Generator<number, HeightGrid, void> {
   const s = seedInt(seed), k = 1 / (o.scale ?? 300), oct = o.octaves ?? 4;
   for (let j = 0; j < g.h; j += 1) {
     for (let i = 0; i < g.w; i += 1) {
       const x = cellX(g, i), z = cellZ(g, j), amp = typeof o.amplitude === "number" ? o.amplitude : o.amplitude(x, z);
       g.data[j * g.w + i]! += (fbm2(x * k, z * k, s, oct) - 0.5) * 2 * amp;
     }
+    if (j % 4 === 3) yield (j + 1) / g.h;
   }
   return g;
 }
@@ -88,6 +95,12 @@ function lockedAt(g: HeightGrid, lock: Uint8Array, x: number, z: number): number
  * (metres along it and the height there), what a road renderer or a car's route reads.
  */
 export function gradeCorridor(g: HeightGrid, xs: ArrayLike<number>, zs: ArrayLike<number>, o: CorridorOptions): { s: Float64Array; y: Float64Array } {
+  const steps = gradeCorridorSteps(g, xs, zs, o);
+  for (;;) { const next = steps.next(); if (next.done) return next.value; }
+}
+
+/** Preserve grading order while yielding inside long roads. */
+export function* gradeCorridorSteps(g: HeightGrid, xs: ArrayLike<number>, zs: ArrayLike<number>, o: CorridorOptions): Generator<void, { s: Float64Array; y: Float64Array }, void> {
   // The line, resampled every cell: its length along, and the land's height under it.
   const px: number[] = [], pz: number[] = [], ps: number[] = [];
   let run = 0;
@@ -154,6 +167,7 @@ export function gradeCorridor(g: HeightGrid, xs: ArrayLike<number>, zs: ArrayLik
   // Onto the grid: each cell near the line takes the height of its nearest point on it, as much as the corridor owns it.
   const reach = o.half + o.blend, best = new Map<number, { d: number; y: number }>();
   for (let n = 1; n < m; n += 1) {
+    if (n % 16 === 1) yield;
     const ax = px[n - 1]!, az = pz[n - 1]!, dx = px[n]! - ax, dz = pz[n]! - az, l2 = dx * dx + dz * dz || 1;
     const i0 = Math.max(0, Math.floor((Math.min(ax, px[n]!) - reach - g.x0) / g.cell)), i1 = Math.min(g.w - 1, Math.ceil((Math.max(ax, px[n]!) + reach - g.x0) / g.cell));
     const j0 = Math.max(0, Math.floor((Math.min(az, pz[n]!) - reach - g.z0) / g.cell)), j1 = Math.min(g.h - 1, Math.ceil((Math.max(az, pz[n]!) + reach - g.z0) / g.cell));

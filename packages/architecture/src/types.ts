@@ -32,6 +32,7 @@ export type MassOp =
   | { readonly op: "decks" }
   | { readonly op: "diner" }
   // (Car culture and the roadside: business.ts.)
+  | { readonly op: "houseGarage"; readonly urban?: boolean }
   | { readonly op: "showroom" }
   | { readonly op: "bigbox"; readonly mall?: boolean }
   | { readonly op: "drivethru" }
@@ -181,7 +182,18 @@ export type Lod = 0 | 1 | 2;
 export interface Solid { readonly lod: Lod; readonly layer?: 0 | 1; readonly box?: BakeBox; readonly capsule?: BakeCapsule }
 
 export type Condition = "pristine" | "worn" | "derelict";
+/** A passenger vehicle placement; the game supplies its canonical car mesh and collision dimensions. */
+export interface ParkedVehicle { readonly key: string; readonly x: number; readonly y: number; readonly z: number; readonly yaw: number; readonly hw: number; readonly hd: number }
+/** A usable bay and its path from the entrance, in world metres. Empty bays are retained. */
+export interface ParkingBay extends ParkedVehicle { readonly occupied: boolean; readonly route: readonly (readonly [number, number, number?])[] }
+/** A floor or ramp: heights at local -z and +z, sampled against the car's current level. */
+export interface GarageSurface { readonly x: number; readonly z: number; readonly yaw: number; readonly hw: number; readonly hd: number; readonly back: number; readonly front: number }
 export interface BuildingPlan {
+  readonly surfaces?: readonly GarageSurface[];
+  readonly barriers?: readonly (Obb & { readonly yMin: number; readonly yMax: number })[];
+  readonly doors?: readonly { readonly x: number; readonly z: number; readonly hw: number; readonly h: number }[];
+  readonly vehicles?: readonly ParkedVehicle[];
+  readonly parking?: readonly ParkingBay[];
   readonly key: string;
   readonly archetype: string;
   readonly condition: Condition;

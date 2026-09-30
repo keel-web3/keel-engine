@@ -21,11 +21,20 @@ export interface BlockPlan {
 
 /** Every lot planned, grouped by block (on the city's height, if given). */
 export function planCity(cat: Catalogue, city: City, height?: CityHeight): BlockPlan[] {
+  const steps = planCitySteps(cat, city, height);
+  for (;;) { const next = steps.next(); if (next.done) return next.value; }
+}
+
+/** Same plans and ordering, yielding after each lot so a loader can return control to the browser. */
+export function* planCitySteps(cat: Catalogue, city: City, height?: CityHeight): Generator<number, BlockPlan[], void> {
   const byBlock = new Map<number, BuildingPlan[]>();
-  for (const lot of city.lots) { const l = byBlock.get(lot.block) ?? []; l.push(planLot(cat, city, lot, height)); byBlock.set(lot.block, l); }
+  let done = 0;
+  for (const lot of city.lots) { const l = byBlock.get(lot.block) ?? []; l.push(planLot(cat, city, lot, height)); byBlock.set(lot.block, l); yield ++done / city.lots.length; }
   const zoning = zoningOf(cat, city);
+  const lotsByBlock = new Map<number, typeof city.lots[number][]>();
+  for (const lot of city.lots) { const group = lotsByBlock.get(lot.block) ?? []; group.push(lot); lotsByBlock.set(lot.block, group); }
   return [...byBlock].map(([block, plans]) => {
-    const lots = city.lots.filter((l) => l.block === block), district = city.districts[lots[0]!.district]!;
+    const lots = lotsByBlock.get(block)!, district = city.districts[lots[0]!.district]!;
     const c = zoning.commons.get(block);
     // (The lake's level: a hand over the highest of its lots' pads, as its lots lay it.)
     const lake = c?.water ? lakeOf(c, (height ? Math.max(...lots.map((l) => height.pad(l))) : 0) + 0.1) : null;
