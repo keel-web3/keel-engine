@@ -1,5 +1,6 @@
 /** Declarative styled-asset transport. Only this trusted runtime executes code;
  * uploaded assets contain data, never import paths or executable programs. */
+import { importRasterEnvelope } from './raster-asset.ts';
 import { SCREENS } from '@keel-engine/core';
 import type { ScreenId } from '@keel-engine/core';
 import { COMPILER_VERSION } from './asset-replay-v6.ts';
@@ -16,7 +17,7 @@ import type { ArchiveFile } from './asset-package-v3.ts';
 export const STYLED_ASSET_FORMAT = 'KEEL-STYLED-ASSET';
 export const STYLED_ASSET_VERSION = 2;
 export const VOXEL_STYLED_ASSET_VERSION = 3;
-export const STYLED_ASSET_RUNTIME_VERSION = 'keel-styled-asset-4.0.0';
+export const STYLED_ASSET_RUNTIME_VERSION = 'keel-styled-asset-5.0.0';
 const LEGACY_DEPENDENCIES = Object.freeze({
   runtime: 'keel-styled-asset-1.0.0',
   nativeCompiler: COMPILER_VERSION,
@@ -29,7 +30,7 @@ const LEGACY_DEPENDENCIES = Object.freeze({
 // existing compact Pixel/Dither assets.
 export const STYLED_ASSET_DEPENDENCIES = Object.freeze({ ...LEGACY_DEPENDENCIES, runtime: 'keel-styled-asset-2.0.0', textureCodec: 'keel-stylized-textures-v1' });
 export const VOXEL_ASSET_DEPENDENCIES = Object.freeze({ runtime: 'keel-styled-asset-3.0.0', '@keel-engine/import': '0.1.0', '@keel-engine/core': '0.1.0', fflate: '0.8.2', renderer: 'three@0.180.0', loader: 'three@0.180.0/GLTFLoader', voxelCodec: 'keel-static-voxel-snapshot-v1' });
-export const ANIMATED_VOXEL_DEPENDENCIES = Object.freeze({ ...VOXEL_ASSET_DEPENDENCIES, runtime: STYLED_ASSET_RUNTIME_VERSION, animationCodec: ANIMATED_VOXEL_FORMAT });
+export const ANIMATED_VOXEL_DEPENDENCIES = Object.freeze({ ...VOXEL_ASSET_DEPENDENCIES, runtime: 'keel-styled-asset-4.0.0', animationCodec: ANIMATED_VOXEL_FORMAT });
 export interface StyledAssetStyle {
   kind: 'original' | 'pixel' | 'dither' | 'voxel';
   pixelSize: number;
@@ -111,6 +112,7 @@ function parseEnvelope(bytes: Uint8Array): any {
   if (bytes.length >= 4 && bytes[0] === 0x4b && bytes[1] === 0x41 && bytes[2] === 0x50 && bytes[3] === 0x33) return unpackAsset(bytes);
   const value = JSON.parse(utf8.decode(bytes));
   if (value?.version === 3 && value?.voxel?.data?.encoding === 'base64') { keys(value.voxel.data, ['encoding', 'data'], 'voxel data'); value.voxel.data = unbase64(value.voxel.data.data); }
+  if (value?.version === 5 && value.raster?.recipe?.data?.encoding === 'base64') { keys(value.raster.recipe.data, ['encoding', 'data'], 'raster data'); value.raster.recipe.data = unbase64(value.raster.recipe.data.data); }
   if (value?.version === 4) {
     const r = value.animatedVoxel;
     if (!Array.isArray(r?.motion) || r.motion.length > 8192 || !Array.isArray(r?.parts) || r.parts.length > 512) fail('invalid animated voxel tables');
@@ -276,14 +278,15 @@ function readableAnimatedJson(value: any, level = 0): string {
 /** Optional readable export. The canonical download remains compact binary. */
 export function styledAssetJson(bytes: Uint8Array): string {
   const envelope = parseEnvelope(bytes);
-  if (envelope?.format !== STYLED_ASSET_FORMAT || ![1, 2, 3, 4].includes(envelope.version)) fail('unsupported envelope version');
-  if (envelope.version === 4) return readableAnimatedJson(envelope);
+  if (envelope?.format !== STYLED_ASSET_FORMAT || ![1, 2, 3, 4, 5].includes(envelope.version)) fail('unsupported envelope version');
+  if (envelope.version >= 4) return readableAnimatedJson(envelope);
   if (envelope.version >= 3) return JSON.stringify(envelope, (_k, v) => v instanceof Uint8Array ? { encoding: 'base64', data: base64(v) } : v, 2);
   const nativeBytes = nativeBytesOf(envelope.native);
   return JSON.stringify({ ...envelope, native: { ...envelope.native, encoding: 'base64-kap', data: base64(nativeBytes) } }, null, 2);
 }
 export async function importStyledAsset(bytes: Uint8Array, options: { dracoDecoder?: any } = {}) {
   const e = parseEnvelope(bytes); dataOnly(e);
+  if (e.version === 5) return importRasterEnvelope(e);
   if (e.version === 4) return importAnimatedVoxelEnvelope(e);
   if (e.version === 3) return importVoxelEnvelope(e);
   keys(e, ['format', 'version', 'name', 'dependencies', 'native', 'style', 'sourceBounds', 'animation', 'voxel', ...(e.version === 2 ? ['conversion'] : [])], 'envelope');
@@ -314,13 +317,13 @@ export async function importStyledAsset(bytes: Uint8Array, options: { dracoDecod
 }
 export type ImportedStyledAsset = Awaited<ReturnType<typeof importStyledAsset>>;
 
-export const STYLED_ASSET_PROGRAM = `// Trusted loader for KEEL-STYLED-ASSET v1/v2/v3/v4. Uploaded recipes are never executed.\nimport {importStyledAsset,createStyledAssetPlayer} from './styled-asset-runtime.mjs';\nexport async function build(data,options={}){if(!data){const url=new URL('./asset.keelasset',import.meta.url);if(typeof process!=='undefined'&&process.versions?.node)data=new Uint8Array(await(await import('node:fs/promises')).readFile(url));else{const r=await fetch(url);if(!r.ok)throw Error('Styled asset data unavailable');data=new Uint8Array(await r.arrayBuffer());}}return importStyledAsset(data,options);}\nexport async function createPlayer(host,data,options={}){return createStyledAssetPlayer({...host,asset:await build(data,options)});}\n`;
+export const STYLED_ASSET_PROGRAM = `// Trusted loader for KEEL-STYLED-ASSET v1/v2/v3/v4/v5. Uploaded recipes are never executed.\nimport {importStyledAsset,createStyledAssetPlayer} from './styled-asset-runtime.mjs';\nexport async function build(data,options={}){if(!data){const url=new URL('./asset.keelasset',import.meta.url);if(typeof process!=='undefined'&&process.versions?.node)data=new Uint8Array(await(await import('node:fs/promises')).readFile(url));else{const r=await fetch(url);if(!r.ok)throw Error('Styled asset data unavailable');data=new Uint8Array(await r.arrayBuffer());}}return importStyledAsset(data,options);}\nexport async function createPlayer(host,data,options={}){return createStyledAssetPlayer({...host,asset:await build(data,options)});}\n`;
 export function makeStyledAssetArchive(bytes: Uint8Array, support: { runtime: Uint8Array; licenses: ArchiveFile[]; dracoFiles?: ArchiveFile[] }): Uint8Array {
   if (!(bytes instanceof Uint8Array) || bytes.length > MAX_ENVELOPE) fail('invalid envelope extent');
   const envelope = parseEnvelope(bytes);
-  if (envelope?.format !== STYLED_ASSET_FORMAT || ![1, 2, 3, 4].includes(envelope.version)) fail('unsupported archive envelope');
+  if (envelope?.format !== STYLED_ASSET_FORMAT || ![1, 2, 3, 4, 5].includes(envelope.version)) fail('unsupported archive envelope');
   const dracoRequired = envelope.version < 3 && needsDraco(nativeBytesOf(envelope.native));
   if (dracoRequired) for (const name of ['draco-factory.mjs', 'draco_decoder_gltf.wasm']) if (!support.dracoFiles?.some(f => f.name === name)) fail('missing shared decoder file ' + name);
   for (const name of ['LICENSE-KEEL.txt', 'LICENSE-fflate.txt', 'LICENSE-Draco-Apache-2.0.txt', 'LICENSE-meshoptimizer.txt']) if (!support.licenses.some(f => f.name === name)) fail('missing runtime license ' + name);
-  return makeAssetZip([{ name: 'asset.keelasset', data: bytes }, { name: 'asset.generated.mjs', data: STYLED_ASSET_PROGRAM }, { name: 'styled-asset-runtime.mjs', data: support.runtime }, { name: 'dependencies.json', data: JSON.stringify(envelope.dependencies, null, 2) }, { name: 'README.txt', data: 'KEEL styled asset v1/v2/v3/v4. Import build or createPlayer from asset.generated.mjs. build() reconstructs native data and GLB; createPlayer({THREE, GLTFLoader, renderer}) replays the saved style and source animations. Host must provide Three.js 0.180.0 and its GLTFLoader. The shared runtime and Three dependencies are installed once. Pixel/dither may contain intentionally lossy palette/pattern textures; inspect the conversion field. Superseded color textures are absent when textureEncoding is palette-pattern-v1. Voxel v3 contains only a static posed cube reconstruction, with no source model, textures, rig or animation. Voxel v4 reconstructs cubes with resampled blended weights, original rig and TRS clips; morph animation is unsupported. Source bounds are optional camera hints, not animation bounds. No on-chain deployment is claimed.\n' }, ...(dracoRequired ? support.dracoFiles ?? [] : []), ...support.licenses]);
+  return makeAssetZip([{ name: 'asset.keelasset', data: bytes }, { name: 'asset.generated.mjs', data: STYLED_ASSET_PROGRAM }, { name: 'styled-asset-runtime.mjs', data: support.runtime }, { name: 'dependencies.json', data: JSON.stringify(envelope.dependencies, null, 2) }, { name: 'README.txt', data: 'KEEL styled asset v1/v2/v3/v4/v5. Import build or createPlayer from asset.generated.mjs. build() reconstructs native data and GLB; createPlayer({THREE, GLTFLoader, renderer}) replays the saved style and source animations. Host must provide Three.js 0.180.0 and its GLTFLoader. The shared runtime and Three dependencies are installed once. Pixel/dither may contain intentionally lossy palette/pattern textures; inspect the conversion field. Superseded color textures are absent when textureEncoding is palette-pattern-v1. Voxel v3 contains only a static posed cube reconstruction, with no source model, textures, rig or animation. Voxel v4 reconstructs cubes with resampled blended weights, original rig and TRS clips; morph animation is unsupported. Raster v5 contains sampled RGBA frames and view/clip metadata; its GLB is a static first-frame card and full animation requires this raster runtime. Source bounds are optional camera hints, not animation bounds. No on-chain deployment is claimed.\n' }, ...(dracoRequired ? support.dracoFiles ?? [] : []), ...support.licenses]);
 }

@@ -16,7 +16,7 @@ export async function buildStyledAsset(out) {
   await fs.writeFile(path.join(out, 'draco-factory.mjs'), '// Official draco3dgltf 1.5.7, portable ESM adapter; WASM supplied explicitly.\nconst process=undefined;const __filename=undefined;\n' + original + '\nexport default DracoDecoderModule;\n');
   await fs.copyFile(path.join(root, 'node_modules/draco3dgltf/draco_decoder_gltf.wasm'), path.join(out, 'draco_decoder_gltf.wasm'));
   const bytes = await fs.readFile(path.join(out, 'styled-asset-runtime.mjs'));
-  const report = { runtime: 'keel-styled-asset-4.0.0', bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex'), threeBundled: Object.keys(result.metafile.inputs).some(p => p.includes('node_modules/three/')), inputs: Object.keys(result.metafile.inputs) };
+  const report = { runtime: 'keel-styled-asset-5.0.0', bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex'), threeBundled: Object.keys(result.metafile.inputs).some(p => p.includes('node_modules/three/')), inputs: Object.keys(result.metafile.inputs) };
   await fs.writeFile(path.join(out, 'build-report.json'), JSON.stringify(report, null, 2) + '\n');
   return report;
 }

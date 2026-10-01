@@ -1,3 +1,4 @@
+import { createRasterThreePlayer } from './raster-player.ts';
 /** Trusted host adapter for complete glTF scenes. Three r180 owns glTF skinning,
  * materials and animation; KEEL owns the validated recipe, native replay and
  * threshold maps. This is deliberately a tooling subpath, not an on-chain module. */
@@ -53,6 +54,8 @@ export async function createStyledAssetPlayer(host: StyledPlayerHost) {
   if (!renderer || typeof renderer.render !== 'function') throw new TypeError('A Three renderer is required');
   const asset = host.asset instanceof Uint8Array ? await importStyledAsset(host.asset, { dracoDecoder: host.dracoDecoder }) : host.asset;
   if (asset?.format !== 'KEEL-IMPORTED-STYLED-ASSET' || !(asset.glb instanceof Uint8Array)) throw new TypeError('Use importStyledAsset before playback');
+  if (asset.animation?.mode === 'baked-frames' && !('raster' in asset)) throw new TypeError('Raster frames are missing; update the host raster import bridge');
+  if ('raster' in asset) return createRasterThreePlayer({ THREE, renderer, asset, ...(host.scene ? { scene: host.scene } : {}) });
   let style = validateStyledAssetStyle(asset.style);
   const loader = typeof host.GLTFLoader === 'function' ? new host.GLTFLoader() : host.GLTFLoader;
   if (!loader || typeof loader.parseAsync !== 'function') throw new TypeError('Three r180 GLTFLoader is required');
