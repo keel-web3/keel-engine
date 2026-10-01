@@ -8,6 +8,17 @@ import { decodeTexturePixels } from './optimization/textures.ts';
 import { encodeStylizedTexture } from './styled-texture-codec.ts';
 import { nativeTextureTables, removeStyledSourceImage, STYLIZED_TEXTURE_FORMAT } from './styled-texture-replay.ts';
 import { decodePng } from './png.ts';
+import { compileAnimatedVoxels } from './animated-voxel.ts';
+import { createAnimatedVoxelStyledAsset } from './styled-asset.ts';
+
+export async function compileAnimatedVoxelStyledAsset(input: Parameters<typeof compileAnimatedVoxels>[0] & { name?: string; style?: StyledAssetStyle; sourceBounds?: StyledAssetBounds | null }) {
+  const start = performance.now();
+  const result = await compileAnimatedVoxels(input);
+  const wrapStart = performance.now();
+  const assetBytes = await createAnimatedVoxelStyledAsset({ recipe: result.recipe, ...(input.name === undefined ? {} : { name: input.name }), ...(input.style === undefined ? {} : { style: input.style }), ...(input.sourceBounds === undefined ? {} : { sourceBounds: input.sourceBounds }) });
+  const imported = await importStyledAsset(assetBytes);
+  return { assetBytes, imported, report: { ...result.report, assetBytes: assetBytes.length, assetSha256: await hash(assetBytes), reconstructedGlbSha256: await hash(imported.glb) }, timings: { ...result.timings, voxelCompile: result.timings.total, envelopeAndValidation: performance.now() - wrapStart, total: performance.now() - start } };
+}
 
 export interface CompileStyledAssetInput {
   packageBytes: Uint8Array;

@@ -134,6 +134,7 @@ test('independent: protected-only maps retain original native bytes and make no 
   assert.equal(result.report.retainedImages, 1);
   assert.deepEqual(result.packageBytes, base.packageBytes);
   assert.deepEqual(unpackAsset(result.assetBytes).native.data, base.packageBytes);
+  assert.ok('textureEncoding' in result.imported.conversion && 'supersededColorPayloadRemoved' in result.imported.conversion && 'changedImages' in result.imported.conversion);
   assert.equal(result.imported.conversion.textureEncoding, 'native-input');
   assert.equal(result.imported.conversion.supersededColorPayloadRemoved, false);
   assert.equal(result.imported.conversion.changedImages, 0);

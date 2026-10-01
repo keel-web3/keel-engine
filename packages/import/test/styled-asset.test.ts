@@ -54,11 +54,12 @@ test('rejects incompatible, executable, corrupt, malformed, and contradictory en
 
 export const voxelFixture = { version: 1, kind: 'keel-static-voxel-style', coordinateSpace: 'source-world', colorSpace: 'linear-srgb', pose: 'static', size: [2, 1, 1], origin: [4, 5, 6], unit: .5, indices: [0, 1], colors: [1, 0, 0, 0, 1, 0], occupancy: [1, 1] };
 test('voxel import rebuilds cubes from grid recipe and labels static animation truthfully', async () => {
-  const c = await compiled(), bytes = await createStyledAsset({ packageBytes: c.packageBytes, style: { ...style, kind: 'voxel' }, voxel: voxelFixture });
+  const c = await compiled(), bytes = await createStyledAsset({ packageBytes: c.packageBytes, style: { ...style, kind: 'voxel' }, voxel: voxelFixture, staticPose: true });
   const imported = await importStyledAsset(bytes), json = readGlb(imported.glb).json as any;
   assert.deepEqual(imported.animation, { mode: 'static-pose', clips: 0, skins: 0 });
   assert.equal(imported.voxelMesh!.positions.length, 2 * 24 * 3); assert.equal(imported.voxelMesh!.indices.length, 2 * 36);
-  assert.equal((readGlb(imported.sourceGlb).json.animations as any[]).length, 1);
+  assert.equal(readGlb(imported.sourceGlb).json.animations, undefined);
+  assert.equal(imported.version, 3); assert.equal(imported.envelope.native.encoding, 'none');
   assert.equal(json.skins, undefined); assert.equal(json.animations, undefined);
   assert.equal(Math.min(...imported.voxelMesh!.positions.filter((_, i) => i % 3 === 0)), 4);
   assert.equal(Math.max(...imported.voxelMesh!.positions.filter((_, i) => i % 3 === 0)), 5);
