@@ -1,4 +1,4 @@
-# Styled assets
+# Styled assets and compact lossy textures
 
 The tooling entry `@keel-engine/import/styled-asset` imports the converter's
 `.keelasset` files. It is deliberately separate from the verified/on-chain
@@ -10,7 +10,7 @@ palette raster renderer.
 
 `createStyledAsset({packageBytes, style, name?, sourceBounds?, voxel?})` returns
 compact binary bytes through KEEL's existing KAP container. The versioned
-`KEEL-STYLED-ASSET` envelope embeds native KAP
+`KEEL-STYLED-ASSET` v2 envelope (v1 imports remain supported) embeds native KAP
 bytes, their SHA-256 digest and length, pinned dependency versions, and a style:
 
 ```ts
@@ -25,7 +25,7 @@ const style = {
 `importStyledAsset(bytes, {dracoDecoder?})` validates the envelope and replays
 native KAP with the v6 shared runtime. It returns `glb`, `sourceGlb`, source
 `nativeScene`, `style`, `animation`, `sourceBounds`, and `voxelMesh` when relevant.
-The source native records remain intact even when the displayed voxel snapshot
+The reconstructed native records remain intact even when the displayed voxel snapshot
 has no rig. The importer never evaluates an uploaded script, imports a URL from
 the file, or executes code stored in the envelope. Dependency versions and
 unknown top-level fields fail closed. SHA-256 detects corruption of embedded
@@ -38,7 +38,7 @@ base64 KAP for inspection; both carriers are accepted by the same importer.
 ordinary native KAP file. Recognition is not validation; import still validates
 the full schema, dependency versions and integrity.
 
-Pixel and dither preserve the reconstructed source scene, skinning, morphs and
+Pixel and dither preserve the reconstructed geometry, skinning, morphs and
 animation clips. Their colors are processed live after the host's scene
 render, tone mapping and output color conversion. Pixel size determines the
 low-resolution render target; output is enlarged with nearest sampling. Dither
@@ -56,6 +56,50 @@ model remains in `sourceGlb`/`nativeScene`.
 Optional `sourceBounds` is `{min:[x,y,z], max:[x,y,z]}` in source-world space.
 It is only a static camera hint. It does not assert bounds over all animation
 times. The player computes a Three Box3 when an imported model is available.
+
+## Actual styled texture conversion
+
+Use `@keel-engine/import/styled-asset-compiler` for the lossy data transformation:
+
+```ts
+const result = await compileStyledAsset({
+  packageBytes: native.packageBytes,
+  style: { kind: 'dither', pixelSize: 4, toneLevels: 8, screen: 'bayer4' },
+  texture: { maxDimension: 256, paletteSize: 32 },
+});
+// These exact bytes carry the smaller styled model and are accepted by the
+// same safe platform importer. No original selected color texture is retained.
+const imported = await importStyledAsset(result.assetBytes);
+```
+
+This is always **stylized lossy conversion**, regardless of the native input's
+compression mode. It replaces eligible base-color/emissive maps with an inferred
+palette and packed indices or palette-pair/mix fields. The shared decoder
+regenerates KEEL screen dithering when that representation is smaller than the
+materialized index field. Selection compares serialized recipe bytes; compare
+the entire downloaded `.keelasset` with the original using the same Brotli
+encoder to judge the final transfer cost. Shared compiler/runtime cost is paid
+once. No universal size win is promised.
+
+Settings are 128/256/512 maximum texture edge and 8/16/32/64 requested colors.
+Palette fitting and ties are deterministic. The chosen sampler becomes nearest
+for changed color textures; existing wrap settings and other maps' samplers stay
+intact. Normal, linear, mixed-use and unfamiliar material slots are retained,
+with a reason in the report. Unknown PNG profiles/JPEG ICC metadata are skipped
+conservatively. Geometry, skinning, morph and animation arrays are checked byte
+for byte against the native input. Scene records outside the declared texture
+sampling change are checked as well.
+
+Center-nearest resize can lose thin alpha features. Alpha is exact only at the
+resized texels; the report measures alpha changes and half-alpha coverage at the
+original resolution. Palette error, nearest filtering and dithering are visible
+style changes, not a no-visible-change claim.
+
+The v2 `conversion` record states whether palette textures are present.
+`reconstructedGlb` and the compatibility alias `sourceGlb` both contain the
+**styled reconstruction**, not the original superseded textures. The download
+cannot recover those discarded color images. `createStyledAsset` remains the
+low-level envelope function and does not itself optimize textures.
 
 ## Host consumer
 

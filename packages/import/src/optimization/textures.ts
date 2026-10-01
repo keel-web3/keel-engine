@@ -229,6 +229,12 @@ function decode(image: NormalizedImage, header: Header, maxPixels: number): Pixe
   }
   return { width: p.width, height: p.height, data: out };
 }
+/** Bounded, metadata-conservative color decode for the explicit stylized lossy
+ * compiler. Eligibility of material roles is decided by its caller. */
+export function decodeTexturePixels(image: NormalizedImage, maxPixels = HARD_MAX_PIXELS): Pixels {
+  bounded(maxPixels, 1, HARD_MAX_PIXELS, 'source pixel budget', true);
+  return decode(image, imageHeader(image, maxPixels), maxPixels);
+}
 /** PNG's five specified reversible row filters, selected by signed residual cost.
  * The fast-png 6.2 encoder only supports filter 0, which can expand source textures.
  * fflate provides the pinned DEFLATE implementation; fast-png independently decodes
