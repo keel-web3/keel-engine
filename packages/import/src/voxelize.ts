@@ -39,6 +39,8 @@ export interface VoxelizeOptions extends SoupOptions {
   readonly surface?: "thin" | "conservative";
   /** Most cells allowed (default 4 million) -- a guard against a unit far too small. */
   readonly maxCells?: number;
+  /** Tooling can retain blended source-node influences for animated voxels. */
+  readonly retainSkinning?: boolean;
 }
 
 /** The voxels, dense over their box, and where each came from. Index x + sx * (y + sy * z). */
@@ -69,6 +71,7 @@ export interface VoxelGrid {
   /** Metres per source unit as voxelised (the scene's own, times `scale`, times the `height` sizing): joints map with it. */
   readonly scale: number;
   readonly stats: { readonly triangles: number; readonly surface: number; readonly interior: number; readonly ms?: number };
+  readonly skinning?: { readonly joints: Int32Array; readonly weights: Float32Array; readonly discardedWeight: Float32Array };
 }
 
 // ---------------------------------------------------------------- geometry
@@ -172,6 +175,7 @@ export function voxelize(scene: ImportScene, opts: VoxelizeOptions = {}): VoxelG
   const rank = new Float32Array(cells).fill(Infinity);
   const srcTri = new Int32Array(cells).fill(-1);
   const srcCell = new Int32Array(cells).fill(-1);
+  const skinning = opts.retainSkinning ? { joints: new Int32Array(cells * 4).fill(-1), weights: new Float32Array(cells * 4), discardedWeight: new Float32Array(cells) } : undefined;
   const P = soup.positions;
   // Triangles by node.
   const byNode = new Map<number, number[]>();
@@ -324,12 +328,18 @@ export function voxelize(scene: ImportScene, opts: VoxelizeOptions = {}): VoxelG
       let bj = -1, bw = 0;
       for (const [jn, ww] of acc) if (ww > bw || (ww === bw && jn < bj)) { bj = jn; bw = ww; }
       g.joint[gi] = bj; g.weight[gi] = bw;
+      if (skinning) {
+        const ranked = [...acc].filter(([, weight]) => weight > 0).sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+        const total = ranked.reduce((sum, [, weight]) => sum + weight, 0), kept = ranked.slice(0, 4), sum = kept.reduce((n, [, weight]) => n + weight, 0);
+        skinning.discardedWeight[gi] = total > 0 ? (total - sum) / total : 0;
+        kept.forEach(([joint, weight], k) => { skinning.joints[gi * 4 + k] = joint; skinning.weights[gi * 4 + k] = weight / sum; });
+      }
     }
   }
   let surface = 0, interior = 0;
   for (let i = 0; i < cells; i += 1) { if (g.occ[i] === 1) surface += 1; else if (g.occ[i] === 2) interior += 1; }
   const ms = typeof performance !== "undefined" ? performance.now() - t0 : 0;
-  return { ...g, scale: scene.metres * (opts.scale ?? 1) * sizing, stats: { triangles: soup.count, surface, interior, ms: Math.round(ms) } };
+  return { ...g, ...(skinning ? { skinning } : {}), scale: scene.metres * (opts.scale ?? 1) * sizing, stats: { triangles: soup.count, surface, interior, ms: Math.round(ms) } };
 }
 
 // Parity: along each axis, a cell centre's ray crosses the node's triangles; odd crossings from one side is inside. Two of three axes decide.

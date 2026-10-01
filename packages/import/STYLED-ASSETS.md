@@ -10,8 +10,9 @@ palette raster renderer.
 
 `createStyledAsset({packageBytes, style, name?, sourceBounds?, voxel?})` returns
 compact binary bytes through KEEL's existing KAP container. The versioned
-`KEEL-STYLED-ASSET` v2 envelope (v1 imports remain supported) embeds native KAP
-bytes, their SHA-256 digest and length, pinned dependency versions, and a style:
+`KEEL-STYLED-ASSET` v2 envelope embeds native KAP bytes, their SHA-256 digest
+and length, pinned dependency versions, and a style. Voxel output uses the
+animated v4 envelope described in [ANIMATED-VOXELS.md](ANIMATED-VOXELS.md), or an explicitly selected static v3 snapshot. Versions 1–3 remain importable:
 
 ```ts
 const style = {
@@ -25,8 +26,8 @@ const style = {
 `importStyledAsset(bytes, {dracoDecoder?})` validates the envelope and replays
 native KAP with the v6 shared runtime. It returns `glb`, `sourceGlb`, source
 `nativeScene`, `style`, `animation`, `sourceBounds`, and `voxelMesh` when relevant.
-The reconstructed native records remain intact even when the displayed voxel snapshot
-has no rig. The importer never evaluates an uploaded script, imports a URL from
+Legacy v1/v2 voxel envelopes retain their source records; new v3 voxel envelopes
+contain only the static reconstruction. Version 4 regenerates voxel geometry with original rig and TRS clips and resampled skin weights. The importer never evaluates an uploaded script, imports a URL from
 the file, or executes code stored in the envelope. Dependency versions and
 unknown top-level fields fail closed. SHA-256 detects corruption of embedded
 native data; it is not an authenticity signature.
@@ -46,12 +47,28 @@ uses KEEL core's actual screens through a 192×192 float32 tile with top-left
 coordinates. Per-channel quantization is in sRGB, with alpha unassociated for
 quantization and reassociated afterward.
 
-Voxel style requires a `keel-static-voxel-style` version-1 recipe with explicit
-occupied grid indices, linear RGB colors, origin, size and unit. Import rebuilds
-all colored cubes using KEEL `meshData`, `addBox` and `writeGlb`; it does not
-reuse a saved voxel GLB. At most 50,000 cubes are accepted. The displayed result
-is explicitly a static pose with zero animation clips and skins; the source
-model remains in `sourceGlb`/`nativeScene`.
+Voxel input requires a `keel-static-voxel-style` version-1 recipe with occupied
+grid indices, linear RGB colors, origin, size and unit. New exports use
+`createVoxelStyledAsset({voxel, style?, name?, sourceBounds?, attribution?})`.
+`createStyledAsset` delegates to it for voxel style, carrying the source glTF
+asset attribution but discarding its original native KAP.
+
+The v3 envelope stores occupied indices in their existing order, the grid
+transform, and an exact Float32 palette or direct color field, whichever has
+the smaller serialized recipe. It contains no source mesh, textures, rig or
+animation, and requires no Draco decoder. Import regenerates colored cubes
+through KEEL `meshData`, `addBox` and `writeGlb`; it does not reuse a saved GLB.
+The generated GLB is byte-identical to the existing accepted cube snapshot.
+At most 50,000 cubes and 1,000,000 grid cells are accepted. Small fidelity,
+warning and optional source-pose metadata survive; unused source cell labels
+and other construction metadata are omitted.
+
+Voxel conversion is explicitly static and lossy relative to the original
+model. It has zero animation clips and skins. `glb`, `reconstructedGlb`, the
+compatibility alias `sourceGlb`, and `nativeScene` now describe only that
+static reconstruction. The original model cannot be recovered from the v3
+download. Attribution remains in the envelope. Pixel/Dither v2 asset bytes
+are unchanged by this shared-runtime upgrade.
 
 Optional `sourceBounds` is `{min:[x,y,z], max:[x,y,z]}` in source-world space.
 It is only a static camera hint. It does not assert bounds over all animation

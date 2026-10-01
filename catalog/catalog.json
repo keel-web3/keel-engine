@@ -2096,7 +2096,7 @@
         },
         {
           "path": "packages/import/src/voxelize.ts",
-          "sha256": "0x58f2f5ec3cdc61f633d844cb9133db22de1d21811d09b2e3a69c0718d8e393ad"
+          "sha256": "0xe7fe46ba146d43d6c3b93e62a374fc6f3c5a8425d6e7d0064677f4f11ec00bf3"
         },
         {
           "path": "packages/import/src/write.ts",
@@ -2113,12 +2113,12 @@
         ]
       },
       "output": {
-        "digest": "0x04643f6ae27badcd19fc7bda9c70b1b630cc3e03a4fd6ccf1d5a5f099963216d",
-        "byteLength": 114408
+        "digest": "0xe131b129922899523b4b280140a1690a80eaa0fc167c750510a66e5cf4e464ea",
+        "byteLength": 114802
       },
-      "sourceDigest": "0xeb72e05b18aa7facbc73638dc5305f80a570ba52b2f67449ccaf24b305aa8403",
-      "recipeDigest": "0x07998553cee0233268da95a6e68f4e89e4dd355c6b096ad4a083df390617ee29",
-      "receiptDigest": "0xea71f4e4baf6c96b0b3d8b60d188af19ecabf9cbb22ad17a91dfb360d3bfe05b",
+      "sourceDigest": "0x02cc6f96f8055a2175be435db684d11018d360da6607037194d4367289614b35",
+      "recipeDigest": "0xb7abc1248fd8105550596d0b208ec00ec9ebb069ced9326f999b336d3a5dc988",
+      "receiptDigest": "0x8002d994a42d270af97adbf3ad879e2a38b74a0c221de991da6832877782fdc9",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
