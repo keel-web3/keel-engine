@@ -1,3 +1,4 @@
+export { compileRasterStyledAsset, compileRasterSourceAsset } from './raster-compiler.ts';
 /** Explicit lossy styling: replace color textures with compact inferred palettes
  * and KEEL screen recipes. Geometry and animation are inherited from native KAP. */
 import { buildFromPackage } from './asset-replay-v6.ts';
