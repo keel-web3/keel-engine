@@ -89,11 +89,14 @@ export async function resolveAdFeed(source: AdFeedSource, base: string, signal: 
   return { endpoint, identity: `${source.chainId}:${source.registry.toLowerCase()}:${entry.revision}:${endpoint}` };
 }
 /** One bounded page per refresh, cycling through all advertisers; errors immediately restore offline house ads. */
-export function watchAdFeed(source: AdFeedSource | undefined, onFeed: (feed: AdFeed) => void, base = globalThis.location?.href ?? "https://localhost/"): () => void {
+export function watchAdFeed(source: AdFeedSource | undefined, onFeed: (feed: AdFeed) => void, base = globalThis.location?.href ?? "https://localhost/", changeEvent?: string): () => void {
   if (!source) return () => undefined;
   let stopped = false, cursor: string | null = null, identity = "", timer: ReturnType<typeof setTimeout> | undefined;
   let current: AbortController | undefined;
+  let changed = false;
   const refresh = async (): Promise<void> => {
+    if (stopped) return;
+    if (current) { changed = true; return; }
     const controller = new AbortController(); current = controller;
     const timeout = setTimeout(() => controller.abort(), 8000);
     try {
@@ -108,8 +111,14 @@ export function watchAdFeed(source: AdFeedSource | undefined, onFeed: (feed: AdF
         if (!stopped) onFeed(feed);
       }
     } catch { cursor = null; identity = ""; if (!stopped) onFeed(EMPTY); }
-    finally { clearTimeout(timeout); if (!stopped) timer = setTimeout(() => void refresh(), 30_000); }
+    finally {
+      clearTimeout(timeout); current = undefined;
+      if (!stopped && changed) { changed = false; void refresh(); }
+      else if (!stopped && !changeEvent) timer = setTimeout(() => void refresh(), 30_000);
+    }
   };
+  const onChange = (): void => { cursor = null; void refresh(); };
+  if (changeEvent) globalThis.addEventListener?.(changeEvent, onChange);
   void refresh();
-  return () => { stopped = true; clearTimeout(timer); current?.abort(); };
+  return () => { stopped = true; clearTimeout(timer); current?.abort(); if (changeEvent) globalThis.removeEventListener?.(changeEvent, onChange); };
 }
