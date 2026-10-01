@@ -2024,7 +2024,7 @@
         },
         {
           "path": "packages/import/keel/link.json",
-          "sha256": "0xc6f6e9af5269bee5aa6ca15f4caba8953e10de5e6fe77fbe28565172bdc4b6bf"
+          "sha256": "0xb5b5739d1bbe5f42a874d9e1c2bf37e444e3bc5636415fbad39d529d32b36a23"
         },
         {
           "path": "packages/import/src/body.ts",
@@ -2040,7 +2040,7 @@
         },
         {
           "path": "packages/import/src/gltf.ts",
-          "sha256": "0xba43e53ad9e87a1a78667c7bcd5eb60e914788711eaa5a732f6fdab3b4c617aa"
+          "sha256": "0x3c64f88989ecf37d5bfc8dbda50f3e177719e4e739cf31a5cfc8011b71771477"
         },
         {
           "path": "packages/import/src/index.ts",
@@ -2072,7 +2072,7 @@
         },
         {
           "path": "packages/import/src/scene.ts",
-          "sha256": "0x294a14096041a553f8826563388fb0e2fbc432b0707fd683b88e3b40c5be485a"
+          "sha256": "0x75b7738e2012c7ffb6c3cd4e8d255d0c2e2a68e47305b9e663dae0763562b3e6"
         },
         {
           "path": "packages/import/src/segment.ts",
@@ -2085,6 +2085,10 @@
         {
           "path": "packages/import/src/stl.ts",
           "sha256": "0xf65ac7caddf08c26d25468ae345692b3a7971fe02e3f01cf2dddf3947a9fbd6c"
+        },
+        {
+          "path": "packages/import/src/texture-transform.ts",
+          "sha256": "0x89b15384d86843b3a63dd1c08b26f1ef1fe7fbba1db1a659d2fb2528ceec3d52"
         },
         {
           "path": "packages/import/src/vox.ts",
@@ -2103,22 +2107,23 @@
         "format": "iife",
         "external": [
           "@keel-engine/builder",
+          "@keel-engine/core",
           "@keel-engine/entity",
           "@keel-engine/object"
         ]
       },
       "output": {
-        "digest": "0x3e2c929e6bffdbc3bf969b492ec1d6d9f6f8bf5813688f6476b58ceb1699dbda",
-        "byteLength": 112988
+        "digest": "0x04643f6ae27badcd19fc7bda9c70b1b630cc3e03a4fd6ccf1d5a5f099963216d",
+        "byteLength": 114408
       },
-      "sourceDigest": "0x8cfe8dd2ea63f70c288e4e7e0b6cbb9b11e7c7172cee74e4054b8cbff2abead4",
-      "recipeDigest": "0x3ad20e0437f330d9a93c57a9f04ea35f5b8803d343fe1b12e2c25294b8d815bf",
-      "receiptDigest": "0x477a8ba75118a08d1750662e22824acbedba7e8922b5c3d2e089ac9895368bff",
+      "sourceDigest": "0xeb72e05b18aa7facbc73638dc5305f80a570ba52b2f67449ccaf24b305aa8403",
+      "recipeDigest": "0x07998553cee0233268da95a6e68f4e89e4dd355c6b096ad4a083df390617ee29",
+      "receiptDigest": "0xea71f4e4baf6c96b0b3d8b60d188af19ecabf9cbb22ad17a91dfb360d3bfe05b",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
         "path": "packages/import/test/vectors.mjs",
-        "sha256": "0x5f2364dde0b33048cf0820b91c550d8c3ee175d9c6bbebf6d0afe4e3f282a5d9"
+        "sha256": "0xb9bbe8ef894cdd05a1e8f742f96d599d3831c5ba1cdd9c4c436bdb6d6fbafbd1"
       },
       "deployments": [],
       "deployed": false

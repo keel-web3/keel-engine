@@ -21,6 +21,7 @@
   },
   "imports": {
     "@keel-engine/builder": "keel/builder",
+    "@keel-engine/core": "keel/core",
     "@keel-engine/entity": "keel/entity",
     "@keel-engine/object": "keel/object"
   },

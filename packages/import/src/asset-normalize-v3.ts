@@ -20,6 +20,8 @@
 
 // v3 compatibility copy: large inline buffers use linear base64 validation.
 function validLargeBase64(s:string):boolean { const pad=s.endsWith('==')?2:s.endsWith('=')?1:0,at=s.indexOf('=');return s.length%4===0&&!/[^A-Za-z0-9+/=]/.test(s)&&(at===-1||at===s.length-pad); }
+import { TEXTURE_TRANSFORM, TEXTURE_INFO_PATH, readTextureTransform, materialTextureInfos } from './texture-transform.ts';
+
 export type NativeArray = Int8Array | Uint8Array | Int16Array | Uint16Array | Uint32Array | Float32Array;
 export type GltfJSON = Record<string, any>;
 export interface NormalizedAccessor {
@@ -183,15 +185,19 @@ export function validatePreservedContainer(bytes:Uint8Array):'glb'|'gltf'{
 }
 function validateExtensions(json: GltfJSON): void {
   for (const key of ['extensionsRequired', 'extensionsUsed']) {
-    for (const extension of list(json[key], key)) if (extension !== DRACO) fail(`unsupported ${key === 'extensionsRequired' ? 'required' : 'optional'} extension ${String(extension)}; refusing to discard it`);
+    for (const extension of list(json[key], key)) if (extension !== DRACO && extension !== TEXTURE_TRANSFORM) fail(`unsupported ${key === 'extensionsRequired' ? 'required' : 'optional'} extension ${String(extension)}; refusing to discard it`);
   }
   const walk = (value: any, path: string): void => {
     if (!value || typeof value !== 'object') return;
     if (Array.isArray(value)) { value.forEach((child, i) => walk(child, `${path}/${i}`)); return; }
     if (value.extensions !== undefined) {
       for (const key of Object.keys(object(value.extensions, `${path}/extensions`))) {
-        if (key !== DRACO) fail(`unsupported extension ${key} at ${path}; refusing to discard it`);
-        if (!/^\/meshes\/\d+\/primitives\/\d+$/.test(path)) fail(`Draco extension at unsupported location ${path}`);
+        if (key === TEXTURE_TRANSFORM) {
+          if (!TEXTURE_INFO_PATH.test(path)) fail(`${TEXTURE_TRANSFORM} at unsupported location ${path}`);
+          readTextureTransform(value.extensions[key], fail);
+        } else if (key === DRACO) {
+          if (!/^\/meshes\/\d+\/primitives\/\d+$/.test(path)) fail(`Draco extension at unsupported location ${path}`);
+        } else fail(`unsupported extension ${key} at ${path}; refusing to discard it`);
       }
     }
     // Extras is application metadata, not another glTF schema object.
@@ -415,7 +421,7 @@ function validateScene(json: GltfJSON, accessors: NormalizedAccessor[], images: 
   for (const texture of textures) { object(texture, 'texture'); reference(images, texture.source, 'texture source'); if (texture.sampler !== undefined) reference(samplers, texture.sampler, 'texture sampler'); }
   for (const material of materials) {
     object(material, 'material');
-    for (const info of [material.pbrMetallicRoughness?.baseColorTexture, material.pbrMetallicRoughness?.metallicRoughnessTexture, material.normalTexture, material.occlusionTexture, material.emissiveTexture]) {
+    for (const info of materialTextureInfos(material)) {
       if (info !== undefined) { object(info, 'texture info'); reference(textures, info.index, 'material texture'); if (info.texCoord !== undefined) integer(info.texCoord, 'texture coordinate set'); }
     }
   }
@@ -438,6 +444,12 @@ function validateScene(json: GltfJSON, accessors: NormalizedAccessor[], images: 
         for (const value of indices.array) if (value >= position.count) fail('primitive index out of bounds');
       }
       if (primitive.material !== undefined) reference(materials, primitive.material, 'primitive material');
+      for (const info of materialTextureInfos(materials[primitive.material])) {
+        if (info.extensions?.[TEXTURE_TRANSFORM] === undefined) continue;
+        const transform = readTextureTransform(info.extensions[TEXTURE_TRANSFORM], fail), set = transform.texCoord ?? info.texCoord ?? 0;
+        const uv = reference(accessors, attributes[`TEXCOORD_${set}`], `${TEXTURE_TRANSFORM} TEXCOORD_${set}`);
+        if (uv.type !== 'VEC2' || !(uv.componentType === 5126 && !uv.normalized || [5121, 5123].includes(uv.componentType) && uv.normalized)) fail(`invalid ${TEXTURE_TRANSFORM} TEXCOORD_${set} accessor`);
+      }
       const targets = list(primitive.targets, 'morph targets');
       if (targets.length) {
         targetCount ??= targets.length;

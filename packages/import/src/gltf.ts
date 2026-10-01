@@ -8,6 +8,7 @@
 //
 //   const scene = parseGltf(bytesOrJson, { resources: { "body.bin": bytes } });
 
+import { TEXTURE_TRANSFORM, readTextureTransform } from "./texture-transform.ts";
 import { fromTRS, identity, GLTF_AXES } from "./math.ts";
 import type { Mat4 } from "./math.ts";
 import { decodePng, isPng } from "./png.ts";
@@ -200,12 +201,14 @@ export function parseGltf(input: Uint8Array | string | Json, opts: GltfOptions =
     const f = arr(pbr["baseColorFactor"]).length === 4 ? (pbr["baseColorFactor"] as number[]) : [1, 1, 1, 1];
     const tex = pbr["baseColorTexture"] as Json | undefined;
     const ext = (m["extensions"] as Json | undefined) ?? {};
+    const transformValue = (tex?.["extensions"] as Json | undefined)?.[TEXTURE_TRANSFORM];
+    const transform = transformValue === undefined ? undefined : readTextureTransform(transformValue, fail);
     const strength = num((ext["KHR_materials_emissive_strength"] as Json | undefined)?.["emissiveStrength"], 1);
     const e = arr(m["emissiveFactor"]).length === 3 ? (m["emissiveFactor"] as number[]) : [0, 0, 0];
     return {
       name: String(m["name"] ?? `material${i}`),
       colour: [num(f[0], 1), num(f[1], 1), num(f[2], 1), num(f[3], 1)],
-      ...(tex && textures[num(tex["index"], -1)] && images[textures[num(tex["index"], -1)]!.image]?.width ? { texture: { texture: num(tex["index"], -1), texCoord: num(tex["texCoord"], 0) } } : {}),
+      ...(tex && textures[num(tex["index"], -1)] && images[textures[num(tex["index"], -1)]!.image]?.width ? { texture: { texture: num(tex["index"], -1), texCoord: transform?.texCoord ?? num(tex["texCoord"], 0), ...(transform ? { transform } : {}) } } : {}),
       ...(e.some((v) => v > 0) ? { emissive: [e[0]! * strength, e[1]! * strength, e[2]! * strength] as const } : {}),
       metallic: num(pbr["metallicFactor"], 1),
     };
@@ -225,7 +228,12 @@ export function parseGltf(input: Uint8Array | string | Json, opts: GltfOptions =
       const n = pos.count;
       const f32 = (d: Float64Array): Float32Array => Float32Array.from(d);
       const uvs: Float32Array[] = [];
-      for (const k of ["TEXCOORD_0", "TEXCOORD_1"]) if (at[k] !== undefined) uvs.push(f32(readAccessor(num(at[k], -1), `${where} ${k}`).data));
+      for (const k of Object.keys(at).filter(k => /^TEXCOORD_\d+$/.test(k))) {
+        const set = Number(k.slice(9)), uv = readAccessor(num(at[k], -1), `${where} ${k}`);
+        if (!Number.isSafeInteger(set) || set > 65535) fail(`${where}: invalid UV set`);
+        if (uv.comps !== 2 || uv.count !== n) fail(`${where}: ${k} must be VEC2, one per vertex`);
+        uvs[set] = f32(uv.data);
+      }
       let colours: Float32Array | undefined;
       if (at["COLOR_0"] !== undefined) {
         const c = readAccessor(num(at["COLOR_0"], -1), `${where} COLOR_0`);
@@ -255,6 +263,8 @@ export function parseGltf(input: Uint8Array | string | Json, opts: GltfOptions =
       }
       if (idx.length % 3) { warnings.push(`${where}: ${idx.length} indices isn't whole triangles: the last ${idx.length % 3} dropped`); idx = idx.subarray(0, idx.length - (idx.length % 3)); }
       const mat = p["material"] !== undefined ? num(p["material"], -1) : -1;
+      const textureInfo = materials[mat]?.texture;
+      if (textureInfo && !uvs[textureInfo.texCoord]) fail(`${where}: missing TEXCOORD_${textureInfo.texCoord} for base-color texture`);
       prims.push({ positions: f32(pos.data), ...(uvs.length ? { uvs } : {}), ...(colours ? { colours } : {}), ...(joints && weights ? { joints, weights } : {}), indices: idx, material: mat < materials.length ? mat : -1 });
     });
     return { name: String(m["name"] ?? `mesh${mi}`), primitives: prims };
