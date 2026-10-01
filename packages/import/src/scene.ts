@@ -8,6 +8,8 @@
 // remembering its node, mesh and material and carrying its uvs, colours and
 // skin weights, for the voxeliser.
 
+import { dcos, dsin } from "@keel-engine/core";
+import type { TextureTransform } from "./texture-transform.ts";
 import { GLTF_AXES, applyPoint, axesToEngine, identity, invert4, mul4 } from "./math.ts";
 import type { Axes, Mat4, V3 } from "./math.ts";
 
@@ -28,7 +30,7 @@ export interface ImportMaterial {
   /** Base colour, linear RGBA. */
   readonly colour: readonly [number, number, number, number];
   /** Base colour texture (times `colour`), with which uv set. */
-  readonly texture?: { readonly texture: number; readonly texCoord: number };
+  readonly texture?: { readonly texture: number; readonly texCoord: number; readonly transform?: TextureTransform };
   /** Emitted light, linear RGB (0 for most). */
   readonly emissive?: readonly [number, number, number];
   readonly metallic?: number;
@@ -37,7 +39,7 @@ export interface ImportMaterial {
 export interface ImportPrimitive {
   /** xyz per vertex (the mesh's own frame). */
   readonly positions: Float32Array;
-  /** uv per vertex (glTF convention: v down from the image's top), for up to two sets. */
+  /** uv per vertex (glTF convention: v down from the image's top), indexed by the TEXCOORD_n suffix (sparse sets remain sparse). */
   readonly uvs?: readonly Float32Array[];
   /** Linear RGBA per vertex. */
   readonly colours?: Float32Array;
@@ -175,8 +177,9 @@ export function soupOf(scene: ImportScene, { axes = scene.axes ?? GLTF_AXES, sca
     const jointMats = skin ? skin.joints.map((j, i) => mul4(scene.nodes[j]!.world, skin.inverseBind[i] ?? identity())) : null;
     const base = mul4(toEngine, n.world);
     for (const p of scene.meshes[n.mesh]!.primitives) {
-      const texCoord = p.material >= 0 ? scene.materials[p.material]?.texture?.texCoord ?? 0 : 0;
-      const uv = p.uvs?.[texCoord] ?? p.uvs?.[0];
+      const textureInfo = p.material >= 0 ? scene.materials[p.material]?.texture : undefined;
+      const uv = p.uvs?.[textureInfo?.texCoord ?? 0], transform = textureInfo?.transform;
+      const cos = transform ? dcos(transform.rotation) : 1, sin = transform ? dsin(transform.rotation) : 0;
       const vertex = (vi: number): V3 => {
         const v = [p.positions[vi * 3]!, p.positions[vi * 3 + 1]!, p.positions[vi * 3 + 2]!];
         if (jointMats && p.joints && p.weights) {
@@ -199,7 +202,14 @@ export function soupOf(scene: ImportScene, { axes = scene.axes ?? GLTF_AXES, sca
           const q = vertex(vi);
           const o = t * 3 + c;
           positions[o * 3] = q[0] * k; positions[o * 3 + 1] = q[1] * k; positions[o * 3 + 2] = q[2] * k;
-          if (uv) { uvs[o * 2] = uv[vi * 2]!; uvs[o * 2 + 1] = uv[vi * 2 + 1]!; }
+          if (uv) {
+            const u = uv[vi * 2]!, v = uv[vi * 2 + 1]!;
+            // glTF applies scale, then rotation, then offset; wrapping follows sampling.
+            // Applying this affine transform before barycentric interpolation is exact.
+            const x = u * (transform?.scale[0] ?? 1), y = v * (transform?.scale[1] ?? 1);
+            uvs[o * 2] = cos * x - sin * y + (transform?.offset[0] ?? 0);
+            uvs[o * 2 + 1] = sin * x + cos * y + (transform?.offset[1] ?? 0);
+          }
           if (p.colours) for (let j = 0; j < 4; j += 1) colours[o * 4 + j] = p.colours[vi * 4 + j]!;
           if (skin && p.joints && p.weights) {
             skinned = true;

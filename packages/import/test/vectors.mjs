@@ -23,4 +23,16 @@ export default await engineVectors(import.meta.url, [
     run: ({ srgbToLinear, linearToSrgb }) => [srgbToLinear(0.5), linearToSrgb(0.214)],
     expect: [0.21404114048223255,0.49995554934020553],
   },
+  {
+    name: "texture transform uses the overridden UV set before wrapping",
+    run: ({ emptyScene, identity, soupOf }) => {
+      const scene = emptyScene("gltf", "transformed"), matrix = identity();
+      return Array.from(soupOf({ ...scene,
+        nodes: [{ name: "triangle", parent: -1, children: [], local: matrix, world: matrix, mesh: 0 }],
+        materials: [{ name: "atlas", colour: [1, 1, 1, 1], texture: { texture: 0, texCoord: 1, transform: { offset: [1.25, -.25], rotation: Math.PI / 2, scale: [-.5, 2], texCoord: 1 } } }],
+        meshes: [{ name: "triangle", primitives: [{ positions: new Float32Array([0, 0, 0, 1, 0, 0, 0, 1, 0]), indices: new Uint32Array([0, 1, 2]), material: 0, uvs: [new Float32Array(6), new Float32Array([.125, .25, .75, .125, .25, .75])] }] }],
+      }).uvs);
+    },
+    expect: [.75, -.3125, 1, -.625, -.25, -.375],
+  },
 ]);

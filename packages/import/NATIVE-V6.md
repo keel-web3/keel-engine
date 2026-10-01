@@ -43,3 +43,23 @@ The generated loader is shared across all modes. `makeNativeArchive` includes
 the complete common decoder, four licenses, and the pinned Draco factory/WASM
 only when the selected exact-data asset requires them. Archive size is a
 secondary standalone-distribution metric, not the primary per-asset comparison.
+## Texture transforms
+
+The native normalizers support `KHR_texture_transform` on all five core glTF
+texture-info slots. Offset, rotation, scale (including negative scale), and
+the UV-set override remain per material slot through native encoding, replay,
+GLB export, and Pixel/Dither texture replacement. `extensionsUsed` and
+`extensionsRequired` are retained. An override must refer to an existing valid
+UV accessor; malformed transforms and transforms at invalid locations reject.
+
+The voxel importer applies scale, then rotation, then offset to the selected UV
+set before interpolation and sampler wrapping. Shared textures do not merge
+per-material transforms. Its base-color sampling still follows its documented
+base-color-only voxel contract; other PBR maps remain available in native GLB.
+
+Unknown required extensions still reject. Unknown optional extensions also
+reject conservatively: optional status alone is not proof that discarding an
+extension preserves this converter's appearance contract. No unknown-extension
+fallback or silent stripping was introduced.
+
+Specification: [Khronos KHR_texture_transform](https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Khronos/KHR_texture_transform).
