@@ -45,7 +45,7 @@ test('readable JSON compatibility preserves the canonical binary envelope semant
 
 test('rejects incompatible, executable, corrupt, malformed, and contradictory envelopes', async () => {
   const c = await compiled(), bytes = await createStyledAsset({ packageBytes: c.packageBytes, style });
-  for (const mutate of [(e: any) => e.version = 2, (e: any) => e.style.screen = 'not-a-screen', (e: any) => e.style.pixelSize = 0, (e: any) => e.dependencies.renderer = 'three@latest', (e: any) => e.native.sha256 = '0'.repeat(64), (e: any) => e.native.byteLength++, (e: any) => e.code = 'globalThis.pwned=true', (e: any) => e.animation.mode = 'static-pose', (e: any) => e.style.constructor = {}]) {
+  for (const mutate of [(e: any) => e.version = 3, (e: any) => e.style.screen = 'not-a-screen', (e: any) => e.style.pixelSize = 0, (e: any) => e.dependencies.renderer = 'three@latest', (e: any) => e.native.sha256 = '0'.repeat(64), (e: any) => e.native.byteLength++, (e: any) => e.code = 'globalThis.pwned=true', (e: any) => e.animation.mode = 'static-pose', (e: any) => e.style.constructor = {}]) {
     const e = decode(bytes); mutate(e); await assert.rejects(importStyledAsset(encode(e)));
   }
   await assert.rejects(importStyledAsset(new TextEncoder().encode('export default ()=>alert(1)')));
