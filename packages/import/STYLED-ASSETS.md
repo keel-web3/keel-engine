@@ -1,5 +1,8 @@
 # Styled assets and compact lossy textures
 
+For current exact target controls, chunked raster replay and runtime-7 host
+requirements, see [TARGETED-ASSETS.md](TARGETED-ASSETS.md).
+
 The tooling entry `@keel-engine/import/styled-asset` imports the converter's
 `.keelasset` files. It is deliberately separate from the verified/on-chain
 `@keel-engine/import` module entry. This feature does not claim an on-chain
@@ -59,7 +62,8 @@ the smaller serialized recipe. It contains no source mesh, textures, rig or
 animation, and requires no Draco decoder. Import regenerates colored cubes
 through KEEL `meshData`, `addBox` and `writeGlb`; it does not reuse a saved GLB.
 The generated GLB is byte-identical to the existing accepted cube snapshot.
-At most 50,000 cubes and 1,000,000 grid cells are accepted. Small fidelity,
+Counts and sparse indices are checked against validated working-memory and
+format bounds rather than fixed 50,000-cube/1,000,000-cell limits. Small fidelity,
 warning and optional source-pose metadata survive; unused source cell labels
 and other construction metadata are omitted.
 
@@ -98,7 +102,7 @@ the entire downloaded `.keelasset` with the original using the same Brotli
 encoder to judge the final transfer cost. Shared compiler/runtime cost is paid
 once. No universal size win is promised.
 
-Settings are 128/256/512 maximum texture edge and 8/16/32/64 requested colors.
+Settings are an integer 1–512 maximum texture edge and 8/16/32/64 requested colors.
 Palette fitting and ties are deterministic. The chosen sampler becomes nearest
 for changed color textures; existing wrap settings and other maps' samplers stay
 intact. Normal, linear, mixed-use and unfamiliar material slots are retained,

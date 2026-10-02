@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
 import { zlibSync } from 'fflate';
-import { encodeVoxelSnapshot, replayVoxelSnapshot, VOXEL_SNAPSHOT_MAX_BYTES, VOXEL_SNAPSHOT_MAX_CUBES } from '../src/styled-voxel-codec.ts';
+import { encodeVoxelSnapshot, replayVoxelSnapshot, VOXEL_SNAPSHOT_MAX_BYTES, VOXEL_SNAPSHOT_MAX_CUBES, VOXEL_SNAPSHOT_MAX_CELLS } from '../src/styled-voxel-codec.ts';
 import type { ReplayedVoxelSnapshot, VoxelSnapshotRecipe, VoxelSnapshotFidelity } from '../src/styled-voxel-codec.ts';
 import { packAsset, unpackAsset } from '../src/asset-binary-v3.ts';
 import { decodeBuffer } from '../src/asset-buffer-codec.ts';
@@ -163,7 +163,7 @@ test('invalid source grid, coordinates, indices, colors, arrays and counts rejec
   const input = fixture(2);
   for (const patch of [
     { version: 2 }, { kind: 'other' }, { coordinateSpace: 'local' }, { colorSpace: 'srgb' }, { pose: 'animated' },
-    { size: [0, 1, 1] }, { size: [1.1, 1, 1] }, { size: [1_000_001, 1, 1] }, { size: [101, 100, 100] }, { size: [1, 1] },
+    { size: [0, 1, 1] }, { size: [1.1, 1, 1] }, { size: [VOXEL_SNAPSHOT_MAX_CELLS + 1, 1, 1] }, { size: [65536, 65536, 1] }, { size: [1, 1] },
     { origin: [0, Infinity, 0] }, { origin: [0, NaN, 0] }, { origin: [1e21, 0, 0] },
     { unit: 0 }, { unit: -0.1 }, { unit: NaN }, { unit: Infinity }, { unit: 1e16 },
     { indices: [] }, { indices: [0, 0] }, { indices: [0, 2] }, { indices: [0, -1] }, { indices: [0, 0.5] }, { indices: [NaN, 0] },

@@ -8,7 +8,14 @@ export interface GeometryPose {
   animation: number | null;
   time: number | null;
 }
-export interface GeometryPoseOptions { samplesPerClip?: number }
+export interface GeometryPoseOptions {
+  samplesPerClip?: number;
+  /** Explicit absolute animation times for bounded consumers. Defaults are unchanged. */
+  sampleTimes?: number[];
+  /** Explicit sprite/grid sampling may accept two float32 ULPs above one, then apply the
+   * existing normalization. Original data and strict optimizer gates stay exact. */
+  allowFloatSkinWeightRoundoff?: boolean;
+}
 
 export class UnsupportedGeometryPoseError extends Error {
   constructor(message: string) {
@@ -91,6 +98,7 @@ export function evaluateGeometryPoses(
 ): GeometryPose[] {
   const samples = options.samplesPerClip ?? 5;
   if (!Number.isSafeInteger(samples) || samples < 2) fail('samplesPerClip must be an integer of at least 2');
+  if(options.sampleTimes&&(!Array.isArray(options.sampleTimes)||options.sampleTimes.some(time=>!Number.isFinite(time))))fail('sampleTimes must contain finite times');
   const json = object(asset.json, 'asset');
   const meshes = list(json.meshes, 'meshes'), nodes = list(json.nodes, 'nodes');
   const mesh = object(ref(meshes, meshIndex, 'mesh'), 'mesh');
@@ -213,7 +221,8 @@ export function evaluateGeometryPoses(
       const jointValues = values(ji, 'VEC4', 'skin joints'), weightValues = values(wi, 'VEC4', 'skin weights');
       for (let i = 0; i < weightValues.length; i++) {
         const weight = weightValues[i]!;
-        if (weight < 0 || weight > 1) fail('skin weight outside [0,1]');
+        const upper = options.allowFloatSkinWeightRoundoff && w.componentType === 5126 ? 1 + 2 ** -22 : 1;
+        if (weight < 0 || weight > upper) fail('skin weight outside [0,1]');
         for (const skin of skins.values()) if (jointValues[i]! >= skin.joints.length) fail('skin joint index out of bounds');
         weightTotals[Math.floor(i / 4)]! += weight;
       }
@@ -340,9 +349,9 @@ export function evaluateGeometryPoses(
   };
   emit(rest, null, null, 'default');
   clips.forEach((clip, animation) => {
-    const count = clip.start === clip.end ? 1 : samples;
+    const count = options.sampleTimes?.length??(clip.start === clip.end ? 1 : samples);
     for (let k = 0; k < count; k++) {
-      const time = count === 1 ? clip.start : k === count - 1 ? clip.end : clip.start + (clip.end - clip.start) * k / (count - 1);
+      const time = options.sampleTimes?.[k]??(count === 1 ? clip.start : k === count - 1 ? clip.end : clip.start + (clip.end - clip.start) * k / (count - 1));
       const states = rest.map(state => ({ ...state }));
       for (const channel of clip.channels) states[channel.node]![channel.path] = sampleChannel(channel, time);
       emit(states, animation, time, `${clip.name} [${animation}] at ${time}`);

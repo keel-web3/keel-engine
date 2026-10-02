@@ -22,6 +22,26 @@ const near = (actual: ArrayLike<number>, expected: number[], epsilon = 1e-5) => 
 };
 const translationMatrix = (x: number, y = 0, z = 0) => [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, x, y, z, 1];
 
+test('sprite-only float skin roundoff preserves normalized poses without widening strict validation', () => {
+  const f = fixture();
+  f.primitive.attributes.JOINTS_0 = f.accessor(new Uint8Array([0, 0, 0, 0]), 'VEC4');
+  const id = f.accessor([1, 0, 0, 0], 'VEC4'); f.primitive.attributes.WEIGHTS_0 = id;
+  f.asset.json.nodes = [{ mesh: 0, skin: 0 }, { translation: [4, 0, 0] }];
+  f.asset.json.skins = [{ joints: [1] }];
+  f.primitive.targets = [{ POSITION: f.accessor([2, 0, 0]) }]; f.asset.json.meshes[0].weights = [.25];
+  const times = f.accessor([0, 1], 'SCALAR'), output = f.accessor([4, 0, 0, 6, 0, 0]);
+  f.asset.json.animations = [{ samplers: [{ input: times, output }], channels: [{ sampler: 0, target: { node: 1, path: 'translation' } }] }];
+  const expected = f.evaluate(3);
+  f.asset.accessors[id]!.array[0] = 1 + 2 ** -23; const original = structuredClone(f.asset);
+  assert.throws(() => f.evaluate(3), /outside/);
+  assert.deepEqual(evaluateGeometryPoses(f.asset, 0, f.primitive, { samplesPerClip: 3, allowFloatSkinWeightRoundoff: true }), expected);
+  assert.deepEqual(f.asset, original);
+  for (const weight of [0, -(2 ** -23), 1 + 2 ** -21, 1.5, NaN, Infinity]) {
+    f.asset.accessors[id]!.array[0] = weight;
+    assert.throws(() => evaluateGeometryPoses(f.asset, 0, f.primitive, { allowFloatSkinWeightRoundoff: true }), UnsupportedGeometryPoseError);
+  }
+});
+
 test('every mesh instance uses hierarchy, matrices, TRS, and its own default morph weights', () => {
   const f = fixture();
   f.primitive.targets = [{ POSITION: f.accessor([2, 0, 0]) }];

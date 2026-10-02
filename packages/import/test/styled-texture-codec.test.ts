@@ -180,3 +180,9 @@ test('browser bundle and native execution produce byte-identical recipes and pix
   assert.deepEqual(bundled.report, native.report);
   assert.deepEqual(browser.replayStylizedTexture(bundled.recipe), replayStylizedTexture(native.recipe));
 });
+
+
+test('continuous compact texture targets include one pixel without a preset minimum', () => {
+ const source=image(9,7,(x,y)=>[x*27,y*31,83,255]);
+ for(const maxDimension of [1,2,3,7,9,127,512])for(const kind of ['pixel','dither'] as const){const result=encodeStylizedTexture(source,{...options,kind,maxDimension});assert.equal(Math.max(result.width,result.height),Math.min(maxDimension,9));assert.deepEqual(replayStylizedTexture(result.recipe).rgba,result.rgba);}
+});

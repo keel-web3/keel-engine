@@ -67,6 +67,23 @@ test('lossless mode bypasses removal and gives an independent exact clone', asyn
   const source = fixture(4, true, true), result = await optimizeGeometry(source, { mode: 'lossless' });
   assert.equal(result.report.changedPrimitives, 0); assert.deepEqual(result.normalized, source); assert.notEqual(result.normalized.accessors[0]!.array, source.accessors[0]!.array);
 });
+
+test('control diagnostics distinguish requested targets and normal-only seam locks without relaxing them', async () => {
+  const source = fixture(4, false, true), primitive = source.json.meshes[0].primitives[0];
+  const positions = source.accessors[primitive.attributes.POSITION]!.array;
+  const normals = source.accessors[primitive.attributes.NORMAL]!.array;
+  const uv = source.accessors[primitive.attributes.TEXCOORD_0]!.array;
+  for (let v = 0; v < positions.length / 3; v++) { uv[v * 2] = positions[v * 3]!; uv[v * 2 + 1] = positions[v * 3 + 1]!; if (v >= 25) { normals[v * 3] = 1; normals[v * 3 + 2] = 0; } }
+  const result = await optimizeGeometry(source, { targetRatio: .1, maxError: 0 });
+  const metric = result.report.metrics[0]!;
+  assert.equal(metric.normalOnlySeamVertices, 10);
+  assert.equal(metric.lockedSeamVertices, 10);
+  assert.equal(result.report.controlStatus.targetTriangles, metric.targetTriangles);
+  assert.equal(result.report.controlStatus.achievedTriangles, metric.outputTriangles);
+  assert.equal(result.report.controlStatus.targetReached, metric.outputTriangles <= metric.targetTriangles);
+  assert.equal(result.report.controlStatus.achievedRatio, metric.outputTriangles / metric.originalTriangles);
+  assertRetainedSamples(source, result);
+});
 test('shared attributes and underlying buffers remain independent of an untouched primitive', async () => {
   const source = fixture(), alias = source.accessors.length;
   source.accessors.push({ ...source.accessors[0]!, sourceIndex: alias, array: new Float32Array(source.accessors[0]!.array.buffer) });

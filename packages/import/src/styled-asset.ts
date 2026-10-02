@@ -7,7 +7,8 @@ import { COMPILER_VERSION } from './asset-replay-v6.ts';
 import { replayStyledTexturePackage as buildFromPackage, STYLIZED_TEXTURE_FORMAT, nativeTextureTables } from './styled-texture-replay.ts';
 import { encodeVoxelSnapshot, replayVoxelSnapshot } from './styled-voxel-codec.ts';
 import { normalizeAsset } from './asset-normalize-v3.ts';
-import { buildAnimatedVoxelAsset, ANIMATED_VOXEL_FORMAT } from './animated-voxel-replay.ts';
+import { buildAnimatedVoxelAsset, ANIMATED_VOXEL_FORMAT, MORPH_VOXEL_FORMAT } from './animated-voxel-replay.ts';
+import type { AnimatedVoxelReplayOptions } from './animated-voxel-replay.ts';
 import { packAsset, unpackAsset } from './asset-binary-v3.ts';
 import { addBox, meshData, writeGlb } from './write.ts';
 import { readGlb } from './gltf.ts';
@@ -17,7 +18,7 @@ import type { ArchiveFile } from './asset-package-v3.ts';
 export const STYLED_ASSET_FORMAT = 'KEEL-STYLED-ASSET';
 export const STYLED_ASSET_VERSION = 2;
 export const VOXEL_STYLED_ASSET_VERSION = 3;
-export const STYLED_ASSET_RUNTIME_VERSION = 'keel-styled-asset-5.0.0';
+export const STYLED_ASSET_RUNTIME_VERSION = 'keel-styled-asset-7.0.0';
 const LEGACY_DEPENDENCIES = Object.freeze({
   runtime: 'keel-styled-asset-1.0.0',
   nativeCompiler: COMPILER_VERSION,
@@ -31,6 +32,16 @@ const LEGACY_DEPENDENCIES = Object.freeze({
 export const STYLED_ASSET_DEPENDENCIES = Object.freeze({ ...LEGACY_DEPENDENCIES, runtime: 'keel-styled-asset-2.0.0', textureCodec: 'keel-stylized-textures-v1' });
 export const VOXEL_ASSET_DEPENDENCIES = Object.freeze({ runtime: 'keel-styled-asset-3.0.0', '@keel-engine/import': '0.1.0', '@keel-engine/core': '0.1.0', fflate: '0.8.2', renderer: 'three@0.180.0', loader: 'three@0.180.0/GLTFLoader', voxelCodec: 'keel-static-voxel-snapshot-v1' });
 export const ANIMATED_VOXEL_DEPENDENCIES = Object.freeze({ ...VOXEL_ASSET_DEPENDENCIES, runtime: 'keel-styled-asset-4.0.0', animationCodec: ANIMATED_VOXEL_FORMAT });
+export const MORPH_VOXEL_DEPENDENCIES = Object.freeze({ ...ANIMATED_VOXEL_DEPENDENCIES, runtime: 'keel-styled-asset-6.0.0', animationCodec: MORPH_VOXEL_FORMAT });
+/** Keep existing dependency bytes for small recipes. Extended sparse grids,
+ * generated cube counts and explicit larger host budgets need the v7 reader. */
+function animatedVoxelDependencies(recipe: any) {
+  const legacy = recipe?.format === MORPH_VOXEL_FORMAT ? MORPH_VOXEL_DEPENDENCIES : ANIMATED_VOXEL_DEPENDENCIES;
+  const parts = Array.isArray(recipe?.parts) ? recipe.parts : [], motion = Array.isArray(recipe?.motion) ? recipe.motion : [];
+  const cubes = parts.reduce((n: number, p: any) => n + (p?.snapshot?.count ?? 0), 0);
+  const extended = cubes > 20000 || parts.some((p: any) => Array.isArray(p?.snapshot?.size) && p.snapshot.size.reduce((n: number, v: number) => n * v, 1) > 1000000 || (p?.snapshot?.sourceLength ?? 0) > 825000) || motion.reduce((n: number, r: any) => n + (r?.buffer?.sourceLength ?? 0), 0) > 64 * 1024 * 1024 || parts.reduce((n: number, p: any) => n + (p?.snapshot?.count ?? 0) * 12 * 24 * (p?.morphs?.length ?? 0), 0) > 64 * 1024 * 1024;
+  return extended ? { ...legacy, runtime: 'keel-styled-asset-7.0.0' } : legacy;
+}
 export interface StyledAssetStyle {
   kind: 'original' | 'pixel' | 'dither' | 'voxel';
   pixelSize: number;
@@ -118,7 +129,7 @@ function parseEnvelope(bytes: Uint8Array): any {
     if (!Array.isArray(r?.motion) || r.motion.length > 8192 || !Array.isArray(r?.parts) || r.parts.length > 512) fail('invalid animated voxel tables');
     const restore = (wire: any) => { if (wire?.data?.encoding === 'base64') { keys(wire.data, ['encoding', 'data'], 'animated voxel data'); wire.data = unbase64(wire.data.data); } };
     for (const motion of r.motion) restore(motion?.buffer);
-    for (const part of r.parts) { restore(part?.snapshot); restore(part?.joints); restore(part?.weights); }
+    for (const part of r.parts) { restore(part?.snapshot); restore(part?.joints); restore(part?.weights); if (Array.isArray(part?.morphs)) for (const morph of part.morphs) restore(morph); }
   }
   return value;
 }
@@ -206,22 +217,23 @@ export async function createVoxelStyledAsset(input: VoxelStyledAssetInput): Prom
   const envelope = { format: STYLED_ASSET_FORMAT, version: VOXEL_STYLED_ASSET_VERSION, name, dependencies: VOXEL_ASSET_DEPENDENCIES, native: { encoding: 'none', byteLength: 0, dracoRequired: false }, style, conversion: VOXEL_CONVERSION, sourceBounds: bounds(input.sourceBounds), animation: { mode: 'static-pose' }, attribution: voxelAttribution(input.attribution), voxel };
   const bytes = packAsset(envelope); if (bytes.length > MAX_ENVELOPE) fail('envelope exceeds limit'); return bytes;
 }
-export async function createAnimatedVoxelStyledAsset(input: { recipe: any; style?: StyledAssetStyle; name?: string; sourceBounds?: StyledAssetBounds | null }): Promise<Uint8Array> {
+export async function createAnimatedVoxelStyledAsset(input: { recipe: any; style?: StyledAssetStyle; name?: string; sourceBounds?: StyledAssetBounds | null; maxWorkingBytes?: number }): Promise<Uint8Array> {
   const style = validateStyledAssetStyle(input.style ?? { kind: 'voxel', pixelSize: 1, toneLevels: 8, screen: 'bayer4' });
   if (style.kind !== 'voxel') fail('animated voxel recipe requires voxel style');
   const name = input.name ?? 'Animated voxels'; if (typeof name !== 'string' || name.length > 240) fail('invalid name');
-  dataOnly(input.recipe); await buildAnimatedVoxelAsset(input.recipe);
-  const envelope = { format: STYLED_ASSET_FORMAT, version: 4, name, dependencies: ANIMATED_VOXEL_DEPENDENCIES, native: { encoding: 'rigged-voxel', byteLength: 0, dracoRequired: false }, style, sourceBounds: bounds(input.sourceBounds), animation: { mode: 'preserved' }, animatedVoxel: input.recipe };
+  dataOnly(input.recipe); await buildAnimatedVoxelAsset(input.recipe, input.maxWorkingBytes === undefined ? {} : { maxWorkingBytes: input.maxWorkingBytes });
+  const envelope = { format: STYLED_ASSET_FORMAT, version: 4, name, dependencies: animatedVoxelDependencies(input.recipe), native: { encoding: 'rigged-voxel', byteLength: 0, dracoRequired: false }, style, sourceBounds: bounds(input.sourceBounds), animation: { mode: 'preserved' }, animatedVoxel: input.recipe };
   const bytes = packAsset(envelope); if (bytes.length > MAX_ENVELOPE) fail('envelope exceeds limit'); return bytes;
 }
-async function importAnimatedVoxelEnvelope(e: any) {
+async function importAnimatedVoxelEnvelope(e: any, options: AnimatedVoxelReplayOptions = {}) {
   keys(e, ['format', 'version', 'name', 'dependencies', 'native', 'style', 'sourceBounds', 'animation', 'animatedVoxel'], 'animated voxel envelope');
   if (e.format !== STYLED_ASSET_FORMAT || e.version !== 4 || typeof e.name !== 'string' || e.name.length > 240) fail('invalid animated voxel envelope');
-  keys(e.dependencies, Object.keys(ANIMATED_VOXEL_DEPENDENCIES), 'dependencies'); for (const [k, v] of Object.entries(ANIMATED_VOXEL_DEPENDENCIES)) if (e.dependencies[k] !== v) fail('unsupported animated voxel dependency ' + k);
+  const dependencies = animatedVoxelDependencies(e.animatedVoxel);
+  keys(e.dependencies, Object.keys(dependencies), 'dependencies'); for (const [k, v] of Object.entries(dependencies)) if (e.dependencies[k] !== v) fail('unsupported animated voxel dependency ' + k);
   keys(e.native, ['encoding', 'byteLength', 'dracoRequired'], 'animated voxel source'); if (e.native.encoding !== 'rigged-voxel' || e.native.byteLength !== 0 || e.native.dracoRequired !== false) fail('animated voxel source claim differs');
   keys(e.animation, ['mode'], 'animation'); if (e.animation.mode !== 'preserved') fail('animated voxel clips must be preserved');
   const style = validateStyledAssetStyle(e.style); if (style.kind !== 'voxel') fail('animated voxels require voxel style');
-  const built = await buildAnimatedVoxelAsset(e.animatedVoxel);
+  const built = await buildAnimatedVoxelAsset(e.animatedVoxel, options);
   return { format: 'KEEL-IMPORTED-STYLED-ASSET' as const, version: 4 as const, name: e.name as string, style, conversion: { mode: 'animated-voxel-lossy', sourceGeometryRemoved: true, sourceTexturesRemoved: true, sourceAnimationRemoved: false }, sourceBounds: bounds(e.sourceBounds), nativeScene: built.scene, reconstructedGlb: built.glb, sourceGlb: built.glb, glb: built.glb, animation: { mode: 'preserved' as const, clips: built.scene.json.animations.length, skins: built.scene.json.skins.length }, voxel: null, voxelMesh: null, voxelCount: built.cubes, envelope: e };
 }
 async function importVoxelEnvelope(e: any) {
@@ -284,10 +296,10 @@ export function styledAssetJson(bytes: Uint8Array): string {
   const nativeBytes = nativeBytesOf(envelope.native);
   return JSON.stringify({ ...envelope, native: { ...envelope.native, encoding: 'base64-kap', data: base64(nativeBytes) } }, null, 2);
 }
-export async function importStyledAsset(bytes: Uint8Array, options: { dracoDecoder?: any } = {}) {
+export async function importStyledAsset(bytes: Uint8Array, options: { dracoDecoder?: any; maxWorkingBytes?: number } = {}) {
   const e = parseEnvelope(bytes); dataOnly(e);
   if (e.version === 5) return importRasterEnvelope(e);
-  if (e.version === 4) return importAnimatedVoxelEnvelope(e);
+  if (e.version === 4) return importAnimatedVoxelEnvelope(e, options);
   if (e.version === 3) return importVoxelEnvelope(e);
   keys(e, ['format', 'version', 'name', 'dependencies', 'native', 'style', 'sourceBounds', 'animation', 'voxel', ...(e.version === 2 ? ['conversion'] : [])], 'envelope');
   if (e.format !== STYLED_ASSET_FORMAT || ![1, 2].includes(e.version)) fail('unsupported envelope version');
@@ -325,5 +337,5 @@ export function makeStyledAssetArchive(bytes: Uint8Array, support: { runtime: Ui
   const dracoRequired = envelope.version < 3 && needsDraco(nativeBytesOf(envelope.native));
   if (dracoRequired) for (const name of ['draco-factory.mjs', 'draco_decoder_gltf.wasm']) if (!support.dracoFiles?.some(f => f.name === name)) fail('missing shared decoder file ' + name);
   for (const name of ['LICENSE-KEEL.txt', 'LICENSE-fflate.txt', 'LICENSE-Draco-Apache-2.0.txt', 'LICENSE-meshoptimizer.txt']) if (!support.licenses.some(f => f.name === name)) fail('missing runtime license ' + name);
-  return makeAssetZip([{ name: 'asset.keelasset', data: bytes }, { name: 'asset.generated.mjs', data: STYLED_ASSET_PROGRAM }, { name: 'styled-asset-runtime.mjs', data: support.runtime }, { name: 'dependencies.json', data: JSON.stringify(envelope.dependencies, null, 2) }, { name: 'README.txt', data: 'KEEL styled asset v1/v2/v3/v4/v5. Import build or createPlayer from asset.generated.mjs. build() reconstructs native data and GLB; createPlayer({THREE, GLTFLoader, renderer}) replays the saved style and source animations. Host must provide Three.js 0.180.0 and its GLTFLoader. The shared runtime and Three dependencies are installed once. Pixel/dither may contain intentionally lossy palette/pattern textures; inspect the conversion field. Superseded color textures are absent when textureEncoding is palette-pattern-v1. Voxel v3 contains only a static posed cube reconstruction, with no source model, textures, rig or animation. Voxel v4 reconstructs cubes with resampled blended weights, original rig and TRS clips; morph animation is unsupported. Raster v5 contains sampled RGBA frames and view/clip metadata; its GLB is a static first-frame card and full animation requires this raster runtime. Source bounds are optional camera hints, not animation bounds. No on-chain deployment is claimed.\n' }, ...(dracoRequired ? support.dracoFiles ?? [] : []), ...support.licenses]);
+  return makeAssetZip([{ name: 'asset.keelasset', data: bytes }, { name: 'asset.generated.mjs', data: STYLED_ASSET_PROGRAM }, { name: 'styled-asset-runtime.mjs', data: support.runtime }, { name: 'dependencies.json', data: JSON.stringify(envelope.dependencies, null, 2) }, { name: 'README.txt', data: 'KEEL styled asset v1/v2/v3/v4/v5. Import build or createPlayer from asset.generated.mjs. build() reconstructs native data and GLB; createPlayer({THREE, GLTFLoader, renderer}) replays the saved style and source animations. Host must provide Three.js 0.180.0 and its GLTFLoader. The shared runtime and Three dependencies are installed once. Pixel/dither may contain intentionally lossy palette/pattern textures; inspect the conversion field. Superseded color textures are absent when textureEncoding is palette-pattern-v1. Voxel v3 contains only a static posed cube reconstruction, with no source model, textures, rig or animation. Voxel v4 reconstructs cubes with resampled blended weights, original rig and TRS clips. Morph recipes require runtime 6 and retain morph-weight clips with nearest-triangle position displacement per cube; source normal/tangent morph shading and sub-cell detail are not retained. Raster v5 contains sampled RGBA frames and view/clip metadata; its GLB is a static first-frame card and full animation requires this raster runtime. Source bounds are optional camera hints, not animation bounds. No on-chain deployment is claimed.\n' }, ...(dracoRequired ? support.dracoFiles ?? [] : []), ...support.licenses]);
 }

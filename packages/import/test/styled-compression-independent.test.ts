@@ -131,6 +131,7 @@ test('independent: protected-only maps retain original native bytes and make no 
   const base = await compileAsset({ mode: 'lossless', entry: 'normal.glb', files: [{ name: 'normal.glb', data: glb }] });
   const result = await compileStyledAsset({ packageBytes: base.packageBytes, style, texture });
   assert.equal(result.report.changedImages, 0);
+  assert.equal(result.report.textureControls.applied, false);
   assert.equal(result.report.retainedImages, 1);
   assert.deepEqual(result.packageBytes, base.packageBytes);
   assert.deepEqual(unpackAsset(result.assetBytes).native.data, base.packageBytes);
@@ -141,6 +142,19 @@ test('independent: protected-only maps retain original native bytes and make no 
   assert.deepEqual(result.imported.nativeScene.json, base.nativeScene.json);
   assert.deepEqual(result.imported.nativeScene.images, base.nativeScene.images);
   assertProtectedScene(base.nativeScene, result.imported.nativeScene);
+});
+
+test('independent: texture controls disclose inert settings on material-color models', async () => {
+  const fixture = styledIndependentFixture();
+  delete fixture.json.materials[0].pbrMetallicRoughness.baseColorTexture;
+  delete fixture.json.images; delete fixture.json.textures; delete fixture.json.samplers;
+  const base = await compileAsset({ mode: 'lossless', entry: 'color.glb', files: [{ name: 'color.glb', data: writeNativeGlb(fixture.json, fixture.arrays, []) }] });
+  const a = await compileStyledAsset({ packageBytes: base.packageBytes, style, texture: { maxDimension: 128, paletteSize: 8 } });
+  const b = await compileStyledAsset({ packageBytes: base.packageBytes, style, texture: { maxDimension: 512, paletteSize: 64 } });
+  assert.deepEqual(a.assetBytes, b.assetBytes);
+  assert.deepEqual(a.report.textureControls, { applied: false, changedImages: 0, reason: 'The source has no images. Texture resolution and palette controls cannot change material or vertex colors; only the saved rendering style changes.' });
+  assert(a.report.warnings.includes(a.report.textureControls.reason));
+  assertProtectedScene(base.nativeScene, a.imported.nativeScene);
 });
 
 test('independent: repeated compiles produce deterministic actual transport bytes', async () => {
