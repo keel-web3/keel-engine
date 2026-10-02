@@ -1,4 +1,7 @@
-export { compileRasterStyledAsset, compileRasterSourceAsset } from './raster-compiler.ts';
+export { compileRasterStyledAsset, compileRasterSourceAsset, preflightRasterSourceAsset, preflightRasterStyledAsset, RasterResourceLimitError, compilePixelSpriteSourceAsset, compilePixelSpriteStyledAsset, PIXEL_SPRITE_PRESETS } from './raster-compiler.ts';
+export { compilePixelModelSourceAsset, compileForceTargetSourceAsset, PIXEL_MODEL_PRESETS } from './pixel-model-compiler.ts';
+export type { PixelModelSettings } from './pixel-model-compiler.ts';
+export type { PixelSpriteSettings, SpriteCostCodec, RasterCompileSettings } from './raster-compiler.ts';
 /** Explicit lossy styling: replace color textures with compact inferred palettes
  * and KEEL screen recipes. Geometry and animation are inherited from native KAP. */
 import { buildFromPackage } from './asset-replay-v6.ts';
@@ -16,15 +19,15 @@ export async function compileAnimatedVoxelStyledAsset(input: Parameters<typeof c
   const start = performance.now();
   const result = await compileAnimatedVoxels(input);
   const wrapStart = performance.now();
-  const assetBytes = await createAnimatedVoxelStyledAsset({ recipe: result.recipe, ...(input.name === undefined ? {} : { name: input.name }), ...(input.style === undefined ? {} : { style: input.style }), ...(input.sourceBounds === undefined ? {} : { sourceBounds: input.sourceBounds }) });
-  const imported = await importStyledAsset(assetBytes);
+  const assetBytes = await createAnimatedVoxelStyledAsset({ recipe: result.recipe, ...(input.memoryBudgetBytes===undefined?{}:{maxWorkingBytes:input.memoryBudgetBytes}), ...(input.name === undefined ? {} : { name: input.name }), ...(input.style === undefined ? {} : { style: input.style }), ...(input.sourceBounds === undefined ? {} : { sourceBounds: input.sourceBounds }) });
+  const imported = await importStyledAsset(assetBytes,input.memoryBudgetBytes===undefined?{}:{maxWorkingBytes:input.memoryBudgetBytes});
   return { assetBytes, imported, report: { ...result.report, assetBytes: assetBytes.length, assetSha256: await hash(assetBytes), reconstructedGlbSha256: await hash(imported.glb) }, timings: { ...result.timings, voxelCompile: result.timings.total, envelopeAndValidation: performance.now() - wrapStart, total: performance.now() - start } };
 }
 
 export interface CompileStyledAssetInput {
   packageBytes: Uint8Array;
   style: StyledAssetStyle;
-  texture: { maxDimension: 128 | 256 | 512; paletteSize: 8 | 16 | 32 | 64 };
+  texture: { maxDimension: number; paletteSize: 8 | 16 | 32 | 64 };
   name?: string;
   sourceBounds?: StyledAssetBounds | null;
   dracoDecoder?: any;
@@ -68,7 +71,7 @@ function pixelError(source: { width: number; height: number; data: Uint8Array },
 export async function compileStyledAsset(input: CompileStyledAssetInput) {
   const started = performance.now(), style = validateStyledAssetStyle(input.style), timings: Record<string, number> = {};
   if (!['pixel', 'dither'].includes(style.kind)) throw Error('Texture styling requires explicit pixel/dither lossy style');
-  if (![128, 256, 512].includes(input.texture?.maxDimension) || ![8, 16, 32, 64].includes(input.texture?.paletteSize)) throw Error('Invalid stylized texture settings');
+  if ((!Number.isSafeInteger(input.texture?.maxDimension) || input.texture.maxDimension < 1 || input.texture.maxDimension > 512) || ![8, 16, 32, 64].includes(input.texture?.paletteSize)) throw Error('Invalid stylized texture settings');
   let at = performance.now(); input.onProgress?.({ stage: 'styled-native-replay', done: 0, total: 1 });
   const source = await buildFromPackage(input.packageBytes, { dracoDecoder: input.dracoDecoder }); timings.nativeReplay = performance.now() - at;
   const base = unpackAsset(input.packageBytes), { body } = nativeTextureTables(base), usages = styledImageUsages(source.scene.json, source.images.length), images: any[] = [], reports: any[] = [], expected = new Map<number, Uint8Array>();
@@ -106,6 +109,8 @@ export async function compileStyledAsset(input: CompileStyledAssetInput) {
   for (const j of [before, after]) for (const texture of j.textures ?? []) if (changed.has(texture.source)) delete texture.sampler;
   if (JSON.stringify(before) !== JSON.stringify(after)) throw Error('Styled scene metadata changed outside declared texture sampling');
   timings.validation = performance.now() - at; timings.total = performance.now() - started;
-  const report = { version: 1, mode: 'stylized-lossy', settings: { style, texture: input.texture }, nativeInputBytes: input.packageBytes.length, assetBytes: assetBytes.length, assetSha256: await hash(assetBytes), reconstructedGlbSha256: await hash(imported.glb), changedImages: images.length, retainedImages: source.images.length - images.length, images: reports, validation: { decodedAccessorsExactToNativeInput: true, sceneExceptTextureSamplingExact: true, generatedTexturePixelsExactToRecipe: true, retainedImagesExact: true, noSupersededTexturePayload: true }, warnings: ['Palette reduction, resolution changes, nearest sampling and dithering are intentional visual loss.', 'sourceGlb/reconstructedGlb contain the styled reconstruction; superseded color textures are unavailable from this download.', 'Normal, linear, mixed and unknown image roles are retained.', 'No guarantee that every styled asset is smaller. Measure the complete downloaded asset with the same encoder.', 'Animation data is unchanged; GPU pixel parity is not verified.'] };
+  const textureControls = { applied: images.length > 0, changedImages: images.length, reason: images.length ? 'Eligible color images were replaced with the requested resolution and palette.' : source.images.length === 0 ? 'The source has no images. Texture resolution and palette controls cannot change material or vertex colors; only the saved rendering style changes.' : 'No eligible color images were replaced. Inspect image roles and retained-image reasons before changing texture controls.' };
+  const report = { version: 1, mode: 'stylized-lossy', settings: { style, texture: input.texture }, nativeInputBytes: input.packageBytes.length, assetBytes: assetBytes.length, assetSha256: await hash(assetBytes), reconstructedGlbSha256: await hash(imported.glb), changedImages: images.length, retainedImages: source.images.length - images.length, images: reports, textureControls, validation: { decodedAccessorsExactToNativeInput: true, sceneExceptTextureSamplingExact: true, generatedTexturePixelsExactToRecipe: true, retainedImagesExact: true, noSupersededTexturePayload: true }, warnings: ['Palette reduction, resolution changes, nearest sampling and dithering are intentional visual loss.', 'sourceGlb/reconstructedGlb contain the styled reconstruction; superseded color textures are unavailable from this download.', 'Normal, linear, mixed and unknown image roles are retained.', 'No guarantee that every styled asset is smaller. Measure the complete downloaded asset with the same encoder.', 'Animation data is unchanged; GPU pixel parity is not verified.'] };
+  if (!textureControls.applied) report.warnings.push(textureControls.reason);
   return { assetBytes, packageBytes, imported, report, timings };
 }

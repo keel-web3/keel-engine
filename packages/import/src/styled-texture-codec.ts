@@ -15,7 +15,7 @@ export const STYLIZED_TEXTURE_MAX_PIXELS = 512 * 512;
 const MAX_SOURCE_DIMENSION = 16_384;
 const SAMPLE_SIDE = 64;
 export interface StylizedTextureOptions {
-  maxDimension: 128 | 256 | 512;
+  maxDimension: number;
   paletteSize: 8 | 16 | 32 | 64;
   kind: 'pixel' | 'dither';
   screen: ScreenId;
@@ -209,7 +209,7 @@ export function encodeStylizedTexture(input: StylizedTextureInput, options: Styl
   integer(input.width, 1, MAX_SOURCE_DIMENSION, 'source width'); integer(input.height, 1, MAX_SOURCE_DIMENSION, 'source height');
   const count = integer(input.width * input.height, 1, STYLIZED_TEXTURE_MAX_SOURCE_PIXELS, 'source pixels');
   if (input.data.length !== count * 4) fail('RGBA length mismatch');
-  if (!options || ![128, 256, 512].includes(options.maxDimension) || ![8, 16, 32, 64].includes(options.paletteSize) || !['pixel', 'dither'].includes(options.kind)) fail('invalid options');
+  if (!options || (!Number.isSafeInteger(options.maxDimension) || options.maxDimension < 1 || options.maxDimension > 512) || ![8, 16, 32, 64].includes(options.paletteSize) || !['pixel', 'dither'].includes(options.kind)) fail('invalid options');
   screen(options.screen);
   const image = resize(input, options.maxDimension), palette = inferPalette(image, options.paletteSize), bits = bitsFor(palette), n = image.width * image.height;
   const fields = colorFields(image, palette, options), alphaPlane = new Uint8Array(n); let constantAlpha = true;

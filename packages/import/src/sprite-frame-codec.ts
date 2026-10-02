@@ -6,11 +6,11 @@
 import { SCREENS } from '@keel-engine/core';
 import type { ScreenId } from '@keel-engine/core';
 import { encodeBuffer, decodeBuffer } from './asset-buffer-codec.ts';
-import { packAsset } from './asset-binary-v3.ts';
+import { packAsset, unpackAsset } from './asset-binary-v3.ts';
 import { crc32 } from './png.ts';
 
 export const SPRITE_FRAME_VERSION = 1;
-export const SPRITE_FRAME_MAX_DIMENSION = 512;
+export const SPRITE_FRAME_MAX_DIMENSION = 65535;
 export const SPRITE_FRAME_MAX_FRAMES = 256;
 export const SPRITE_FRAME_MAX_PIXELS = 16_777_216;
 const MAX_SAMPLES = 8192, TILE = 8, MAX_TILES = 4096;
@@ -19,13 +19,15 @@ export interface SpriteFrameInput {
   height: number;
   frames: Uint8Array[];
   paletteSize: 8 | 16 | 32 | 64;
-  kind: 'pixel' | 'dither';
+  kind: 'pixel' | 'dither' | 'original';
   screen: ScreenId;
+  /** Compiler-internal shared palette for independently bounded chunks. */
+  palette?: number[];
 }
-export type SpriteFrameEncoding = 'rgba' | 'indexed' | 'delta' | 'tiles';
+export type SpriteFrameEncoding = 'rgba' | 'indexed' | 'delta' | 'tiles' | 'chunks';
 export interface SpriteFrameRecipe {
-  version: 1;
-  kind: 'pixel' | 'dither';
+  version: 1 | 2;
+  kind: 'pixel' | 'dither' | 'original';
   encoding: SpriteFrameEncoding;
   width: number;
   height: number;
@@ -132,9 +134,10 @@ function box(colors: Color[]): Box {
 /** Weighted median cut follows styled-texture-codec's stable RGB/axis tie rules.
  * Each frame gets the same bounded number of stratified, integer-jitter samples,
  * including hidden RGB. One palette is then used at every animation time. */
-function globalPalette(input: SpriteFrameInput, pixels: number): number[] {
-  const colors = new Map<number, Color>(), samples = Math.min(pixels, Math.floor(MAX_SAMPLES / input.frames.length));
-  for (let f = 0; f < input.frames.length; f++) for (let s = 0; s < samples; s++) {
+export function spriteGlobalPalette(input: SpriteFrameInput, pixels = input.width * input.height): number[] {
+  const colors = new Map<number, Color>(), sampledFrames = Math.min(MAX_SAMPLES,input.frames.length), samples = Math.min(pixels, Math.floor(MAX_SAMPLES / sampledFrames));
+  for (let sampleFrame = 0; sampleFrame < sampledFrames; sampleFrame++) for (let s = 0; s < samples; s++) {
+    const f = Math.floor(sampleFrame * input.frames.length / sampledFrames);
     const start = Math.floor(s * pixels / samples), end = Math.floor((s + 1) * pixels / samples);
     let hash = (Math.imul(s + 1, 0x9e3779b1) ^ Math.imul(f + 1, 0x85ebca6b)) >>> 0;
     hash = Math.imul(hash ^ hash >>> 16, 0x7feb352d) >>> 0;
@@ -256,13 +259,15 @@ function tiles(width: number, height: number, indices: Uint8Array[], alphas: Uin
   for (let i = 0; i < ids.length; i++) { references[i * indexBytes] = ids[i]! & 255; if (indexBytes === 2) references[i * 2 + 1] = ids[i]! >>> 8; }
   return { bytes: join([...dictionary, references]), dictionaryTiles: dictionary.length };
 }
-export function encodeSpriteFrames(input: SpriteFrameInput): EncodedSpriteFrames {
+function encodeSpriteFramesInternal(input: SpriteFrameInput, onCandidate?: (recipe: SpriteFrameRecipe) => void): EncodedSpriteFrames {
   if (!input || !Array.isArray(input.frames)) fail('RGBA frame array required');
   const pixels = validateShape(input.width, input.height, input.frames.length);
   for (const frame of input.frames) if (!(frame instanceof Uint8Array) || frame.length !== pixels * 4) fail('RGBA frame length mismatch');
-  if (![8, 16, 32, 64].includes(input.paletteSize) || !['pixel', 'dither'].includes(input.kind)) fail('invalid options');
+  if (![8, 16, 32, 64].includes(input.paletteSize) || !['pixel', 'dither', 'original'].includes(input.kind)) fail('invalid options');
   validateScreen(input.screen);
-  const palette = globalPalette(input, pixels), bits = bitsFor(palette.length / 3), quantized = quantize(input, palette, pixels), plane = quantized.alpha === 'plane';
+  if(input.kind==='original')return encodeOriginalFrames(input,pixels,onCandidate);
+  if(input.palette&&(!Array.isArray(input.palette)||!input.palette.length||input.palette.length>192||input.palette.length%3||input.palette.some(n=>!Number.isInteger(n)||n<0||n>255)))fail('invalid shared palette');
+  const palette = input.palette??spriteGlobalPalette(input, pixels), bits = bitsFor(palette.length / 3), quantized = quantize(input, palette, pixels), plane = quantized.alpha === 'plane';
   const frameCRC32 = quantized.frames.map(frame => crc32(frame)), candidates: SpriteFrameCandidate[] = [], skippedCandidates: SpriteFrameReport['skippedCandidates'] = [];
   let selected: SpriteFrameRecipe | undefined, cost = Infinity;
   const consider = (encoding: SpriteFrameEncoding, bytes: Uint8Array, details: Partial<SpriteFrameCandidate> = {}) => {
@@ -271,6 +276,7 @@ export function encodeSpriteFrames(input: SpriteFrameInput): EncodedSpriteFrames
     if (encoding === 'tiles') recipe.dictionaryTiles = details.dictionaryTiles!;
     const serializedBytes = packAsset(recipe).length;
     candidates.push({ ...details, encoding, payloadBytes: recipe.data.length, serializedBytes });
+    onCandidate?.(recipe);
     if (serializedBytes < cost) { selected = recipe; cost = serializedBytes; }
   };
   // This fixed order also breaks exact byte-cost ties; only the selected payload survives.
@@ -293,15 +299,93 @@ export function encodeSpriteFrames(input: SpriteFrameInput): EncodedSpriteFrames
   } };
 }
 
+/** The legacy raw-cost choice remains stable. Compilers with a pinned transport
+ * encoder can instead compare these four bounded candidates in complete assets. */
+export function encodeSpriteFrames(input: SpriteFrameInput): EncodedSpriteFrames {
+  return encodeSpriteFramesInternal(input);
+}
+export function encodeSpriteFrameCandidates(input: SpriteFrameInput) {
+  const candidateRecipes: SpriteFrameRecipe[] = [];
+  return { ...encodeSpriteFramesInternal(input, recipe => candidateRecipes.push(recipe)), candidateRecipes };
+}
+
+/** Original raster retains every rendered RGBA byte. It is still a baked 2D view. */
+function encodeOriginalFrames(input:SpriteFrameInput,pixels:number,onCandidate?:(recipe:SpriteFrameRecipe)=>void):EncodedSpriteFrames {
+  const encoded=encodeBuffer(join(input.frames)),recipe:SpriteFrameRecipe={version:1,kind:'original',encoding:'rgba',width:input.width,height:input.height,frameCount:input.frames.length,screen:input.screen,palette:[0,0,0],alpha:'plane',frameCRC32:input.frames.map(frame=>crc32(frame)),codec:encoded.codec,parameters:encoded.parameters,sourceLength:encoded.sourceLength,data:encoded.data};
+  onCandidate?.(recipe);const cost=packAsset(recipe).length;
+  return{recipe,frames:decodeSpriteFrames(recipe),report:{selected:'rgba',width:input.width,height:input.height,frameCount:input.frames.length,paletteSize:0,sourceRGBABytes:pixels*input.frames.length*4,quantizedRGBABytes:pixels*input.frames.length*4,payloadBytes:recipe.data.length,serializedBytes:cost,metadataBytes:cost-recipe.data.length,alphaExact:true,quantizationError:{rgbMAE:0,rgbRMSE:0,rgbMaxError:0,alphaMAE:0,alphaMaxError:0,alphaChangedPixels:0},candidates:[{encoding:'rgba',payloadBytes:recipe.data.length,serializedBytes:cost}],skippedCandidates:[],selectionBasis:'Exact rendered RGBA; no palette quantization. Source 3D shading and geometry are not retained.'}};
+}
+/** A real array with lazy indexed properties, so legacy .length/.at/.map access
+ * works. Structured cloning intentionally materializes it; transfer assetBytes
+ * and re-import at the destination for bounded memory instead. */
+function lazyFrames(count:number,get:(index:number)=>Uint8Array):Uint8Array[]{
+  const frames=new Array<Uint8Array>(count);
+  for(let i=0;i<count;i++)Object.defineProperty(frames,i,{enumerable:true,configurable:false,get:()=>get(i)});
+  return frames;
+}
+export class SpriteFrameResourceLimitError extends Error {
+  actual:number; maximum:number;
+  constructor(actual:number,maximum:number){super('Estimated encoded sprite working set '+actual+' bytes exceeds '+maximum+' bytes');this.name='SpriteFrameResourceLimitError';this.actual=actual;this.maximum=maximum;}
+}
+export interface ChunkedSpriteOptions {chunkFrames?:number;signal?:AbortSignal;onProgress?:(event:{stage:string;done:number;total:number})=>void;maxWorkingBytes?:number}
+const abort=(signal?:AbortSignal)=>{if(signal?.aborted){const error=new Error('Raster conversion cancelled');error.name='AbortError';throw error;}};
+/** No total-frame or total-pixel ceiling: the encoder works a chunk at a time.
+ * Global palette samples and raster dimensions are invariant across chunks. */
+export async function encodeChunkedSpriteFrames(input:SpriteFrameInput,options:ChunkedSpriteOptions={}):Promise<EncodedSpriteFrames>{
+  integer(input.width,1,SPRITE_FRAME_MAX_DIMENSION,'width');integer(input.height,1,SPRITE_FRAME_MAX_DIMENSION,'height');integer(input.frames.length,1,0xffffffff-1,'frame count');
+  const pixels=input.width*input.height,budget=options.maxWorkingBytes??256*1024*1024,chunkPixels=Math.min(SPRITE_FRAME_MAX_PIXELS,Math.max(pixels,Math.floor(budget/40))),chunkSize=Math.max(1,Math.min(integer(options.chunkFrames??SPRITE_FRAME_MAX_FRAMES,1,SPRITE_FRAME_MAX_FRAMES,'chunk frames'),Math.floor(chunkPixels/pixels)));
+  validateShape(input.width,input.height,1);abort(options.signal);
+  if(pixels*16>budget)throw new SpriteFrameResourceLimitError(pixels*16,budget);
+  const palette=input.kind==='original'?[0,0,0]:spriteGlobalPalette(input,pixels),chunks:SpriteFrameRecipe[]=[],checksums:number[]=[],reports:SpriteFrameReport[]=[];let encodedBytes=0;
+  for(let start=0;start<input.frames.length;start+=chunkSize){
+    abort(options.signal);options.onProgress?.({stage:'raster-palette-codec',done:start,total:input.frames.length});
+    const frames=input.frames.slice(start,Math.min(input.frames.length,start+chunkSize)),encoded=encodeSpriteFrames({...input,frames,palette});
+    encodedBytes+=encoded.recipe.data.length;
+    // Packaging makes a bounded number of copies of encoded data; account for
+    // that peak before retaining a larger compressed result.
+    const peak=encodedBytes*4+input.frames.length*160+chunkSize*pixels*16;if(peak>budget)throw new SpriteFrameResourceLimitError(peak,budget);
+    chunks.push(encoded.recipe);checksums.push(...encoded.recipe.frameCRC32);reports.push(encoded.report);
+    // Verify the independently replayable chunk before discarding working RGBA.
+    const replay=decodeSpriteFrames(encoded.recipe);for(let f=0;f<replay.length;f++)if(replay[f]!.some((v,i)=>v!==encoded.frames[f]![i]))fail('chunk replay differs');
+    await new Promise<void>(resolve=>setTimeout(resolve,0));
+  }
+  abort(options.signal);options.onProgress?.({stage:'raster-palette-codec',done:input.frames.length,total:input.frames.length});
+  const data=packAsset({version:1,chunks}),recipe:SpriteFrameRecipe={version:2,kind:input.kind,encoding:'chunks',width:input.width,height:input.height,frameCount:input.frames.length,screen:input.screen,palette,alpha:'plane',frameCRC32:checksums,codec:'raw',parameters:{version:1},sourceLength:data.length,data};
+  const cost=packAsset(recipe).length,channels=pixels*input.frames.length*3,weighted=(key:'rgbMAE'|'rgbRMSE')=>reports.reduce((sum,r)=>sum+(key==='rgbRMSE'?r.quantizationError[key]**2:r.quantizationError[key])*r.frameCount*pixels*3,0)/channels;
+  return{recipe,frames:decodeChunkedSpriteFrames(recipe),report:{selected:'chunks',width:input.width,height:input.height,frameCount:input.frames.length,paletteSize:input.kind==='original'?0:palette.length/3,sourceRGBABytes:pixels*input.frames.length*4,quantizedRGBABytes:pixels*input.frames.length*4,payloadBytes:data.length,serializedBytes:cost,metadataBytes:cost-data.length,alphaExact:true,quantizationError:{rgbMAE:weighted('rgbMAE'),rgbRMSE:Math.sqrt(weighted('rgbRMSE')),rgbMaxError:Math.max(...reports.map(r=>r.quantizationError.rgbMaxError)),alphaMAE:0,alphaMaxError:0,alphaChangedPixels:0},candidates:[{encoding:'chunks',payloadBytes:data.length,serializedBytes:cost}],skippedCandidates:[],selectionBasis:'Independently verified bounded chunks, each choosing its smallest exact encoding; one fixed global palette, requested dimensions/FPS/views preserved. Lazy replay retains one decoded chunk. Complete transport cost is measured after chunk selection.'}};
+}
+function decodeChunkedSpriteFrames(recipe:SpriteFrameRecipe,deferPayloadValidation=false):Uint8Array[]{
+  if(recipe.encoding!=='chunks'||!['pixel','dither','original'].includes(recipe.kind)||recipe.codec!=='raw'||recipe.parameters?.version!==1||Object.keys(recipe.parameters).length!==1||!(recipe.data instanceof Uint8Array)||recipe.sourceLength!==recipe.data.length)fail('invalid chunked recipe');
+  integer(recipe.width,1,SPRITE_FRAME_MAX_DIMENSION,'width');integer(recipe.height,1,SPRITE_FRAME_MAX_DIMENSION,'height');integer(recipe.frameCount,1,0xffffffff-1,'frame count');validateScreen(recipe.screen);
+  if(!Array.isArray(recipe.palette)||!recipe.palette.length||recipe.palette.length>192||recipe.palette.length%3||recipe.alpha!=='plane'||!Array.isArray(recipe.frameCRC32)||recipe.frameCRC32.length!==recipe.frameCount)fail('invalid chunked metadata');
+  for(const n of recipe.palette)integer(n,0,255,'palette byte');for(const n of recipe.frameCRC32)integer(n,0,0xffffffff,'frame checksum');
+  const bundle=unpackAsset(recipe.data);if(!bundle||bundle.version!==1||Object.keys(bundle).some(k=>!['version','chunks'].includes(k))||!Array.isArray(bundle.chunks)||!bundle.chunks.length||bundle.chunks.length>recipe.frameCount)fail('invalid chunk directory');
+  const chunks:SpriteFrameRecipe[]=bundle.chunks,starts:number[]=[];let count=0;
+  for(const chunk of chunks){
+    validateRecipeFields(chunk);
+    if(chunk.version!==1||chunk.width!==recipe.width||chunk.height!==recipe.height||chunk.kind!==recipe.kind||chunk.screen!==recipe.screen||JSON.stringify(chunk.palette)!==JSON.stringify(recipe.palette))fail('chunk settings differ');
+    validateFrameMetadata(chunk);
+    starts.push(count);if(count+chunk.frameCount>recipe.frameCount)fail('chunk frame count differs');
+    for(let f=0;f<chunk.frameCount;f++)if(chunk.frameCRC32[f]!==recipe.frameCRC32[count+f])fail('chunk checksum directory differs');
+    if(!deferPayloadValidation)decodeSpriteFrames(chunk);
+    count+=chunk.frameCount;
+  }
+  if(count!==recipe.frameCount)fail('chunk frame count differs');
+  let cached=-1,frames:Uint8Array[]=[];
+  return lazyFrames(count,index=>{let lo=0,hi=starts.length;while(lo+1<hi){const mid=(lo+hi)>>>1;if(starts[mid]!<=index)lo=mid;else hi=mid;}if(cached!==lo){frames=decodeSpriteFrames(chunks[lo]!);cached=lo;}return frames[index-starts[lo]!]!;});
+}
+
 interface Region { op: number; x: number; y: number; w: number; h: number; color: number; alpha: number; colors: Uint8Array; alphas: Uint8Array }
-/** Validate all record lengths, coordinates, references, indices and padding before
- * allocating any RGBA frames. decodeBuffer separately bounds DEFLATE inflation. */
-export function decodeSpriteFrames(recipe: SpriteFrameRecipe): Uint8Array[] {
+function validateRecipeFields(recipe:SpriteFrameRecipe):void {
   if (!recipe || typeof recipe !== 'object' || Array.isArray(recipe) || ![Object.prototype, null].includes(Object.getPrototypeOf(recipe))) fail('invalid recipe');
   const required = ['version', 'kind', 'encoding', 'width', 'height', 'frameCount', 'screen', 'palette', 'alpha', 'frameCRC32', 'codec', 'parameters', 'sourceLength', 'data'];
   const allowed = recipe.encoding === 'tiles' ? [...required, 'dictionaryTiles'] : required;
   if (Object.keys(recipe).some(k => !allowed.includes(k)) || required.some(k => !Object.hasOwn(recipe, k))) fail('invalid recipe fields');
-  if (recipe.version !== 1 || !['pixel', 'dither'].includes(recipe.kind) || !['rgba', 'indexed', 'delta', 'tiles'].includes(recipe.encoding)) fail('unsupported recipe');
+}
+/** Shape and payload extent checks do not inflate data or allocate pixel planes. */
+function validateFrameMetadata(recipe:SpriteFrameRecipe){
+  if (recipe.version !== 1 || !['pixel', 'dither', 'original'].includes(recipe.kind) || !['rgba', 'indexed', 'delta', 'tiles'].includes(recipe.encoding)) fail('unsupported recipe');
+  if(recipe.kind==='original'&&recipe.encoding!=='rgba')fail('original RGB must use exact RGBA encoding');
   const pixels = validateShape(recipe.width, recipe.height, recipe.frameCount), total = pixels * recipe.frameCount;
   validateScreen(recipe.screen);
   if (!Array.isArray(recipe.palette) || !recipe.palette.length || recipe.palette.length > 64 * 3 || recipe.palette.length % 3) fail('invalid palette');
@@ -321,7 +405,25 @@ export function decodeSpriteFrames(recipe: SpriteFrameRecipe): Uint8Array[] {
     expected = dictionaryTiles * tileStride + tileCount * referenceBytes;
   } else integer(recipe.sourceLength, recipe.frameCount, recipe.frameCount * (9 + stride), 'delta length');
   if (recipe.encoding !== 'delta' && recipe.sourceLength !== expected) fail('field length mismatch');
-  const bytes = decodeBuffer(recipe, recipe.encoding === 'delta' ? recipe.frameCount * (9 + stride) : expected);
+  const maximum=recipe.encoding==='delta'?recipe.frameCount*(9+stride):expected;
+  if(!(recipe.data instanceof Uint8Array)||!recipe.parameters||typeof recipe.parameters!=='object'||Array.isArray(recipe.parameters)||recipe.parameters.version!==1||!Object.hasOwn(recipe.parameters,'version')||Object.keys(recipe.parameters).length!==1)fail('invalid buffer metadata');
+  if(recipe.codec==='raw'?recipe.data.length!==recipe.sourceLength:recipe.data.length>maximum+Math.ceil(maximum/16)+1024)fail('invalid buffer extent');
+  return{pixels,total,plane,bits,colorBytes,stride,tileCount,tileColorBytes,tileStride,dictionaryTiles,referenceBytes,expected,maximum};
+}
+/** Rehydrate already imported Worker data without decoding every frame again.
+ * All directory/recipe bounds are checked now. A chunk's complete payload,
+ * palette indices, rectangles and every pixel checksum are checked on access. */
+export function rehydrateSpriteFrames(recipe:SpriteFrameRecipe):Uint8Array[]{
+  validateRecipeFields(recipe);
+  return recipe.version===2?decodeChunkedSpriteFrames(recipe,true):decodeSpriteFrames(recipe);
+}
+/** Validate all record lengths, coordinates, references, indices and padding before
+ * allocating any RGBA frames. decodeBuffer separately bounds DEFLATE inflation. */
+export function decodeSpriteFrames(recipe: SpriteFrameRecipe): Uint8Array[] {
+  validateRecipeFields(recipe);
+  if(recipe.version===2)return decodeChunkedSpriteFrames(recipe);
+  const{pixels,plane,bits,colorBytes,stride,tileColorBytes,tileStride,dictionaryTiles,referenceBytes,maximum}=validateFrameMetadata(recipe);
+  const bytes = decodeBuffer(recipe,maximum);
   const size = recipe.palette.length / 3, regions: Region[] = [];
   if (recipe.encoding === 'indexed') {
     for (let f = 0; f < recipe.frameCount; f++) validateIndices(bytes.subarray(f * stride, f * stride + colorBytes), pixels, bits, size);

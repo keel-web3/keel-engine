@@ -218,7 +218,7 @@
         },
         {
           "path": "packages/ads/src/feed.ts",
-          "sha256": "0x810868ede4983affd9d4e1eea7753c3944ff75f094c8ffa4ea243f9296869f12"
+          "sha256": "0x7ee3db9714becd984c414ca8588ee0e6a7e98bf7642c120ca179fa129eb723be"
         },
         {
           "path": "packages/ads/src/href.ts",
@@ -249,12 +249,12 @@
         ]
       },
       "output": {
-        "digest": "0xaee72125031bebcd0e22044b12235f0b64b9acff9dc02a94b8b635367d0e1d99",
-        "byteLength": 8723
+        "digest": "0x363f3575cc64682d6e1e5daf5c3ec0379a2079cd0dfc80436be177c0a5fbd58f",
+        "byteLength": 8894
       },
-      "sourceDigest": "0x560f6af2a1b7df25922964f9a966eef37132a8888c3c6a5beae2130dcda18b9f",
-      "recipeDigest": "0x522bbfbfdf64f8cc7daf72f3100ddd70aba7f26a2161a78cf7c55870090dbcf4",
-      "receiptDigest": "0x09e6e84ade1f44cf7353c99d7237ee3f6a10786eaed8e7144ef42edbd30b637c",
+      "sourceDigest": "0xd5371ff5ce9a4e312feb29e00a3e992e1454baf1c3322011a843a72ad7fde594",
+      "recipeDigest": "0x6dc787dc6117553345643617ec973bff32ead26150405e34b34c297172761014",
+      "receiptDigest": "0x2315847001562f3b7ca04b7065c6f4b0e6a531287770ae426e47ee1e2b67c731",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -2095,8 +2095,12 @@
           "sha256": "0x2bb2e554cc5b2e395db9dfb28c734111d22c81acd4124941b6ebef78ae63522b"
         },
         {
+          "path": "packages/import/src/voxel-budget.ts",
+          "sha256": "0xe0d27a910c5dbd2ede88551fc54403e0a2bb788aa88570429ff5c45f5a5fe8d9"
+        },
+        {
           "path": "packages/import/src/voxelize.ts",
-          "sha256": "0xe7fe46ba146d43d6c3b93e62a374fc6f3c5a8425d6e7d0064677f4f11ec00bf3"
+          "sha256": "0x8e6f4bb4d793cfe4275b4bc410a2e1a0fe8fe381cdbde674c2771d1e12685608"
         },
         {
           "path": "packages/import/src/write.ts",
@@ -2113,12 +2117,12 @@
         ]
       },
       "output": {
-        "digest": "0xe131b129922899523b4b280140a1690a80eaa0fc167c750510a66e5cf4e464ea",
-        "byteLength": 114802
+        "digest": "0xa0918678ab645430e45d15357007f34f310cc6c456624db5b866465aa60e82fb",
+        "byteLength": 115682
       },
-      "sourceDigest": "0x02cc6f96f8055a2175be435db684d11018d360da6607037194d4367289614b35",
-      "recipeDigest": "0xb7abc1248fd8105550596d0b208ec00ec9ebb069ced9326f999b336d3a5dc988",
-      "receiptDigest": "0x8002d994a42d270af97adbf3ad879e2a38b74a0c221de991da6832877782fdc9",
+      "sourceDigest": "0x2d3685788dba0c9811e5ee2136549d818ae36a2ab3fd0edb10a57fd72502012b",
+      "recipeDigest": "0xf533b1a6acc2617722dea8fc18919b4b12a5d17a22dbecf91789b24f7bc5278b",
+      "receiptDigest": "0x43452ab6497db2687e4543ba9ad6df2bd5f890a87be23d678b12f9ad0a1120e0",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
