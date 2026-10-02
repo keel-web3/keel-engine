@@ -86,8 +86,11 @@ should preserve the previous completed result and allow retry or cancellation.
 Focused tests cover 1×1, 2×2 and rectangular rasters; Original/Pixel/Dither hard
 triangle targets; sparse cube budgets; malformed chunk data; repeat/archive
 identity; lazy player seeking; and resource/cancellation behavior. Full engine
-TypeScript passes. The full suite reports 1,484 passed, 76 skipped and two
-failures: the pre-existing advertising catalog digest mismatch, and an unchanged
-particle allocation assertion that passes when rerun alone. No converter test
-failed. The aggregate suite is not green, so this remains a draft release until
-the catalog/CI gates are reconciled.
+TypeScript passes. The initial local full suite reported 1,484 passed, 76 skipped
+and two failures: the pre-existing advertising catalog digest mismatch, and an
+unchanged particle allocation assertion that passed when rerun alone. The first
+GitHub run passed that particle test and failed only the catalog assertion. No
+converter test failed. The catalog was then regenerated with pinned Node
+22.23.2 and SDK master c6bd381, updating only the ads and import records. Check
+the current pull-request head's CI for the aggregate release result; the initial
+run is not represented as a blanket green suite.
