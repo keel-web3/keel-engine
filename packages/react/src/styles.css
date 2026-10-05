@@ -1,0 +1,7 @@
+[data-keel-theme] {font-family:var(--keel-font,ui-monospace,monospace);font-size:var(--keel-body);color:var(--keel-ink);background:var(--keel-surface);}
+[data-keel-theme] .keel-panel {background:var(--keel-surface);border:var(--keel-border) solid var(--keel-outline);padding:var(--keel-pad);}
+[data-keel-theme] .keel-button {font:inherit;color:var(--keel-on-accent);background:var(--keel-accent);border:var(--keel-border) solid var(--keel-outline);padding:var(--keel-px) var(--keel-pad);border-radius:0;cursor:pointer;}
+[data-keel-theme] .keel-button:focus-visible {outline:var(--keel-px) solid var(--keel-ink);outline-offset:var(--keel-px);}
+[data-keel-theme] .keel-button:disabled {cursor:default;opacity:.5;}
+.keel-canvas canvas {image-rendering:pixelated;}
+@media(prefers-reduced-motion:reduce){[data-keel-theme] * {animation-duration:0s;transition-duration:0s;}}

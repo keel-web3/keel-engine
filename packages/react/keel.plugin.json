@@ -1,0 +1,10 @@
+{
+  "schema": "keel-plugin@1",
+  "id": "keel/react",
+  "version": "0.1.0",
+  "entry": "src/mcp.mjs",
+  "capabilities": [
+    "mcp"
+  ],
+  "description": "Reusable React bindings, KEEL theme tokens and agent scaffolding."
+}

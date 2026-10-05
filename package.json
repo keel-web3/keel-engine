@@ -41,7 +41,9 @@
     "compile:native-v5": "node tools/compile-native-v5.mjs",
     "build:native-v5": "node tools/build-native-v5.mjs",
     "compile:native-v6": "node tools/compile-native-v6.mjs",
-    "build:native-v6": "node tools/build-native-v6.mjs"
+    "build:native-v6": "node tools/build-native-v6.mjs",
+    "plugins": "node tools/plugins.mjs",
+    "test:plugins": "node --test packages/plugins/test/*.test.mjs packages/react/test/*.test.mjs"
   },
   "devDependencies": {
     "typescript": "^5.9.2",
