@@ -1,0 +1,10 @@
+{
+  "name": "@keel-engine/plugins",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Explicit local KEEL tooling plugin registry.",
+  "exports": {
+    "./registry": "./src/registry.mjs"
+  }
+}

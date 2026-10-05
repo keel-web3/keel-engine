@@ -1,0 +1,42 @@
+{
+  "schema": "keel-plugins-validation@1",
+  "date": "2026-10-05",
+  "engineBase": "823ddb1d5864959f67a8bac02691d8861051ba1d",
+  "node": "22.22.1",
+  "react": "19.2.8",
+  "focusedTests": {
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0,
+    "command": "node --test packages/plugins/test/*.test.mjs packages/react/test/*.test.mjs"
+  },
+  "typecheck": "React declarations, canonical design adapter and usable TSX example passed",
+  "browser": {
+    "reactVersion": "19.2.8",
+    "engineStarts": 1,
+    "width": 160,
+    "height": 144,
+    "integerScale": 3,
+    "offPalette": 0,
+    "frame": 6,
+    "pixelsSha256": "64ee2a5e1b5d2ef0cceec2aebed20231a3473d2da74c096606f02854ee6ec0b6",
+    "repeatPixelsIdentical": true,
+    "errors": []
+  },
+  "mcp": {
+    "toolCountWithTrailerAndReact": 72,
+    "reactTools": [
+      "keel-react-catalog",
+      "keel-react-plan",
+      "keel-react-theme",
+      "keel-react-scaffold"
+    ],
+    "objectInputRoots": true
+  },
+  "limits": [
+    "Existing REDLINE/CRUCIBLE apps are reference patterns, not migrated or redeployed.",
+    "React host adapter is optional tooling, not an onchain registered React runtime.",
+    "Browser fixture uses desktop Chromium/SwiftShader; physical mobile acceptance is not established.",
+    "No third-party font, music, mesh or game asset was copied."
+  ]
+}

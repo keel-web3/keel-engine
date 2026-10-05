@@ -212,3 +212,7 @@ present, those tests skip.
 
 MIT. See `LICENSE`. Third-party code in `vendor/` keeps its own license; see
 `NOTICE`.
+
+## Optional tooling plugins and React
+
+See [docs/PLUGINS.md](docs/PLUGINS.md) for the explicit local plugin registry, separate private trailer package, and [@keel-engine/react](packages/react/README.md) for reusable engine bindings, seeded design tokens and React MCP tools.
