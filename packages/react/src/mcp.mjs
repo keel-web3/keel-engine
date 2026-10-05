@@ -1,4 +1,4 @@
-import {readFile,writeFile,unlink,access} from 'node:fs/promises';
+import {readFile,writeFile,unlink,access,mkdir} from 'node:fs/promises';
 import {join} from 'node:path';
 import {DESIGN_LANGUAGE,recipeTheme,themeTokens} from './design.ts';
 const object=(properties,required=[])=>({type:'object',properties,required,additionalProperties:false});
@@ -34,6 +34,7 @@ export const keelPlugin={apiVersion:1,id:'keel/react',version:'0.1.0',instructio
  if(name==='keel-react-plan')return plan(value);
  if(typeof value.outDir!=='string'||!value.outDir)throw new TypeError('outDir required.');
  const result=plan({...value,brief:value.brief??'A seeded KEEL scene hosted by React.'}),out=await workspace.resolveOutputDirectory(value.outDir);
+ await mkdir(out,{recursive:true});
  const template=await readFile(new URL('../examples/KeelDemo.tsx',import.meta.url),'utf8');
  const component=template.replace("seed: 'keel/react-demo', culture: 'clean'",`seed: ${JSON.stringify(result.theme.recipe.seed)}, culture: ${JSON.stringify(result.theme.recipe.culture)}, pins: ${JSON.stringify(result.theme.recipe.pins)}`);
  const files=[{name:'KeelDemo.tsx',content:component},{name:'keel-react.plan.json',content:JSON.stringify(result,null,2)+'\n'},{name:'README.md',content:'Import KeelDemo.tsx into a client page. Install/link @keel-engine/react and React >=18.3 from your trusted engine workspace; Node >=22.18. Project fonts remain project-owned. Read keel-react.plan.json for APIs, design rules and browser gates. The example contains a small canonical engine world, not a substitute renderer.\n'}];
