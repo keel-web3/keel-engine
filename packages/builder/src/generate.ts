@@ -12,13 +12,15 @@
 //
 // Kinds: critter (four legs or two), crate, banner, tree, lamp, windmill.
 
-import { createRoll, dcos, deriveSeed, dhypot, dsin, stream } from "@keel-engine/core";
+import { createRoll, deriveSeed, stream } from "@keel-engine/core/rng";
+import { dcos, dhypot, dsin } from "@keel-engine/core/dmath";
 import type { Plan } from "@keel-engine/entity";
 import type { Stream } from "@keel-engine/runtime";
 import type { ObjectAnimation } from "./animate.ts";
 import { createEditor } from "./edit.ts";
 import type { Oklch } from "./look.ts";
 import type { VariationRules } from "./variation.ts";
+import { generatorRecords } from "./generator-record.ts";
 import { createVoxels } from "./voxels.ts";
 import type { V3, VoxelModel } from "./voxels.ts";
 
@@ -316,5 +318,6 @@ export function generate(kind: GeneratorKind, seed: string | number, opts: Gener
     animation = windmill(S, m);
     Object.assign(colours, { primary: [0.82, 0.03, 80], secondary: [0.45, 0.1, 30], trim: [0.7, 0.05, 70] });
   }
+  generatorRecords.set(m, { kind, seed: String(seed), options: { ...opts }, baseline: m.clone() });
   return { kind, seed: String(seed), model: m, rules, colours, target, ...(animation ? { animation } : {}), ...(truth ? { truth } : {}) };
 }

@@ -4,7 +4,7 @@
 // checks each against its digest. So a new format is a new program -- the bytes a chain
 // sees never change shape.
 
-import { sha256 } from "@keel-engine/codec";
+import { sha256 } from "@keel-engine/codec/hash";
 import { createPacker, createReader } from "@keel-engine/proof";
 
 /** A staked token in a match: which token, the seed it IS, what's staked with it, how it's set up (format-defined). */

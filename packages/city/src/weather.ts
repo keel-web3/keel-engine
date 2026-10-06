@@ -1,3 +1,4 @@
+import { fnv1a32Signed as fnv } from "@keel-engine/core/hash";
 // Weather: a city's sky and what it leaves on the ground, as a pure function of the city and the GAME clock -- so every
 // screen has the same rain at the same moment, and a race formed at a moment races the roads as they were then. One real
 // second is one game minute: a game day is 24 real minutes, a season 90 game days (a day and a half, real).
@@ -121,11 +122,7 @@ const CLIMATE: Readonly<Record<Climate, ClimateSpec>> = {
   arid: { mean: 22, seasonal: 9, daily: 12, wet: [0.08, 0.1, 0.06, 0.1], storms: 0.6, heavy: 30, fog: 0.02, prevailing: 2.4, breeze: 7 },
 };
 
-const fnv = (text: string): number => {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i += 1) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
-  return h | 0;
-};
+
 const sat = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
 const smooth = (t: number): number => t * t * (3 - 2 * t);
 

@@ -13,8 +13,12 @@
   "build": {
     "format": "iife",
     "external": [
-      "@keel-engine/codec",
+      "@keel-engine/codec/runtime",
+      "@keel-engine/codec/schemas/construction",
+      "@keel-engine/codec/schemas/voxel",
       "@keel-engine/core",
+      "@keel-engine/core/dmath",
+      "@keel-engine/core/rng",
       "@keel-engine/entity",
       "@keel-engine/object",
       "@keel-engine/runtime",

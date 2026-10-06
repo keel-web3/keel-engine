@@ -106,7 +106,10 @@ export interface IndexedSource {
 export type IndexedSources = ReadonlyMap<string, IndexedSource> | ((design: string) => IndexedSource | undefined);
 
 /** The renderer the indexed bake draws through (`createPixelRenderer` from @keel-engine/render has it). */
-export interface IndexedBakeRenderer extends BakeRenderer {
+export interface IndexedBakeRenderer extends Omit<BakeRenderer, 'render' | 'setStyle'> {
+  /** Present on the complete color backend; indexed-only backends omit these. */
+  render?: BakeRenderer['render'];
+  setStyle?: BakeRenderer['setStyle'];
   renderIndexed(options: { eye: readonly [number, number, number]; target: readonly [number, number, number]; fov?: number; time?: number; sun?: readonly [number, number, number]; waterY?: number; fogNear?: number; fogFar?: number; gap?: number; split?: readonly [number, number, number] | undefined; ortho?: number }): WebGLFramebuffer | null;
   /** Depth sprites: after renderIndexed, each pixel's height in sixteenths of a texel + 1 over R (high) and G (low) (keel/render HEIGHT_FS). */
   renderIndexedHeights?(options: { eye: readonly [number, number, number]; target: readonly [number, number, number]; fov?: number; pixelsPerMetre: number; eps?: number; ortho?: number }): WebGLFramebuffer | null;

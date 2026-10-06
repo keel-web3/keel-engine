@@ -313,7 +313,7 @@ has the details and sizes.
 
 | package | stores | through | old data |
 | --- | --- | --- | --- |
-| `@keel-engine/builder` | voxel models (`storeVoxels` / `loadVoxels`; text `"KC1:"` + base64url, what exported pack code embeds), op lists (`storeOps` / `loadOps`), asset data (`storeData` / `loadData`) | `VOXELS`, `opListSchema(OPS)`, `named("keel/builder/data", dyn())` | KV1 bytes and `"KV1:"` text, `J1` JSON still load (told apart by the first byte / prefix) |
+| `@keel-engine/builder` | selected models (`storeModel` / `loadModel`, `KC2:` text), legacy voxels (`storeVoxels` / `loadVoxels`, `KC1:`), op lists (`storeOps` / `loadOps`), asset data (`storeData` / `loadData`) | `VOXEL_CONSTRUCTION` or `VOXELS`, `opListSchema(OPS)`, `named("keel/builder/data", dyn())` | KV1 bytes and `"KV1:"` text, J1 JSON, and KC1 still load |
 | `@keel-engine/particles` | the smart pool (`pool.saveBytes()` / `loadBytes()`), the proof-of-concept pool (`saveBytes` / `loadBytes`) | `PARTICLE_POOL`, `PARTICLES` | `save()` / `load()` as before |
 | `@keel-engine/world` | snapshots (`world.snapshotBytes()` / `restoreBytes()`): restore exact, as the JSON path | `WORLD_SNAPSHOT` | `snapshot()` / `restore()` as before |
 | `@keel-engine/audio` | music (`musicRecipe`, `storeMusic(recipe or plan)`, `loadMusic(bytes)` tells a recipe from a song by the header), sfx settings (`createSfx(t, { settings })`, `bodySfx(sfx, { settings, materialOf })`: gain, rate, pan, jitter per sound; surfaces by material; events) | `MUSIC_RECIPE`, `SONG`, `SFX_SETTINGS` | plans and options as before |

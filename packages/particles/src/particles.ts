@@ -16,7 +16,8 @@
 // proof of concept's, in the same order, to the bit.
 
 import type { Stream, Vec3, Vec3Like } from "@keel-engine/core";
-import { PARTICLES, decode, encode } from "@keel-engine/codec";
+import { decode, encode } from "@keel-engine/codec/runtime";
+import { PARTICLES } from "@keel-engine/codec/schemas/particles";
 
 /** [low, high]: a value drawn evenly between them. */
 export type Span = readonly [number, number];

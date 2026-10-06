@@ -1,6 +1,6 @@
 // Particle renderer shader sources. Kept separate from the GL setup so the programs stay easy to review.
 
-import { CURVE_SAMPLES } from "./pool.ts";
+import { CURVE_SAMPLES } from "./pool-internal.ts";
 import { CURL_GLSL } from "@keel-engine/core";
 import { SPRITE_CELL } from "./palette.ts";
 import { PARTICLE_SPRITES } from "./recipe.ts";

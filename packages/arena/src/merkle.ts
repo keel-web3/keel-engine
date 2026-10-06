@@ -4,7 +4,7 @@
 // bottom-up, the index choosing left or right -- no sorting, so no second-preimage games
 // between leaves and nodes.
 
-import { sha256 } from "@keel-engine/codec";
+import { sha256 } from "@keel-engine/codec/hash";
 import { createPacker, equalBytes } from "@keel-engine/proof";
 
 export function settlementLeaf(index: number, tokenId: bigint, spent: bigint): Uint8Array {

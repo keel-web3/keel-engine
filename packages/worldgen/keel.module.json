@@ -14,7 +14,7 @@
     "format": "iife",
     "external": [
       "@keel-engine/bake",
-      "@keel-engine/codec",
+      "@keel-engine/codec/runtime",
       "@keel-engine/core",
       "@keel-engine/level",
       "@keel-engine/runtime",

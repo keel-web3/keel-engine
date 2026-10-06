@@ -5,7 +5,22 @@
   "type": "module",
   "description": "Seeded streams, the frame convention, math, SDF primitives, OKLCH palettes, dither screens, the quantizer, the GIF encoder.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./rng": "./src/rng.ts",
+    "./dmath": "./src/dmath.ts",
+    "./math": "./src/math.ts",
+    "./frame": "./src/frame.ts",
+    "./targets": "./src/targets.ts",
+    "./palette": "./src/palette.ts",
+    "./dither": "./src/dither.ts",
+    "./quantize": "./src/quantize.ts",
+    "./gif": "./src/gif.ts",
+    "./curl": "./src/curl.ts",
+    "./hash": "./src/hash.ts",
+    "./random": "./src/random.ts",
+    "./color": "./src/color.ts",
+    "./role": "./src/role.ts",
+    "./storage": "./src/storage.ts"
   },
   "dependencies": {
     "@keel-engine/runtime": "workspace:*"

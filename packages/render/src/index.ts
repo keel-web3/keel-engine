@@ -30,3 +30,5 @@ export type { IndexedPixel } from "./indexed.ts";
 // A pixel-art sky for perspective views: a gradient and flat pixel clouds, from a raster hook.
 export { createSkyPass } from "./sky.ts";
 export type { SkyOptions, SkyPass } from "./sky.ts";
+
+export { linkProgram } from "./link-program.ts";

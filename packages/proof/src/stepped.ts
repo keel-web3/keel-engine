@@ -16,7 +16,7 @@
 //   const outs = jobs.map((j) => proveJob(S, run.ctx, j));   // what each job commits (reference)
 //   aggregate(S, input, run.ctx, outs);               // what the aggregator checks and derives
 
-import { sha256 } from "@keel-engine/codec";
+import { sha256 } from "@keel-engine/codec/hash";
 import { createPacker, equalBytes } from "./bytes.ts";
 
 export interface SteppedSpec<I, C, E> {

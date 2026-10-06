@@ -36,6 +36,8 @@ import { SETTINGS, WORLD_SNAPSHOT } from "./world.ts";
 import { PARTICLES, PARTICLE_POOL } from "./particles.ts";
 import { BLOCKS, BYTECODE } from "./script.ts";
 import { MUSIC_RECIPE, SFX_SETTINGS, SONG } from "./audio.ts";
+import { SPECIMEN_PROGRAM } from "./specimen.ts";
+import { VOXEL_CONSTRUCTION } from "./construction.ts";
 import { VOXELS } from "./voxel.ts";
 import { HYBRID_POPULATION } from "./hybrid.ts";
 import { SCHEMA_SCHEMA } from "../canonical.ts";
@@ -50,9 +52,15 @@ export const ENGINE_SCHEMAS = {
   "keel/script/blocks": BLOCKS, "keel/script/bytecode": BYTECODE,
   "keel/audio/recipe": MUSIC_RECIPE, "keel/audio/song": SONG, "keel/audio/sfx": SFX_SETTINGS,
   "keel/builder/voxels": VOXELS,
+  "keel/builder/construction": VOXEL_CONSTRUCTION,
+  "keel/bake/specimen": SPECIMEN_PROGRAM,
 } as const;
 
 /** Register every engine schema (by id and by name@version) into a registry. */
 export function registerEngineSchemas(registry: Registry): string[] {
   return Object.values(ENGINE_SCHEMAS).map((s) => registry.register(s));
 }
+
+export { SPECIMEN_PROGRAM } from "./specimen.ts";
+
+export { VOXEL_CONSTRUCTION } from "./construction.ts";

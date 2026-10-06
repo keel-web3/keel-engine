@@ -1,0 +1,6 @@
+{
+  "name": "mesh-runtime",
+  "features": [{ "module": "@keel-engine/bake/mesh", "exports": ["lookMesh", "meshBounds", "meshMatrix", "mulMatrix"] }],
+  "maxGzipBytes": 24000,
+  "forbidInputs": ["/import/", "/audio/", "/particles/", "/sprites.ts", "/draw-mesh.ts", "/gif.ts", "/dither.ts"]
+}

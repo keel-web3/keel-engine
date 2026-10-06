@@ -1,0 +1,25 @@
+{
+  "name": "particles-runtime",
+  "features": [
+    {
+      "module": "@keel-engine/particles/runtime",
+      "exports": [
+        "PARTICLE_RAMPS",
+        "PRESETS",
+        "createRuntimeParticlePool",
+        "createParticleRenderer",
+        "defineParticleRecipe",
+        "particlePalette"
+      ]
+    }
+  ],
+  "maxGzipBytes": 33000,
+  "maxBrotliBytes": 29000,
+  "forbidInputs": [
+    "particles/src/particles.ts",
+    "particles/src/pool.ts",
+    "particles/src/persistence.ts",
+    "particles/src/pool-codec.ts",
+    "packages/codec/"
+  ]
+}

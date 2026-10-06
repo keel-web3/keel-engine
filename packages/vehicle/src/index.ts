@@ -19,3 +19,5 @@ export type { StaticBox, StaticDisc, StaticHit, StaticMeter, StaticShape, Static
 export { BREAK_SPEED, collideStatic, createStaticWorld } from "./static.ts";
 export type { AssistState, Tuning } from "./assist.ts";
 export { STEER_FADE, assistState, gripAtSpeed, lockAt, steerCommand, tuningAt, usefulLock } from "./assist.ts";
+
+export { followPath } from "./follow.ts";

@@ -266,7 +266,8 @@ import them back: the same object, the same attribute build, the same rigged ski
 
 ## The storage seam
 
-Everything stored goes through `store.ts`: `storeVoxels` / `loadVoxels`
+Voxel storage uses `voxel-store.ts` (`builder/storage`), independent of the editor
+op catalogue. `store.ts` keeps the compatibility exports: `storeVoxels` / `loadVoxels`
 (bytes or text), `storeVoxelsText`, `storeOps` / `loadOps`, `storeData` /
 `loadData`. Each is a document of the engine's bit codec (`@keel-engine/codec`):
 header `0xB1` and the schema's short id, then the bits.
@@ -274,13 +275,17 @@ header `0xB1` and the schema's short id, then the bits.
 | stored | schema | notes |
 | --- | --- | --- |
 | voxels | `keel/builder/voxels@1` (`VOXELS`) | roles in use (first-use order), unit exactly, pivot, box, cells LZ-coded, groups; text is `"KC1:"` + base64url |
+| selected model | `VOXELS` or `keel/builder/construction@1` | `storeModel` chooses raw cells, repeated boxes or pinned seed + sparse edits; `storeModelText` wraps selected bytes as `KC2:`; `loadModel` checks exact reconstruction |
 | op lists | `keel/builder/ops@1` (`opListSchema(OPS)`) | a union by `op`, built from `OPS` so the two never drift; an unknown op or field throws naming it |
 | asset data | `keel/builder/data@1` (a `dyn`) | any JSON-like value; `-0` and nesting kept |
 
 Old data still loads, told apart by its first byte: `0xB1` a codec document,
 `"KV"` 1 the old KV1 voxels (`codec.ts`, also as `"KV1:"` text), `"J"` 1 the old
-JSON op lists and data. Exported pack code calls `loadVoxels`, which reads every
-format it knows. Over the 26 test models the documents are 41% of KV1's bytes
+JSON op lists and data. New exported pack code calls `loadModel`, which also
+reads the legacy formats. Games that only need explicit primitives can use
+`loadPrimitiveModel` from `builder/primitive-runtime` and omit the generators.
+See [modular builds](../../docs/MODULAR_BUILDS.md) for sizes and decoder cost.
+Over the original 26 test models the voxel documents are 41% of KV1's bytes
 (3.9 KB against 9.5 KB) and their text 42% of KV1's characters; gzip'd as the
 text a pack file embeds, 7-10% smaller than KV1's. (The bytes are already
 bit-packed, so gzip barely shrinks a lone document.) JSON stays the authoring

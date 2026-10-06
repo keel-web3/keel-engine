@@ -21,7 +21,9 @@
     "weight": -1000
   },
   "imports": {
-    "@keel-engine/codec": "keel/codec",
+    "@keel-engine/codec/runtime": "keel/codec",
+    "@keel-engine/codec/schemas/common": "keel/codec",
+    "@keel-engine/codec/schemas/world": "keel/codec",
     "@keel-engine/core": "keel/core",
     "@keel-engine/object": "keel/object",
     "@keel-engine/terrain": "keel/terrain",

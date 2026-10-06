@@ -1,3 +1,5 @@
+import { bodySpace, meshBounds } from "./geometry.ts";
+export { bodySpace, meshBounds } from "./geometry.ts";
 // Look meshes: a design's solids (the same boxes, wedges and capsules the baker
 // draws sprites from) as ONE triangle mesh, made once and cached on the GPU --
 // a real 3D object the sprite renderer draws live at any position, heading
@@ -12,7 +14,7 @@
 //   sprites.drawMeshes(view, [{ mesh: design.key, x, y: 0, z, yaw, look }], style);
 
 import { cleanTriangles } from "./clean-triangles.ts";
-import { dacos, dcos, dhypot, dsin } from "@keel-engine/core";
+import { dacos, dcos, dhypot, dsin } from "@keel-engine/core/dmath";
 import type { BakeBox, BakeCapsule, BakeWorld } from "./bake.ts";
 
 /**
@@ -53,15 +55,14 @@ class Builder {
   readonly boundsOnly: boolean;
   readonly bounds: [number, number, number, number, number, number] = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
   constructor(boundsOnly = false) { this.boundsOnly = boundsOnly; }
-  vert(p: readonly number[], n: readonly number[], slot: number, u: number, v: number, foot = -1): number {
+  vert(p: readonly number[], n: readonly number[], slot: number, u: number, v: number, foot = -1): void {
     if (this.boundsOnly) {
       // Match the uploaded Float32 positions exactly, including tessellated capsules.
       for (let a = 0; a < 3; a++) { const v = Math.fround(p[a]!); this.bounds[a] = Math.min(this.bounds[a]!, v); this.bounds[a + 3] = Math.max(this.bounds[a + 3]!, v); }
-      return 0;
+      return;
     }
     this.p.push(p[0]!, p[1]!, p[2]!); this.n.push(n[0]!, n[1]!, n[2]!); this.a.push(slot, u, v, this.part); this.f.push(foot);
     if (foot >= 0) this.grid = true;
-    return this.p.length / 3 - 1;
   }
   quad(a: number, b: number, c: number, d: number): void { if (!this.boundsOnly) this.i.push(a, b, c, a, c, d); }
 }
@@ -73,9 +74,9 @@ const turn = ([c, s]: readonly [number, number], x: number, y: number, z: number
 
 /** A face's surface coordinate, the bake's rule: by the axis it faces, the other two local coordinates over the half extents. */
 const faceUv = (axis: 0 | 1 | 2, l: readonly number[], h: readonly number[]): [number, number] => {
-  const r = [l[0]! / Math.max(1e-4, h[0]!), l[1]! / Math.max(1e-4, h[1]!), l[2]! / Math.max(1e-4, h[2]!)];
-  const f = axis === 0 ? [r[2]!, r[1]!] : axis === 1 ? [r[0]!, r[2]!] : [r[0]!, r[1]!];
-  return [Math.max(0, Math.min(1, f[0]! * 0.5 + 0.5)), Math.max(0, Math.min(1, f[1]! * 0.5 + 0.5))];
+  const uAxis = axis === 0 ? 2 : 0, vAxis = axis === 1 ? 2 : 1;
+  const u = l[uAxis]! / Math.max(1e-4, h[uAxis]!), v = l[vAxis]! / Math.max(1e-4, h[vAxis]!);
+  return [Math.max(0, Math.min(1, u * 0.5 + 0.5)), Math.max(0, Math.min(1, v * 0.5 + 0.5))];
 };
 
 /**
@@ -94,15 +95,18 @@ function face(B: Builder, box: BakeBox, corners: readonly (readonly number[])[],
   const slot = box.mat ?? 0, c = box.c, h = [box.h[0] ?? 0, box.h[1] ?? 0, box.h[2] ?? 0];
   const n = B.boundsOnly ? [] : turn(rotation, localNormal[0]!, localNormal[1]!, localNormal[2]!);
   const grid = box.grid && axis !== 1 && box.kind !== "wedge" ? box.grid : null;
-  const ids = corners.map((l) => {
-    const w = turn(rotation, l[0]!, l[1]!, l[2]!);
-    const p = [w[0] + (c[0] ?? 0), w[1] + (c[1] ?? 0), w[2] + (c[2] ?? 0)];
+  const start = B.p.length / 3, p = [0, 0, 0];
+  for (const l of corners) {
+    // The writer copies these scalars immediately, so each face needs one position scratch.
+    p[0] = rotation[0] * l[0]! + rotation[1] * l[2]! + (c[0] ?? 0);
+    p[1] = l[1]! + (c[1] ?? 0);
+    p[2] = -rotation[1] * l[0]! + rotation[0] * l[2]! + (c[2] ?? 0);
     // Bounds consume only the exact Float32 positions; UVs and normals do not affect them.
-    if (B.boundsOnly) return B.vert(p, n, slot, 0, 0);
+    if (B.boundsOnly) { B.vert(p, n, slot, 0, 0); continue; }
     const [u, v] = grid ? gridUv(axis, l, h, grid) : faceUv(axis, l, h);
-    return B.vert(p, n, slot, u, v, grid ? Math.max(0, l[1]! + h[1]!) : -1);
-  });
-  if (!B.boundsOnly) for (let k = 1; k + 1 < ids.length; k += 1) B.i.push(ids[0]!, ids[k]!, ids[k + 1]!);
+    B.vert(p, n, slot, u, v, grid ? Math.max(0, l[1]! + h[1]!) : -1);
+  }
+  if (!B.boundsOnly) for (let k = 1; k + 1 < corners.length; k += 1) B.i.push(start, start + k, start + k + 1);
 }
 
 function boxMesh(B: Builder, b: BakeBox): void {
@@ -180,14 +184,18 @@ function capsuleMesh(B: Builder, cap: BakeCapsule, around: number, rings: number
   const e2 = cross(ax, e1);
   const template = capsuleTemplate(around, rings);
   const directions = template.circle.map(([c, s]) => [e1[0]! * c + e2[0]! * s, e1[1]! * c + e2[1]! * s, e1[2]! * c + e2[2]! * s]);
-  const start = B.p.length / 3;
+  const start = B.p.length / 3, p = [0, 0, 0], n = [0, 0, 0];
   for (let k = 0; k < template.profile.length; k++) {
     const [na, rad, nr] = template.profile[k]!, h = (k > rings ? len : 0) + r * na;
     for (let i = 0; i <= around; i++) {
       const dir = directions[i]!;
-      const p = [A[0]! + ax[0]! * h + dir[0]! * r * rad, A[1]! + ax[1]! * h + dir[1]! * r * rad, A[2]! + ax[2]! * h + dir[2]! * r * rad];
-      if (B.boundsOnly) { B.vert(p, [], slot, 0, 0); continue; }
-      const n = [dir[0]! * nr + ax[0]! * na, dir[1]! * nr + ax[1]! * na, dir[2]! * nr + ax[2]! * na];
+      p[0] = A[0]! + ax[0]! * h + dir[0]! * r * rad;
+      p[1] = A[1]! + ax[1]! * h + dir[1]! * r * rad;
+      p[2] = A[2]! + ax[2]! * h + dir[2]! * r * rad;
+      if (B.boundsOnly) { B.vert(p, n, slot, 0, 0); continue; }
+      n[0] = dir[0]! * nr + ax[0]! * na;
+      n[1] = dir[1]! * nr + ax[1]! * na;
+      n[2] = dir[2]! * nr + ax[2]! * na;
       B.vert(p, n, slot, i / around, Math.max(0, Math.min(1, (h + r) / (len + 2 * r))));
     }
   }
@@ -270,13 +278,18 @@ function appendWorld(B: Builder, world: BakeWorld, around: number, rings: number
   }
 }
 
+/** Both synchronous and yielding construction finish through the same exact buffer path. */
+function finishMesh(B: Builder, bounds: LookMeshOptions["bounds"]): LookMesh {
+  const positions = Float32Array.from(B.p), attrs = Float32Array.from(B.a);
+  const mesh = { positions, normals: Float32Array.from(B.n), attrs, bodies: bodySpace(positions, bounds ?? meshBounds(positions)), indices: cleanTriangles(positions, Uint32Array.from(B.i), attrs) };
+  return B.grid ? { ...mesh, facade: Float32Array.from(B.f) } : mesh;
+}
+
 /** A design's posed solids as one look mesh (made once; drawn at any position, heading and spin). */
 export function lookMesh(world: BakeWorld, { around = 12, rings = 3, bounds, chordError }: LookMeshOptions = {}): LookMesh {
   const B = new Builder();
   appendWorld(B, world, around, rings, chordError);
-  const positions = Float32Array.from(B.p), attrs = Float32Array.from(B.a);
-  const mesh = { positions, normals: Float32Array.from(B.n), attrs, bodies: bodySpace(positions, bounds ?? meshBounds(positions)), indices: cleanTriangles(positions, Uint32Array.from(B.i), attrs) };
-  return B.grid ? { ...mesh, facade: Float32Array.from(B.f) } : mesh;
+  return finishMesh(B, bounds);
 }
 
 /** Same mesh bytes, yielding between small batches of solids when workers are unavailable. */
@@ -288,21 +301,11 @@ export function* lookMeshSteps(world: BakeWorld, { around = 12, rings = 3, bound
     if (++count % 32 === 0) yield;
   }
   yield;
-  const positions = Float32Array.from(B.p), attrs = Float32Array.from(B.a);
-  const mesh = { positions, normals: Float32Array.from(B.n), attrs, bodies: bodySpace(positions, bounds ?? meshBounds(positions)), indices: cleanTriangles(positions, Uint32Array.from(B.i), attrs) };
-  return B.grid ? { ...mesh, facade: Float32Array.from(B.f) } : mesh;
+  return finishMesh(B, bounds);
 }
 
 /** A mesh's own bounds: [minX, minY, minZ, maxX, maxY, maxZ] (what to pass every mesh of one thing). */
-export function meshBounds(positions: Float32Array): [number, number, number, number, number, number] {
-  const b: [number, number, number, number, number, number] = [Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity];
-  for (let v = 0; v < positions.length; v += 3) for (let a = 0; a < 3; a += 1) {
-    const q = positions[v + a]!;
-    if (q < b[a]!) b[a] = q;
-    if (q > b[a + 3]!) b[a + 3] = q;
-  }
-  return b;
-}
+
 
 /** The bounds of a whole design's worlds together (a car's body and its glass: one body space for both). */
 export function worldsBounds(worlds: readonly BakeWorld[], options: LookMeshOptions = {}): [number, number, number, number, number, number] {
@@ -311,12 +314,7 @@ export function worldsBounds(worlds: readonly BakeWorld[], options: LookMeshOpti
   return B.bounds;
 }
 
-export const bodySpace = (positions: Float32Array, b: readonly number[]): Float32Array => {
-  const out = new Float32Array(positions.length);
-  const span = [Math.max(1e-4, b[3]! - b[0]!), Math.max(1e-4, b[4]! - b[1]!), Math.max(1e-4, b[5]! - b[2]!)];
-  for (let v = 0; v < positions.length; v += 3) for (let a = 0; a < 3; a += 1) out[v + a] = Math.max(0, Math.min(1, (positions[v + a]! - b[a]!) / span[a]!));
-  return out;
-};
+
 
 // ---------------------------------------------------------------- posing a mesh (bending limbs)
 

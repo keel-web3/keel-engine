@@ -41,7 +41,7 @@ export interface StreetPlan {
   readonly plants: readonly PlantSpot[];
   readonly ads: readonly AdSlotSpec[];
   /** Long things a car hits along the highway -- guard rails, sound walls -- as boxes on the ground (world). */
-  readonly barriers: readonly Obb[];
+  readonly barriers: readonly (Obb & { strength?: number; yMin?: number; yMax?: number })[];
   /** Boards with words on them: the exit gantries' (what a renderer letters). */
   readonly signs: readonly StreetSign[];
 }
@@ -182,7 +182,7 @@ export function* planStreetsSteps(sc: StreetCatalogue, city: City, height?: City
     const D = drawsFor(city.site.seed, `junction|${j.node}`);
     // (Signals where two arterials cross; where a street meets one, its stop line and a post will do.)
     const arterialRoads = new Set(j.arms.filter((a) => a.cls === "arterial").map((a) => a.group));
-    const signals = arterialRoads.size >= 2 && !j.arms.some((a) => a.cls === "highway");
+    const signals = arterialRoads.size >= 2 && !j.arms.some((a) => a.cls === "highway" || motorway(a.cls));
     // (Where motorways only meet -- a freeway's merge or diverge, a ramp's gore -- nobody stops: no post, no signal.)
     if (j.arms.every((a) => motorway(a.cls))) continue;
     j.arms.forEach((a: JunctionArm, k) => {

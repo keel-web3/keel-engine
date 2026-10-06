@@ -1,3 +1,4 @@
+import { linkProgram } from "@keel-engine/render/link-program";
 // The sprite renderer: every visible sprite in one instanced draw. Baked
 // sprites live in a texture array (one layer per atlas page); each instance
 // is a world position, an atlas rectangle, its anchor and a layer; the vertex
@@ -150,18 +151,7 @@ export interface SpriteRenderer {
 export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas, { width, height, capacity = 8192 }: { width: number; height: number; capacity?: number }): SpriteRenderer {
   const gl = canvas.getContext("webgl2", { antialias: false, alpha: false, depth: true, preserveDrawingBuffer: false }) as WebGL2RenderingContext | null;
   if (!gl) throw new Error("WebGL2 isn't available.");
-  const compile = (type: number, src: string) => {
-    const s = gl.createShader(type)!;
-    gl.shaderSource(s, src);
-    gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(`Sprite shader: ${gl.getShaderInfoLog(s)}`);
-    return s;
-  };
-  const prog = gl.createProgram()!;
-  gl.attachShader(prog, compile(gl.VERTEX_SHADER, VS));
-  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, FS));
-  gl.linkProgram(prog);
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error(`Sprite program: ${gl.getProgramInfoLog(prog)}`);
+  const prog = linkProgram(gl, VS, FS, "Sprite");
   const u = (name: string) => gl.getUniformLocation(prog, name);
   const U = { center: u("uCenter"), right: u("uRight"), up: u("uUp"), forward: u("uForward"), k: u("uK"), size: u("uSize"), depth: u("uDepthRange"), pages: u("uPages") };
 
@@ -190,11 +180,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
   let layerState: Layers | null = null;
   const layers = (): Layers => {
     if (layerState) return layerState;
-    const p = gl.createProgram()!;
-    gl.attachShader(p, compile(gl.VERTEX_SHADER, LAYER_VS));
-    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, LAYER_FS));
-    gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(`Layer program: ${gl.getProgramInfoLog(p)}`);
+    const p = linkProgram(gl, LAYER_VS, LAYER_FS, "Layer");
     const lu = (name: string) => gl.getUniformLocation(p, name);
     const u = { center: lu("uCenter"), right: lu("uRight"), up: lu("uUp"), forward: lu("uForward"), k: lu("uK"), size: lu("uSize"), depth: lu("uDepthRange"), pages: lu("uPages"), looks: lu("uLooks"), paints: lu("uPaints"), palette: lu("uPalette"), places: lu("uPlaces"), anchorDither: lu("uDitherAnchor"), decals: lu("uDecals"), screen: lu("uScreen"), dither: lu("uDither"), outline: lu("uOutline"), heights: lu("uHeights"), heightOn: lu("uHeightOn"), ds: lu("uDS"), ids: lu("uIds"), idBase: lu("uIdBase") };
     const v = gl.createVertexArray()!;
@@ -218,11 +204,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
   let boardState: { prog: WebGLProgram; u: Record<BoardUniform, WebGLUniformLocation | null>; vao: WebGLVertexArrayObject; inst: WebGLBuffer; capacity: number } | null = null;
   const boards = () => {
     if (boardState) return boardState;
-    const p = gl.createProgram()!;
-    gl.attachShader(p, compile(gl.VERTEX_SHADER, BILLBOARD_VS));
-    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, BILLBOARD_FS));
-    gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(`Billboard program: ${gl.getProgramInfoLog(p)}`);
+    const p = linkProgram(gl, BILLBOARD_VS, BILLBOARD_FS, "Billboard");
     const bu = (name: string) => gl.getUniformLocation(p, name);
     const u = { eye: bu("uEye"), right: bu("uRight"), up: bu("uUp"), forward: bu("uForward"), tan: bu("uTan"), aspect: bu("uAspect"), far: bu("uFar"), lift: bu("uLift"), contract: bu("uContract"), size: bu("uSize"), pages: bu("uPages"), looks: bu("uLooks"), paints: bu("uPaints"), palette: bu("uPalette"), places: bu("uPlaces"), decals: bu("uDecals"), screen: bu("uScreen"), dither: bu("uDither"), outline: bu("uOutline") };
     const v = gl.createVertexArray()!;
@@ -246,11 +228,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
   let swayState: { prog: WebGLProgram; u: Record<SwayUniform, WebGLUniformLocation | null>; vao: WebGLVertexArrayObject; inst: WebGLBuffer; capacity: number } | null = null;
   const sways = () => {
     if (swayState) return swayState;
-    const p = gl.createProgram()!;
-    gl.attachShader(p, compile(gl.VERTEX_SHADER, SWAY_VS));
-    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, SWAY_FS));
-    gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(`Sway program: ${gl.getProgramInfoLog(p)}`);
+    const p = linkProgram(gl, SWAY_VS, SWAY_FS, "Sway");
     const su = (name: string) => gl.getUniformLocation(p, name);
     const u = {
       center: su("uCenter"), right: su("uRight"), up: su("uUp"), forward: su("uForward"), k: su("uK"), size: su("uSize"), depth: su("uDepthRange"), pages: su("uPages"), looks: su("uLooks"), paints: su("uPaints"), palette: su("uPalette"), places: su("uPlaces"), anchorDither: su("uDitherAnchor"), decals: su("uDecals"),
@@ -277,11 +255,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
   let fxState: { prog: WebGLProgram; u: Record<LayerUniform, WebGLUniformLocation | null>; vao: WebGLVertexArrayObject; inst: WebGLBuffer; capacity: number } | null = null;
   const fxs = () => {
     if (fxState) return fxState;
-    const p = gl.createProgram()!;
-    gl.attachShader(p, compile(gl.VERTEX_SHADER, FX_VS));
-    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, FX_FS));
-    gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(`Fx program: ${gl.getProgramInfoLog(p)}`);
+    const p = linkProgram(gl, FX_VS, FX_FS, "Fx");
     const fu = (name: string) => gl.getUniformLocation(p, name);
     const u = { center: fu("uCenter"), right: fu("uRight"), up: fu("uUp"), forward: fu("uForward"), k: fu("uK"), size: fu("uSize"), depth: fu("uDepthRange"), pages: fu("uPages"), looks: fu("uLooks"), paints: fu("uPaints"), palette: fu("uPalette"), places: fu("uPlaces"), anchorDither: fu("uDitherAnchor"), decals: fu("uDecals"), screen: fu("uScreen"), dither: fu("uDither"), outline: fu("uOutline"), heights: fu("uHeights"), heightOn: fu("uHeightOn"), ds: fu("uDS"), ids: fu("uIds"), idBase: fu("uIdBase") };
     const v = gl.createVertexArray()!;
@@ -323,14 +297,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
     gl.activeTexture(gl.TEXTURE0);
   };
   /** Link a program the renderer's own way, so a shader error reads the same wherever it came from. */
-  const link = (vs: string, fs: string, what: string): WebGLProgram => {
-    const p = gl.createProgram()!;
-    gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
-    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(`${what} program: ${gl.getProgramInfoLog(p)}`);
-    return p;
-  };
+  const link = (vs: string, fs: string, what: string): WebGLProgram => linkProgram(gl, vs, fs, what);
 
   // The live mesh pass (draw-mesh.ts): made the first time a mesh is set or drawn; it shares the look textures.
   let meshState2: MeshPass | null = null;
@@ -442,7 +409,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
         pages.forEach((p, i) => gl.texSubImage3D(gl.TEXTURE_2D_ARRAY, 0, 0, 0, i, p.width, p.height, 1, gl.RG, gl.UNSIGNED_BYTE, p.heights ?? new Uint8Array(p.width * p.height * 2)));
       }
     },
-    setTarget(w, h) { W = w; H = h; canvas.width = w; canvas.height = h; },
+    setTarget(w, h) { W = w; H = h; if (canvas.width !== w) canvas.width = w; if (canvas.height !== h) canvas.height = h; },
     withTargetSize(w, h, draw) {
       if (!Number.isInteger(w) || !Number.isInteger(h) || w < 1 || h < 1) throw new RangeError("Invalid render size");
       const oldW = W, oldH = H;

@@ -43,7 +43,8 @@ import type { ParticleState, ParticleView, Particles, Recipes } from "@keel-engi
 import { buildPieceFrom, PIECE_KEYS, placeObject, settle, worldAabb, worldColliders, worldRails } from "@keel-engine/object";
 import type { ObjectDef, ObjectInstance, PieceContexts, PieceDef, PieceKey, Support, WorldBox } from "@keel-engine/object";
 import { datan2, dcos, dhypot, dsin, rampForTarget } from "@keel-engine/core";
-import { WORLD_SNAPSHOT, decode, encode } from "@keel-engine/codec";
+import { decode, encode } from "@keel-engine/codec/runtime";
+import { WORLD_SNAPSHOT } from "@keel-engine/codec/schemas/world";
 import { createSettings, parseLocks } from "./settings.ts";
 import type { Settings, SettingsJSON, Thing } from "./settings.ts";
 import type { Explanation, LayerValues, Refusal, SetOptions, SettingValue, WriteResult } from "./config.ts";

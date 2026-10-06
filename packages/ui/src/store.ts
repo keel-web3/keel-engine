@@ -12,12 +12,10 @@
 
 import type { MenuEntry } from "./menu.ts";
 
-export interface StorageLike {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-  removeItem?(key: string): void;
-}
-
+import type {StorageLike} from "@keel-engine/core/storage";
+export type {StorageLike} from "@keel-engine/core/storage";
+import {availableStorage} from "@keel-engine/core/storage";
+export {availableStorage} from "@keel-engine/core/storage";
 /** A storage in memory (tests; a fallback). */
 export function memoryStorage(): StorageLike & { readonly data: Map<string, string> } {
   const data = new Map<string, string>();
@@ -27,7 +25,7 @@ export function memoryStorage(): StorageLike & { readonly data: Map<string, stri
 /** The browser's localStorage when it can be used, else null. */
 export function browserStorage(): StorageLike | null {
   try {
-    const s = (globalThis as { localStorage?: StorageLike }).localStorage;
+    const s = availableStorage();
     if (!s) return null;
     const probe = "__keel_probe__";
     s.setItem(probe, "1");

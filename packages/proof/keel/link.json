@@ -16,7 +16,7 @@
     "weight": -1000
   },
   "imports": {
-    "@keel-engine/codec": "keel/codec"
+    "@keel-engine/codec/hash": "keel/codec"
   },
   "manifests": {}
 }

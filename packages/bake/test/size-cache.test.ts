@@ -18,3 +18,11 @@ test("main and mirror workspaces are reused; resizing evicts only the least rece
   get(195, 422);
   assert.deepEqual(released, [mirror.id, 3]);
 });
+
+
+test("resizing never exceeds the live GPU workspace limit, even during allocation", () => {
+  let live=0,peak=0;
+  const get=createSizeCache(2, (w,h)=>{peak=Math.max(peak,++live);return {w,h};},()=>live--);
+  for(let n=0;n<30;n++) get(390+n,844+n);
+  assert.equal(peak,2);assert.equal(live,2);
+});

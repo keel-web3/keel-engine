@@ -14,7 +14,8 @@
     "format": "iife",
     "external": [
       "@keel-engine/camera",
-      "@keel-engine/codec",
+      "@keel-engine/codec/runtime",
+      "@keel-engine/codec/schemas/world",
       "@keel-engine/core",
       "@keel-engine/entity",
       "@keel-engine/input",

@@ -12,7 +12,7 @@
 //   });
 //   SPRINT.execute(SPRINT.inputOf(match), SPRINT.witnessOf(match));  // what the prover runs
 
-import { sha256 } from "@keel-engine/codec";
+import { sha256 } from "@keel-engine/codec/hash";
 import { defineProvable, equalBytes, type Provable } from "@keel-engine/proof";
 import {
   MAX_PLACINGS, ZERO32, decodeEntrants, decodeMatchInput, decodeMatchResult, encodeEntrants, encodeMatchInput, encodeMatchResult, entrantsDigest,

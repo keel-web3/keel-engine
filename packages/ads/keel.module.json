@@ -14,6 +14,7 @@
     "format": "iife",
     "external": [
       "@keel-engine/core",
+      "@keel-engine/core/hash",
       "@keel-engine/runtime"
     ]
   }

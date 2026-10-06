@@ -6,6 +6,7 @@
     "version": "0.1.1",
     "kind": "runtime",
     "needs": [
+      "keel/render@^0.1",
       "keel/core@^0.1",
       "keel/codec@^0.1"
     ],
@@ -17,8 +18,11 @@
     "weight": -1000
   },
   "imports": {
-    "@keel-engine/codec": "keel/codec",
-    "@keel-engine/core": "keel/core"
+    "@keel-engine/codec/runtime": "keel/codec",
+    "@keel-engine/codec/schemas/particles": "keel/codec",
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/core/curl": "keel/core",
+    "@keel-engine/render/link-program": "keel/render"
   },
   "manifests": {}
 }

@@ -5,7 +5,9 @@
   "type": "module",
   "description": "The WebGL2 pixel renderer and its FX passes: palette ramps, dither screens, outlines, at any target size.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./baker": "./src/baker.ts",
+    "./link-program": "./src/link-program.ts"
   },
   "dependencies": {
     "@keel-engine/core": "workspace:*",

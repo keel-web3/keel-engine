@@ -25,10 +25,13 @@ import {
   FAR, FULLSCREEN_VS, MAX_BOXES, MAX_CAPS, MAX_COLOURS, MAX_MATERIALS, MAX_RAMPS, MAX_WEDGES, PALETTE_WIDTH,
   PIXEL_FS, POINTS_FS, POINTS_VS, SCREEN_TILE, SKY_MAT, WORLD_FS,
 } from "./shaders.ts";
-import { BAKE_WORLD_FS, DEPTH_FS, HEIGHT_FS, INDEX_FS, unpackDepth } from "./indexed.ts";
+import { DEPTH_FS, unpackDepth } from "./indexed.ts";
 import { DEPTH_OUT_FS, DIRECT_PIXEL_FS, RASTER_FLOATS, RASTER_FS, RASTER_VS, boxTemplate, capsuleTemplate } from "./raster.ts";
 import type { DepthOut, RasterFrame, RasterMesh, RasterTemplate } from "./raster.ts";
-import { linkProgram } from "./link-program.ts";
+import { program } from "./program.ts";
+import type { Program } from "./program.ts";
+import { createIndexedPass } from "./indexed-pass.ts";
+import { uploadWorld } from "./world-buffers.ts";
 
 // ---------------------------------------------------------------- types
 
@@ -241,28 +244,6 @@ type PixelUniform =
 type IndexUniform = "uData" | "uData2" | "uDepth" | "uGap";
 type HeightUniform = WorldUniform | "uData" | "uDepth" | "uScale" | "uEps" | "uOrthoH";
 
-interface Program<N extends string> {
-  p: WebGLProgram;
-  /** Uniform locations by name (an inactive one is absent: GL ignores a null location). */
-  loc: Record<N, WebGLUniformLocation | null>;
-}
-
-function program<N extends string>(gl: WebGL2RenderingContext, vs: string, fs: string): Program<N> {
-  const p = linkProgram(gl, vs, fs, "Pixel renderer");
-  try {
-    const loc: Record<string, WebGLUniformLocation | null> = {};
-    const n = gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS) as number;
-    for (let i = 0; i < n; i += 1) {
-      const u = gl.getActiveUniform(p, i);
-      if (u) loc[u.name.replace(/\[0\]$/, "")] = gl.getUniformLocation(p, u.name);
-    }
-    return { p, loc: loc as Record<N, WebGLUniformLocation | null> };
-  } catch (error) {
-    gl.deleteProgram(p);
-    throw error;
-  }
-}
-
 const norm = (a: Vec3Like): Vec3 => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
 const dot = (a: Vec3Like, b: Vec3Like): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
@@ -410,48 +391,13 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
   }
   target(W, H);
 
-  // ---- bake mode (indexed.ts): compiled the first time a bake asks, so a normal frame's GL calls never change.
-  interface Extra { world: Program<WorldUniform | "uSplit" | "uOrthoH">; index: Program<IndexUniform>; depth: Program<"uDepth">; height: Program<HeightUniform> | null; fb: WebGLFramebuffer; tex: WebGLTexture; w: number; h: number }
-  let extra: Extra | null = null;
-  function bakeMode(): Extra {
-    if (!extra) {
-      const bw = program<WorldUniform | "uSplit" | "uOrthoH">(gl, FULLSCREEN_VS, BAKE_WORLD_FS);
-      (["Boxes", "Wedges", "Capsules"] as const).forEach((name, i) => gl.uniformBlockBinding(bw.p, gl.getUniformBlockIndex(bw.p, name), i));
-      extra = { world: bw, index: program<IndexUniform>(gl, FULLSCREEN_VS, INDEX_FS), depth: program<"uDepth">(gl, FULLSCREEN_VS, DEPTH_FS), height: null, fb: gl.createFramebuffer(), tex: gl.createTexture(), w: 0, h: 0 };
-    }
-    // (Its own picture, sized to the target: an RGBA8 texture the index and depth passes draw into.)
-    if (extra.w !== W || extra.h !== H) {
-      gl.bindTexture(gl.TEXTURE_2D, extra.tex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, W, H, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-      nearest();
-      gl.bindFramebuffer(gl.FRAMEBUFFER, extra.fb);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, extra.tex, 0);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      extra.w = W; extra.h = H;
-    }
-    return extra;
-  }
-  // Draw a fullscreen pass with `prog` into `fb`, its textures bound first.
-  function pass(prog: WebGLProgram, fb: WebGLFramebuffer | null, textures: ReadonlyArray<readonly [WebGLTexture | null, WebGLUniformLocation | null]>): void {
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-    gl.viewport(0, 0, W, H);
-    gl.useProgram(prog);
-    textures.forEach(([t, loc], i) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, t); gl.uniform1i(loc, i); });
-    gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-    const a = gl.getAttribLocation(prog, "aPos");
-    gl.enableVertexAttribArray(a);
-    gl.vertexAttribPointer(a, 2, gl.FLOAT, false, 0, 0);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-  }
-  function readTarget(fb: WebGLFramebuffer | null, attachment: number): Uint8Array {
-    const out = new Uint8Array(W * H * 4);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
-    if (fb) gl.readBuffer(attachment);
-    gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, out);
-    if (fb) gl.readBuffer(gl.COLOR_ATTACHMENT0);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    return out;
-  }
+  const indexed = createIndexedPass({
+    gl, quad, matTex, blocks,
+    get width() { return W; }, get height() { return H; },
+    get fbo() { return fbo; }, get dataTex() { return dataTex; }, get data2Tex() { return data2Tex; }, get depthTex() { return depthTex; },
+    counts: { get boxes() { return nBoxes; }, get wedges() { return nWedges; }, get capsules() { return nCaps; } },
+  }, () => program<"uDepth">(gl, FULLSCREEN_VS, DEPTH_FS));
+  const { mode: bakeMode, pass, readTarget } = indexed;
 
   // ---- raster mode (raster.ts): compiled the first time a frame rasterises or a mesh is set.
   type RasterUniform = "uKind" | "uEye" | "uFwd" | "uRight" | "uUp" | "uTan" | "uAspect" | "uMats" | "uSun" | "uWaterY" | "uFogNear" | "uFogFar" | "uRes" | "uTime";
@@ -601,22 +547,10 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
       authoredStyle = { ...style };
       fxDirty = true;
     },
-    setWorld({ boxes = [], wedges = [], capsules = [] }) {
-      const bx: RenderBox[] = [];
-      const wd: RenderWedge[] = [...wedges];
-      for (const b of boxes) (b.kind === "wedge" ? wd : bx).push(b);
-      nBoxes = Math.min(MAX_BOXES, bx.length);
-      for (let i = 0; i < nBoxes; i += 1) { const b = bx[i]!; boxBlock.data.set([b.c[0], b.c[1], b.c[2], b.mat ?? 0, b.h[0], b.h[1], b.h[2], b.yaw ?? 0], i * 8); }
-      nWedges = Math.min(MAX_WEDGES, wd.length);
-      for (let i = 0; i < nWedges; i += 1) { const w = wd[i]!; wedgeBlock.data.set([w.c[0], w.c[1], w.c[2], w.mat ?? 0, w.h[0], w.h[1], w.h[2], w.yaw ?? 0, Math.max(0, Math.min(0.98, w.lo ?? 0)), Math.max(0, w.skin ?? 0), Math.max(-1, Math.min(1, w.top?.[0] ?? -1)), Math.max(-1, Math.min(1, w.top?.[1] ?? 1))], i * 12); }
-      nCaps = Math.min(MAX_CAPS, capsules.length);
-      for (let i = 0; i < nCaps; i += 1) { const c = capsules[i]!; capBlock.data.set([c.a[0], c.a[1], c.a[2], c.r, c.b[0], c.b[1], c.b[2], c.mat ?? 0], i * 8); }
-      // (Only the used parts go up: a few KB a frame.)
-      for (const [blk, n] of [[boxBlock, nBoxes * 8], [wedgeBlock, nWedges * 12], [capBlock, nCaps * 8]] as const) {
-        gl.bindBuffer(gl.UNIFORM_BUFFER, blk.buf);
-        if (n) gl.bufferSubData(gl.UNIFORM_BUFFER, 0, blk.data, 0, n);
-      }
-      return { boxes: nBoxes, wedges: nWedges, capsules: nCaps, dropped: bx.length - nBoxes + wd.length - nWedges + capsules.length - nCaps };
+    setWorld(world) {
+      const counts = uploadWorld(gl, blocks, world);
+      nBoxes = counts.boxes; nWedges = counts.wedges; nCaps = counts.capsules;
+      return counts;
     },
     setFx(list = []) { fxList = list.map((e) => ({ ...e })); resolveFx(fxList, { width: W, height: H }); fxDirty = true; },
     toggleFx(name, on) { fxList = toggleFx(fxList, name, on); fxDirty = true; },
@@ -723,69 +657,15 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
       const data = readTarget(fbo, gl.COLOR_ATTACHMENT0);
       const data2 = readTarget(fbo, gl.COLOR_ATTACHMENT1);
       gl.disable(gl.DEPTH_TEST);
-      pass(x.depth.p, x.fb, [[depthTex, x.depth.loc.uDepth]]);
+      pass(x.depth!.p, x.fb, [[depthTex, x.depth!.loc.uDepth]]);
       const packed = readTarget(x.fb, gl.COLOR_ATTACHMENT0);
       const depth = new Float32Array(W * H);
       for (let i = 0; i < depth.length; i += 1) depth[i] = unpackDepth(packed[i * 4]!, packed[i * 4 + 1]!, packed[i * 4 + 2]!);
       return { width: W, height: H, data, data2, depth };
     },
-    renderIndexed({ eye, target: look, fov = 1.2, time = 0, sun = [0.4, 0.8, 0.3], waterY = 0, fogNear = 25, fogFar = 110, gap = 0.56, split, ortho = 0 }) {
-      const x = bakeMode();
-      const { forward: fwd, right, up } = cameraBasis(eye, look);
-      // Pass 1, as render()'s (no particles: a bake draws solids), with the surface coordinate.
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-      gl.viewport(0, 0, W, H);
-      gl.enable(gl.DEPTH_TEST);
-      gl.depthFunc(gl.ALWAYS);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-      const BW = x.world.loc; // (the bake world's uniforms: WORLD_FS's, and uSplit)
-      gl.useProgram(x.world.p);
-      gl.uniform2f(BW.uRes, W, H);
-      gl.uniform3fv(BW.uEye, eye as unknown as Float32List); gl.uniform3fv(BW.uFwd, fwd); gl.uniform3fv(BW.uRight, right); gl.uniform3fv(BW.uUp, up);
-      gl.uniform1f(BW.uTan, Math.tan(fov / 2)); gl.uniform1f(BW.uTime, time);
-      gl.uniform1i(BW.uBoxes, nBoxes); gl.uniform1i(BW.uWedges, nWedges); gl.uniform1i(BW.uCaps, nCaps);
-      for (const blk of blocks) gl.bindBufferBase(gl.UNIFORM_BUFFER, blk.i, blk.buf);
-      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, matTex); gl.uniform1i(BW.uMats, 1);
-      gl.uniform3fv(BW.uSun, norm(sun));
-      gl.uniform1f(BW.uWaterY, waterY); gl.uniform1f(BW.uFogNear, fogNear); gl.uniform1f(BW.uFogFar, fogFar);
-      gl.uniform4f(BW.uSplit, split?.[0] ?? 0, split?.[1] ?? 0, split?.[2] ?? 0, split ? 1 : 0);
-      gl.uniform1f(BW.uOrthoH, ortho);
-      gl.bindBuffer(gl.ARRAY_BUFFER, quad);
-      const aw = gl.getAttribLocation(x.world.p, "aPos");
-      gl.enableVertexAttribArray(aw);
-      gl.vertexAttribPointer(aw, 2, gl.FLOAT, false, 0, 0);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-      gl.disable(gl.DEPTH_TEST);
-      // Pass 2: the index, into its own picture.
-      gl.useProgram(x.index.p);
-      gl.uniform1f(x.index.loc.uGap, gap / FAR);
-      pass(x.index.p, x.fb, [[dataTex, x.index.loc.uData], [data2Tex, x.index.loc.uData2], [depthTex, x.index.loc.uDepth]]);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      return x.fb;
-    },
-    readIndexed() { return readTarget(bakeMode().fb, gl.COLOR_ATTACHMENT0); },
-    renderIndexedHeights({ eye, target: look, fov = 1.2, pixelsPerMetre, eps = 0, ortho = 0 }) {
-      const x = bakeMode();
-      // (Compiled the first time a bake asks for heights: a bake without them never builds it. It marches the world's
-      // solids again -- pass 1's uniform blocks, still bound.)
-      if (!x.height) {
-        x.height = program<HeightUniform>(gl, FULLSCREEN_VS, HEIGHT_FS);
-        (["Boxes", "Wedges", "Capsules"] as const).forEach((name, i) => gl.uniformBlockBinding(x.height!.p, gl.getUniformBlockIndex(x.height!.p, name), i));
-      }
-      const hp = x.height;
-      const { forward: fwd, right, up } = cameraBasis(eye, look);
-      gl.disable(gl.DEPTH_TEST);
-      gl.useProgram(hp.p);
-      const L = hp.loc;
-      gl.uniform2f(L.uRes, W, H);
-      gl.uniform3fv(L.uEye, eye as unknown as Float32List); gl.uniform3fv(L.uFwd, fwd); gl.uniform3fv(L.uRight, right); gl.uniform3fv(L.uUp, up);
-      gl.uniform1f(L.uTan, Math.tan(fov / 2)); gl.uniform1f(L.uScale, pixelsPerMetre); gl.uniform1f(L.uEps, eps); gl.uniform1f(L.uOrthoH, ortho);
-      gl.uniform1i(L.uBoxes, nBoxes); gl.uniform1i(L.uWedges, nWedges); gl.uniform1i(L.uCaps, nCaps);
-      for (const blk of blocks) gl.bindBufferBase(gl.UNIFORM_BUFFER, blk.i, blk.buf);
-      pass(hp.p, x.fb, [[dataTex, L.uData], [depthTex, L.uDepth]]);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      return x.fb;
-    },
+    renderIndexed: indexed.renderIndexed,
+    readIndexed: indexed.readIndexed,
+    renderIndexedHeights: indexed.renderIndexedHeights,
     setMesh(key, mesh) {
       const R = rasterMode();
       const old = R.meshes.get(key);

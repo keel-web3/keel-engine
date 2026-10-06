@@ -6,9 +6,11 @@
     "version": "0.1.2",
     "kind": "runtime",
     "needs": [
+      "keel/render@^0.1",
       "keel/runtime@^0.1",
       "keel/core@^0.1",
       "keel/entity@^0.1",
+      "keel/particles@^0.1",
       "keel/codec@^0.1"
     ],
     "title": "Bake and draw",
@@ -19,9 +21,17 @@
     "weight": -1000
   },
   "imports": {
-    "@keel-engine/codec": "keel/codec",
+    "@keel-engine/codec/runtime": "keel/codec",
+    "@keel-engine/codec/schemas/hybrid": "keel/codec",
+    "@keel-engine/codec/schemas/object": "keel/codec",
     "@keel-engine/core": "keel/core",
+    "@keel-engine/core/curl": "keel/core",
+    "@keel-engine/core/dmath": "keel/core",
+    "@keel-engine/core/rng": "keel/core",
     "@keel-engine/entity": "keel/entity",
+    "@keel-engine/particles/basic": "keel/particles",
+    "@keel-engine/particles/pool": "keel/particles",
+    "@keel-engine/render/link-program": "keel/render",
     "@keel-engine/runtime": "keel/runtime"
   },
   "manifests": {}

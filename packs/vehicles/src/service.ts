@@ -15,7 +15,7 @@
 // Deterministic: every draw is a tag of its own (no car's draw moves), dmath for every angle.
 
 import { datan2, dcos, dhypot, dsin } from "@keel-engine/core";
-import { meshMatrix, mulMatrix } from "@keel-engine/bake";
+import { meshMatrix, mulMatrix } from "@keel-engine/bake/mesh";
 import type { BodyGeometry, Car, CarDecal, Colour, Dial, Handling, Panel, PanelPaint, WheelMount, WheelSpec } from "./car.ts";
 import { at, snap } from "./draws.ts";
 import type { Draws } from "./draws.ts";

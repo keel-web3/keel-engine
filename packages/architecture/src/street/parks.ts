@@ -9,6 +9,7 @@
 import { addBox, addPlant, count, pick, subPlacer, toWorld } from "../frame.ts";
 import type { Build } from "../frame.ts";
 import type { ArtKind, LampStyle, MassOp, PropSpot } from "../types.ts";
+import { groundCover } from "./ground-cover.ts";
 import { art } from "./art.ts";
 import { bench, furniture, lamp, tree } from "./furniture.ts";
 
@@ -42,6 +43,12 @@ export function park(b: Build, op: Extract<MassOp, { op: "park" }>): void {
   addBox(b, 1, s.x, 0.09, s.z, s.hw, 0.02, pw, "gravel");
   addBox(b, 1, s.x, 0.09, s.z, pw, 0.02, s.hd, "gravel");
   const clear = piece(b, op.art) + 1.5;
+  groundCover(b, s, (x, z, r) => Math.abs(x - s.x) > pw + r && Math.abs(z - s.z) > pw + r && Math.hypot(x - s.x, z - s.z) > clear + r);
+  for (let k = 0; k < 12; k++) {
+    const side = k % 2 ? 1 : -1, along = b.D.flat("verge", k), length = .4 + b.D.u("vergeL", k) * 1.2;
+    const horizontal = k < 6, x = horizontal ? s.x + along * (s.hw - length) : s.x + side * (pw + .06), z = horizontal ? s.z + side * (pw + .06) : s.z + along * (s.hd - length);
+    addBox(b, 1, x, .095, z, horizontal ? length : .12, .003, horizontal ? .12 : length, "gravel");
+  }
   // Trees: a few seeded spots, clear of the paths, the piece and each other, their crowns inside the park's edge.
   const n = Math.min(8, Math.max(3, Math.round((s.hw * s.hd) / 60))), trees: [number, number][] = [];
   for (let k = 0; k < n * 3 && trees.length < n; k += 1) {

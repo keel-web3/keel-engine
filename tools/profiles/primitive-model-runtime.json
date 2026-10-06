@@ -1,0 +1,6 @@
+{
+  "name": "primitive-model-runtime",
+  "features": [{ "module": "@keel-engine/builder/primitive-runtime", "exports": ["loadPrimitiveModel"] }],
+  "maxGzipBytes": 28000,
+  "forbidInputs": ["/import/", "/audio/", "/ops.ts", "/generate.ts", "/edit.ts", "/style.ts", "/dither.ts", "/gpu.ts"]
+}

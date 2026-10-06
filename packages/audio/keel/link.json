@@ -6,6 +6,7 @@
     "version": "0.1.0",
     "kind": "runtime",
     "needs": [
+      "keel/core@^0.1",
       "keel/codec@^0.1"
     ],
     "title": "Audio",
@@ -16,7 +17,10 @@
     "weight": -1000
   },
   "imports": {
-    "@keel-engine/codec": "keel/codec"
+    "@keel-engine/codec/runtime": "keel/codec",
+    "@keel-engine/codec/schemas/audio": "keel/codec",
+    "@keel-engine/core/hash": "keel/core",
+    "@keel-engine/core/random": "keel/core"
   },
   "manifests": {}
 }

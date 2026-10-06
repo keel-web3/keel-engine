@@ -12,6 +12,8 @@ export interface VehicleSpec {
   readonly width: number;
   readonly height: number;
   readonly length: number;
+  /** Rendered body centre, forward of the centre of mass (m). */
+  readonly bodyCentre?: number;
   /** Height of the centre of mass above the ground at rest (m): a truck's is high, a prototype's low. */
   readonly comHeight: number;
   /** Axles: z forward of the centre (m), and half the track (m). */

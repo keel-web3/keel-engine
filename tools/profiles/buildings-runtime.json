@@ -1,0 +1,25 @@
+{
+  "name": "buildings-runtime",
+  "features": [
+    {
+      "module": "@keel-engine/buildings/runtime",
+      "exports": [
+        "CITY_CATALOGUE",
+        "CITY_STREETS",
+        "cityTreeDesigns",
+        "treeBare",
+        "treeFit",
+        "treeSeasonPaint",
+        "treeSpecies"
+      ]
+    }
+  ],
+  "maxGzipBytes": 28000,
+  "maxBrotliBytes": 24000,
+  "forbidInputs": [
+    "buildings/src/pack.ts",
+    "buildings/src/profiles.ts",
+    "buildings/src/objects/",
+    "object/src/catalogue.ts"
+  ]
+}

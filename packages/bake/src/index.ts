@@ -92,3 +92,20 @@ export type { BloomPass } from "./bloom.ts";
 
 export { createMeshWorker, serveMeshWorker } from "./mesh-worker.ts";
 export type { MeshWorker } from "./mesh-worker.ts";
+
+// Seeded miniature constructions, articulated loops and physical matter actions.
+export {compileObject,objectScale,objectWorld,posedMesh,posedParticles} from './specimen.ts';
+export type {CompiledObject} from './specimen.ts';
+export {matterFrame} from './specimen-matter.ts';
+export type {MatterFrame} from './specimen-matter.ts';
+export {paintVolumes} from './specimen-volumes.ts';
+export {expandPrimitivePattern,specimenParts} from './primitive-patterns.ts';
+export {SPECIMEN_MOTION_FRAMES} from './specimen-types.ts';
+export type {SpecimenProgram,SpecimenPattern,SpecimenPart,SpecimenV3,SpecimenAnimation,SpecimenFinish,SpecimenMaterial,SpecimenJoint,SpecimenPoseKey,SpecimenTrack,SpecimenEmitter,SpecimenDynamic} from './specimen-types.ts';
+export {readSpecimen} from './specimen-read.ts';
+
+export { bodySpace } from "./geometry.ts";
+export { solidLodSteps } from "./solid-lod.ts";
+export type { LodSolid, SolidLodStep, SolidLodTerm } from "./solid-lod.ts";
+
+export { cloudLobe } from "./cloud-lobe.ts";

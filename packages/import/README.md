@@ -5,6 +5,13 @@
 `keel/builder`). The editor (the KEEL desktop app) offers it by hand and
 through the assistant; the result draws live as its op list streams in.
 
+Host converters are optional subpaths. `import/gameboy-compiler` lowers the real
+animated source to eight coherent 32px views, RGB555 four-color native tiles,
+bounded ROM clips and independently cached phases. The native asset converter
+shares exact procedural Float32 compression through `codec/procedural-buffer`;
+ordinary game runtimes do not need to import the parsers or compilers. See
+[modular builds](../../docs/MODULAR_BUILDS.md) for selection and size budgets.
+
 > "a way to take in 3D objects and convert them into voxel or into the pixel
 > art generative ones ... where it even tries to figure out boundaries once it
 > creates it in our system and separate the attributes."

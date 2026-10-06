@@ -20,6 +20,7 @@
   },
   "imports": {
     "@keel-engine/core": "keel/core",
+    "@keel-engine/core/hash": "keel/core",
     "@keel-engine/elevation": "keel/elevation",
     "@keel-engine/road": "keel/road",
     "@keel-engine/runtime": "keel/runtime"

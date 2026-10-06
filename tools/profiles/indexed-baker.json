@@ -1,0 +1,7 @@
+{
+  "name": "indexed-baker",
+  "features": [{ "module": "@keel-engine/render/baker", "exports": ["createIndexedRenderer"] }],
+  "maxGzipBytes": 13000,
+  "maxBrotliBytes": 12000,
+  "forbidInputs": ["render/src/pixel-renderer.ts", "render/src/raster.ts", "render/src/fx.ts", "core/src/targets.ts", "ui/src/"]
+}

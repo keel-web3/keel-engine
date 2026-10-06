@@ -18,6 +18,7 @@
   },
   "imports": {
     "@keel-engine/core": "keel/core",
+    "@keel-engine/core/hash": "keel/core",
     "@keel-engine/runtime": "keel/runtime"
   },
   "manifests": {}

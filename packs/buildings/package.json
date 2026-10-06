@@ -7,7 +7,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./module": "./src/module.ts",
-    "./codec": "./src/codec.ts"
+    "./codec": "./src/codec.ts",
+    "./runtime": "./src/runtime.ts"
   },
   "dependencies": {
     "@keel-engine/runtime": "workspace:*",

@@ -13,8 +13,9 @@
   "build": {
     "format": "iife",
     "external": [
-      "@keel-engine/bake",
-      "@keel-engine/core"
+      "@keel-engine/bake/mesh",
+      "@keel-engine/core",
+      "@keel-engine/core/hash"
     ]
   }
 }

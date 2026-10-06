@@ -1,3 +1,4 @@
+import { linkProgram } from "@keel-engine/render/link-program";
 // The particle renderer for the sprite path: every live particle in one
 // instanced draw, through the same pixel view as @keel-engine/bake's sprite
 // renderer and into the same framebuffer after it. Each particle is a quad
@@ -23,8 +24,8 @@
 //   sprites.draw(view, instances); parts.draw(view, pool, { ahead });     // same view, same depth buffer
 
 import type { PixelView } from "@keel-engine/bake";
-import { CURVE_SAMPLES, MAX_STYLES, STYLE_WIDTH } from "./pool.ts";
-import type { ParticlePool } from "./pool.ts";
+import { CURVE_SAMPLES, MAX_STYLES, STYLE_WIDTH } from "./pool-internal.ts";
+import type { RuntimeParticlePool } from "./pool-types.ts";
 import { particleSpriteAtlas } from "./palette.ts";
 import { PARTICLE_FS, PARTICLE_VS, SCATTER_FS, SCATTER_VS, STATE_WIDTH } from "./gpu-shaders.ts";
 import { FLOW_PERIOD } from "@keel-engine/core";
@@ -51,7 +52,7 @@ export interface ParticleRenderer {
    * `contract`: under perspective, write depth by keel/bake's one contract (project.ts: linear forward distance from the
    * eye over `far`, 0.5 at the eye) -- so particles sort with a live mesh scene. Off, the dungeon renderer's near..far.
    */
-  draw(view: Pick<PixelView, "center" | "axes" | "pixelsPerMetre" | "width" | "height"> & { readonly eye?: readonly [number, number, number]; readonly fov?: number; readonly near?: number; readonly far?: number; readonly contract?: boolean }, pool: ParticlePool, options?: ParticleDrawOptions): void;
+  draw(view: Pick<PixelView, "center" | "axes" | "pixelsPerMetre" | "width" | "height"> & { readonly eye?: readonly [number, number, number]; readonly fov?: number; readonly near?: number; readonly far?: number; readonly contract?: boolean }, pool: RuntimeParticlePool, options?: ParticleDrawOptions): void;
   /** Ramps the pool's styles name that the palette hasn't got (drawn on ramp 0). */
   readonly missingRamps: readonly string[];
   /** Slots written to the GPU by the last draw, and bytes uploaded for them. */
@@ -63,21 +64,7 @@ export interface ParticleRenderer {
 }
 
 export function createParticleRenderer(gl: WebGL2RenderingContext, { capacity }: ParticleRendererOptions): ParticleRenderer {
-  const compile = (type: number, src: string) => {
-    const s = gl.createShader(type)!;
-    gl.shaderSource(s, src);
-    gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(`Particle shader: ${gl.getShaderInfoLog(s)}`);
-    return s;
-  };
-  const link = (vs: string, fs: string) => {
-    const p = gl.createProgram()!;
-    gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
-    gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(`Particle program: ${gl.getProgramInfoLog(p)}`);
-    return p;
-  };
+  const link = (vs: string, fs: string) => linkProgram(gl, vs, fs, "Particle");
   const prog = link(PARTICLE_VS, PARTICLE_FS);
   const u = (name: string) => gl.getUniformLocation(prog, name);
   const U = {
@@ -155,8 +142,8 @@ export function createParticleRenderer(gl: WebGL2RenderingContext, { capacity }:
 
   let ramps = new Map<string, readonly [number, number]>();
   let styleVersion = -1;
-  let stylePool: ParticlePool | null = null;
-  let statePool: ParticlePool | null = null;
+  let stylePool: RuntimeParticlePool | null = null;
+  let statePool: RuntimeParticlePool | null = null;
   let paletteDirty = false;
   const missing: string[] = [];
   let written = 0;
@@ -166,7 +153,7 @@ export function createParticleRenderer(gl: WebGL2RenderingContext, { capacity }:
   const changes = new Int32Array(capacity);
 
   // The pool's style table, with each style's ramp filled in from the palette.
-  function syncStyles(pool: ParticlePool) {
+  function syncStyles(pool: RuntimeParticlePool) {
     const { data, ramps: names, count, version } = pool.styles;
     if (version === styleVersion && pool === stylePool && !paletteDirty) return;
     styleVersion = version;
@@ -189,7 +176,7 @@ export function createParticleRenderer(gl: WebGL2RenderingContext, { capacity }:
   }
 
   // Slot s's four texels into records[r].
-  function record(pool: ParticlePool, s: number, r: number) {
+  function record(pool: RuntimeParticlePool, s: number, r: number) {
     const { p0, v0, vinf, tSeg, tStop, tBirth, life, style, rnd, lod } = pool.slots;
     const o = r * RECORD_FLOATS;
     const q = s * 3;
@@ -231,7 +218,7 @@ export function createParticleRenderer(gl: WebGL2RenderingContext, { capacity }:
   }
 
   // Bring the GPU's state up to the pool's: the changed slots, or every slot (a load, a clear, a new time base).
-  function syncState(pool: ParticlePool) {
+  function syncState(pool: RuntimeParticlePool) {
     written = 0;
     uploaded = 0;
     let n = pool.takeChanges(changes);

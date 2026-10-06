@@ -20,7 +20,7 @@
 //   const pool = createBakeWorkers({ entry: { module: "examples/army", run: "bakeWorker", url: import.meta.url }, payload: { seed } });
 
 import { renderSprites } from "./bake.ts";
-import type { BakedSprite, BakeSources, BakeSpriteOptions } from "./bake.ts";
+import type { BakedSprite, BakeSources, BakeSpriteOptions, BakeRenderer } from "./bake.ts";
 import { renderIndexedSprites } from "./indexed.ts";
 import type { IndexedBakeRenderer, IndexedSources } from "./indexed.ts";
 import type { SpriteJob } from "./plan.ts";
@@ -44,6 +44,7 @@ export function bakeSlice(renderer: IndexedBakeRenderer, jobs: readonly SpriteJo
   const baked: BakedSprite[] = [];
   const indexed = jobs.filter((j) => has(sources.indexed, j.design));
   const plain = jobs.filter((j) => !has(sources.indexed, j.design) && has(sources.plain, j.design));
+  if (plain.length && (!renderer.render || !renderer.setStyle)) throw new TypeError('Plain sprite jobs require a color renderer');
   // (A big slice gathers into a big staging texture: fewer read-backs, each a wait for the GPU.)
   const staging = options.staging ?? (jobs.length > 200 ? 2048 : 1024);
   // (Depth sprites: indexed designs carry a height plane when asked -- indexed.ts.)
@@ -54,7 +55,7 @@ export function bakeSlice(renderer: IndexedBakeRenderer, jobs: readonly SpriteJo
   for (const [style, list] of byStyle) {
     let parsed: BakeSpriteOptions["style"];
     if (style.startsWith("{")) { try { parsed = JSON.parse(style) as BakeSpriteOptions["style"]; } catch { /* a key, not a style */ } }
-    baked.push(...renderSprites(renderer, list, sources.plain!, { staging, heights: !!options.heights, ...(parsed ? { style: parsed } : {}) }).baked);
+    baked.push(...renderSprites(renderer as IndexedBakeRenderer & BakeRenderer, list, sources.plain!, { staging, heights: !!options.heights, ...(parsed ? { style: parsed } : {}) }).baked);
   }
   return { baked, ms: now() - t0 };
 }

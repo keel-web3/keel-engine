@@ -5,7 +5,16 @@
   "type": "module",
   "description": "The builder: voxel models palette-indexed by role, edited by ops, converted to objects, attributes and rigged entities, animated, varied and exported as pack code.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./voxels": "./src/voxels.ts",
+    "./construction": "./src/construction.ts",
+    "./generator": "./src/generate.ts",
+    "./mesh": "./src/mesh.ts",
+    "./animation": "./src/animate.ts",
+    "./rig": "./src/rig.ts",
+    "./convert": "./src/convert.ts",
+    "./storage": "./src/voxel-store.ts",
+    "./primitive-runtime": "./src/construction-runtime.ts"
   },
   "dependencies": {
     "@keel-engine/core": "workspace:*",

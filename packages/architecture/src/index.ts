@@ -17,3 +17,5 @@ export { trafficSignSolids } from "./street/roadside.ts";
 export type { TrafficSignKind, TrafficSignOptions, TrafficSignSpec } from "./street/roadside.ts";
 export type { BlockPlan } from "./city.ts";
 export { planCity, planCitySteps } from "./city.ts";
+
+export * from "./road-safety.ts";

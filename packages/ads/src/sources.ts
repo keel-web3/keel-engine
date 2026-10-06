@@ -1,3 +1,4 @@
+import { fnv1a32Signed as fnv } from "@keel-engine/core/hash";
 // Sources of creatives, composed: the first source with an answer for a slot
 // wins (a chain registry, then a curated list, then house ads). House ads are
 // deterministic fictional brands from a seed, so a world is never blank and
@@ -7,11 +8,7 @@ import { hash2 } from "@keel-engine/core";
 import { safeHref } from "./href.ts";
 import type { AdCreative, AdSlot, AdSource } from "./types.ts";
 
-const fnv = (text: string): number => {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i += 1) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
-  return h | 0;
-};
+
 
 const FIRST = ["NEON", "MIDNIGHT", "CHROME", "VELVET", "APEX", "NOVA", "RADIO", "TURBO", "LUCKY", "SILVER", "ELECTRIC", "GOLDEN", "ROYAL", "ATOMIC"];
 const TRADE = ["NOODLES", "MOTORS", "HOTEL", "RECORDS", "COLA", "TIRES", "BANK", "PIZZA", "ARCADE", "RADIO", "GARAGE", "DINER", "INSURANCE", "SPORTS"];

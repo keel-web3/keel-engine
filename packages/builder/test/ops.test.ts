@@ -9,7 +9,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
 import { createRoll, stream } from "@keel-engine/core";
 import { QUADRUPED_BODY, entityOf, missingSockets, socketsOf, wear } from "@keel-engine/entity";
-import { OPS, buildSession, createSession, loadData, loadOps, loadVoxels, opReference, opSchema, runOps, sameVoxels, storeData, storeOps, storeVoxels, validateOps } from "../src/index.ts";
+import { OPS, buildSession, createSession, loadData, loadOps, loadModel, loadVoxels, opReference, opSchema, runOps, sameVoxels, storeData, storeOps, storeVoxels, validateOps } from "../src/index.ts";
 import type { AgentOp, VoxelAttributeShape, VoxelSpec } from "../src/index.ts";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -187,8 +187,8 @@ test("exported pack files typecheck under the repo's strict settings and round-t
     assert.deepEqual(fox.build(S(), { seed: "7" }).body, fb.build(S(), { seed: "7" }).body);
     assert.equal(fox.build(S(), {}).parts.length, 1);
     // (The voxels in the file are the session's.)
-    const text = /loadVoxels\(([\s\S]*?)\);/.exec(built["beast-entity"]!.b.code)![1]!.replace(/[\s"+,]/g, "");
-    assert.ok(sameVoxels(loadVoxels(text), built["beast-entity"]!.r.session.editor.model));
+    const text = /loadModel\(([\s\S]*?)\);/.exec(built["beast-entity"]!.b.code)![1]!.replace(/[\s"+,]/g, "");
+    assert.ok(sameVoxels(loadModel(text), built["beast-entity"]!.r.session.editor.model));
     console.log(`\n${built["hat-attribute"]!.b.code}`);
   } finally {
     rmSync(dir, { recursive: true, force: true });

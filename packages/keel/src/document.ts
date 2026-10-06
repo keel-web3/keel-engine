@@ -1,3 +1,4 @@
+import { resolveKeelPayloadStorage, type KeelPayloadStorageMode } from "@keel/protocol";
 // A game as KEEL will assemble it: every module it needs (by id, and every
 // module providing a contract it needs, transitively), each bundled and put in
 // KEEL's own module slot (gzip'd, hash-checked, ordered by phase and weight),
@@ -25,7 +26,7 @@ export interface ModuleReport {
   readonly phase: string;
   readonly weight: number;
   readonly bytes: number;
-  /** What KeelHold stores: every object is kept compressed. */
+  /** Selected payload bytes before any presentation/URI framing. */
   readonly stored: number;
   /** sha256 of the module's bytes (for verified modules, the digest its receipt binds). */
   readonly digest?: string;
@@ -103,6 +104,7 @@ export async function keelAudioScripts(vendorDir: string): Promise<PageScript[]>
 }
 
 export interface DocumentOptions extends BundleOptions, PrepareOptions {
+  readonly payloadStorage?: KeelPayloadStorageMode;
   /** Export to start after the modules load (default: main). Another entry reuses the same verified module slots. */
   readonly entryExport?: string;
   /**
@@ -133,6 +135,8 @@ export function gameEntrySource(gameId: string, entryExport = "main"): string {
 }
 
 export async function buildGameDocument(gameId: string, workspace: readonly WorkspaceModule[], options: DocumentOptions = {}): Promise<GameDocument> {
+  const payloadStorage = resolveKeelPayloadStorage(options.payloadStorage);
+  const compression = (bytes: Uint8Array): "none" | "gzip" => payloadStorage === "raw" || gzipSync(bytes, { level: 9 }).byteLength >= bytes.byteLength ? "none" : "gzip";
   const entryExport = options.entryExport ?? "main";
   const entry = gameEntrySource(gameId, entryExport);
   const mods = closureOf(gameId, workspace);
@@ -151,28 +155,29 @@ export async function buildGameDocument(gameId: string, workspace: readonly Work
   for (const p of options.pageScripts ?? []) {
     fragments.push(await buildKeelInlineModuleFragment({
       moduleId: p.id, version: p.version, mediaType: "text/javascript", ...(p.aliases ? { aliases: p.aliases } : {}),
-      decodedBytes: p.bytes, compression: "gzip", execution: "classic", phase: "runtime", weight: p.weight,
+      decodedBytes: p.bytes, compression: compression(p.bytes), execution: "classic", phase: "runtime", weight: p.weight,
     }));
   }
   for (const b of bundles) {
     fragments.push(await buildKeelInlineModuleFragment({
       moduleId: b.manifest.id, version: b.manifest.version, mediaType: "text/javascript",
-      decodedBytes: b.bytes, compression: "gzip", execution: "classic", phase: b.manifest.phase, weight: b.manifest.weight,
+      decodedBytes: b.bytes, compression: compression(b.bytes), execution: "classic", phase: b.manifest.phase, weight: b.manifest.weight,
     }));
   }
   // The entry: start every module, then hand the page to the game.
   const shell = options.shell ?? await buildKeelInlineShellFragments({ repositoryRoot: sdkRoot() });
   const doc = await buildKeelInlineLocalDocument({
     shell,
+    payloadStorage,
     modules: fragments,
     entry: { id: entryExport === "main" ? `${gameId}/entry` : `${gameId}/${entryExport}/entry`, mediaType: "text/javascript", source: new TextEncoder().encode(entry), compression: "none", ...(options.background ? { backgroundColor: options.background } : {}) },
   });
-  const pages: ModuleReport[] = (options.pageScripts ?? []).map((p) => ({
-    id: p.id, version: p.version, kind: "page-script", phase: "runtime", weight: p.weight, bytes: p.bytes.byteLength, stored: gzipSync(p.bytes, { level: 9 }).byteLength,
+  const pages: ModuleReport[] = (options.pageScripts ?? []).map((p, index) => ({
+    id: p.id, version: p.version, kind: "page-script", phase: "runtime", weight: p.weight, bytes: p.bytes.byteLength, stored: fragments[index]!.item.embedded!.storedIntegrity!.byteLength,
   }));
   const modules = [...pages, ...bundles.map((b, i) => ({
     id: b.manifest.id, version: b.manifest.version, kind: b.manifest.kind, phase: b.manifest.phase, weight: b.manifest.weight,
-    bytes: b.bytes.byteLength, stored: gzipSync(b.bytes, { level: 9 }).byteLength,
+    bytes: b.bytes.byteLength, stored: fragments[(options.pageScripts?.length ?? 0) + i]!.item.embedded!.storedIntegrity!.byteLength,
     ...(verified[i] ? { digest: verified[i]!.outputDigest } : {}),
   }))];
   return { html: doc.rootBytes, document: doc, modules, resolution, bundles, verified };

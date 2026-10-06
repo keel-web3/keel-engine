@@ -21,7 +21,8 @@ import { SIDEWALK, drawsFor } from "@keel-engine/city";
 import type { City, CityHeight, District, DistrictKind, Obb, Streets } from "@keel-engine/city";
 import { datan2, dcos, dhypot, dsin } from "@keel-engine/core";
 import type { RoadEdge } from "@keel-engine/road";
-import { placerAt } from "../frame.ts";
+import { roadGuards } from "../road-safety.ts";
+import { addBox, placerAt } from "../frame.ts";
 import type { Placer } from "../frame.ts";
 import type { AdSlotSpec, InfraSpec, PlantKind, PlantSpot, PropKind, PropSpot, Solid, StreetSign } from "../types.ts";
 import { billboard, gantry, hookAt, pylon, radioMast, railRun, steelPole, trafficCamera, utilityPole, wallPanel, wire } from "./roadside.ts";
@@ -59,7 +60,7 @@ export interface InfraContext {
   note?(q: PropSpot): void;
   readonly plants: PlantSpot[];
   readonly ads: AdSlotSpec[];
-  readonly barriers: Obb[];
+  readonly barriers: (Obb & { strength?: number; yMin?: number; yMax?: number })[];
   readonly signs: StreetSign[];
 }
 
@@ -410,6 +411,23 @@ export function* planInfraSteps(c: InfraContext): Generator<number, void, void> 
         c.barriers.push({ x, z, hw: 0.12, hd: len / 2, yaw });
       }
     }
+  }
+
+  if (c.height) for (const run of c.runs) {
+    const { e, D } = run; if (e.bridge) continue;
+    const x:number[]=[],z:number[]=[],y:number[]=[];
+    for(let s=run.s0+6;s<=run.s1-6;s+=4){ const p=c.along(e,s);x.push(p.x);z.push(p.z);y.push(c.yAt(p.x,p.z)); }
+    const out = SIDEWALK[e.cls].kerb + SIDEWALK[e.cls].slab;
+    for(const g of roadGuards(x,z,y,out,c.yAt,e.cls === "highway",(x,z)=> {
+      const at=streets.at(x,z);
+      return (!at || at.edge === e.id && at.kerb>out-.2) && c.clear(x,z,.15) && !c.byDoor(x,z,.4) && !c.barriers.some(b=>(b.x-x)**2+(b.z-z)**2<16);
+    })) {
+      const p=place(D,g.x,g.z,g.yaw);
+      if(g.material === "concrete") addBox(p,1,0,g.height/2,0,g.hw,g.height/2,g.hd,"plinth");
+      else railRun(p,g.hd*2);
+      c.barriers.push({...g,yMin:g.y-.2,yMax:g.y+g.height});
+    }
+    yield .72;
   }
 
   // ---- radio masts on the high ground: open land, off every road, lot and landmark, the highest few, well apart.

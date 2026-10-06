@@ -1,3 +1,4 @@
+import { fnv1a32 as hashOf } from "@keel-engine/core/hash";
 // Landmarks: the places a city is built AROUND, rather than on top of.
 //
 // A game's big set pieces -- a speedway, a plaza, a port, a stadium -- are not buildings on a lot. They take a whole
@@ -29,11 +30,7 @@ const rankOf = (cls: RoadClass): number => {
   return i < 0 ? CLASS_RANK.length : i;
 };
 
-const hashOf = (s: string): number => {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i += 1) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
-  return h >>> 0;
-};
+
 
 /**
  * A block's box, measured along its OWN longest side: where its middle is, how far it reaches along that side and

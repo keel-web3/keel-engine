@@ -140,7 +140,8 @@ export interface PoolParticleView {
   light: number;
 }
 
-export interface ParticlePool {
+/** Live simulation and snapshot contract; codec byte persistence is opt-in. */
+export interface RuntimeParticlePool {
   readonly capacity: number;
   readonly emitterCapacity: number;
   /** Live particles. */
@@ -179,10 +180,6 @@ export interface ParticlePool {
   clear(): void;
   save(): ParticlePoolSnapshot;
   load(snapshot: ParticlePoolSnapshot): void;
-  /** save() as codec bytes (keel/particles/pool): every number exact, Infinity included. */
-  saveBytes(): Uint8Array;
-  /** Put saveBytes() back (another document, or another pool's, is refused as load() refuses). */
-  loadBytes(bytes: Uint8Array): void;
   resetStats(): void;
   /** Is this slot a live particle? */
   isLive(slot: number): boolean;
@@ -194,4 +191,12 @@ export interface ParticlePool {
   takeChanges(out: Int32Array): number;
   /** The live particles for the pixel renderer (it allocates: hero shots, previews). */
   list(sizeScale?: number): PoolParticleView[];
+}
+
+/** The broad pool API retains exact codec byte persistence for existing callers. */
+export interface ParticlePool extends RuntimeParticlePool {
+  /** save() as codec bytes (keel/particles/pool): every number exact, Infinity included. */
+  saveBytes(): Uint8Array;
+  /** Put saveBytes() back (another document, or another pool's, is refused as load() refuses). */
+  loadBytes(bytes: Uint8Array): void;
 }

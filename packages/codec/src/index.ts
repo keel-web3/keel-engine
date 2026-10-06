@@ -33,3 +33,9 @@ export { sha256, toHex } from "./sha256.ts";
 export { solidityDecoder } from "./solidity.ts";
 export type { SolidityOptions } from "./solidity.ts";
 export * from "./schemas/index.ts";
+
+// Bounded native sprite compression: shared by cartridge ROM and battery cache.
+export {RETRO_CODEC_VERSION,encodeRetroFrame,decodeRetroFrame,encodeRetroClip,decodeRetroClipFrame,encodeRetroAsset,decodeRetroAssetFrame} from './retro.ts';
+export type {RetroClip,RetroAsset} from './retro.ts';
+
+export { encodeFloat32Runs, decodeFloat32Runs } from "./procedural-buffer.ts";

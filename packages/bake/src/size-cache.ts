@@ -6,11 +6,11 @@ export function createSizeCache<T>(capacity: number, create: (width: number, hei
     let value = entries.get(key);
     if (value !== undefined) entries.delete(key);
     else {
-      value = create(width, height);
       if (entries.size >= capacity) {
         const oldest = entries.keys().next().value!;
         dispose(entries.get(oldest)!); entries.delete(oldest);
       }
+      value = create(width, height);
     }
     entries.set(key, value);
     return value;

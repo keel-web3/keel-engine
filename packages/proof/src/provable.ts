@@ -12,7 +12,7 @@
 // and what parity vectors are generated from; the guest must match it byte
 // for byte (see vectors.ts).
 
-import { sha256 } from "@keel-engine/codec";
+import { sha256 } from "@keel-engine/codec/hash";
 import { createPacker, createReader, equalBytes, toHex } from "./bytes.ts";
 
 const utf8 = new TextEncoder();

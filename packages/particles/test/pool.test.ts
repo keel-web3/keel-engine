@@ -70,7 +70,7 @@ test("the pool never allocates after warm-up: no typed array grows, and V8's all
     spawned = pool.stats.spawned - before;
     const { profile } = (await session.post("HeapProfiler.stopSampling")) as { profile: { head: SampleNode } };
     const found = new Map<string, number>();
-    const walk = (n: SampleNode) => { if (n.callFrame.url.endsWith("/particles/src/pool.ts")) found.set(n.callFrame.functionName, (found.get(n.callFrame.functionName) ?? 0) + n.selfSize); n.children.forEach(walk); };
+    const walk = (n: SampleNode) => { if (/\/particles\/src\/pool(?:-runtime)?\.ts$/.test(n.callFrame.url)) found.set(n.callFrame.functionName, (found.get(n.callFrame.functionName) ?? 0) + n.selfSize); n.children.forEach(walk); };
     walk(profile.head);
     sites = found;
     if (HOT.every((h) => !found.get(h))) break;

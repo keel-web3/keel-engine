@@ -24,7 +24,8 @@
   },
   "imports": {
     "@keel-engine/camera": "keel/camera",
-    "@keel-engine/codec": "keel/codec",
+    "@keel-engine/codec/runtime": "keel/codec",
+    "@keel-engine/codec/schemas/world": "keel/codec",
     "@keel-engine/core": "keel/core",
     "@keel-engine/entity": "keel/entity",
     "@keel-engine/input": "keel/input",

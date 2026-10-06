@@ -13,6 +13,7 @@ import type { CityHeight } from "@keel-engine/city";
 import { addBox, addCapsule, subPlacer, toWorld } from "./frame.ts";
 import { keepLevel, thing } from "./foundations.ts";
 import type { Build } from "./frame.ts";
+import { groundCover } from "./street/ground-cover.ts";
 import { art } from "./street/art.ts";
 import { bench, lamp, tree } from "./street/furniture.ts";
 import type { LampStyle, MassOp, PropSpot, WaterSpec } from "./types.ts";
@@ -85,6 +86,10 @@ export function commons(b: Build, _op: Extract<MassOp, { op: "commons" }>): void
   }
   // Paths.
   const { loop, segs } = paths(c);
+  groundCover(b, { x: fx((own.x0 + own.x1) / 2), z: fz((own.z0 + own.z1) / 2), hw: (own.x1 - own.x0) / 2, hd: (own.z1 - own.z0) / 2 }, (x, z, r) => {
+    const u = x + site.u, v = z + site.v;
+    return segs.every(path => away(path, u, v) > r) && (!W || away(W, u, v) > r + 1) && c.features.every(f => dist(f.u - u, f.v - v) > f.r + r);
+  });
   for (const s of segs) { const r = meet(s, ext); if (r) box(r, 1, 0.09, 0.02, W ? "paving" : "gravel"); }
   // The pieces this lot has.
   for (const f of c.features) {

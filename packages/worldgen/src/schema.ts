@@ -11,8 +11,8 @@
 //
 // encode*/decode* round-trip exactly (test/schema.test.ts).
 
-import { array, decode, dyn, encode, enumOf, int, map, named, nullable, num, optional, recursive, ref, string, struct, tuple, uint, union } from "@keel-engine/codec";
-import type { Type } from "@keel-engine/codec";
+import { array, decode, dyn, encode, enumOf, int, map, named, nullable, num, optional, recursive, ref, string, struct, tuple, uint, union } from "@keel-engine/codec/runtime";
+import type { Type } from "@keel-engine/codec/runtime";
 import type { TilesetRules } from "@keel-engine/terrain";
 import { FOLIAGE_LAYERS } from "./biomes.ts";
 import type { BiomeDef } from "./biomes.ts";

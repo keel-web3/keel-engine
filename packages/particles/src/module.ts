@@ -7,7 +7,7 @@ export const manifest = defineManifest({
   id: "keel/particles",
   version: "0.1.1",
   kind: "runtime",
-  needs: ["keel/core@^0.1", "keel/codec@^0.1"],
+  needs: ["keel/render@^0.1", "keel/core@^0.1", "keel/codec@^0.1"],
   title: "KEEL Engine particles",
   description: "Particles for the pixel engine: a fixed pool with budgets, priorities and LOD, emitters as recipes (bursts, streams, trails; sockets; sub-emitters), a preset library, closed-form motion drawn on the GPU beside the sprites -- and the proof of concept's pool.",
 });

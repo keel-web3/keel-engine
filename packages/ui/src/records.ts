@@ -1,7 +1,7 @@
 // Themes, fonts and screens to codec bytes and back. JSON is the readable
 // view (toJSON/fromJSON on the same schemas); these bytes are what's stored.
 
-import { decode, encode } from "@keel-engine/codec";
+import { decode, encode } from "@keel-engine/codec/runtime";
 import { makeFont } from "./font.ts";
 import type { PixelFont } from "./font.ts";
 import { GENERATED_CODES, generateFont } from "./genfont.ts";
