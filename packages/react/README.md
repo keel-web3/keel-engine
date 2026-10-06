@@ -34,3 +34,9 @@ Register exact source state through `useKeelInspection(probe,id,'mesh'|'graph'|'
 Reference patterns were read from REDLINE's React engine host and CRUCIBLE's React package room. Those applications are not migrated or deployed by installing this plugin. The small `examples/KeelDemo.tsx` is a new browser fixture, using canonical theme and renderer APIs; it does not copy their fonts, meshes or branding.
 
 The adapter lives in the engine checkout and uses the engine workspace package names. A host can use a shared pnpm workspace including the engine or vendor the required engine source packages as CRUCIBLE does. An npm or onchain distribution of React itself is not implemented. Peer support is React 18.3 and 19; validation records the exact tested version.
+
+## Website bundle profile
+
+`@keel-engine/react/bundle` exports `createKeelBrowserBundlePlugin({aliases, transforms})`, a build-time esbuild plugin. React/Next hosts can bundle the canonical scene and selected runtime APIs into their ordinary browser entry. The plugin composes explicit runtime aliases and reviewed source transforms; it does not substitute an offline scene or add a renderer. Existing app bundlers keep ownership of React so a Next host does not ship a second React instance. Standalone HTML authors can include React through their normal esbuild entry.
+
+REDLINE's `game/tools/runtime-build.mjs` uses this profile for its browser, avatar/mesh workers, measured factories and paired Node verifier. It keeps web networking, audio, export and physical scene controls. Its canonical on-chain compilation continues to emit revisionable resources independently; website transfer bytes and on-chain source-storage bytes are measured separately. Profile/compiler sources participate in REDLINE's replay identity.

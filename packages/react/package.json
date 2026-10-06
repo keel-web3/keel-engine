@@ -12,7 +12,8 @@
     "./design": "./src/design.ts",
     "./mcp": "./src/mcp.mjs",
     "./styles.css": "./src/styles.css",
-    "./lifecycle": "./src/lifecycle.mjs"
+    "./lifecycle": "./src/lifecycle.mjs",
+    "./bundle": "./src/bundle.mjs"
   },
   "peerDependencies": {
     "react": "^18.3.0 || ^19.0.0"
