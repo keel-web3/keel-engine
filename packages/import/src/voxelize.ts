@@ -24,6 +24,7 @@
 import type { V3 } from "./math.ts";
 import { ImportError, sampleTexture, soupOf } from "./scene.ts";
 import type { ImportScene, Soup, SoupOptions } from "./scene.ts";
+import { voxelGridWorkingBytes, VoxelResourceLimitError } from './voxel-budget.ts';
 
 export interface VoxelizeOptions extends SoupOptions {
   /** Cells along the longest side (default 48). */
@@ -39,8 +40,12 @@ export interface VoxelizeOptions extends SoupOptions {
   readonly surface?: "thin" | "conservative";
   /** Most cells allowed (default 4 million) -- a guard against a unit far too small. */
   readonly maxCells?: number;
+  /** Actual dense working-array estimate, checked before allocation. */
+  readonly maxWorkingBytes?: number;
   /** Tooling can retain blended source-node influences for animated voxels. */
   readonly retainSkinning?: boolean;
+  /** Compile-time triangle and barycentric provenance for deformation transfer. */
+  readonly retainSurfaceBindings?: boolean;
 }
 
 /** The voxels, dense over their box, and where each came from. Index x + sx * (y + sy * z). */
@@ -71,6 +76,7 @@ export interface VoxelGrid {
   /** Metres per source unit as voxelised (the scene's own, times `scale`, times the `height` sizing): joints map with it. */
   readonly scale: number;
   readonly stats: { readonly triangles: number; readonly surface: number; readonly interior: number; readonly ms?: number };
+  readonly surfaceBindings?: { readonly triangles: Int32Array; readonly barycentrics: Float32Array };
   readonly skinning?: { readonly joints: Int32Array; readonly weights: Float32Array; readonly discardedWeight: Float32Array };
 }
 
@@ -165,7 +171,10 @@ export function voxelize(scene: ImportScene, opts: VoxelizeOptions = {}): VoxelG
   if (!(unit > 0)) throw new RangeError("voxelize: the unit must be positive");
   const size: V3 = [Math.max(1, Math.ceil(ext[0] / unit - 1e-6)), Math.max(1, Math.ceil(ext[1] / unit - 1e-6)), Math.max(1, Math.ceil(ext[2] / unit - 1e-6))];
   const cells = size[0] * size[1] * size[2];
+  if (!Number.isSafeInteger(cells) || !size.every(Number.isSafeInteger)) throw new RangeError('voxelize: grid dimensions exceed exact integer indexing');
   if (cells > (opts.maxCells ?? 4_000_000)) throw new RangeError(`voxelize: ${size.join(" x ")} = ${cells} cells is too many -- a bigger unit, or fewer voxels`);
+  const workingBytes = voxelGridWorkingBytes(size, opts.retainSkinning, opts.retainSurfaceBindings, opts.fill ?? 'flood');
+  if (opts.maxWorkingBytes !== undefined && workingBytes > opts.maxWorkingBytes) throw new VoxelResourceLimitError('Voxel grid exceeds the configured working-memory budget', { size, cells, estimatedWorkingBytes: workingBytes, memoryBudgetBytes: opts.maxWorkingBytes });
   // (The model is centred on x and z by the builder later; the grid starts at the bounds' low corner.)
   const origin: V3 = [lo[0] - (size[0] * unit - ext[0]) / 2, lo[1], lo[2] - (size[2] * unit - ext[2]) / 2];
   const emissive = new Set<number>();
@@ -176,6 +185,7 @@ export function voxelize(scene: ImportScene, opts: VoxelizeOptions = {}): VoxelG
   const srcTri = new Int32Array(cells).fill(-1);
   const srcCell = new Int32Array(cells).fill(-1);
   const skinning = opts.retainSkinning ? { joints: new Int32Array(cells * 4).fill(-1), weights: new Float32Array(cells * 4), discardedWeight: new Float32Array(cells) } : undefined;
+  const surfaceBindings = opts.retainSurfaceBindings ? { triangles: srcTri, barycentrics: new Float32Array(cells * 3) } : undefined;
   const P = soup.positions;
   // Triangles by node.
   const byNode = new Map<number, number[]>();
@@ -302,6 +312,7 @@ export function voxelize(scene: ImportScene, opts: VoxelizeOptions = {}): VoxelG
     const at = [si % sx, Math.floor(si / sx) % sy, Math.floor(si / (sx * sy))] as const;
     const c: V3 = [origin[0] + (at[0] + 0.5) * unit, origin[1] + (at[1] + 0.5) * unit, origin[2] + (at[2] + 0.5) * unit];
     const b = closest(c, P, t * 9);
+    if (surfaceBindings) surfaceBindings.barycentrics.set([b.u, b.v, b.w], gi * 3);
     const mat = soup.material[t]!;
     g.mesh[gi] = soup.mesh[t]!;
     g.material[gi] = mat;
@@ -339,7 +350,7 @@ export function voxelize(scene: ImportScene, opts: VoxelizeOptions = {}): VoxelG
   let surface = 0, interior = 0;
   for (let i = 0; i < cells; i += 1) { if (g.occ[i] === 1) surface += 1; else if (g.occ[i] === 2) interior += 1; }
   const ms = typeof performance !== "undefined" ? performance.now() - t0 : 0;
-  return { ...g, ...(skinning ? { skinning } : {}), scale: scene.metres * (opts.scale ?? 1) * sizing, stats: { triangles: soup.count, surface, interior, ms: Math.round(ms) } };
+  return { ...g, ...(skinning ? { skinning } : {}), ...(surfaceBindings ? { surfaceBindings } : {}), scale: scene.metres * (opts.scale ?? 1) * sizing, stats: { triangles: soup.count, surface, interior, ms: Math.round(ms) } };
 }
 
 // Parity: along each axis, a cell centre's ray crosses the node's triangles; odd crossings from one side is inside. Two of three axes decide.

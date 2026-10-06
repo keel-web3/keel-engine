@@ -42,6 +42,14 @@ jobs:
         working-directory: keel-engine
         run: pnpm install --frozen-lockfile
 
+      - name: Install the React browser test runtime
+        working-directory: keel-engine
+        run: pnpm --filter @keel-engine/react exec playwright install --with-deps chromium
+
+      - name: Optional plugin and React browser tests
+        working-directory: keel-engine
+        run: pnpm test:plugins
+
       - name: Typecheck
         working-directory: keel-engine
         run: npm run typecheck

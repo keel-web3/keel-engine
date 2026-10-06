@@ -2169,8 +2169,12 @@
           "sha256": "0x2bb2e554cc5b2e395db9dfb28c734111d22c81acd4124941b6ebef78ae63522b"
         },
         {
+          "path": "packages/import/src/voxel-budget.ts",
+          "sha256": "0xe0d27a910c5dbd2ede88551fc54403e0a2bb788aa88570429ff5c45f5a5fe8d9"
+        },
+        {
           "path": "packages/import/src/voxelize.ts",
-          "sha256": "0xe7fe46ba146d43d6c3b93e62a374fc6f3c5a8425d6e7d0064677f4f11ec00bf3"
+          "sha256": "0x8e6f4bb4d793cfe4275b4bc410a2e1a0fe8fe381cdbde674c2771d1e12685608"
         },
         {
           "path": "packages/import/src/write.ts",

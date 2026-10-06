@@ -1,0 +1,393 @@
+{
+  "keel-react-catalog": {
+    "type": "object",
+    "properties": {},
+    "required": [],
+    "additionalProperties": false
+  },
+  "keel-react-theme": {
+    "type": "object",
+    "properties": {
+      "recipe": {
+        "type": "object",
+        "properties": {
+          "seed": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "culture": {
+            "type": "string",
+            "enum": [
+              "industrial",
+              "organic",
+              "crystalline",
+              "arcane",
+              "brutal",
+              "clean"
+            ]
+          },
+          "pins": {
+            "type": "object",
+            "properties": {
+              "tone": {
+                "enum": [
+                  "dark",
+                  "light"
+                ]
+              },
+              "hue": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 360
+              },
+              "accentHue": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 360
+              },
+              "motion": {
+                "enum": [
+                  "snappy",
+                  "bouncy",
+                  "none"
+                ]
+              },
+              "corner": {
+                "enum": [
+                  "flat",
+                  "bevel",
+                  "inset",
+                  "notched",
+                  "rivets",
+                  "glow",
+                  "round"
+                ]
+              },
+              "body": {
+                "type": "integer",
+                "minimum": 5,
+                "maximum": 16
+              },
+              "unit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 8
+              },
+              "border": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3
+              },
+              "bevel": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "fill": {
+                "enum": [
+                  "solid",
+                  "dither",
+                  "gradient",
+                  "scan"
+                ]
+              },
+              "shadow": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "glow": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "caps": {
+                "type": "boolean"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "scale": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 16
+      }
+    },
+    "required": [],
+    "additionalProperties": false
+  },
+  "keel-react-plan": {
+    "type": "object",
+    "properties": {
+      "brief": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 8192
+      },
+      "recipe": {
+        "type": "object",
+        "properties": {
+          "seed": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "culture": {
+            "type": "string",
+            "enum": [
+              "industrial",
+              "organic",
+              "crystalline",
+              "arcane",
+              "brutal",
+              "clean"
+            ]
+          },
+          "pins": {
+            "type": "object",
+            "properties": {
+              "tone": {
+                "enum": [
+                  "dark",
+                  "light"
+                ]
+              },
+              "hue": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 360
+              },
+              "accentHue": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 360
+              },
+              "motion": {
+                "enum": [
+                  "snappy",
+                  "bouncy",
+                  "none"
+                ]
+              },
+              "corner": {
+                "enum": [
+                  "flat",
+                  "bevel",
+                  "inset",
+                  "notched",
+                  "rivets",
+                  "glow",
+                  "round"
+                ]
+              },
+              "body": {
+                "type": "integer",
+                "minimum": 5,
+                "maximum": 16
+              },
+              "unit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 8
+              },
+              "border": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3
+              },
+              "bevel": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "fill": {
+                "enum": [
+                  "solid",
+                  "dither",
+                  "gradient",
+                  "scan"
+                ]
+              },
+              "shadow": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "glow": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "caps": {
+                "type": "boolean"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "assets": {
+        "type": "array",
+        "maxItems": 128,
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "path": {
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "font",
+                "image",
+                "audio",
+                "video",
+                "mesh"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "path",
+            "kind"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "brief"
+    ],
+    "additionalProperties": false
+  },
+  "keel-react-scaffold": {
+    "type": "object",
+    "properties": {
+      "outDir": {
+        "type": "string",
+        "minLength": 1
+      },
+      "brief": {
+        "type": "string",
+        "maxLength": 8192
+      },
+      "recipe": {
+        "type": "object",
+        "properties": {
+          "seed": {
+            "type": "string",
+            "maxLength": 256
+          },
+          "culture": {
+            "type": "string",
+            "enum": [
+              "industrial",
+              "organic",
+              "crystalline",
+              "arcane",
+              "brutal",
+              "clean"
+            ]
+          },
+          "pins": {
+            "type": "object",
+            "properties": {
+              "tone": {
+                "enum": [
+                  "dark",
+                  "light"
+                ]
+              },
+              "hue": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 360
+              },
+              "accentHue": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 360
+              },
+              "motion": {
+                "enum": [
+                  "snappy",
+                  "bouncy",
+                  "none"
+                ]
+              },
+              "corner": {
+                "enum": [
+                  "flat",
+                  "bevel",
+                  "inset",
+                  "notched",
+                  "rivets",
+                  "glow",
+                  "round"
+                ]
+              },
+              "body": {
+                "type": "integer",
+                "minimum": 5,
+                "maximum": 16
+              },
+              "unit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 8
+              },
+              "border": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3
+              },
+              "bevel": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "fill": {
+                "enum": [
+                  "solid",
+                  "dither",
+                  "gradient",
+                  "scan"
+                ]
+              },
+              "shadow": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "glow": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2
+              },
+              "caps": {
+                "type": "boolean"
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "outDir"
+    ],
+    "additionalProperties": false
+  }
+}

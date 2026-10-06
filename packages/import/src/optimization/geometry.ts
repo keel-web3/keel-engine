@@ -33,6 +33,9 @@ export interface GeometryPrimitiveReport {
   mesh: number; primitive: number; applied: boolean; reason: string;
   originalTriangles: number; outputTriangles: number; originalVertices: number; outputVertices: number;
   targetTriangles: number; simplifierError: number; lockedSeamVertices: number;
+  /** Coincident vertices locked only by the base NORMAL attribute. Diagnostic;
+   * the appearance-preserving seam policy is unchanged. */
+  normalOnlySeamVertices: number;
   preservedDegenerateTriangles: number;
   sampledErrors: GeometryError[]; correspondenceIndex: number | null;
   attempts: Array<{ targetTriangles: number; outputTriangles: number; accepted: boolean; reason: string }>;
@@ -145,7 +148,7 @@ function seamLocks(positions: Float32Array, streams: Map<number, NormalizedAcces
 }
 /** Welding is allowed only across byte-identical complete vertex records,
  * including joints, weights, custom attributes and every morph delta. */
-function weldExactVertices(indices: Uint32Array, streams: Map<number, NormalizedAccessor>, count: number): Uint32Array {
+export function weldExactVertices(indices: Uint32Array, streams: Map<number, NormalizedAccessor>, count: number): Uint32Array {
   const fields = [...streams.values()].map(a => ({ bytes: new Uint8Array(a.array.buffer, a.array.byteOffset, a.array.byteLength), stride: arity[a.type]! * a.array.BYTES_PER_ELEMENT }));
   const buckets = new Map<number, number[]>(), remap = new Uint32Array(count);
   for (let v = 0; v < count; v++) {
@@ -201,13 +204,18 @@ export async function optimizeGeometry(asset: NormalizedAsset, options: Geometry
   for (let mi = 0; mi < (asset.json.meshes ?? []).length; mi++) for (let pi = 0; pi < asset.json.meshes[mi].primitives.length; pi++) {
     const primitive = asset.json.meshes[mi].primitives[pi], originalPosition = asset.accessors[primitive.attributes?.POSITION], originalIndex = asset.accessors[primitive.indices];
     const originalTriangles = (primitive.mode ?? 4) === 4 ? Math.floor((originalIndex?.count ?? originalPosition?.count ?? 0) / 3) : 0;
-    const metric: GeometryPrimitiveReport = { mesh: mi, primitive: pi, applied: false, reason: '', originalTriangles, outputTriangles: originalTriangles, originalVertices: originalPosition?.count ?? 0, outputVertices: originalPosition?.count ?? 0, targetTriangles: Math.max(1, Math.floor(originalTriangles * targetRatio)), simplifierError: 0, lockedSeamVertices: 0, preservedDegenerateTriangles: 0, sampledErrors: [], correspondenceIndex: null, attempts: [], metricAttributes: [], warnings: [] };
+    const metric: GeometryPrimitiveReport = { mesh: mi, primitive: pi, applied: false, reason: '', originalTriangles, outputTriangles: originalTriangles, originalVertices: originalPosition?.count ?? 0, outputVertices: originalPosition?.count ?? 0, targetTriangles: Math.max(1, Math.floor(originalTriangles * targetRatio)), simplifierError: 0, lockedSeamVertices: 0, normalOnlySeamVertices: 0, preservedDegenerateTriangles: 0, sampledErrors: [], correspondenceIndex: null, attempts: [], metricAttributes: [], warnings: [] };
     metrics.push(metric);
     if (mode === 'lossless' || targetRatio === 1) { metric.reason = mode === 'lossless' ? 'lossless mode bypasses triangle removal' : 'targetRatio is one'; continue; }
     if (opaque) { metric.reason = 'opaque extension accessor/vertex references cannot be safely remapped'; continue; }
     const generatedStart = generated.length;
     try {
       const input = primitiveInput(asset, primitive), scale = dimensions(input.positions), locks = seamLocks(input.positions, input.streams);
+      const normal = primitive.attributes.NORMAL, withoutNormals = new Map(input.streams);
+      // Shared accessors and morph NORMAL streams remain protected in this diagnostic.
+      if (normal !== undefined && !Object.entries(primitive.attributes).some(([semantic, id]) => semantic !== 'NORMAL' && id === normal) && !(primitive.targets ?? []).some((target: any) => Object.values(target).includes(normal))) withoutNormals.delete(normal);
+      const otherLocks = seamLocks(input.positions, withoutNormals);
+      metric.normalOnlySeamVertices = locks.reduce((n, locked, vertex) => n + Number(locked && !otherLocks[vertex]), 0);
       const weldedIndices = weldExactVertices(input.indices, input.streams, input.count);
       metric.lockedSeamVertices = locks.reduce((n, v) => n + v, 0);
       metric.preservedDegenerateTriangles = input.protectedIndices.length / 3;
@@ -267,5 +275,7 @@ export async function optimizeGeometry(asset: NormalizedAsset, options: Geometry
     normalized.validation.decodedBytes = normalized.accessors.reduce((n, a) => n + a.array.byteLength, 0) + normalized.images.reduce((n, i) => n + i.data.byteLength, 0);
   }
   const report = { version: GEOMETRY_OPTIMIZER_VERSION, mode, simplifier: 'meshoptimizer@0.25.0', settings: { targetRatio, maxError, maxAbsoluteError: Number.isFinite(maxAbsoluteError) ? maxAbsoluteError : null, samplesPerClip, maxSurfaceSamples, maxAttempts, lockBorder: options.lockBorder !== false }, metrics, originalTriangles: metrics.reduce((n, m) => n + m.originalTriangles, 0), outputTriangles: metrics.reduce((n, m) => n + m.outputTriangles, 0), changedPrimitives: metrics.filter(m => m.applied).length, warnings: ['Error is measured at finite deterministic bidirectional surface samples and clip times; it is not a continuous, all-surface or screen-space guarantee. Animation blending and arbitrary unanimated morph-weight combinations are not covered.', 'Retained vertices copy all source attributes and morph deltas exactly; removed vertices and changed triangle interpolation are explicitly lossy.', 'All source clips, channels, node transforms, rigs, materials and images are preserved; shared accessors are isolated before remapping.', 'Duplicate source animation timestamps, where present, use the last key at an exact timestamp for measurement; source clip data is unchanged.', 'No visibility, camera-dependent culling, disconnected-component pruning, or attribute regeneration is performed.'] };
-  return { normalized, asset: normalized, report, correspondence };
+  const targetTriangles = metrics.reduce((n, m) => n + m.targetTriangles, 0);
+  const controlStatus = { targetTriangles, achievedTriangles: report.outputTriangles, targetReached: report.outputTriangles <= targetTriangles, achievedRatio: report.originalTriangles ? report.outputTriangles / report.originalTriangles : 1, blockedPrimitives: metrics.filter(m => m.outputTriangles > m.targetTriangles).map(m => ({ mesh: m.mesh, primitive: m.primitive, targetTriangles: m.targetTriangles, achievedTriangles: m.outputTriangles, lockedSeamVertices: m.lockedSeamVertices, normalOnlySeamVertices: m.normalOnlySeamVertices, reason: m.reason })) };
+  return { normalized, asset: normalized, report: { ...report, controlStatus }, correspondence };
 }
