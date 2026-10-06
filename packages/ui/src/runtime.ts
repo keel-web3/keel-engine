@@ -24,7 +24,7 @@ export type { FrameColours, FrameDraw, FrameKind, FrameShape, FrameState, FrameT
 export { digitAdvance, glyphFromBitmap, glyphOf, kernKey, makeFont, measure, trimGlyph } from "./font.ts";
 export type { FontInput, FontSource, Glyph, PixelFont } from "./font.ts";
 export { DEFAULT_FONT, DEFAULT_FONT_RANGES, GENERATED_CODES, GLYPHS, SERIFS, SOFTS, ZEROS, fontParamsFromSeed, fontParamsKey, fontParamsOf, generateFont } from "./genfont.ts";
-export type { FontParams, FontRanges, Serif, SoftCorners, ZeroStyle } from "./genfont.ts";
+export type { FontParams, FontRanges, FontTarget, Serif, SoftCorners, ZeroStyle } from "./genfont.ts";
 export { drawText, glyphSprite, layoutText, parseRich } from "./text.ts";
 export type { DrawTextOptions, LayoutOptions, PlacedItem, TextLayout, TextRun } from "./text.ts";
 export { createAtlas } from "./atlas.ts";

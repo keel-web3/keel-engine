@@ -2,7 +2,7 @@
 // The broad package entry retains the complete API.
 export { directionFor, planBake } from "./plan.ts";
 export { pixelView } from "./view.ts";
-export { LayerInstances, createSpriteRenderer } from "./sprites.ts";
+export { LAYER_INSTANCE_FLOATS, LayerInstances, createSpriteRenderer } from "./sprites.ts";
 export { lookMesh, meshBounds, mergeMeshes, meshMatrix, mulMatrix, worldsBounds } from "./mesh.ts";
 export { cardsMesh } from "./cards.ts";
 export { defaultMeshSun, orthoDepthRange, projectionOf, shotOfView } from "./project.ts";

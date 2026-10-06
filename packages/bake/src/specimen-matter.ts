@@ -25,6 +25,20 @@ export function matterFrame(node:DynamicMatter,seed:string,time:number,period:nu
    seams.push({a:world([p[0]-.025,p[1]+.058,p[2]]),b:world([next[0]-.025,next[1]+.058,next[2]]),r:Math.max(.001,.012*s*fade),mat:mat+2});
   }
   meshes.push(lookMesh({boxes:plates,capsules:seams},{around:6,rings:1}));
+ }else if(node.kind==='liquid'&&(node.flow==='pour'||node.flow==='jet')){
+  // A continuous stream (top of path, default 0.95 above the pool) with bulges travelling down it,
+  // staggered splash crowns where it lands and ripple rings crossing the pool; every part closes its loop.
+  const phase=((time/period)%1+1)%1,top=node.path?.[0]?.[1]??.95,x0=node.path?.[0]?.[0]??0,z0=node.path?.[0]?.[2]??0,radius=.48*s,center=world([0,0,0]),capsules:Array<{a:V3;b:V3;r:number;mat:number}>=[];
+  const pool=lookMesh({boxes:[],capsules:[{a:center,b:center,r:radius,mat}]},{around:24,rings:6});
+  for(let i=0;i<pool.positions.length;i+=3){const upper=pool.positions[i+1]!>=center[1];pool.positions[i+1]=center[1]+(pool.positions[i+1]!-center[1])*.14;if(upper){pool.normals[i]=0;pool.normals[i+1]=1;pool.normals[i+2]=0;}}
+  meshes.push(pool);
+  // pour: bulges travel down to the pool; jet: up from the vent, and the spray falls back from the top.
+  const up=node.flow==='jet'?-1:1,n=12;for(let i=0;i<n;i++){const u=i/n,v=(i+1)/n,y=(t:number)=>top+(.05-top)*t,bulge=(t:number)=>.075+.025*Math.sin((t*3-up*phase)*Math.PI*2)*(node.flow==='jet'?.6+.4*t:1),xs=(t:number)=>x0*(1-t);capsules.push({a:world([xs(u),y(u),z0*(1-u)]),b:world([xs(v),y(v),z0*(1-v)]),r:bulge((u+v)/2)*s,mat});}
+  if(node.flow==='jet')for(let k=0;k<8;k++){const age=((phase+k/8)%1)*period,a=k*2.4,m:number[]=[];motionAt([x0,top,z0],[Math.cos(a)*.3,.25,Math.sin(a)*.3],[0,0,0],0,0,1.6,age*.6,10,m);if(m[1]!<.05)continue;const p=world([m[0]!,m[1]!,m[2]!]),f=1-age/period;capsules.push({a:p,b:p,r:Math.max(.012,.04*f)*s,mat:mat+2});}
+  for(let crown=0;crown<2;crown++){const age=((phase+crown*.5)%1)*period*.5,u=age/(period*.5);
+   for(let k=0;k<5;k++){const a=k*Math.PI*2/5+crown*.6,m:number[]=[];motionAt([0,.03,0],[Math.cos(a)*.38,.55,Math.sin(a)*.38],[0,0,0],0,0,2.2,age,10,m);if(m[1]!<.03)continue;const p=world([m[0]!,m[1]!,m[2]!]);capsules.push({a:p,b:p,r:Math.max(.012,.03*(1-u))*s,mat:mat+2});}
+   const ring=.1+u*.34;for(let k=0;k<14;k++){const a=k*Math.PI/7,b=(k+1)*Math.PI/7;capsules.push({a:world([Math.cos(a)*ring,.04,Math.sin(a)*ring]),b:world([Math.cos(b)*ring,.04,Math.sin(b)*ring]),r:.016*s*(1-u*.6),mat:mat+2});}}
+  meshes.push(lookMesh({boxes:[],capsules},{around:8,rings:2}));points.push(world([0,top+.1,0]));
  }else if(node.kind==='liquid'&&node.flow==='wave'){
   const phase=time/period,segments:Array<{a:V3;b:V3;r:number;mat:number}>=[];
   for(let row=0;row<5;row++)for(let i=0;i<18;i++){const x=-.55+i/18*1.1,z=-.32+row*.16;
@@ -62,7 +76,7 @@ export function matterFrame(node:DynamicMatter,seed:string,time:number,period:nu
    const age=((time/period-birth/births+1)%1)*period;
    const fire=node.kind==='combustion',life=period*(fire?.44:.74);if(age>=life)continue;
    const S=stream(createRoll(normalizeSeed(seed)),90+birth),x=S.between(-.19,.19),z=S.between(-.1,.1);
-   const recipe:Recipe={life:[life,life],speed:[.01,.04],up:[(fire?.6:.43)*s,(fire?.85:.56)*s],gravity:(fire?-.16:-.06)*s,drag:.5,size:[fire?.24:.14,fire?.35:.20],light:[1,1],fade:.1,ramp:fire?'fire':'smoke'};
+   const recipe:Recipe={life:[life,life],speed:[.01,.04],up:[(fire?.6:.43)*s,(fire?.85:.56)*s],gravity:(fire?-.16:-.06)*s,drag:.5,size:[fire?.24:.2,fire?.35:.29],light:[1,1],fade:.1,ramp:fire?'fire':'smoke'};
    const pool=createParticles(1,{recipes:{plume:recipe}});pool.emit('plume',world([x,0,z]),{count:1,S,spread:.12});for(let t=0;t<age-1e-9;){const dt=Math.min(1/120,age-t);pool.step(dt);t+=dt;}
    const state=pool.save()[0]!;if(!state)continue;const q=age/life,flow:number[]=[];curlNoise(x*3+birth*.31,age*2,z*3,age,flow);
    const envelope=Math.min(1,q/.16,(1-q)/.18),p=add(state.p,[flow[0]!*.11*s,0,flow[2]!*.1*s]),r=Math.max(.002,state.size*s*(fire?1-q*.45:1+q*.9)*envelope);

@@ -1,0 +1,199 @@
+{
+  "note": "Captured from the original main schema copied byte-for-byte before the native integration. Pins exact old-main header, raw body and field layout, including exact numeric escapes.",
+  "sourceSha256": "f0674d572f53ba5a95defd7515c775e6b0a0617fcfff7a88b176344a4e3d923a",
+  "schemaId": "0144b34232f958218665df1e7c4dd166e5e36f7a93d6c2f4f26cd13cbd87f570",
+  "program": {
+    "version": 2,
+    "hue": 180.14789,
+    "variation": 0.04,
+    "displayScale": 0.91,
+    "animation": "sway",
+    "parts": [
+      {
+        "kind": "box",
+        "c": [
+          -0.3,
+          0.125,
+          0.17
+        ],
+        "h": [
+          0.12,
+          0.15,
+          0.18
+        ],
+        "yaw": 0.14789,
+        "lo": 0,
+        "tone": 0,
+        "material": 1,
+        "joint": "root"
+      },
+      {
+        "kind": "capsule",
+        "a": [
+          0.2,
+          0,
+          0.1
+        ],
+        "b": [
+          0.4,
+          0.2,
+          0.1
+        ],
+        "r": 0.05,
+        "tone": 1,
+        "material": 0,
+        "joint": "arm"
+      }
+    ],
+    "patterns": [
+      {
+        "part": {
+          "kind": "capsule",
+          "a": [
+            0.2,
+            0,
+            0.1
+          ],
+          "b": [
+            0.4,
+            0.2,
+            0.1
+          ],
+          "r": 0.05,
+          "tone": 1,
+          "material": 0,
+          "joint": "arm"
+        },
+        "repeat": {
+          "kind": "mirror",
+          "axis": 0
+        }
+      }
+    ],
+    "materials": [
+      {
+        "finish": "metal",
+        "screen": "bayer4",
+        "pattern": "none"
+      },
+      {
+        "finish": "wood",
+        "screen": "hatch",
+        "pattern": "grain"
+      },
+      {
+        "finish": "water",
+        "screen": "bayer2",
+        "pattern": "vein"
+      }
+    ],
+    "joints": [
+      {
+        "name": "arm",
+        "parent": "root",
+        "pivot": [
+          0.2,
+          0,
+          0.1
+        ]
+      }
+    ],
+    "motion": {
+      "action": "Original main articulated construction",
+      "period": 1.6,
+      "tracks": [
+        {
+          "joint": "arm",
+          "keys": [
+            {
+              "at": 0,
+              "rot": [
+                0,
+                0,
+                0
+              ],
+              "off": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "at": 0.5,
+              "rot": [
+                0,
+                0.4,
+                0
+              ],
+              "off": [
+                0,
+                0,
+                0
+              ]
+            },
+            {
+              "at": 1,
+              "rot": [
+                0,
+                0,
+                0
+              ],
+              "off": [
+                0,
+                0,
+                0
+              ]
+            }
+          ],
+          "easing": "smooth"
+        }
+      ]
+    },
+    "emitters": [
+      {
+        "kind": "bubble",
+        "joint": "root",
+        "at": [
+          0,
+          0,
+          0
+        ],
+        "velocity": [
+          0,
+          0.1,
+          0
+        ],
+        "count": 2,
+        "spread": 0.1
+      }
+    ],
+    "dynamics": [
+      {
+        "kind": "liquid",
+        "joint": "root",
+        "at": [
+          0,
+          0,
+          0
+        ],
+        "size": 0.3,
+        "material": 2,
+        "flow": "wave",
+        "path": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0.1,
+            0.2
+          ]
+        ]
+      }
+    ]
+  },
+  "raw": "2dd019a12ee0f3cb3e4511f041a9109a87a0690870a59fe177079e59f2ba80096591307d041a2581130834023b324c8983e820d12c089841a011d945d432ca288983e820d2132298002710138809c407d03e81f40fa138809f604e203e81f40fa0fa09c404e2027101f40fa07d0e707d03e81f40fa08343e8432503e81f40fa025af47d03e81f40fa083444c00726f6f7461726d4f726967696e616c206d61696e206172746963756c6174656420636f6e737472756374696f6e",
+  "document": "b10144b3422dd019a12ee0f3cb3e4511f041a9109a87a0690870a59fe177079e59f2ba80096591307d041a2581130834023b324c8983e820d12c089841a011d945d432ca288983e820d2132298002710138809c407d03e81f40fa138809f604e203e81f40fa0fa09c404e2027101f40fa07d0e707d03e81f40fa08343e8432503e81f40fa025af47d03e81f40fa083444c00726f6f7461726d4f726967696e616c206d61696e206172746963756c6174656420636f6e737472756374696f6e"
+}

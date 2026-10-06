@@ -183,3 +183,22 @@ test("TTF import of an open-licensed font on this machine (Source Code Pro, SIL 
     for (let c = 33; c < 127; c += 1) assert.ok(f.glyphs.get(c)!.bits.some(Boolean), `${size}px ${String.fromCharCode(c)}`);
   }
 });
+
+test("native glyph column budgets redraw the recipes and preserve letter counters",()=>{
+ const params={...DEFAULT_FONT,round:0,zero:'plain' as const};
+ const narrow=generateFont(params,5,'native',{maxWidth:3});
+ for(const glyph of narrow.glyphs.values())assert.ok(glyph.w<=3);
+ const D=narrow.glyphs.get(68)!,O=narrow.glyphs.get(79)!,zero=narrow.glyphs.get(48)!;
+ assert.notDeepEqual([...D.bits],[...O.bits]);
+ assert.equal(O.bits[O.w*2+1],0);assert.equal(zero.bits[zero.w*2+1],0);
+ assert.equal(generateFont(params,5).key,generateFont(params,5,'keel-gen',{}).key);
+ assert.throws(()=>generateFont(params,5,'bad',{maxWidth:2}),/glyph width/);
+});
+
+test("native budgets keep the extra strokes of wide letters while compacting rounded letters",()=>{
+ const f=generateFont({...DEFAULT_FONT,round:0},5,'native',{maxWidth:5,normalWidth:3});
+ assert.equal(f.glyphs.get(77)!.w,5);assert.equal(f.glyphs.get(87)!.w,5);
+ assert.equal(f.glyphs.get(68)!.w,3);assert.equal(f.glyphs.get(79)!.w,3);
+ assert.notDeepEqual([...f.glyphs.get(77)!.bits],[...f.glyphs.get(72)!.bits]);
+ assert.throws(()=>generateFont(DEFAULT_FONT,5,'bad',{maxWidth:3,normalWidth:5}),/fit the native/);
+});

@@ -32,7 +32,9 @@
     "@keel-engine/particles/basic": "keel/particles",
     "@keel-engine/particles/pool": "keel/particles",
     "@keel-engine/render/link-program": "keel/render",
-    "@keel-engine/runtime": "keel/runtime"
+    "@keel-engine/runtime": "keel/runtime",
+    "@keel-engine/codec": "keel/codec",
+    "@keel-engine/particles": "keel/particles"
   },
   "manifests": {}
 }

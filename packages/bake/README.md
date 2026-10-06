@@ -5,7 +5,7 @@ drawing a sprite isn't. So a game bakes every design it uses — each entity
 variant (with its attributes), object and prop — into sprite atlases at load,
 from N directions for each clip's frames, at the game's pixel scale; frames
 then only draw sprites. Module `keel/bake@0.1.0` (`kind: "runtime"`, needs `keel/runtime@^0.1`, `keel/core@^0.1`,
-`keel/entity@^0.1`, `keel/codec@^0.1`; the pixel renderer is handed in, so it needs no `keel/render`).
+`keel/entity@^0.1`, `keel/codec@^0.1`, `keel/particles@^0.1`; the pixel renderer is handed in, so it needs no `keel/render`).
 
 Two ways to bake: **colours baked in** (`renderSprites`: a design's palette through the full pixel pipeline — props,
 anything drawn one way) and **indexed** (`renderIndexedSprites`: SHAPES baked once as slots, shades and surface
@@ -569,3 +569,11 @@ sprites leaves most of it for the game. Re-run: `node packages/bake/tools/build.
 With baked entities (`examples/army`: 16 designs + 6 props, 1920×1080, every frame simulated, culled, filled and
 drawn, GPU finished): 10,000 units at 8 px/m (6,700 sprites in view) 1.9 ms median / 5.7 ms worst; at 4 px/m (the
 whole army, 13,759 sprites) 1.9 ms median / 3.8 ms worst; 120 fps (the display's rate) held live.
+
+## Seeded specimen compiler
+
+`readSpecimen`, `SpecimenProgram` and `compileObject(program, seed)` provide one shared primitive construction, bone tree and fixed camera bounds for sixteen closed motion samples. `objectWorld`, `posedMesh` and `posedParticles` expose the same source. `specimenParts` expands optional root-attached `mirror`, `line` and horizontal `ring` patterns while retaining material/joint references and enforcing the 24-expanded-part budget. Mirrored moving joints must be authored explicitly. Generative authoring should use stable material screens and a consistent construction across seeded variants rather than introduce frame-specific random pixels.
+
+`matterFrame` generates actual flowing liquid, viscous/molten channels with moving cooling plates, traveling wave geometry, flame volumes, cooling vapor and periodic physical particle births. `paintVolumes` is the 32x32 CPU palette lowering of those shared volumes for constrained native sprite targets. The host compiles this geometry and material action into sprites; a Game Boy cartridge executes its native tile renderer, not TypeScript or GLSL.
+
+The construction is immutable during use. The compiler caches at most four seeds per program object; each seed reproduces its meshes, rigid attachments, effect sources and closed loop independently of rendering order. Compact source storage and native frame compression are supplied by `@keel-engine/codec`. These compiler exports are shared engine code rather than game-specific handwritten sprite substitutions.

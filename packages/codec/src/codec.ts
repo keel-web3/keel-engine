@@ -327,6 +327,43 @@ function compile(n: Node, recs: C[]): C {
         },
       };
     }
+    case "grow": {
+      // (The base layout, read and written here with one item codec; the grown one is `of`'s own.)
+      const b = n.base;
+      const item = compile(b.of, recs);
+      const next = compile(n.of, recs);
+      const lw = bitsFor(b.max + 1);
+      const spare = 2 ** lw - 1;
+      const above = recs.map((c) => c.node);
+      return {
+        node: n,
+        w(o, v, x) {
+          if (!holds(b, v, above)) { o.bits(spare, lw); next.w(o, v, x); return; }
+          if (!Array.isArray(v) && !(ArrayBuffer.isView(v) && !(v instanceof DataView))) fail(`${describe(v)} is not an array.`);
+          const a = v as ArrayLike<unknown>;
+          o.bits(a.length, lw);
+          let k = 0;
+          try { for (; k < a.length; k += 1) item.w(o, a[k], x); } catch (e) { throw under(e, k, null); }
+        },
+        r(i, x) {
+          const s = i.at;
+          const len = i.bits(lw);
+          if (len === spare) {
+            if (x.trace) meta(x, "grown", s, i, len, "the spare length code: the grown layout follows");
+            const v = next.r(i, x);
+            if (holds(b, v, above)) fail("Written in the grown layout, but the original layout holds it (not canonical).");
+            return v;
+          }
+          if (x.trace) meta(x, "length", s, i, len, `${len} items`);
+          if (len > b.max) fail(`${len} items; the max is ${b.max}.`);
+          const out = new Array<unknown>(len);
+          if (x.trace !== null) { for (let k = 0; k < len; k += 1) out[k] = rd(item, i, x, k); return out; }
+          let k = 0;
+          try { for (; k < len; k += 1) out[k] = item.r(i, x); } catch (e) { throw under(e, k, null); }
+          return out;
+        },
+      };
+    }
     case "optional": case "nullable": {
       const of = compile(n.of, recs);
       const none = n.kind === "optional" ? undefined : null;
@@ -662,6 +699,45 @@ function compile(n: Node, recs: C[]): C {
       if (!target) throw new SchemaError(`A self node (depth ${n.depth}) outside its recursive().`);
       return { node: n, w: (o, v, x) => target.w(o, v, x), r: (i, x) => target.r(i, x) };
     }
+  }
+}
+
+/**
+ * Whether a schema holds a value as far as its shape goes: no array longer than its max, no field (other than an undefined
+ * one) that a struct or a union's variant doesn't have. It is what grow() asks of its base layout; anything else wrong with
+ * the value (a type, a range) is left for the writer to say, in either layout.
+ */
+export function holds(n: Node, v: unknown, recs: readonly Node[] = []): boolean {
+  const fields = (fs: readonly Field[], ext: readonly (readonly Field[])[], tag: string | null): boolean => {
+    if (typeof v !== "object" || v === null || Array.isArray(v)) return true;
+    const rec = v as Record<string, unknown>;
+    const all = [...fs, ...ext.flat()];
+    for (const key in rec) if (rec[key] !== undefined && key !== tag && !all.some((f) => f.name === key)) return false;
+    return all.every((f) => rec[f.name] === undefined || holds(f.type, rec[f.name], recs));
+  };
+  switch (n.kind) {
+    case "named": case "default": case "optional": return v === undefined || holds(n.of, v, recs);
+    case "nullable": return v === undefined || v === null || holds(n.of, v, recs);
+    case "rec": return holds(n.of, v, [...recs, n]);
+    case "self": { const at = recs.length - 1 - n.depth; return at < 0 || holds(recs[at]!, v, recs.slice(0, at)); }
+    case "array": case "runs": case "lz": {
+      if (!Array.isArray(v) && !(ArrayBuffer.isView(v) && !(v instanceof DataView))) return true;
+      const a = v as ArrayLike<unknown>;
+      if (n.kind === "array" && n.max && a.length > n.max) return false;
+      for (let k = 0; k < a.length; k += 1) if (!holds(n.of, a[k], recs)) return false;
+      return true;
+    }
+    case "tuple": return !Array.isArray(v) || n.items.every((t, k) => holds(t, v[k], recs));
+    case "struct": return fields(n.fields, n.ext, null);
+    case "union": {
+      const tag = typeof v === "object" && v !== null ? (v as Record<string, unknown>)[n.tag] : undefined;
+      const variant = n.variants.find((x) => x.name === tag)?.type as Extract<Node, { kind: "struct" }> | undefined;
+      return !variant || fields(variant.fields, variant.ext, n.tag);
+    }
+    case "alt": { const cat = valueCategory(v); const b = n.of.find((x) => categoryOf(x) === cat); return !b || holds(b, v, recs); }
+    case "map": return typeof v !== "object" || v === null || Array.isArray(v) || Object.values(v).every((x) => x === undefined || holds(n.value, x, recs));
+    case "grow": return holds(n.of, v, recs);
+    default: return true;
   }
 }
 

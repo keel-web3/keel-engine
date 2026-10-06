@@ -61,6 +61,7 @@ the whole DSL as one object; each is also exported by name (`enumOf` for
 | `const(value)` | 0 | the value | |
 | `dyn()` | 3 tag bits + ... | `Json` | any JSON-like value, self-described: integers as varints, fractional numbers as `num()` does (and a number seen before in the document as its index), strings and keys through the table, an object shaped like an earlier one (the same keys in order) as that shape's index then its values. -0, NaN and the infinities survive |
 | `array(of, { length, max })` | length + items | `readonly T[]` | a varuint length, exactly `length` items, or a length in ⌈log2(max+1)⌉ bits |
+| `grow(base, of)` | the base's, or its spare code + `of` | `of`'s | a capped array that outgrew its layout: `base` is the array as it was (its length field must have a spare code above its max), `of` what it became (more items, items with optional fields added). What `base` holds is written exactly as `base` wrote it; anything else is the spare length code, then `of` |
 | `optional(of)` | 1 + ... | `T \| undefined` | in a struct: the field may be left out |
 | `nullable(of)` | 1 + ... | `T \| null` | |
 | `withDefault(of, value)` | 1 (+ the value) | `T` | 1 bit when it is the default (an absent field counts as it) |
@@ -156,6 +157,10 @@ same start, and every string is written once for the pack.
 - An **enum or union grows at the end** within its `capacity` (declare it up
   front: the width is ⌈log2 capacity⌉). A reader meeting a value it doesn't know
   fails at that field, saying so ("data from a newer schema?").
+- A **capped array grows** through a spare length code: `grow(array(item, { max }), array(item2, { max: more }))`, where
+  `item2` is `item` with optional fields added. Values the old array holds are the same bits as before (old data reads,
+  and new data that says nothing new is what an old writer wrote); the rest is the spare code and the grown layout, which
+  an old reader meets as an over-long length. `compatibility()` accepts `array` -> `grow` and warns for `grow` -> `array`.
 - Names, versions and docs change freely.
 - Everything else must match exactly: widths, grids, Golomb parameters, table
   names, field order, defaults. `compatibility(writer, reader)` checks it and
@@ -377,3 +382,13 @@ they need the generator and the packs.
 `particles`, `audio`; the tools and tests also import other packages' test
 fixtures by path (WALLRUN's course, the world's garden, the army's cast in
 bake's `test/cast.ts`, and bake's `recordOf` for the size table).
+
+## Cartridge sprites and generative construction
+
+`SPECIMEN_PROGRAM` (`keel/bake/specimen@1`) stores bounded box/wedge/capsule constructions, optional root-attached mirror/line/ring repetitions, material enums, shared joint names, exact numeric values, closed pose tracks, emitters and material-motion nodes. It preserves off-grid floats using exact escapes; the host reconstructs the shared KEEL 3D design before rasterizing. Use `readSpecimen` from `@keel-engine/bake` for semantic validation of attachments, expanded construction budgets and closed loops. The default `SPECIMEN_PROGRAM` and `keel/bake/specimen@1` key retain the original main layout (no color field, three screens). Native color/screen authors use `SPECIMEN_PROGRAM_NATIVE` or placement `SPECIMEN_PROGRAM_PLACEMENT` (`keel/bake/specimen@2`); native pre-tier documents remain registered as `SPECIMEN_PROGRAM_NATIVE_PRE_TIER`. `readDocument` resolves each historical schema by its stored hash before `readSpecimen` validates the value. Do not decode one layout as another merely because they share the name.
+
+`encodeRetroFrame` / `decodeRetroFrame` losslessly encode one 256-byte 2bpp frame with an explicit raw, RLE or literal/fill/copy/zero mode. `encodeRetroClip` chooses an independent XOR anchor within each direction's four-pose block only when it saves at least twelve bytes. There are no recursive frame dependencies, previous-frame state, heap allocations or global dictionaries. `decodeRetroClipFrame` provides arbitrary frame access. The caller splits clips into cartridge banks; offsets use uint16 and a clip cannot exceed that range.
+
+`encodeRetroAsset` / `decodeRetroAssetFrame` produce self-contained eight- or sixteen-view cache packets with RGB555 palette, shade-mask attributes, a uint16 directory and independent frame streams. These packets are complete animation phases. Their versioned `KT` header is separate from the schema-ID header of a construction recipe.
+
+`native/keel_retro.h` is the portable, bounded C decoder and cache-packet validator. `native/keel_retro_rom.h` is a smaller LR35902/SDCC fast path for immutable ROM packets already validated at build time. It preserves the active ROM bank and caps output at 256 bytes; it does not validate untrusted input lengths. Use the portable decoder for downloaded assets and battery SRAM. Both use fixed buffers and support overlapping copies. Cartridge integration must still enforce bank, WRAM/stack and save-memory budgets.

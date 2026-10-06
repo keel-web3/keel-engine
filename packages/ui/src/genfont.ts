@@ -349,9 +349,11 @@ function soften(sub: Sub, r: number, soft: SoftCorners = "all", mid = 0): Pt[] {
   return out;
 }
 
-function drawGlyph(code: number, cls: WidthClass, src: string, p: FontParams, m: Metrics): Glyph {
-  const W = widthOf(cls, m) + (p.capWidth && cls !== "i" && ((code >= 65 && code <= 90) || (code >= 48 && code <= 57)) ? p.capWidth : 0);
+function drawGlyph(code: number, cls: WidthClass, src: string, p: FontParams, m: Metrics, maxWidth = Infinity, normalWidth = maxWidth): Glyph {
   const extraW = m.stroke - 1;
+  const gridWidth = (cls === "w" ? maxWidth : normalWidth) - extraW - m.serifPad * 2 - m.slantPad;
+  if(gridWidth<3)throw new RangeError("Native glyph width cannot fit this font weight, serif and slant");
+  const W = Math.min(gridWidth, widthOf(cls, m) + (p.capWidth && cls !== "i" && ((code >= 65 && code <= 90) || (code >= 48 && code <= 57)) ? p.capWidth : 0));
   const boxW = W + extraW + m.serifPad * 2 + m.slantPad;
   const H = m.C + m.asc + m.D;
   const top = m.C - 1 + m.asc; // (image row = top - row)
@@ -425,13 +427,22 @@ function drawGlyph(code: number, cls: WidthClass, src: string, p: FontParams, m:
   return { code, w: boxW, h: H, ox: 0, oy: -(m.C + m.asc), adv: boxW - m.slantPad - m.serifPad + p.tracking + (m.C >= 12 ? 1 : 0), bits };
 }
 
+/** Native column budget. Redraw strokes on the smaller grid instead of scaling glyph bitmaps. */
+export interface FontTarget {
+  readonly maxWidth?: number;
+  /** Normal glyphs may use fewer columns; M/W keep the larger total budget. */
+  readonly normalWidth?: number;
+}
+
 /** A generated font: the family `params` at cap height `size` (5..16 px; larger works, it just isn't tuned). */
-export function generateFont(params: FontParams = DEFAULT_FONT, size = 7, name = "keel-gen"): PixelFont {
+export function generateFont(params: FontParams = DEFAULT_FONT, size = 7, name = "keel-gen", target: FontTarget = {}): PixelFont {
   if (!(Number.isInteger(size) && size >= 5 && size <= 32)) throw new RangeError(`A generated font's size is a whole 5..32 px cap height (got ${size}).`);
+  if(target.maxWidth!==undefined&&(!Number.isInteger(target.maxWidth)||target.maxWidth<3||target.maxWidth>32))throw new RangeError("Native glyph width must be a whole 3..32 pixels");
+  if(target.normalWidth!==undefined&&(!Number.isInteger(target.normalWidth)||target.normalWidth<3||target.normalWidth>(target.maxWidth??32)))throw new RangeError("Normal glyph width must fit the native glyph budget");
   const m = metricsOf(params, size);
   // (Trimmed to their ink -- where they sit and how far they advance kept: smaller atlas entries, smaller records.)
-  const glyphs: Glyph[] = GLYPHS.map(([code, cls, src]) => trimGlyph(drawGlyph(code, cls, src, params, m)));
-  const space = Math.max(2, Math.ceil(m.B / 2) + (size >= 10 ? 1 : 0));
+  const glyphs: Glyph[] = GLYPHS.map(([code, cls, src]) => trimGlyph(drawGlyph(code, cls, src, params, m, target.maxWidth, target.normalWidth)));
+  const space = Math.max(2, Math.ceil(Math.min(m.B,target.normalWidth??target.maxWidth??Infinity) / 2) + (size >= 10 ? 1 : 0));
   glyphs.push({ code: 32, w: 0, h: 0, ox: 0, oy: 0, adv: space + params.tracking, bits: new Uint8Array(0) });
   const gap = 1 + Math.floor(size / 6);
   return makeFont({ name, size, ascent: size + m.asc, descent: m.D, lineHeight: size + m.asc + m.D + gap, glyphs, source: "generated" });

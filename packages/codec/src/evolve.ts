@@ -35,6 +35,14 @@ export function compatibility(writer: Type<unknown>, reader: Type<unknown>): Com
   const walk = (w0: Node, r0: Node, p: string): void => {
     const w = unwrap(w0);
     const r = unwrap(r0);
+    // (A grown array reads what its base wrote; a reader of the base reads a grown writer's data until it uses the grown
+    // layout, and then fails at that field, as a grown enum does.)
+    if (w.kind === "array" && r.kind === "grow") { walk(w, r.base, p); return; }
+    if (w.kind === "grow" && r.kind === "array") {
+      walk(w.base, r, p);
+      warnings.push(`${at(p)}: the writer's array has grown; data in its grown layout is past this reader's max.`);
+      return;
+    }
     if (w.kind !== r.kind) { problems.push(`${at(p)}: written as ${w.kind}, read as ${r.kind}.`); return; }
     const eq = (what: string, a: unknown, b: unknown): boolean => {
       if (same(a, b)) return true;
@@ -69,6 +77,7 @@ export function compatibility(writer: Type<unknown>, reader: Type<unknown>): Com
       case "array": { const q = r as typeof w; eq("length", [w.length, w.max], [q.length, q.max]); walk(w.of, q.of, `${p}[]`); return; }
       case "optional": case "nullable": case "runs": case "rec": walk(w.of, (r as typeof w).of, p); return;
       case "lz": { const q = r as typeof w; eq("lz min", w.min, q.min); walk(w.of, q.of, `${p}[]`); return; }
+      case "grow": { const q = r as typeof w; walk(w.base, q.base, p); walk(w.of, q.of, p); return; }
       case "default": { const q = r as typeof w; eq("default", w.value, q.value); walk(w.of, q.of, p); return; }
       case "delta": { const q = r as typeof w; eq("delta k", w.k, q.k); walk(w.of, q.of, p); return; }
       case "self": eq("recursion depth", w.depth, (r as typeof w).depth); return;

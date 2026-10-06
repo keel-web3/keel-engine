@@ -10,10 +10,10 @@
 import { decodeRaw, encodeRaw } from "./codec.ts";
 import {
   alt, array, biguint, bool, bytes, constant, delta, dyn, enumOf, extend, fixed, float16, float32, float64, hex, int, map, named, nullable, num, optional,
-  lz, planes, recursive, ref, runs, string, struct, tuple, uint, union, varint, varuint, SchemaError,
+  lz, planes, recursive, ref, runs, string, struct, tuple, uint, union, varint, varuint, grow, SchemaError,
 } from "./schema.ts";
 import type { StructType } from "./schema.ts";
-import type { Field, Json, Lit, Node, Type } from "./schema.ts";
+import type { ArrayNode, Field, Json, Lit, Node, Type } from "./schema.ts";
 import { sha256, toHex } from "./sha256.ts";
 
 /** A schema as plain data: what the schema-schema encodes and the editor shows (a default's value as its own bytes). */
@@ -56,6 +56,7 @@ export const SCHEMA_SCHEMA = named("keel/codec/schema", recursive<SchemaRecord>(
   rec: struct({ of: self }),
   self: struct({ depth: varuint() }),
   lz: struct({ of: self, min: uint(4) }),
+  grow: struct({ base: self, of: self }),
 }, { capacity: 64 }) as unknown as Type<SchemaRecord>), { doc: "Every schema, as data: a document can carry its own." });
 
 /** A schema as a record (the schema-schema's value). `docs: false` blanks named() docs (what the id hashes). */
@@ -90,6 +91,7 @@ export function toRecord(type: Type<unknown>, { docs = true }: { readonly docs?:
       case "named": return { kind: "named", name: n.name, version: n.version, doc: docs ? n.doc : "", of: walk(n.of) };
       case "self": return { kind: "self", depth: n.depth };
       case "lz": return { kind: "lz", of: walk(n.of), min: n.min };
+      case "grow": return { kind: "grow", base: walk(n.base), of: walk(n.of) };
     }
   };
   return walk(type as Node);
@@ -150,6 +152,7 @@ export function fromRecord<V = unknown>(record: SchemaRecord): Type<V> {
     case "rec": return V(n({ kind: "rec", of: of() }));
     case "self": return V(n({ kind: "self", depth: r["depth"] }));
     case "lz": return V(lz(of() as Type<number>, { min: r["min"] as number }));
+    case "grow": return V(grow(of("base") as ArrayNode, of()));
     default: throw new SchemaError(`No schema kind ${JSON.stringify(r["kind"])}.`);
   }
 }

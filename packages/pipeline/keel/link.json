@@ -1,0 +1,24 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/pipeline",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/runtime@^0.1"
+    ],
+    "title": "Pipeline",
+    "description": "Generate once, compile through independently pinned modules, reuse unchanged artifacts.",
+    "provides": [
+      "asset/pipeline@1.0.0"
+    ],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

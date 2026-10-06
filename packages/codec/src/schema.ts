@@ -18,6 +18,8 @@
 // Every node is frozen, and the field order you write is the order it's
 // encoded in (and part of its hash).
 
+import { bitsFor } from "./bits.ts";
+
 /** A value a document can hold with no schema: JSON's, plus -0, NaN and the infinities (a dyn() carries them). */
 export type Json = null | boolean | number | string | readonly Json[] | { readonly [key: string]: Json };
 /** An enum's or a const's value. */
@@ -27,7 +29,7 @@ export type Lit = string | number | boolean;
 export const KINDS = [
   "uint", "int", "bool", "fixed", "float", "enum", "varuint", "varint", "string", "ref", "bytes", "hex", "biguint",
   "array", "optional", "nullable", "default", "struct", "tuple", "union", "alt", "map", "delta", "runs", "planes",
-  "dyn", "num", "const", "named", "rec", "self", "lz",
+  "dyn", "num", "const", "named", "rec", "self", "lz", "grow",
 ] as const;
 export type Kind = (typeof KINDS)[number];
 
@@ -74,12 +76,13 @@ export interface NamedNode<V = unknown> extends Type<V> { readonly kind: "named"
 export interface RecNode<V = unknown> extends Type<V> { readonly kind: "rec"; readonly of: Node }
 export interface SelfNode<V = unknown> extends Type<V> { readonly kind: "self"; readonly depth: number }
 export interface LzNode<V = unknown> extends Type<readonly V[]> { readonly kind: "lz"; readonly of: Node; readonly min: number }
+export interface GrowNode<V = unknown> extends Type<V> { readonly kind: "grow"; readonly base: ArrayNode; readonly of: Node }
 
 /** Any node (the untyped view the codec walks). */
 export type Node =
   | UintNode | IntNode | BoolNode | FixedNode | FloatNode | EnumNode | VarNode | StringNode | RefNode | BytesNode | HexNode | BigNode
   | ArrayNode | OptionalNode | NullableNode | DefaultNode | StructNode | TupleNode | UnionNode | AltNode | MapNode | DeltaNode | RunsNode
-  | PlanesNode | DynNode | NumNode | ConstNode | NamedNode | RecNode | SelfNode | LzNode;
+  | PlanesNode | DynNode | NumNode | ConstNode | NamedNode | RecNode | SelfNode | LzNode | GrowNode;
 
 /** A schema error: the definition itself is wrong. */
 export class SchemaError extends TypeError {
@@ -199,6 +202,21 @@ type AnyType = Type<any>; // eslint-disable-line @typescript-eslint/no-explicit-
 export function array<S extends AnyType>(of: S, { length = 0, max = 0 }: { readonly length?: number; readonly max?: number } = {}): ArrayNode<Infer<S>> {
   if (length && max) bad("An array has a fixed length or a max, not both.");
   return node({ kind: "array", of: asNode(of), length: whole(length, 0, 2 ** 32, "array length"), max: whole(max, 0, 2 ** 32, "array max") });
+}
+/**
+ * A capped array that outgrew its layout. `base` is the array as it was (a `max` whose length field has a spare code: the
+ * all-ones length, above the max); `of` is what it became -- the same items with optional fields added, a bigger max. A
+ * value `base` holds (no more items than its max, no field its items lack) is written exactly as `base` writes it, so old
+ * data and new data that says nothing new are the same bits; anything else is the spare length code, then the value as `of`.
+ * An old reader meets that code as an over-long length and says so.
+ */
+export function grow<S extends AnyType>(base: ArrayNode<unknown>, of: S): GrowNode<Infer<S>> {
+  const b = asNode(base);
+  if (b.kind !== "array" || b.length || !b.max) bad("grow() takes a base array with a max (and no fixed length).");
+  const a = b as ArrayNode;
+  if (2 ** bitsFor(a.max + 1) - 1 <= a.max) bad(`grow(): a max of ${a.max} fills its length field; there is no spare length code to grow through.`);
+  if (categoryOf(asNode(of)) !== "array") bad("grow(): it grows into an array type.");
+  return node({ kind: "grow", base: a, of: asNode(of) });
 }
 /** Maybe there: a presence bit. In a struct, the field may be left out (and is left out when decoded). */
 export const optional = <S extends AnyType>(of: S): OptionalNode<Infer<S>> => node({ kind: "optional", of: asNode(of), optional: true });
@@ -369,6 +387,7 @@ export function mapChildren(n: Node, f: (child: Node) => Node): Node {
     case "tuple": { const items = n.items.map(f); return items.every((x, i) => x === n.items[i]) ? n : node({ ...n, items: Object.freeze(items) }); }
     case "alt": { const of = n.of.map(f); return of.every((x, i) => x === n.of[i]) ? n : node({ ...n, of: Object.freeze(of) }); }
     case "map": { const key = f(n.key); const value = f(n.value); return key === n.key && value === n.value ? n : node({ ...n, key, value }); }
+    case "grow": { const base = f(n.base) as ArrayNode; const of = f(n.of); return base === n.base && of === n.of ? n : node({ ...n, base, of }); }
     default: return n;
   }
 }
@@ -381,7 +400,7 @@ export function categoryOf(n: Node): Category {
     case "string": case "ref": case "hex": return "string";
     case "biguint": return "bigint";
     case "bytes": return "bytes";
-    case "array": case "delta": case "runs": case "planes": case "tuple": case "lz": return "array";
+    case "array": case "delta": case "runs": case "planes": case "tuple": case "lz": case "grow": return "array";
     case "struct": case "union": case "map": return "object";
     case "nullable": return "any";
     case "enum": { const c = new Set([...n.values.map((v) => typeof v), ...(n.other ? ["string"] : [])]); return c.size === 1 ? ([...c][0] as Category) : "any"; }
@@ -396,5 +415,5 @@ export const t = {
   uint, int, bool, fixed, float16, float32, float64, varuint, varint, num, biguint,
   enum: enumOf, string, ref, bytes, hex, const: constant, dyn,
   array, optional, nullable, withDefault, default: withDefault, struct, extend, tuple, union, alt, map,
-  delta, runs, lz, planes, named, recursive,
+  delta, runs, lz, planes, named, recursive, grow,
 } as const;

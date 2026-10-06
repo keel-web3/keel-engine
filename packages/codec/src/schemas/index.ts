@@ -27,6 +27,7 @@ export type { BandTables, MusicRecipe, SfxSettings, Song } from "./audio.ts";
 export { VOXELS, opListSchema, voxelRecordOf } from "./voxel.ts";
 export { HYBRID_POPULATION, POPULATION_RECIPE, UNIT_ANIM, UNIT_EXCEPTION, UNIT_PART, UNIT_PINS } from "./hybrid.ts";
 export type { HybridRecord, UnitExceptionRecord, UnitPinsRecord } from "./hybrid.ts";
+export { SPECIMEN_PROGRAM, SPECIMEN_PROGRAM_LEGACY, SPECIMEN_PROGRAM_NATIVE, SPECIMEN_PROGRAM_NATIVE_PRE_TIER, SPECIMEN_PROGRAM_PLACEMENT } from "./specimen.ts";
 export type { OpFieldType, OpTable, VoxelModelLike, VoxelRecord } from "./voxel.ts";
 
 import type { Registry } from "../document.ts";
@@ -36,7 +37,7 @@ import { SETTINGS, WORLD_SNAPSHOT } from "./world.ts";
 import { PARTICLES, PARTICLE_POOL } from "./particles.ts";
 import { BLOCKS, BYTECODE } from "./script.ts";
 import { MUSIC_RECIPE, SFX_SETTINGS, SONG } from "./audio.ts";
-import { SPECIMEN_PROGRAM } from "./specimen.ts";
+import { SPECIMEN_PROGRAM, SPECIMEN_PROGRAM_NATIVE, SPECIMEN_PROGRAM_NATIVE_PRE_TIER, SPECIMEN_PROGRAM_PLACEMENT } from "./specimen.ts";
 import { VOXEL_CONSTRUCTION } from "./construction.ts";
 import { VOXELS } from "./voxel.ts";
 import { HYBRID_POPULATION } from "./hybrid.ts";
@@ -53,14 +54,18 @@ export const ENGINE_SCHEMAS = {
   "keel/audio/recipe": MUSIC_RECIPE, "keel/audio/song": SONG, "keel/audio/sfx": SFX_SETTINGS,
   "keel/builder/voxels": VOXELS,
   "keel/builder/construction": VOXEL_CONSTRUCTION,
+  "keel/bake/specimen/native-pre-tier": SPECIMEN_PROGRAM_NATIVE_PRE_TIER,
+  "keel/bake/specimen/native": SPECIMEN_PROGRAM_NATIVE,
+  "keel/bake/specimen@2": SPECIMEN_PROGRAM_PLACEMENT,
+  // Register the older main last: its historical name@1 remains the default.
   "keel/bake/specimen": SPECIMEN_PROGRAM,
 } as const;
 
-/** Register every engine schema (by id and by name@version) into a registry. */
+/** Register every engine schema by id, explicit catalogue key and name@version.
+ * Native specimen layouts share historical name@1 identities; their explicit keys disambiguate them. */
 export function registerEngineSchemas(registry: Registry): string[] {
-  return Object.values(ENGINE_SCHEMAS).map((s) => registry.register(s));
+  return Object.entries(ENGINE_SCHEMAS).map(([key,s]) => registry.register(s,key));
 }
 
-export { SPECIMEN_PROGRAM } from "./specimen.ts";
 
 export { VOXEL_CONSTRUCTION } from "./construction.ts";

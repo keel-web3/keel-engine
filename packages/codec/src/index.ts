@@ -8,15 +8,15 @@
 
 export { BitError, BitReader, BitWriter, bitsFor, fromHalf, toHalf } from "./bits.ts";
 export {
-  KINDS, SchemaError, alt, array, asNode, biguint, bool, bytes, categoryOf, constant, delta, dyn, enumOf, extend, fixed, float16, float32, float64, hex, int,
+  KINDS, SchemaError, alt, array, asNode, biguint, bool, bytes, categoryOf, constant, delta, dyn, enumOf, extend, fixed, float16, float32, float64, grow, hex, int,
   lz, map, mapChildren, named, nullable, num, optional, planes, recursive, ref, runs, string, struct, t, tuple, uint, union, varint, varuint, withDefault,
 } from "./schema.ts";
 export type {
-  AltNode, ArrayNode, BigNode, BoolNode, BytesNode, Category, ConstNode, DefaultNode, DeltaNode, DynNode, EnumNode, Field, FixedNode, FloatNode, HexNode, Infer,
+  AltNode, ArrayNode, BigNode, BoolNode, BytesNode, Category, ConstNode, DefaultNode, DeltaNode, DynNode, EnumNode, Field, FixedNode, FloatNode, GrowNode, HexNode, Infer,
   IntNode, Json, Kind, Lit, LzNode, MapNode, NamedNode, Node, NullableNode, NumNode, OffGrid, OptionalNode, PlanesNode, RecNode, RefNode, RunsNode, SelfNode, StringNode,
   StructNode, StructType, StructValue, TupleNode, Type, UintNode, UnionNode, VarNode,
 } from "./schema.ts";
-export { CodecError, Tables, createTables, decodeRaw, encodeRaw, finishReading, gridOf, pathText, readValue, same, sizeOf, validate, valueCategory, writeValue } from "./codec.ts";
+export { CodecError, Tables, createTables, decodeRaw, encodeRaw, finishReading, gridOf, holds, pathText, readValue, same, sizeOf, validate, valueCategory, writeValue } from "./codec.ts";
 export type { DecodeOptions, EncodeOptions, Grid, Tracer } from "./codec.ts";
 export { SCHEMA_SCHEMA, decodeSchema, encodeSchema, fromRecord, schemaId, schemaName, shortId, toRecord } from "./canonical.ts";
 export type { SchemaRecord } from "./canonical.ts";
@@ -35,7 +35,13 @@ export type { SolidityOptions } from "./solidity.ts";
 export * from "./schemas/index.ts";
 
 // Bounded native sprite compression: shared by cartridge ROM and battery cache.
-export {RETRO_CODEC_VERSION,encodeRetroFrame,decodeRetroFrame,encodeRetroClip,decodeRetroClipFrame,encodeRetroAsset,decodeRetroAssetFrame} from './retro.ts';
+export {RETRO_CODEC_VERSION,encodeRetroFrame,decodeRetroFrame,encodeRetroClip,encodeRetroClipAdaptive,decodeRetroClipFrame,encodeRetroAsset,decodeRetroAssetFrame} from './retro.ts';
 export type {RetroClip,RetroAsset} from './retro.ts';
 
 export { encodeFloat32Runs, decodeFloat32Runs } from "./procedural-buffer.ts";
+
+export {RETRO_CTX_VERSION,CTX_SIZE,CTX_CLASSES,CTX_PLPS,CTX_QTAB,CTX_MODEL_BYTES,ctxClassOf,encodeCtxModel,decodeCtxModel,ctxModelId,ctxPixels,ctxTiles,ctxOf,encodeCtxChain,decodeCtxChain,trainCtxModel,encodeCtxClip,decodeCtxClip} from './retro-ctx.ts';
+export type {CtxModel,CtxFrame,CtxClip,CtxClipCode} from './retro-ctx.ts';
+
+export { packBankRecords } from './rom-banks.ts';
+export type { BankRecordLocation, PackedBankRecords } from './rom-banks.ts';

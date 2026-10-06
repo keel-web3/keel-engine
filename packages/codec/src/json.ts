@@ -125,7 +125,7 @@ function to(n: Node, v: unknown, recs: Node[], o: JsonOptions): Json {
       for (const k of keys) put(out, k, to(n.value, (v as Record<string, unknown>)[k], recs, o));
       return out;
     }
-    case "named": return to(n.of, v, recs, o);
+    case "named": case "grow": return to(n.of, v, recs, o);
     case "rec": return to(n.of, v, [...recs, n], o);
     case "self": return to(recs[recs.length - 1 - n.depth]!, v, recs.slice(0, recs.length - 1 - n.depth), o);
     default: return v as Json;
@@ -139,7 +139,7 @@ function categoryMatches(n: Node, cat: string): boolean {
     case "string": case "ref": case "hex": return cat === "string";
     case "biguint": return cat === "bigint";
     case "bytes": return cat === "bytes";
-    case "array": case "delta": case "runs": case "planes": case "tuple": case "lz": return cat === "array";
+    case "array": case "delta": case "runs": case "planes": case "tuple": case "lz": case "grow": return cat === "array";
     case "struct": case "union": case "map": return cat === "object";
     case "enum": return n.values.some((x) => typeof x === cat) || (n.other && cat === "string");
     case "const": return (n.value === null ? "null" : Array.isArray(n.value) ? "array" : typeof n.value) === cat;
@@ -156,7 +156,7 @@ function jsonFits(n: Node, j: unknown): boolean {
     case "bool": return typeof j === "boolean";
     case "string": case "ref": case "hex": case "bytes": return typeof j === "string";
     case "biguint": return typeof j === "string" || typeof j === "number";
-    case "array": case "delta": case "runs": case "planes": case "tuple": case "lz": return Array.isArray(j);
+    case "array": case "delta": case "runs": case "planes": case "tuple": case "lz": case "grow": return Array.isArray(j);
     case "struct": case "union": case "map": return j !== null && typeof j === "object" && !Array.isArray(j);
     case "enum": return n.values.includes(j as never) || (n.other && typeof j === "string");
     case "const": return JSON.stringify(n.value) === JSON.stringify(j);
@@ -218,7 +218,7 @@ function from(n: Node, j: unknown, recs: Node[]): unknown {
       for (const [k, x] of Object.entries(j)) { try { put(out, k, from(n.value, x, recs)); } catch (e) { throw under(e, k); } }
       return out;
     }
-    case "named": return from(n.of, j, recs);
+    case "named": case "grow": return from(n.of, j, recs);
     case "rec": return from(n.of, j, [...recs, n]);
     case "self": return from(recs[recs.length - 1 - n.depth]!, j, recs.slice(0, recs.length - 1 - n.depth));
     default: return j;

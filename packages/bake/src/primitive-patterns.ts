@@ -19,5 +19,5 @@ export function expandPrimitivePattern(p:SpecimenPattern):SpecimenPart[]{
  return out;
 }
 export function specimenParts(p:{parts:SpecimenPart[];patterns?:SpecimenPattern[]}):SpecimenPart[]{
- const parts=[...p.parts,...(p.patterns??[]).flatMap(expandPrimitivePattern)];if(parts.length<1||parts.length>24)throw new Error('expanded specimen part budget 1..24');return parts;
+ const parts=[...p.parts,...(p.patterns??[]).flatMap(expandPrimitivePattern)];if(parts.length<1||parts.length>64)throw new Error('expanded specimen part budget 1..64');return parts;
 }

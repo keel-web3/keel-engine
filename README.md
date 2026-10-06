@@ -3,6 +3,11 @@
 KEEL Engine is the pixel-art game engine for [KEEL](https://github.com/keel-web3/keel-sdk)
 onchain games. It is TypeScript here and classic-script modules on chain.
 
+For small game-specific builds, use the optional feature entry points and
+explicit byte budgets in [modular builds](docs/MODULAR_BUILDS.md). The existing
+package and module APIs remain available; converter and editor tools are
+separate from the runtime a game chooses to ship.
+
 Every part of the engine is a **KEEL verified module**, and so is every
 standard pack and every AI:
 

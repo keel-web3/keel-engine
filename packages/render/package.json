@@ -7,7 +7,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./baker": "./src/baker.ts",
-    "./link-program": "./src/link-program.ts"
+    "./link-program": "./src/link-program.ts",
+    "./target-raster": "./src/target-raster.ts"
   },
   "dependencies": {
     "@keel-engine/core": "workspace:*",

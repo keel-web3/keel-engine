@@ -100,8 +100,8 @@ export {matterFrame} from './specimen-matter.ts';
 export type {MatterFrame} from './specimen-matter.ts';
 export {paintVolumes} from './specimen-volumes.ts';
 export {expandPrimitivePattern,specimenParts} from './primitive-patterns.ts';
-export {SPECIMEN_MOTION_FRAMES} from './specimen-types.ts';
-export type {SpecimenProgram,SpecimenPattern,SpecimenPart,SpecimenV3,SpecimenAnimation,SpecimenFinish,SpecimenMaterial,SpecimenJoint,SpecimenPoseKey,SpecimenTrack,SpecimenEmitter,SpecimenDynamic} from './specimen-types.ts';
+export {SPECIMEN_MOTION_FRAMES,SPECIMEN_DETAIL_MAX} from './specimen-types.ts';
+export type {SpecimenProgram,SpecimenColor,SpecimenPattern,SpecimenPart,SpecimenV3,SpecimenAnimation,SpecimenFinish,SpecimenMaterial,SpecimenJoint,SpecimenPoseKey,SpecimenTrack,SpecimenEmitter,SpecimenDynamic,SpecimenDetail} from './specimen-types.ts';
 export {readSpecimen} from './specimen-read.ts';
 
 export { bodySpace } from "./geometry.ts";
@@ -109,3 +109,7 @@ export { solidLodSteps } from "./solid-lod.ts";
 export type { LodSolid, SolidLodStep, SolidLodTerm } from "./solid-lod.ts";
 
 export { cloudLobe } from "./cloud-lobe.ts";
+
+export {SPRITE_CAMERA,SPRITE_LOOK,materialLight,spriteFraming,specimenSprite,auditSpecimen} from './specimen-sprite.ts';
+export type {SpriteCamera,SpriteLook,SpriteFraming,SpriteView,SpecimenAudit} from './specimen-sprite.ts';
+export {specimenAtDetail,specimenDetail,emitterSlots} from './specimen-detail.ts';

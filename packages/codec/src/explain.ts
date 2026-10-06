@@ -85,6 +85,7 @@ export function typeText(n: Node): string {
     case "delta": return `delta of ${typeText(n.of)}`;
     case "runs": return `runs of ${typeText(n.of)}`;
     case "lz": return `lz of ${typeText(n.of)}`;
+    case "grow": return `${typeText(n.base)}, grown to ${typeText(n.of)}`;
     case "named": return `${n.name}@${n.version}`;
     case "rec": return "recursive";
     case "self": return "(recursion)";

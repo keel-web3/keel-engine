@@ -58,6 +58,21 @@ export function encodeRetroClip(frames:readonly Uint8Array[],views:number,anchor
  if(offsets.at(-1)!>65535)throw new Error('retro clip exceeds bank address range');
  return {data:Uint8Array.from(packets.flatMap(p=>[...p])),offsets:Uint16Array.from(offsets),bases,frames:frames.length,views};
 }
+/** Adaptive clip: any frame list (no view grid). Each frame is stored as an XOR delta against whichever earlier
+ * keyframe makes it smallest, or becomes a keyframe itself; the decoder contract is unchanged (one anchor, no
+ * chains). Suits mixed sequences such as resting poses plus an animated turn. */
+export function encodeRetroClipAdaptive(frames:readonly Uint8Array[]):RetroClip {
+ if(!frames.length||frames.length>256)throw new Error('invalid retro clip dimensions');
+ const packets:Uint8Array[]=[],bases=new Uint16Array(frames.length).fill(65535),offsets=[0],keys:number[]=[];
+ for(const [i,f] of frames.entries()){
+  let p=encodeRetroFrame(f),base=-1;
+  for(const k of keys){const d=encodeRetroFrame(Uint8Array.from(f,(v,n)=>v^frames[k]![n]!));if(d.length+12<p.length){p=d;base=k;}}
+  if(base>=0)bases[i]=base;else keys.push(i);
+  packets.push(p);offsets.push(offsets.at(-1)!+p.length);
+ }
+ if(offsets.at(-1)!>65535)throw new Error('retro clip exceeds bank address range');
+ return {data:Uint8Array.from(packets.flatMap(p=>[...p])),offsets:Uint16Array.from(offsets),bases,frames:frames.length,views:1};
+}
 export function decodeRetroClipFrame(c:RetroClip,frame:number):Uint8Array {
  if(!Number.isInteger(frame)||frame<0||frame>=c.frames||c.offsets.length!==c.frames+1||c.bases.length!==c.frames)throw new Error('invalid retro frame index');
  const read=(i:number)=>{const a=c.offsets[i]!,b=c.offsets[i+1]!;if(a>=b||b>c.data.length)throw new Error('invalid retro offsets');return decodeRetroFrame(c.data.subarray(a,b));};

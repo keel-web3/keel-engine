@@ -31,6 +31,7 @@
     "@keel-engine/builder": "workspace:*",
     "@keel-engine/humans": "workspace:*",
     "@keel-engine/animals": "workspace:*",
-    "@keel-engine/cloth": "workspace:*"
+    "@keel-engine/cloth": "workspace:*",
+    "@keel-engine/render": "workspace:*"
   }
 }

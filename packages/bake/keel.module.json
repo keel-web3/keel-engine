@@ -24,7 +24,9 @@
       "@keel-engine/particles/basic",
       "@keel-engine/particles/pool",
       "@keel-engine/render/link-program",
-      "@keel-engine/runtime"
+      "@keel-engine/runtime",
+      "@keel-engine/codec",
+      "@keel-engine/particles"
     ]
   }
 }

@@ -1,0 +1,9 @@
+{
+  "name": "@keel-engine/pipeline",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Modular, content-addressed generation and compilation graphs for KEEL games.",
+  "exports": { ".": "./src/index.ts", "./module": "./src/module.ts" },
+  "dependencies": { "@keel-engine/runtime": "workspace:*" }
+}

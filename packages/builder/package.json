@@ -14,7 +14,8 @@
     "./rig": "./src/rig.ts",
     "./convert": "./src/convert.ts",
     "./storage": "./src/voxel-store.ts",
-    "./primitive-runtime": "./src/construction-runtime.ts"
+    "./primitive-runtime": "./src/construction-runtime.ts",
+    "./generative": "./src/generative.ts"
   },
   "dependencies": {
     "@keel-engine/core": "workspace:*",

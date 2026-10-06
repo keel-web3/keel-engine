@@ -1,0 +1,17 @@
+{
+  "name": "@keel-engine/targets",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Device limits and presentation ages, resolved independently for any KEEL game.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./module": "./src/module.ts",
+    "./cgb/color": "./src/cgb/color.ts",
+    "./cgb/palettes": "./src/cgb/palettes.ts",
+    "./cgb/palette-groups": "./src/cgb/palette-groups.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

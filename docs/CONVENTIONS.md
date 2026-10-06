@@ -18,7 +18,11 @@ packages/<name>/
   Every `@keel-engine/<pkg>` a package imports must be in its manifest's `needs`
   (`"keel/<pkg>@^0.1"`): the KEEL build links those imports (they resolve
   through the module's context, never copied in), so a module can only reach
-  what it declared. A package has one entry, `src/index.ts`: no subpath exports besides `./module` (its manifest, read as data).
+  what it declared. The catalogue entry stays `src/index.ts`; explicitly declared
+  runtime subpaths retain their own module needs. Tooling-only subpaths such as
+  builder's `./generative` are outside the catalogue entry and its pinned bytes;
+  do not assume they are available from the on-chain module. `./module` exposes
+  the manifest as data.
 - **TypeScript:** strict as configured in `tsconfig.base.json` --
   `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`,
   `erasableSyntaxOnly` (no enums, namespaces or parameter properties: Node runs

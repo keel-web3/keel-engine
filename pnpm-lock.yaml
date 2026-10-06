@@ -116,6 +116,9 @@ importers:
       '@keel-engine/codec':
         specifier: workspace:*
         version: link:../codec
+      '@keel-engine/core':
+        specifier: workspace:*
+        version: link:../core
       '@keel-engine/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -131,6 +134,12 @@ importers:
       '@keel-engine/entity':
         specifier: workspace:*
         version: link:../entity
+      '@keel-engine/particles':
+        specifier: workspace:*
+        version: link:../particles
+      '@keel-engine/render':
+        specifier: workspace:*
+        version: link:../render
       '@keel-engine/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -147,9 +156,6 @@ importers:
       '@keel-engine/humans':
         specifier: workspace:*
         version: link:../../packs/humans
-      '@keel-engine/render':
-        specifier: workspace:*
-        version: link:../render
 
   packages/builder:
     dependencies:
@@ -309,6 +315,9 @@ importers:
       '@keel-engine/builder':
         specifier: workspace:*
         version: link:../builder
+      '@keel-engine/codec':
+        specifier: workspace:*
+        version: link:../codec
       '@keel-engine/core':
         specifier: workspace:*
         version: link:../core
@@ -355,6 +364,9 @@ importers:
 
   packages/keel:
     dependencies:
+      '@keel-engine/builder':
+        specifier: workspace:*
+        version: link:../builder
       '@keel-engine/codec':
         specifier: workspace:*
         version: link:../codec
@@ -428,6 +440,9 @@ importers:
       '@keel-engine/core':
         specifier: workspace:*
         version: link:../core
+      '@keel-engine/render':
+        specifier: workspace:*
+        version: link:../render
       '@keel-engine/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -441,6 +456,12 @@ importers:
       '@keel-engine/core':
         specifier: workspace:*
         version: link:../core
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
+  packages/pipeline:
+    dependencies:
       '@keel-engine/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -525,6 +546,12 @@ importers:
       '@keel-engine/core':
         specifier: workspace:*
         version: link:../core
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
+  packages/targets:
+    dependencies:
       '@keel-engine/runtime':
         specifier: workspace:*
         version: link:../runtime
