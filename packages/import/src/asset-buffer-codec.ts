@@ -3,6 +3,7 @@
  * runtime is a package-level cost (charged once by the outer compiler), not hidden per segment.
  * Version 1 fixes candidate order, zlib level 9 and first-occurrence dictionary ordering.
  */
+import { encodeFloat32Runs as float32Runs, decodeFloat32Runs as restoreFloat32Runs } from '@keel-engine/codec/procedural-buffer';
 import { zlibSync, unzlibSync } from 'fflate';
 
 export const BUFFER_CODEC_VERSION = 1;
@@ -98,83 +99,6 @@ function dictionary(source: Uint8Array, stride: number): { data: Uint8Array; dic
 /** Infer arithmetic only when the regenerated IEEE754 words are exactly identical.
  * Runs are source-derived; no model names, geometry templates, tolerances or quantization.
  */
-function float32Runs(source: Uint8Array, stride: number): Uint8Array | null {
-  const rows = source.length / stride;
-  if (rows < 2 || rows > MAX_DICTIONARY_ROWS) return null;
-  const sourceView = new DataView(source.buffer, source.byteOffset, source.byteLength);
-  const scratch = new DataView(new ArrayBuffer(4));
-  type Run = { type: number; start: number; count: number; steps?: Uint8Array };
-  const runs: Run[] = [];
-  const infer = (start: number): Run | null => {
-    let count = 1;
-    same: while (start + count < rows) {
-      for (let k = 0; k < stride; k++) if (source[start * stride + k] !== source[(start + count) * stride + k]) break same;
-      count++;
-    }
-    if (count >= 2) return { type: 1, start, count };
-    if (start + 4 > rows) return null;
-    const steps = new Uint8Array(stride), stepView = new DataView(steps.buffer);
-    for (let k = 0; k < stride; k += 4) {
-      const first = sourceView.getFloat32(start * stride + k, true);
-      const second = sourceView.getFloat32((start + 1) * stride + k, true);
-      const step = Math.fround(second - first);
-      if (!Number.isFinite(first) || !Number.isFinite(step)) return null;
-      stepView.setFloat32(k, step, true);
-    }
-    count = 1;
-    affine: while (start + count < rows) {
-      for (let k = 0; k < stride; k += 4) {
-        const first = sourceView.getFloat32(start * stride + k, true), step = stepView.getFloat32(k, true);
-        scratch.setFloat32(0, Math.fround(first + step * count), true);
-        if (scratch.getUint32(0, true) !== sourceView.getUint32((start + count) * stride + k, true)) break affine;
-      }
-      count++;
-    }
-    return count >= 4 ? { type: 2, start, count, steps } : null;
-  };
-  let row = 0, literal = -1, inferred = false;
-  while (row < rows) {
-    const run = infer(row);
-    if (run) { if (literal >= 0) runs.push({ type: 0, start: literal, count: row - literal }); literal = -1; runs.push(run); row += run.count; inferred = true; }
-    else { if (literal < 0) literal = row; row++; }
-  }
-  if (literal >= 0) runs.push({ type: 0, start: literal, count: rows - literal });
-  if (!inferred) return null;
-  const length = runs.reduce((n, run) => n + 5 + (run.type === 0 ? run.count * stride : run.type === 1 ? stride : 2 * stride), 0);
-  const output = new Uint8Array(length), view = new DataView(output.buffer); let cursor = 0;
-  for (const run of runs) {
-    output[cursor++] = run.type; view.setUint32(cursor, run.count, true); cursor += 4;
-    const literalLength = run.type === 0 ? run.count * stride : stride;
-    output.set(source.subarray(run.start * stride, run.start * stride + literalLength), cursor); cursor += literalLength;
-    if (run.type === 2) { output.set(run.steps!, cursor); cursor += stride; }
-  }
-  return output;
-}
-function restoreFloat32Runs(data: Uint8Array, length: number, stride: number): Uint8Array {
-  const out = new Uint8Array(length), input = new DataView(data.buffer, data.byteOffset, data.byteLength), output = new DataView(out.buffer);
-  let cursor = 0, row = 0; const rows = length / stride;
-  while (cursor < data.length) {
-    if (cursor + 5 > data.length) throw new Error('Truncated procedural run');
-    const type = data[cursor++]!, count = input.getUint32(cursor, true); cursor += 4;
-    if (!count || count > rows - row || type > 2 || (type === 1 && count < 2) || (type === 2 && count < 4)) throw new Error('Invalid procedural run');
-    const stored = type === 0 ? count * stride : type === 1 ? stride : 2 * stride;
-    if (cursor + stored > data.length) throw new Error('Truncated procedural data');
-    if (type === 0) out.set(data.subarray(cursor, cursor + stored), row * stride);
-    else if (type === 1) for (let i = 0; i < count; i++) out.set(data.subarray(cursor, cursor + stride), (row + i) * stride);
-    else {
-      for (let k = 0; k < stride; k += 4) {
-        const first = input.getFloat32(cursor + k, true), step = input.getFloat32(cursor + stride + k, true);
-        if (!Number.isFinite(first) || !Number.isFinite(step)) throw new Error('Invalid affine seed or step');
-        // The seed is copied bit-for-bit, including signed zero. Later rows execute arithmetic.
-        output.setUint32(row * stride + k, input.getUint32(cursor + k, true), true);
-        for (let i = 1; i < count; i++) output.setFloat32((row + i) * stride + k, Math.fround(first + step * i), true);
-      }
-    }
-    row += count; cursor += stored;
-  }
-  if (row !== rows) throw new Error('Incomplete procedural rows');
-  return out;
-}
 export function encodeBuffer(bytes: Uint8Array, hints?: BufferHints): EncodedBuffer {
   if (!(bytes instanceof Uint8Array)) throw new Error('Expected Uint8Array');
   integer(bytes.length, 0, BUFFER_CODEC_MAX_BYTES, 'source length');
@@ -288,7 +212,12 @@ function inflateExact(data: Uint8Array, expected: number): Uint8Array {
   const out = unzlibSync(data, { out: new Uint8Array(expected) });
   if (out.length !== expected) throw new Error('Unexpected decoded length');
   let a = 1, b = 0;
-  for (let i = 0; i < out.length; i++) { a = (a + out[i]!) % 65521; b = (b + a) % 65521; }
+  // Adler-32's standard chunk bound keeps sums exact and avoids two modulo operations per byte.
+  for (let start = 0; start < out.length; start += 5552) {
+    const end = Math.min(start + 5552, out.length);
+    for (let i = start; i < end; i++) { a += out[i]!; b += a; }
+    a %= 65521; b %= 65521;
+  }
   const checksum = ((b << 16) | a) >>> 0, end = data.length;
   const stored = ((data[end - 4]! << 24) | (data[end - 3]! << 16) | (data[end - 2]! << 8) | data[end - 1]!) >>> 0;
   if (checksum !== stored) throw new Error('Invalid zlib checksum');

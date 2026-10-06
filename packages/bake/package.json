@@ -5,16 +5,29 @@
   "type": "module",
   "description": "Design once, draw fast: bake designs into sprite atlases at load, instanced sprites, spatial hashing and culling.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./mesh": "./src/mesh.ts",
+    "./sprites": "./src/sprites.ts",
+    "./specimen": "./src/specimen.ts",
+    "./specimen-matter": "./src/specimen-matter.ts",
+    "./primitives": "./src/primitive-patterns.ts",
+    "./volumes": "./src/volumes.ts",
+    "./stream": "./src/stream.ts",
+    "./indexed": "./src/indexed.ts",
+    "./population": "./src/population.ts",
+    "./runtime": "./src/runtime.ts",
+    "./geometry": "./src/geometry.ts",
+    "./solid-lod": "./src/solid-lod.ts"
   },
   "dependencies": {
     "@keel-engine/runtime": "workspace:*",
     "@keel-engine/core": "workspace:*",
     "@keel-engine/entity": "workspace:*",
-    "@keel-engine/codec": "workspace:*"
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/particles": "workspace:*",
+    "@keel-engine/render": "workspace:*"
   },
   "devDependencies": {
-    "@keel-engine/render": "workspace:*",
     "@keel-engine/builder": "workspace:*",
     "@keel-engine/humans": "workspace:*",
     "@keel-engine/animals": "workspace:*",

@@ -1,4 +1,5 @@
-import { PARTICLE_POOL, decode } from "@keel-engine/codec";
+import { decode } from "@keel-engine/codec/runtime";
+import { PARTICLE_POOL } from "@keel-engine/codec/schemas/particles";
 import type { ParticlePoolRecord } from "@keel-engine/codec";
 import type { ParticlePoolSnapshot } from "./pool-types.ts";
 

@@ -5,7 +5,11 @@
   "type": "module",
   "description": "The generative UI system: themes from a seed and a culture (OKLCH ramps, procedural 9-slice frames, dither, type scale, motion), generative and imported pixel fonts, generative icons, retained-mode widgets drawn palette-true into one pixel layer, and generated HUDs, menus and loading screens.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./runtime": "./src/runtime.ts",
+    "./records": "./src/records.ts",
+    "./schemas": "./src/schemas.ts",
+    "./import": "./src/import.ts"
   },
   "dependencies": {
     "@keel-engine/core": "workspace:*",

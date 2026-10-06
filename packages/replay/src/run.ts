@@ -24,7 +24,7 @@
 // to a server can't be rewritten after the fact, and the last link commits
 // to all of it.
 
-import { sha256, toHex } from "@keel-engine/codec";
+import { sha256, toHex } from "@keel-engine/codec/hash";
 import { createTape, decodeTape, encodeTape } from "./tape.ts";
 import type { Tape } from "./tape.ts";
 

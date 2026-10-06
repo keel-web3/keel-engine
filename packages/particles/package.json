@@ -5,12 +5,19 @@
   "type": "module",
   "description": "Pooled, seeded particle emitters: the proof of concept's pool, and the engine's smart pool -- budgets, LOD, recipes, sub-emitters, sockets, one instanced draw.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./basic": "./src/particles.ts",
+    "./pool": "./src/pool.ts",
+    "./gpu": "./src/gpu.ts",
+    "./presets": "./src/presets/index.ts",
+    "./runtime": "./src/runtime.ts",
+    "./persistence": "./src/persistence.ts"
   },
   "dependencies": {
     "@keel-engine/core": "workspace:*",
     "@keel-engine/runtime": "workspace:*",
-    "@keel-engine/codec": "workspace:*"
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/render": "workspace:*"
   },
   "devDependencies": {
     "@keel-engine/bake": "workspace:*"

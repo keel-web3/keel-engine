@@ -53,3 +53,14 @@ export type { GifFrame, GifSpec } from "./gif.ts";
 
 export { TARGET_PROFILES, adaptTargetPalette, fromRgb555, nearestColour, reduceColours, rgb555, targetProfile } from "./targets.ts";
 export type { RetroBits, TargetColour, TargetId, TargetInput, TargetProfile } from "./targets.ts";
+
+export { fnv1a32, fnv1a32Signed, seedTagHash } from "./hash.ts";
+export { createMulberry32 } from "./random.ts";
+export type { RandomStream } from "./random.ts";
+
+export { srgb8ToLinear } from './color.ts';
+
+export { plainRole } from './role.ts';
+
+export {availableStorage} from "./storage.ts";
+export type {StorageLike} from "./storage.ts";

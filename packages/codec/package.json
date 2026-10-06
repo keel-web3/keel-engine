@@ -5,7 +5,16 @@
   "type": "module",
   "description": "The bit codec: typed schemas, canonical bit-packed encoding, self-describing documents, a JSON view and a bit inspector -- the engine's packed form for objects, looks, worlds, particles and scripts.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./runtime": "./src/runtime.ts",
+    "./retro": "./src/retro.ts",
+    "./procedural-buffer": "./src/procedural-buffer.ts",
+    "./schemas/*": "./src/schemas/*.ts",
+    "./inspector": "./src/explain.ts",
+    "./solidity": "./src/solidity.ts",
+    "./registry": "./src/load.ts",
+    "./hash": "./src/sha256.ts",
+    "./byte-columns": "./src/byte-columns.ts"
   },
   "dependencies": {
     "@keel-engine/runtime": "workspace:*"

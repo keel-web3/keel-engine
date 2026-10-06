@@ -128,5 +128,13 @@ export const SDK_ROOT = "@keel/game-engine";
 export function moduleForImport(name: string, workspace: readonly WorkspaceModule[]): string | undefined {
   if (name === `${SDK_PREFIX}build`) return undefined; // (the build is Node's, never a page's)
   const pkg = name === SDK_ROOT ? `${ENGINE_PREFIX}runtime` : name.startsWith(SDK_PREFIX) ? ENGINE_PREFIX + name.slice(SDK_PREFIX.length) : name;
-  return workspace.find((w) => w.packageName === pkg)?.manifest.id;
+  // Feature entry points share their owning module's runtime API and needs.
+  // Prefer an exact package match before its exported subpaths.
+  const exact = workspace.find((w) => w.packageName === pkg);
+  if (exact) return exact.manifest.id;
+  const owner = workspace.find((w) => pkg.startsWith(w.packageName + "/"));
+  if (!owner) return undefined;
+  const subpath = "./" + pkg.slice(owner.packageName.length + 1);
+  const exportsOf = JSON.parse(readFileSync(join(owner.dir, "package.json"), "utf8")).exports ?? {};
+  return Object.keys(exportsOf).some(key => key === subpath || (key.endsWith("*") && subpath.startsWith(key.slice(0, -1)))) ? owner.manifest.id : undefined;
 }

@@ -8,15 +8,15 @@
 //
 //   exportPackFile({ kind: "attribute", id: "war-flag", model, attribute: { slot: "back", fit: "height" } })
 //   ->  import { defineAttribute } from "@keel-engine/runtime";
-//       import { loadVoxels, voxelAttribute } from "@keel-engine/builder";
-//       const VOXELS = loadVoxels("KC1:...");    (the storage seam: store.ts)
+//       import { loadModel, voxelAttribute } from "@keel-engine/builder";
+//       const VOXELS = loadModel("KC1:...");    (the storage seam: store.ts)
 //       export default defineAttribute({ id: "war-flag", slot: "back", targets: [...], build: voxelAttribute(VOXELS, { fit: "height" }) });
 
 import { contractOf } from "@keel-engine/entity";
 import type { AttributeTarget } from "@keel-engine/runtime";
 import type { FrontSpec } from "@keel-engine/scene";
 import type { ObjectAnimation } from "./animate.ts";
-import { storeVoxels, storeVoxelsText } from "./store.ts";
+import { storeModel, storeModelText } from "./construction.ts";
 import type { Anchor, FitMode, SmoothOptions } from "./convert.ts";
 import type { Oklch } from "./look.ts";
 import { analyseShape } from "./rig.ts";
@@ -93,16 +93,16 @@ export function exportPackFile(a: AssetSpec, { imports = "engine", width = 96 }:
     ].join("\n");
   }
   const m = a.model;
-  const text = storeVoxelsText(m);
-  const bytes = storeVoxels(m).length;
+  const text = storeModelText(m);
+  const bytes = storeModel(m).length;
   const lines: string[] = [];
   for (let i = 0; i < text.length; i += width) lines.push(text.slice(i, i + width));
-  const data = lines.length === 1 ? `loadVoxels(${JSON.stringify(lines[0])})` : `loadVoxels(\n  ${lines.map((l) => JSON.stringify(l)).join(" +\n  ")},\n)`;
+  const data = lines.length === 1 ? `loadModel(${JSON.stringify(lines[0])})` : `loadModel(\n  ${lines.map((l) => JSON.stringify(l)).join(" +\n  ")},\n)`;
   const title = a.title ?? a.id;
   const what = a.kind === "attribute" ? `an attribute for the "${a.attribute?.slot}" socket` : a.kind === "entity" ? "a creature" : "an object";
   const head = [
     `// ${title}: ${what}, built with the KEEL builder -- ${m.count} voxels (${[...new Set(m.roles)].join(", ")}),`,
-    `// ${bytes} bytes as data. The voxels are a role-indexed, LZ-coded codec document (loadVoxels); they`,
+    `// ${bytes} bytes as data. The model is an exact construction or voxel codec document (loadModel); they`,
     `// convert when this module loads.${a.colours ? " Suggested look (OKLCH per role; looks are applied later):" : ""}`,
     ...(a.colours ? [`//   ${JSON.stringify(a.colours)}`] : []),
   ];
@@ -116,7 +116,7 @@ export function exportPackFile(a: AssetSpec, { imports = "engine", width = 96 }:
     return [
       ...head,
       `import { defineAttribute } from "${runtime}";`,
-      `import { loadVoxels, voxelAttribute } from "${builder}";`,
+      `import { loadModel, voxelAttribute } from "${builder}";`,
       "",
       `const VOXELS = ${data};`,
       "",
@@ -133,7 +133,7 @@ export function exportPackFile(a: AssetSpec, { imports = "engine", width = 96 }:
     return [
       ...head,
       `import { defineEntity } from "${runtime}";`,
-      `import { loadVoxels, voxelEntity, voxelSockets } from "${builder}";`,
+      `import { loadModel, voxelEntity, voxelSockets } from "${builder}";`,
       "",
       `const VOXELS = ${data};`,
       "",
@@ -146,7 +146,7 @@ export function exportPackFile(a: AssetSpec, { imports = "engine", width = 96 }:
   const opts = clean({ key: a.id, front: o.front ?? "detect", tags: tags.length ? tags : undefined, smooth: o.smooth, meta: Object.keys(meta).length ? meta : undefined });
   return [
     ...head,
-    `import { loadVoxels, objectFromVoxels } from "${builder}";`,
+    `import { loadModel, objectFromVoxels } from "${builder}";`,
     "",
     `const VOXELS = ${data};`,
     "",

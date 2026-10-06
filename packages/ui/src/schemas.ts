@@ -1,3 +1,4 @@
+import { seedText } from "@keel-engine/codec/schemas/common";
 // The UI's stored forms, as bit-codec schemas (the KEEL build lists every
 // named schema this file exports in keel/ui's manifest, bytes embedded, and
 // keel/codec's setup registers them on the page):
@@ -8,8 +9,8 @@
 //   keel/ui/screen       a layout document: the node tree, its ids/tones/icons through shared tables
 
 import { SCREEN_IDS } from "@keel-engine/core";
-import { alt, array, bool, enumOf, extend, fixed, named, num, optional, planes, recursive, ref, seedText, string, struct, tuple, uint, varint, varuint } from "@keel-engine/codec";
-import type { Infer, Type } from "@keel-engine/codec";
+import { alt, array, bool, enumOf, extend, fixed, named, num, optional, planes, recursive, ref, string, struct, tuple, uint, varint, varuint } from "@keel-engine/codec/runtime";
+import type { Infer, Type } from "@keel-engine/codec/runtime";
 import { FRAME_KINDS } from "./frames.ts";
 import { SERIFS, SOFTS, ZEROS } from "./genfont.ts";
 import { ANCHORS, WIDGETS } from "./node.ts";

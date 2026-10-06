@@ -1,3 +1,4 @@
+import { fnv1a32Signed as fnv } from "@keel-engine/core/hash";
 // The land round a city, out to the horizon: what you see past its edge from a car. A city stands in a REGION --
 // farmland on one bearing, forested hills on another, the sea or a range of mountains, a river valley, the next
 // town's water tower and a metro's skyline on the horizon, freeways and a rail line out to them on viaducts where the
@@ -32,11 +33,7 @@ const TAU = Math.PI * 2;
 const apart = (a: number, b: number): number => { const d = (((a - b) % TAU) + TAU) % TAU; return d > Math.PI ? TAU - d : d; };
 const sat = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
 const ramp = (v: number, a: number, b: number): number => { const t = sat((v - a) / (b - a)); return t * t * (3 - 2 * t); };
-const fnv = (text: string): number => {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i += 1) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
-  return h | 0;
-};
+
 const bearingOf = (x: number, z: number): number => datan2(x, z);
 const at = (a: number, d: number): [number, number] => [dsin(a) * d, dcos(a) * d];
 

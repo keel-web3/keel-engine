@@ -1,5 +1,5 @@
 import { defineManifest } from "@keel-engine/runtime";
-import { schemaEntry } from "@keel-engine/codec";
+import { schemaEntry } from "@keel-engine/codec/runtime";
 import { BIOME_TABLE, ROOM_TEMPLATES_SCHEMA, TILESET_RULES, WORLD_RECIPE } from "./schema.ts";
 
 // (The dungeon renderer draws keel/bake's depth sprites -- its one occlusion model. Terrain types, the ground surface and tilesets are keel/terrain's; levels and their locks keel/level's and

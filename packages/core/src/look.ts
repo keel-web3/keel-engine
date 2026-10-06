@@ -1,3 +1,5 @@
+import { fnv1a32 } from "./hash.ts";
+import { createMulberry32 } from "./random.ts";
 // Looks: what a thing's ROLES wear when it's drawn -- each role a ramp (a hue,
 // a chroma, a lightness and its span in OKLCH), a pattern and a finish -- drawn
 // from a seed through a colour PROFILE (a harmony: analogous, complementary,
@@ -172,17 +174,7 @@ function stuffOf(role: LookRole, spec: RoleSpecLike): string {
  * maths, the same on every machine.
  */
 function streamOf(seed: string, label: string): Stream {
-  const text = `${seed}:${label}`;
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i += 1) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
-  let a = h;
-  const f = (): number => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+  const f = createMulberry32(fnv1a32(`${seed}:${label}`));
   const totalOf = (e: ReadonlyArray<readonly [unknown, number]>): number => e.reduce((n, [, w]) => n + w, 0);
   return {
     f,

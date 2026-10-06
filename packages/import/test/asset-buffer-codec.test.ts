@@ -119,3 +119,13 @@ test('browser bundle and Node source produce identical recipes and bytes', async
   assert.equal(serialized(browser.encodeBuffer(source, { stride: 12, componentBytes: 4 })), serialized(node));
   assert.deepEqual(browser.decodeBuffer(node), source);
 });
+
+
+test('Adler checksums stay exact across chunk boundaries and maximum-byte sums', () => {
+  for (const length of [0, 1, 5551, 5552, 5553, 11104, 11105, 131072]) for (const fill of [0, 1, 255]) {
+    const source = new Uint8Array(length).fill(fill), record = { codec: 'zlib', data: zlibSync(source, { level: 9 }), parameters: { version: 1 }, sourceLength: length };
+    assert.deepEqual(decodeBuffer(record), source);
+    const corrupt = record.data.slice(); corrupt[corrupt.length - 1]! ^= 1;
+    assert.throws(() => decodeBuffer({ ...record, data: corrupt }), /checksum/);
+  }
+});

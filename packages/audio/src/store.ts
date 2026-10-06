@@ -12,8 +12,9 @@
 //   const song = storeMusic(editedPlan);                                               // ~300 bytes
 //   play(loadMusic(bytes));                                                             // either kind: the header says which
 
-import { MUSIC_RECIPE, SONG, decode, encode, moodOfRecipe, planOfSong, readHeader, recipeOfMood, shortId, songOf } from "@keel-engine/codec";
-import type { MusicRecipe } from "@keel-engine/codec";
+import { decode, encode, readHeader, shortId } from "@keel-engine/codec/runtime";
+import { MUSIC_RECIPE, SONG, moodOfRecipe, planOfSong, recipeOfMood, songOf } from "@keel-engine/codec/schemas/audio";
+import type { MusicRecipe } from "@keel-engine/codec/schemas/audio";
 import { KIT_BAND } from "./nocturnes.ts";
 import { BANDS, moodFor, scoreOf } from "./score.ts";
 import type { Mood, MoodSpec, Pins, Plan } from "./score.ts";

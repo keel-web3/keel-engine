@@ -1,0 +1,49 @@
+{
+  "name": "bake-runtime",
+  "features": [
+    {
+      "module": "@keel-engine/bake/runtime",
+      "exports": [
+        "LayerInstances",
+        "SwayInstances",
+        "VOLUME_KIND",
+        "VolumeInstances",
+        "cardsMesh",
+        "coarseLayerMesh",
+        "createLookTable",
+        "createMeshWorker",
+        "createSpriteCache",
+        "createSpriteRenderer",
+        "defaultMeshSun",
+        "directionFor",
+        "frustumOf",
+        "layeredMesh",
+        "layeredMeshSteps",
+        "lookMesh",
+        "mergeMeshes",
+        "meshBounds",
+        "meshMatrix",
+        "mulMatrix",
+        "orthoDepthRange",
+        "packSway",
+        "pixelView",
+        "planBake",
+        "prefixMesh",
+        "prepareMeshDetail",
+        "projectionOf",
+        "renderIndexedSprites",
+        "shotOfView",
+        "solidSize",
+        "visible",
+        "worldsBounds"
+      ]
+    }
+  ],
+  "maxGzipBytes": 68000,
+  "maxBrotliBytes": 55000,
+  "forbidInputs": [
+    "bake/src/hybrid.ts",
+    "bake/src/portrait.ts",
+    "bake/src/specimen.ts"
+  ]
+}

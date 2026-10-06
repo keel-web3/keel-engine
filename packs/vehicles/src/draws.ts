@@ -1,3 +1,4 @@
+import { seedTagHash as hash32 } from "@keel-engine/core/hash";
 // The draws a generated thing is made from: every draw hashed from (seed, tag),
 // so the same seed is the same car everywhere and the order draws are made in
 // never matters (a new dial doesn't move the old ones). The shapes are the
@@ -8,13 +9,7 @@
 import { dlog2 } from "@keel-engine/core";
 
 /** A 32-bit hash of (seed, tag): FNV-1a, then a finishing mix. Exact integer maths. */
-export function hash32(seed: string, tag: string): number {
-  let h = 0x811c9dc5;
-  const s = `${seed}|${tag}`;
-  for (let i = 0; i < s.length; i += 1) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); }
-  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
-  return h >>> 0;
-}
+export { hash32 };
 
 export const clamp = (v: number, lo: number, hi: number): number => (v < lo ? lo : v > hi ? hi : v);
 /** A dial (-1..1) as a value between lo and hi. */

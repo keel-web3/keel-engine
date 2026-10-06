@@ -22,7 +22,8 @@
     "./native-asset-compiler-v6": "./src/asset-compiler-v6.ts",
     "./native-asset-runtime": "./src/asset-replay-v6.ts",
     "./styled-asset": "./src/styled-asset-runtime.ts",
-    "./styled-asset-compiler": "./src/styled-asset-compiler.ts"
+    "./styled-asset-compiler": "./src/styled-asset-compiler.ts",
+    "./gameboy-compiler": "./src/gameboy-compiler.ts"
   },
   "dependencies": {
     "@keel-engine/builder": "workspace:*",
@@ -34,7 +35,8 @@
     "fast-png": "6.2.0",
     "fflate": "0.8.2",
     "jpeg-js": "0.4.4",
-    "meshoptimizer": "0.25.0"
+    "meshoptimizer": "0.25.0",
+    "@keel-engine/codec": "workspace:*"
   },
   "devDependencies": {
     "@keel-engine/keel": "workspace:*",

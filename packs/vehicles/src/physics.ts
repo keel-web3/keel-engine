@@ -69,7 +69,7 @@ export function physicsOf(car: Car): CarPhysics {
   const finalDrive = ((redline * Math.PI) / 30) * radius / (vmax * GEARS[5]);
   const aero = car.parts.spoiler === "bigwing" || car.parts.spoiler === "swan" ? 0.9 : car.parts.spoiler === "wing" ? 0.5 : car.parts.spoiler === "none" ? 0.1 : 0.25;
   const spec: VehicleSpec = {
-    mass, width: g.width, height: roof, length: g.length, comHeight,
+    mass, width: g.width, height: roof, length: g.length, bodyCentre: -comZ, comHeight,
     crushBelt: g.belt - comHeight, wheelWidth: (car.wheels[0].width + car.wheels[1].width) / 2,
     bodyContacts: [
       // Preserve the established floor clearance and footprint; shape the upper hull to the cabin.

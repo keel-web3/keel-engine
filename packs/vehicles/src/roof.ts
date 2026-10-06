@@ -1,7 +1,7 @@
 // Convertible hardware, in the same boxes, sheets, tubes and finish slots as the car. Pieces stay rigid as their
 // hinges move: hard roof panels nest in the rear well; fabric folds over several articulated bows.
 import { dsin, dcos, datan2, dhypot } from "@keel-engine/core";
-import { meshMatrix } from "@keel-engine/bake";
+import { meshMatrix } from "@keel-engine/bake/mesh";
 import type { BakeWorld } from "@keel-engine/bake";
 import type { Car, Colour } from "./car.ts";
 import { drawsOf, clamp } from "./draws.ts";

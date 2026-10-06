@@ -21,8 +21,9 @@
     "weight": -500
   },
   "imports": {
-    "@keel-engine/bake": "keel/bake",
-    "@keel-engine/core": "keel/core"
+    "@keel-engine/bake/mesh": "keel/bake",
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/core/hash": "keel/core"
   },
   "manifests": {}
 }

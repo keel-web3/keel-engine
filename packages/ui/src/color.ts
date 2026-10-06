@@ -1,3 +1,4 @@
+import { srgb8ToLinear as lin } from "@keel-engine/core/color";
 // Colours as the UI layer holds them: one 32-bit word per pixel, RGBA bytes in
 // memory order (a Uint32Array over the layer's bytes on a little-endian
 // machine -- every browser and every Node we run on), so a pixel is written in
@@ -30,7 +31,7 @@ export function fromHex(hex: string): Rgba {
 }
 export const toHex = (c: Rgba): string => `#${rgbOf(c).map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 
-const lin = (v: number): number => { const s = v / 255; return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4; };
+
 
 /** WCAG relative luminance, 0..1. */
 export function luminance(c: Rgba): number {

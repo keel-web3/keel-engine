@@ -1,0 +1,24 @@
+{
+  "name": "entity-runtime",
+  "features": [
+    {
+      "module": "@keel-engine/entity/runtime",
+      "exports": [
+        "HUMANOID_CLIPS",
+        "IDLE_PERIOD",
+        "apply",
+        "entityOf",
+        "idleActFor",
+        "poseSkeleton",
+        "posed",
+        "posedIdle",
+        "skinOf"
+      ]
+    }
+  ],
+  "maxGzipBytes": 26000,
+  "maxBrotliBytes": 23000,
+  "forbidInputs": [
+    "entity/src/define.ts"
+  ]
+}

@@ -6,7 +6,7 @@ export const manifest = defineManifest({
   id: "keel/import",
   version: "0.1.0",
   kind: "runtime",
-  needs: ["keel/core@^0.1", "keel/runtime@^0.1", "keel/entity@^0.1", "keel/object@^0.1", "keel/builder@^0.1"],
+  needs: ["keel/core@^0.1", "keel/runtime@^0.1", "keel/entity@^0.1", "keel/object@^0.1", "keel/builder@^0.1", "keel/codec@^0.1"],
   title: "KEEL Engine 3D model import",
   description: "glTF/GLB, OBJ+MTL, STL and MagicaVoxel .vox into voxels, roles, parts, a rigged body with socket attributes and fitted primitives -- builder data and a replayable op list.",
 });

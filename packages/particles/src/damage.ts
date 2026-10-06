@@ -1,7 +1,7 @@
 // Damage states: the smoke, fire, sparks and drips that say how hurt a building or a unit is, and the
 // explosion or the body coming apart when it dies. Presentation only -- it never reads or writes game
 // state; the game tells it each tick what each thing is (where, how hurt, what it's made of) and it only
-// emits into a ParticlePool.
+// emits into a RuntimeParticlePool.
 //
 //   const damage = createDamageStates(pool);
 //   // each game tick, for every building and unit on the map (reuse one object: set() copies what it needs):
@@ -25,8 +25,8 @@
 // At most MAX_DAMAGE_EMITTERS continuous emitters an entity (bursts are one-shot). The pool culls and LODs what
 // they throw like anything else: nothing spawns off the picture.
 
-import type { ParticleEmitOptions, ParticlePool } from "./pool.ts";
-import { mix32 } from "./pool.ts";
+import type { ParticleEmitOptions, RuntimeParticlePool } from "./pool-runtime.ts";
+import { mix32 } from "./pool-runtime.ts";
 
 export interface DamageStageThresholds {
   readonly light: number;
@@ -145,7 +145,7 @@ const INV16 = 1 / 65535;
 
 type Mutable<T> = { -readonly [K in keyof T]: T[K] };
 
-export function createDamageStates(pool: ParticlePool, options: DamageStatesOptions = {}): DamageStates {
+export function createDamageStates(pool: RuntimeParticlePool, options: DamageStatesOptions = {}): DamageStates {
   const N = options.capacity ?? 2048;
   if (!(N > 0 && Number.isInteger(N))) throw new RangeError("Damage states' capacity is a positive integer.");
   const T = { ...DAMAGE_STAGES, ...options.stages };

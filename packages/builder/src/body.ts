@@ -14,7 +14,7 @@
 // doesn't need the baker. `doc` is the model's codec document (VOXELS): what a
 // hybrid record stores.
 
-import { VOXELS } from "@keel-engine/codec";
+import { VOXELS } from "@keel-engine/codec/schemas/voxel";
 import type { Role as EntityRole, Skeleton } from "@keel-engine/entity";
 import type { EntitySocket } from "@keel-engine/entity";
 import { entityRoleOf } from "./look.ts";

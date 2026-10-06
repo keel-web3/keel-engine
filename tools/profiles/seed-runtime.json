@@ -1,0 +1,6 @@
+{
+  "name": "seed-runtime",
+  "features": [{ "module": "@keel-engine/core/rng", "exports": ["normalizeSeed", "createRoll", "stream", "deriveSeed"] }],
+  "maxGzipBytes": 4000,
+  "forbidInputs": ["/render/", "/import/", "/audio/", "/bake/", "/dither.ts", "/gif.ts"]
+}

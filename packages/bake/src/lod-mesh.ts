@@ -1,3 +1,5 @@
+import { solidSize } from "./solid-lod.ts";
+export { solidSize } from "./solid-lod.ts";
 // Levels of detail as ONE mesh: a generated thing's solids in runs, coarsest
 // first ([what level 2 draws][what level 1 adds][what level 0 adds]), so each
 // level is a PREFIX of the index buffer -- a switch is an index count
@@ -71,11 +73,7 @@ export function prefixMesh(mesh: LayeredMesh, count: number): LookMesh {
  * How big a solid reads (m): the middle of its three extents. A long thin cornice is its thickness, a sign its height,
  * a rooftop unit its size -- what a coarser level loses when it drops it (keel/lod's geometric error).
  */
-export function solidSize(solid: BakeBox | BakeCapsule): number {
-  if ("r" in solid) return 2 * solid.r;
-  const e = [solid.h[0] ?? 0, solid.h[1] ?? 0, solid.h[2] ?? 0].sort((a, b) => a - b);
-  return 2 * e[1]!;
-}
+
 
 /** The biggest solid in a world by solidSize (0 when empty): the error of dropping all of it. */
 export function worldError(world: BakeWorld): number {

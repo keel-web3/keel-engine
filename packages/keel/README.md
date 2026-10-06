@@ -33,3 +33,17 @@ node packages/keel/src/cli.ts document <game-id> [--project <dir>] [--dev]
 ```
 
 See the repository `README.md` and `docs/PUBLISHING.md`.
+
+## Resource compression and small revisions
+
+`src/resource-containers.mjs` provides bounded, lossless host-side packing.
+Compression groups preserve each logical resource's ID, ordered range and SHA-256
+and cannot mix shared and creator ownership. The compressor is target-selected;
+an exact decoder replay is required before accepting a container.
+
+`packResourceRevision` compares the next graph with a complete previous container
+snapshot. Unchanged members retain their original container/range references;
+changed members become separate containers. This permits dictionary sharing at
+first publication without rewriting that dictionary for a small fix. Its result
+is an unbound plan, not a chain receipt. The caller must resolve the full active
+reference graph and verify prior bindings before publication or another patch.

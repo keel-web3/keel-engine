@@ -16,7 +16,7 @@
 // tried in order; the seeded one never fails, so the matrix always answers.
 
 import { canonicalJson } from "@keel-engine/replay";
-import { sha256, toHex } from "@keel-engine/codec";
+import { sha256, toHex } from "@keel-engine/codec/hash";
 import { limitsFor, programHash, readProgram } from "./contract.ts";
 import type { Contract, Program } from "./contract.ts";
 import { OPS, tidy } from "./expr.ts";

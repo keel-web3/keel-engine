@@ -1,0 +1,6 @@
+{
+  "name": "retro-decoder",
+  "features": [{ "module": "@keel-engine/codec/retro", "exports": ["decodeRetroFrame", "decodeRetroClipFrame", "decodeRetroAssetFrame"] }],
+  "maxGzipBytes": 5000,
+  "forbidInputs": ["/builder/", "/render/", "/import/", "/audio/", "/schemas/", "/procedural-buffer.ts"]
+}

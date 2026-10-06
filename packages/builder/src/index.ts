@@ -71,3 +71,5 @@ export { VOXEL_BOX_LIMIT, designVoxels, voxelParts, voxelStyle, voxelUnitFor } f
 import { registerStyle } from "@keel-engine/object";
 import { voxelStyle } from "./style.ts";
 registerStyle(voxelStyle);
+
+export { CONSTRUCTION_REVISION, CONSTRUCTION_MAX_CELLS, compileVoxelConstructionCandidates, compileVoxelConstruction, storeModel, storeModelText, loadModel, loadPrimitiveModel } from "./construction.ts";

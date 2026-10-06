@@ -5,3 +5,6 @@ export type { EdgeSpec, RoadClass, RoadEdge, RoadGraph, RoadNode } from "./graph
 export { ROAD_CLASS, loopGraph, roadGraph } from "./graph.ts";
 export type { FieldChunk, FieldWindow, FieldWindowWorkspace, RoadAt, RoadField } from "./field.ts";
 export { CHUNK, CHUNK_TEXELS, FAR, REACH, TPM, createFieldWindowWorkspace, fieldWindow, fieldWindowSteps, roadField } from "./field.ts";
+
+export { pathPolyline } from "./polyline.ts";
+export type { PolylinePath } from "./polyline.ts";

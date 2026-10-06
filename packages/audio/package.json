@@ -5,10 +5,12 @@
   "type": "module",
   "description": "Generative lo-fi records from a mood and a seed, live intensity, seeded game SFX, KEEL audio.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./car-runtime": "./src/car-runtime.ts"
   },
   "dependencies": {
     "@keel-engine/runtime": "workspace:*",
-    "@keel-engine/codec": "workspace:*"
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/core": "workspace:*"
   }
 }

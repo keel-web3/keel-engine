@@ -13,7 +13,10 @@
   "build": {
     "format": "iife",
     "external": [
-      "@keel-engine/codec"
+      "@keel-engine/codec/runtime",
+      "@keel-engine/codec/schemas/audio",
+      "@keel-engine/core/hash",
+      "@keel-engine/core/random"
     ]
   }
 }

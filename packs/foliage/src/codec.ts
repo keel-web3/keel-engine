@@ -4,9 +4,9 @@
 // number on a millimetre-ish grid). Not part of the pack's KEEL module (its
 // index doesn't import this): the editor, a level's save and agents import
 // "@keel-engine/foliage/codec". packs/buildings reuses the helpers.
-import { alt, bool, enumOf, fixed, map, named, num, optional, ref, struct, withDefault } from "@keel-engine/codec";
-import type { Infer, Type } from "@keel-engine/codec";
-import { seedAny, vec3, yaw } from "@keel-engine/codec";
+import { alt, bool, enumOf, fixed, map, named, num, optional, ref, struct, withDefault } from "@keel-engine/codec/runtime";
+import type { Infer, Type } from "@keel-engine/codec/runtime";
+import { seedAny, vec3, yaw } from "@keel-engine/codec/schemas/common";
 import type { StyledObjectDef } from "@keel-engine/object";
 import { pack } from "./pack.ts";
 

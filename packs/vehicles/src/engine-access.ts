@@ -1,6 +1,6 @@
 // Engine access and moving hardware share the exact geometry used by the body and its damage parts.
 import { dsin } from "@keel-engine/core";
-import { meshMatrix, mulMatrix } from "@keel-engine/bake";
+import { meshMatrix, mulMatrix } from "@keel-engine/bake/mesh";
 import type { Car } from "./car.ts";
 import { mechanicsOf } from "./mechanics.ts";
 

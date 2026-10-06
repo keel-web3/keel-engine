@@ -39,7 +39,8 @@ interface Box { c: V3; ax: V3; az: V3; hw: number; hl: number }
 function boxOf(car: Vehicle): Box {
   const f = rotate(car.q, [0, 0, 1]), r = rotate(car.q, [1, 0, 0]);
   const flat = (v: V3): V3 => { const l = Math.sqrt(v[0] * v[0] + v[2] * v[2]) || 1; return [v[0] / l, 0, v[2] / l]; };
-  return { c: [car.p[0], 0, car.p[2]], ax: flat(r), az: flat(f), hw: car.spec.width / 2, hl: car.spec.length / 2 };
+  const centre = car.spec.bodyCentre ?? 0;
+  return { c: [car.p[0] + f[0] * centre, 0, car.p[2] + f[2] * centre], ax: flat(r), az: flat(f), hw: car.spec.width / 2, hl: car.spec.length / 2 };
 }
 const reach = (b: Box, n: V3): number => b.hw * Math.abs(dot(b.ax, n)) + b.hl * Math.abs(dot(b.az, n));
 

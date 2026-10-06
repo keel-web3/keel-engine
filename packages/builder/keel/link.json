@@ -23,8 +23,12 @@
     "weight": -1000
   },
   "imports": {
-    "@keel-engine/codec": "keel/codec",
+    "@keel-engine/codec/runtime": "keel/codec",
+    "@keel-engine/codec/schemas/construction": "keel/codec",
+    "@keel-engine/codec/schemas/voxel": "keel/codec",
     "@keel-engine/core": "keel/core",
+    "@keel-engine/core/dmath": "keel/core",
+    "@keel-engine/core/rng": "keel/core",
     "@keel-engine/entity": "keel/entity",
     "@keel-engine/object": "keel/object",
     "@keel-engine/runtime": "keel/runtime",

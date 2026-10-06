@@ -82,7 +82,7 @@ interface Overlap { readonly nx: number; readonly nz: number; readonly depth: nu
 // The car's footprint: the body's box on the ground, centred between its axles (the centre of mass sits forward of it).
 function footprintOf(car: Vehicle): { cx: number; cz: number; fx: number; fz: number; hl: number; hw: number } {
   const f = rotate(car.q, [0, 0, 1]), l = Math.sqrt(f[0] * f[0] + f[2] * f[2]) || 1, fx = f[0] / l, fz = f[2] / l;
-  const mid = (car.spec.frontAxle + car.spec.rearAxle) / 2;
+  const mid = car.spec.bodyCentre ?? (car.spec.frontAxle + car.spec.rearAxle) / 2;
   return { cx: car.p[0] + fx * mid, cz: car.p[2] + fz * mid, fx, fz, hl: car.spec.length / 2, hw: car.spec.width / 2 };
 }
 

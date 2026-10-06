@@ -13,9 +13,17 @@
   "build": {
     "format": "iife",
     "external": [
-      "@keel-engine/codec",
+      "@keel-engine/codec/runtime",
+      "@keel-engine/codec/schemas/hybrid",
+      "@keel-engine/codec/schemas/object",
       "@keel-engine/core",
+      "@keel-engine/core/curl",
+      "@keel-engine/core/dmath",
+      "@keel-engine/core/rng",
       "@keel-engine/entity",
+      "@keel-engine/particles/basic",
+      "@keel-engine/particles/pool",
+      "@keel-engine/render/link-program",
       "@keel-engine/runtime"
     ]
   }

@@ -14,5 +14,8 @@ export type { Anchor, ButtonControl, Rect, SliderControl, StickControl, TiltCont
 export { DPAD_BUTTONS, RACING_BUTTONS, RACING_STICK, RACING_TILT, RACING_ZONES, TOUCH_LAYOUTS, TWIN_STICK } from "./touch/layout.ts";
 export { rollOf, sliderValue, stickValue, tiltValue } from "./touch/math.ts";
 export type { OverlayOptions, TouchOverlay } from "./touch/overlay.ts";
-export { createTouchOverlay } from "./touch/overlay.ts";
+export { createTouchOverlay, createTouchSurface } from "./touch/overlay.ts";
 export { CONTROLS_CSS, injectControlsCss } from "./touch/styles.ts";
+
+export { racingTouchLayout, RACING_THUMBS_CSS } from "./touch/racing.ts";
+export type { RacingTouchOptions } from "./touch/racing.ts";

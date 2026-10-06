@@ -7,7 +7,15 @@
   "exports": {
     ".": "./src/index.ts",
     "./resolver": "./src/resolver.ts",
-    "./vectors": "./src/vectors.ts"
+    "./vectors": "./src/vectors.ts",
+    "./features": "./src/features.ts",
+    "./compact-shaders": "./src/compact-shaders.ts",
+    "./representation-plan": "./src/representation-plan.ts",
+    "./construction-compiler": "./src/construction-compiler.ts",
+    "./model-plan": "./src/model-plan.ts",
+    "./modular-resources": "./src/modular-resources.mjs",
+    "./resource-containers": "./src/resource-containers.mjs",
+    "./compact-identifiers": "./src/compact-identifiers.mjs"
   },
   "dependencies": {
     "@keel-engine/codec": "workspace:*",
@@ -15,7 +23,8 @@
     "@keel/builder": "link:../../../keel-sdk/packages/builder",
     "@keel/protocol": "link:../../../keel-sdk/packages/protocol",
     "@keel/sandbox-sdk": "link:../../../keel-sdk/packages/sandbox-sdk",
-    "@keel/sdk": "link:../../../keel-sdk/packages/sdk"
+    "@keel/sdk": "link:../../../keel-sdk/packages/sdk",
+    "@keel-engine/builder": "workspace:*"
   },
   "devDependencies": {
     "esbuild": "^0.25.9"

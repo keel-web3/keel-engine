@@ -23,6 +23,11 @@ export interface ButtonControl {
   readonly value?: number;
   /** Flip on each tap instead of holding. */
   readonly toggle?: boolean;
+  /** Extra held actions, e.g. accelerator + boost under one thumb. */
+  readonly with?: Readonly<Record<string, number>>;
+  /** Queue brief taps (default true). Set false for continuous pedals. */
+  readonly pulse?: boolean;
+  readonly ripple?: boolean;
   /** Buttons in the same group can be held and crossed with one finger. */
   readonly slide?: string;
 }

@@ -19,7 +19,9 @@
 // OBJECT worn in a socket itself; the builder gives a reader for its VOXELS
 // bodies (voxelBodyReader).
 
-import { HYBRID_POPULATION, OBJECT, decode, encode, readHeader, shortId } from "@keel-engine/codec";
+import { decode, encode, readHeader, shortId } from "@keel-engine/codec/runtime";
+import { HYBRID_POPULATION } from "@keel-engine/codec/schemas/hybrid";
+import { OBJECT } from "@keel-engine/codec/schemas/object";
 import type { HybridRecord, ObjectRecord, Type, UnitPinsRecord } from "@keel-engine/codec";
 import type { AttributeShape, Role } from "@keel-engine/entity";
 import { defineAttribute } from "@keel-engine/runtime";

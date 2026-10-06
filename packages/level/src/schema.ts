@@ -1,10 +1,12 @@
+import { SETTINGS } from "@keel-engine/codec/schemas/world";
+import { vec3, yaw } from "@keel-engine/codec/schemas/common";
 // The level document's packed form: a codec schema (keel/level) -- the
 // terrain's arrays as runs (a meadow is one run of grass), things by table-
 // deduped names and millimetre positions, settings as the world's own schema.
 // encodeLevel / decodeLevel round-trip a document exactly (test/level.test.ts).
 
-import { SETTINGS, array, decode, dyn, encode, enumOf, fixed, int, map, named, nullable, num, optional, ref, runs, string, struct, tuple, uint, vec3, withDefault, yaw } from "@keel-engine/codec";
-import type { Infer } from "@keel-engine/codec";
+import { array, decode, dyn, encode, enumOf, fixed, int, map, named, nullable, num, optional, ref, runs, string, struct, tuple, uint, withDefault } from "@keel-engine/codec/runtime";
+import type { Infer } from "@keel-engine/codec/runtime";
 import type { LevelDocument } from "./document.ts";
 
 const tile = tuple([uint(13), uint(13)]);

@@ -1,3 +1,4 @@
+import { fnv1a32Signed as fnv } from "@keel-engine/core/hash";
 // Where a city stands: its size, its flat buildable core, the way its grid
 // runs, and what lies past its edges -- the sea on one bearing, mountains on
 // another. And the seeded draws every other part of the generator makes its
@@ -12,11 +13,7 @@ export interface Draws {
   flat(tag: string, i?: number, j?: number): number;
 }
 
-const fnv = (text: string): number => {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i += 1) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
-  return h | 0;
-};
+
 
 export function drawsFor(seed: string, part: string): Draws {
   const base = fnv(`keel-city|${seed}|${part}`);

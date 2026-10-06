@@ -21,8 +21,9 @@
 // Nothing in here needs a page but createSfx: sfxStyle, sfxSamples, paramsFor
 // and bodySfx are plain code (test/sfx.test.ts runs them in Node).
 
-import { SFX_SETTINGS, decode, encode } from "@keel-engine/codec";
-import type { SfxSettings } from "@keel-engine/codec";
+import { decode, encode } from "@keel-engine/codec/runtime";
+import { SFX_SETTINGS } from "@keel-engine/codec/schemas/audio";
+import type { SfxSettings } from "@keel-engine/codec/schemas/audio";
 import { bandpass, noiseOf, normalize, onePole, partials, wear } from "./samples.ts";
 import type { PartialSpec, Samples } from "./samples.ts";
 import { hash, streamOf } from "./score.ts";

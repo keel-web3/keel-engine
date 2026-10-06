@@ -26,3 +26,7 @@ export { PRESETS } from "./presets/index.ts";
 
 export { DAMAGE_EFFECTS, DAMAGE_STAGES, MAX_DAMAGE_EMITTERS, createDamageStates } from "./damage.ts";
 export type { DamageEffects, DamageKind, DamageStageThresholds, DamageMaterial, DamageState, DamageStates, DamageStatesOptions, DamageStats } from "./damage.ts";
+
+export { createRuntimeParticlePool } from "./pool-runtime.ts";
+export type { RuntimeParticlePool } from "./pool-types.ts";
+export { withParticlePersistence } from "./persistence.ts";

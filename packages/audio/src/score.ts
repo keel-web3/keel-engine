@@ -1,3 +1,5 @@
+import { createMulberry32 } from "@keel-engine/core/random";
+import { fnv1a32 as hash } from "@keel-engine/core/hash";
 // The score: generative lo-fi as a plan (plain data), written by a seed from a
 // MOOD. It is NOCTURNES' composer (src/music.js there) with the room taken
 // out: whatever NOCTURNES read off a genome -- its theme's band, the palette's
@@ -236,15 +238,10 @@ export const ROOM_KINDS: readonly RoomKind[] = ["vinyl", "crackle", "fan", "hum"
 
 // ---------------------------------------------------------------- seeds
 
-export function hash(text: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < text.length; i += 1) h = Math.imul(h ^ text.charCodeAt(i), 16777619);
-  return h >>> 0;
-}
+export { hash };
 /** A seeded stream off a string (exact integer arithmetic: the same in every browser). */
 export function streamOf(text: unknown): Stream {
-  let a = hash(String(text)) || 1;
-  const f = (): number => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const f = createMulberry32(hash(String(text)) || 1);
   const weighted = <T>(l: Weighted<T>): T => {
     let s = 0;
     for (const [, w] of l) s += w;

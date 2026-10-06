@@ -20,7 +20,7 @@
 //     look:     { hue?, chroma?, aura?, trail?, size? } }
 
 import { canonicalJson } from "@keel-engine/replay";
-import { sha256, toHex } from "@keel-engine/codec";
+import { sha256, toHex } from "@keel-engine/codec/hash";
 import { checkExpr, evalExpr, exprVars, scaleToward, tidy } from "./expr.ts";
 import type { Expr } from "./expr.ts";
 
