@@ -26,3 +26,5 @@ export { cloudLobe } from "./cloud-lobe.ts";
 export { createSizeCache } from "./size-cache.ts";
 export { shadowView } from "./shadow-view.ts";
 export { LOOK_TEXELS, LOOKS_PER_ROW, PAINTS_PER_ROW, PALETTE_ROW, PLACES_PER_ROW } from "./looks.ts";
+
+export { GROUND_ART_SIZE, GROUND_ART_LAYERS, GROUND_ART_METRES, groundArtPixels, uploadGroundArt } from "./ground-art.ts";

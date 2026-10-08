@@ -113,3 +113,5 @@ export { cloudLobe } from "./cloud-lobe.ts";
 export {SPRITE_CAMERA,SPRITE_LOOK,materialLight,spriteFraming,specimenSprite,auditSpecimen} from './specimen-sprite.ts';
 export type {SpriteCamera,SpriteLook,SpriteFraming,SpriteView,SpecimenAudit} from './specimen-sprite.ts';
 export {specimenAtDetail,specimenDetail,emitterSlots} from './specimen-detail.ts';
+
+export { GROUND_ART_SIZE, GROUND_ART_LAYERS, GROUND_ART_METRES, groundArtPixels, uploadGroundArt } from "./ground-art.ts";
