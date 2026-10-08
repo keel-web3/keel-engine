@@ -146,6 +146,8 @@ export interface MaterialSpec {
    * its sill streaks and foot grime -- the grime deepened by the district's dirt. Walls with a facade grid only.
    */
   readonly detail?: WallDetail;
+  /** Optional second material ramp, such as foliage rooted on a weathered wall. */
+  readonly detailInk?: Pick<MaterialSpec, "hue" | "chroma" | "light" | "span" | "finish">;
 }
 
 /** A variant of a district kind's look: how much of it is lit, how warm, how dirty. */

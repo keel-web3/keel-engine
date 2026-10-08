@@ -14,6 +14,7 @@
 // Before either, a shadow pass draws the meshes from the sun; and before all
 // of it, the frustum decides what is worth drawing at all (cull.ts).
 
+import { wallArtPixels, WALL_ART_WIDTH, WALL_ART_HEIGHT, WALL_ART_LAYERS } from "./wall-art.ts";
 import { createSizeCache } from "./size-cache.ts";
 import { SLOTS } from "./indexed.ts";
 import { MESH_GFS, MESH_LIGHTS, MESH_SHADOW_FS, MESH_VS } from "./mesh.ts";
@@ -62,7 +63,7 @@ export interface MeshPass {
 // Live meshes (drawMeshes' second pass): LAYER_FS reading pass 1's G-buffer in place of a sprite's texels -- the same
 // looks, finishes, marks, decals, sheens, screens and outline, on a real 3D object drawn at its exact heading.
 const MESH_FS = [
-  ["uniform sampler2DArray uPages;", "uniform sampler2DArray uPages;\nuniform sampler2D uGA;\nuniform highp usampler2D uGB;\nuniform highp isampler2D uGC;\nuniform sampler2D uGD;\nuniform float uGap;\nuniform vec3 uMirrorAxes[3];  // right, up, forward: a reflected ray's way across the picture\nuniform vec2 uMirrorK;        // pixels a metre, and how far a reflection reaches (pixels)\nuniform ivec2 uTints[24];  // a coloured light's ramp: its base in the palette, its length\nuniform int uChunkMax;     // the biggest pixel size any draw in this call asked for"],
+  ["uniform sampler2DArray uPages;", "uniform sampler2DArray uPages;\nuniform sampler2DArray uWallArt;\nuniform sampler2D uGA;\nuniform highp usampler2D uGB;\nuniform highp isampler2D uGC;\nuniform sampler2D uGD;\nuniform float uGap;\nuniform vec3 uMirrorAxes[3];  // right, up, forward: a reflected ray's way across the picture\nuniform vec2 uMirrorK;        // pixels a metre, and how far a reflection reaches (pixels)\nuniform ivec2 uTints[24];  // a coloured light's ramp: its base in the palette, its length\nuniform int uChunkMax;     // the biggest pixel size any draw in this call asked for"],
   ["flat in vec2 vAnchor;", "vec2 vAnchor;"],
   ["in vec3 vUv;\nflat in int vLook;\nflat in vec2 vDepth;\nflat in vec4 vDS;\nflat in int vId;", "vec3 vUv; int vLook; vec2 vDepth; vec4 vDS; int vId;"],
   ["void main() {\n  vec4 c = texelFetch(uPages, ivec3(ivec2(vUv.xy), int(vUv.z + 0.5)), 0);\n  ivec3 hAt = ivec3(ivec2(vUv.xy), int(vUv.z + 0.5));\n  if (vLook < 0) { if (c.a < 0.5) discard; outColor = uIds == 1 ? idColour() : vec4(c.rgb, 1.0); gl_FragDepth = texelZ(hAt, vDepth.x); return; }",
@@ -320,7 +321,7 @@ float pnoise(vec2 f, float per) {
   vec2 j = mod(i + 1.0, per); i = mod(i, per);
   return mix(mix(hash12(i), hash12(vec2(j.x, i.y)), t.x), mix(hash12(vec2(i.x, j.y)), hash12(j), t.x), t.y);
 }
-float wallDetail(uint D, ivec2 fp, int chunk, uint who, vec4 c, int gw, int pane, int wtype, float wfill) {
+vec2 wallDetail(uint D, ivec2 fp, int chunk, uint who, vec4 c, int gw, int pane, int wtype, float wfill) {
   int mat = int(D & 15u);
   float grime = float((D >> 4u) & 15u) / 15.0, footK = float((D >> 8u) & 15u) / 15.0;
   float sc = ((D >> 13u) & 3u) == 1u ? 2.0 : ((D >> 13u) & 3u) == 2u ? 0.5 : ((D >> 13u) & 3u) == 3u ? 4.0 : 1.0;
@@ -333,7 +334,7 @@ float wallDetail(uint D, ivec2 fp, int chunk, uint who, vec4 c, int gw, int pane
   float cy = hD ? max(wrapD(FD.y - F.y), 0.25 * wrapD(FD.x - F.x)) : hU ? wrapD(FU.y - F.y) : 0.05;
   int bu = int(c.b * 255.0 + 0.5), bv = int(c.a * 255.0 + 0.5);
   float cellR = float((bu & 15) * 16 + (bv & 15));
-  float x = 0.0;
+  float x = 0.0, growth = 0.0;
   bool wall = pane == 0;
   if (mat == 1 || mat == 7) {
     // Brick in running bond (courses, head joints half a brick over on every other course), or stone in big ashlar blocks.
@@ -353,6 +354,16 @@ float wallDetail(uint D, ivec2 fp, int chunk, uint who, vec4 c, int gw, int pane
     float tx = nx * 3.0, ty = ny * 2.0;
     bool tie = tx * cx <= 0.25 && ty * cy <= 0.25 && hR && hD && latIdx(FR.x, tx, 0.5) != latIdx(F.x, tx, 0.5) && latIdx(FD.y, ty, 0.5) != latIdx(F.y, ty, 0.5);
     if (wall) x += seam ? -1.0 : tie ? -0.75 : (hash12(vec2(px_ + cellR, py_ * 7.0 + cellR)) - 0.5) * 0.5 + 0.15 * (fract(F.y * ny) - 0.5);
+  } else if (mat == 8) {
+    // Authored artwork, selected once by the panel's stable seed. A shared
+    // mipmapped atlas replaces per-fragment vines/crack synthesis.
+    float age = hash12(vec2(cellR, 53.0));
+    float tile = age < 0.4 ? 0.0 : age < 0.72 ? 1.0 : age < 0.88 ? 2.0 : 3.0;
+    vec2 uv = vec2(mod(cellR, 2.0) < 1.0 ? F.x : 1.0 - F.x, 1.0 - F.y);
+    float level = clamp(log2(max(max(cx * 256.0, cy * 128.0), 1.0)), 0.0, 8.0);
+    vec2 art = textureLod(uWallArt, vec3(clamp(uv, vec2(0.002), vec2(0.998)), tile), level).rg;
+    growth = art.g;
+    x += growth > 0.45 ? (art.r - 0.33) * 12.0 : (art.r - 0.58) * 6.0;
   } else if (mat == 3) {
     // Corrugated sheet: vertical ribs, a dark valley line between each and a lit crest; a lap every storey.
     float nr = latticeN(24.0 * sc, cx), ny = latticeN(sc, cy);
@@ -405,14 +416,14 @@ float wallDetail(uint D, ivec2 fp, int chunk, uint who, vec4 c, int gw, int pane
       if (o.x != 0u && o.y == who && (texelFetch(uGC, qU, 0).w & 256) == 0) x += 1.3;
     }
   }
-  return x;
+  return vec2(x, growth);
 }
 void plainPaint(int look, int slot, float shade, out int rbase, out int rlen, out float rx) {`],
   ["  if (kind == 8 && (gc.w & 256) == 0) kind = 0;", "  if (kind == 8 && (gc.w & 256) == 0) kind = 0;\n  int wPane = 0, wType = -1; float wFill = 0.0;"],
   ["    int w = windowAt(c.ba, int((A.z >> 8u) & 15u), float((A.z >> 12u) & 15u) / 15.0, float((A.z >> 4u) & 15u) / 15.0, wr);",
    "    int w = windowAt(c.ba, int((A.z >> 8u) & 15u), float((A.z >> 12u) & 15u) / 15.0, float((A.z >> 4u) & 15u) / 15.0, wr);\n    wPane = w; wType = int((A.z >> 8u) & 15u); wFill = float((A.z >> 12u) & 15u) / 15.0;"],
   ["  // (Where the dither screens are read: the picture's pixel, or the sprite's own",
-   "  if ((A.z >> 16u) != 0u && (gc.w & 256) != 0) x += wallDetail(A.z >> 16u, fp, chunk, gb.y, c, gc.w, wPane, wType, wFill);\n  // (Where the dither screens are read: the picture's pixel, or the sprite's own"],
+   "  if ((A.z >> 16u) != 0u && (gc.w & 256) != 0) { vec2 wd = wallDetail(A.z >> 16u, fp, chunk, gb.y, c, gc.w, wPane, wType, wFill); if (wd.y > 0.45 && B.y > 0u) { base = int(B.x); len = max(int(B.y), 1); x = t * float(len - 1) + wd.x; } else x += wd.x; }\n  // (Where the dither screens are read: the picture's pixel, or the sprite's own"],
   // A crossed card's ink is one entry, not the style's outline: a field of tufts reads as foliage, not as black lace.
   ["  else if (edge) idx = max(0, idx - uOutline);", "  else if (edge) idx = max(0, idx - ((gc.w & 1280) == 1024 ? min(uOutline, 1) : uOutline));"],
   // ---------------------------------------------------------------- weather (MeshStyle.weather)
@@ -506,10 +517,11 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
   interface MeshGpu { vao: WebGLVertexArrayObject; bufs: WebGLBuffer[]; count: number; lo: [number, number, number]; hi: [number, number, number]; bounds: Bounds; parts: ReadonlyMap<number, Bounds> }
   interface Meshes {
     gprog: WebGLProgram; gu: Record<MeshU, WebGLUniformLocation | null>;
-    cprog: WebGLProgram; cu: Record<PaintUniform | "ga" | "gb" | "gc" | "gd" | "gap" | "tints" | "chunkMax" | "mirrorAxes" | "mirrorK" | "fog" | "fogRange" | "fogRay" | "time" | "fKind" | "f0" | "f1" | "f2" | "gKind" | "g0" | "g1" | "g2" | "wxOn" | "wxPersp" | "wxAmt" | "wxRamp" | "wxMapOn" | "wxMap" | "wxBox" | "wxAlt", WebGLUniformLocation | null>;
+    cprog: WebGLProgram; cu: Record<PaintUniform | "ga" | "gb" | "gc" | "gd" | "gap" | "tints" | "chunkMax" | "mirrorAxes" | "mirrorK" | "fog" | "fogRange" | "fogRay" | "time" | "fKind" | "f0" | "f1" | "f2" | "gKind" | "g0" | "g1" | "g2" | "wxOn" | "wxPersp" | "wxAmt" | "wxRamp" | "wxMapOn" | "wxMap" | "wxBox" | "wxAlt" | "wallArt", WebGLUniformLocation | null>;
     fbo: WebGLFramebuffer | null; ga: WebGLTexture | null; gb: WebGLTexture | null; gc: WebGLTexture | null; gd: WebGLTexture | null; zb: WebGLRenderbuffer | null; w: number; h: number;
     tri: WebGLVertexArrayObject; meshes: Map<string, MeshGpu>; poses: WebGLTexture | null; poseRows: number;
     sprog: WebGLProgram; su: Record<MeshU, WebGLUniformLocation | null>; sfbo: WebGLFramebuffer; smap: WebGLTexture | null; ssize: number;
+    wallArt: WebGLTexture;
     wxMap: WebGLTexture | null; wxMapKey: unknown; wxMapVersion: number;
   }
   let meshState: Meshes | null = null;
@@ -524,9 +536,18 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
     for (const key of Object.keys(su) as MeshU[]) su[key] = sg(`u${key[0]!.toUpperCase()}${key.slice(1)}`);
     const cprog = link(FULLSCREEN_VS, MESH_FS, "Mesh paint");
     const c = (n: string) => gl.getUniformLocation(cprog, n);
-    const cu = { center: c("uCenter"), right: c("uRight"), up: c("uUp"), forward: c("uForward"), k: c("uK"), size: c("uSize"), depth: c("uDepthRange"), pages: c("uPages"), looks: c("uLooks"), paints: c("uPaints"), palette: c("uPalette"), places: c("uPlaces"), anchorDither: c("uDitherAnchor"), decals: c("uDecals"), screen: c("uScreen"), dither: c("uDither"), outline: c("uOutline"), heights: c("uHeights"), heightOn: c("uHeightOn"), ds: c("uDS"), ids: c("uIds"), idBase: c("uIdBase"), ga: c("uGA"), gb: c("uGB"), gc: c("uGC"), gd: c("uGD"), gap: c("uGap"), tints: c("uTints"), chunkMax: c("uChunkMax"), mirrorAxes: c("uMirrorAxes"), mirrorK: c("uMirrorK"), fog: c("uFog"), fogRange: c("uFogRange"), fogRay: c("uFogRay"), time: c("uTime"), fKind: c("uFKind"), f0: c("uF0"), f1: c("uF1"), f2: c("uF2"), gKind: c("uGKind"), g0: c("uG0"), g1: c("uG1"), g2: c("uG2"), wxOn: c("uWxOn"), wxPersp: c("uWxPersp"), wxAmt: c("uWxAmt"), wxRamp: c("uWxRamp"), wxMapOn: c("uWxMapOn"), wxMap: c("uWxMap"), wxBox: c("uWxBox"), wxAlt: c("uWxAlt") };
+    const cu = { center: c("uCenter"), right: c("uRight"), up: c("uUp"), forward: c("uForward"), k: c("uK"), size: c("uSize"), depth: c("uDepthRange"), pages: c("uPages"), looks: c("uLooks"), paints: c("uPaints"), palette: c("uPalette"), places: c("uPlaces"), anchorDither: c("uDitherAnchor"), decals: c("uDecals"), screen: c("uScreen"), dither: c("uDither"), outline: c("uOutline"), heights: c("uHeights"), heightOn: c("uHeightOn"), ds: c("uDS"), ids: c("uIds"), idBase: c("uIdBase"), ga: c("uGA"), gb: c("uGB"), gc: c("uGC"), gd: c("uGD"), gap: c("uGap"), tints: c("uTints"), chunkMax: c("uChunkMax"), mirrorAxes: c("uMirrorAxes"), mirrorK: c("uMirrorK"), fog: c("uFog"), fogRange: c("uFogRange"), fogRay: c("uFogRay"), time: c("uTime"), fKind: c("uFKind"), f0: c("uF0"), f1: c("uF1"), f2: c("uF2"), gKind: c("uGKind"), g0: c("uG0"), g1: c("uG1"), g2: c("uG2"), wxOn: c("uWxOn"), wxPersp: c("uWxPersp"), wxAmt: c("uWxAmt"), wxRamp: c("uWxRamp"), wxMapOn: c("uWxMapOn"), wxMap: c("uWxMap"), wxBox: c("uWxBox"), wxAlt: c("uWxAlt"), wallArt: c("uWallArt") };
+    const wallArt = gl.createTexture()!;
+    gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D_ARRAY, wallArt);
+    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RG8, WALL_ART_WIDTH, WALL_ART_HEIGHT, WALL_ART_LAYERS, 0, gl.RG, gl.UNSIGNED_BYTE, wallArtPixels());
+    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.activeTexture(gl.TEXTURE0);
     const tri = gl.createVertexArray()!;
-    meshState = { gprog, gu, cprog, cu, fbo: null, ga: null, gb: null, gc: null, gd: null, zb: null, w: 0, h: 0, tri, meshes: new Map(), poses: null, poseRows: 0, sprog, su, sfbo: gl.createFramebuffer()!, smap: null, ssize: 0, wxMap: null, wxMapKey: null, wxMapVersion: -1 };
+    meshState = { gprog, gu, cprog, cu, wallArt, fbo: null, ga: null, gb: null, gc: null, gd: null, zb: null, w: 0, h: 0, tri, meshes: new Map(), poses: null, poseRows: 0, sprog, su, sfbo: gl.createFramebuffer()!, smap: null, ssize: 0, wxMap: null, wxMapKey: null, wxMapVersion: -1 };
     return meshState;
   };
   // Main, mirror and small GPU atlas bake each retain their workspace.
@@ -924,6 +945,7 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
       (style.tints ?? []).slice(0, 24).forEach((t, i) => { tintRamps[i * 2] = t[0]; tintRamps[i * 2 + 1] = t[1]; });
       gl.uniform2iv(U.tints, tintRamps);
       gl.uniform1i(U.chunkMax, draws.reduce((m, d) => Math.max(m, Math.min(31, Math.round(d.chunk ?? 1))), 1));
+      gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D_ARRAY, M.wallArt); gl.uniform1i(U.wallArt, 4);
       gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, L.palette); gl.uniform1i(U.palette, 1);
       gl.activeTexture(gl.TEXTURE2); gl.bindTexture(gl.TEXTURE_2D, L.looks); gl.uniform1i(U.looks, 2);
       gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, L.paints); gl.uniform1i(U.paints, 3);

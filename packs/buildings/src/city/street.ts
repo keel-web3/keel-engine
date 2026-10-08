@@ -23,7 +23,10 @@ const MATERIALS: Readonly<Partial<Record<StreetSlotName, MaterialSpec>>> = {
   wood: m(45, 0.07, 0.42), binGreen: m(150, 0.05, 0.3, "metal"), hydrant: m(25, 0.17, 0.5, "leather"), shelterGlass: m(210, 0.03, 0.55, "leather", { mirror: 0.4 }),
   frame: m(240, 0.01, 0.45, "metal"), adPanel: glow(90, 0.04, 0.86, 0.45), newsBox: m(250, 0.12, 0.4, "leather"), planter: m(70, 0.015, 0.5),
   foliage: m(140, 0.08, 0.3), foliageAlt: m(115, 0.09, 0.38), trunk: m(45, 0.05, 0.28), grass: m(135, 0.07, 0.34, "matte", { span: 0.45, screen: "chunky", dither: 1.3 }),
-  paving: m(70, 0.012, 0.5, "matte", { span: 0.4, screen: "checker", dither: 0.8 }), water: m(225, 0.08, 0.34, "leather", { mirror: 0.5 }), jet: glow(200, 0.05, 0.9, 0.55), plinth: m(75, 0.015, 0.58),
+  paving: m(70, 0.012, 0.5, "matte", { span: 0.4, screen: "checker", dither: 0.8 }), water: m(225, 0.08, 0.34, "leather", { mirror: 0.5 }), jet: glow(200, 0.05, 0.9, 0.55), plinth: m(75, 0.015, 0.58, "matte", {
+    detail: { material: "barrier", grime: 0.4, foot: 0.7 },
+    detailInk: { hue: 138, chroma: 0.085, light: 0.38, span: 0.38, finish: "matte" },
+  }),
   bronze: m(165, 0.05, 0.4, "metal"), sculpture: m(230, 0.01, 0.62, "metal"), housing: m(240, 0.01, 0.16), signalRed: glow(25, 0.22, 0.58, 0.9),
   signalAmber: glow(70, 0.17, 0.75, 0.9), signalGreen: glow(160, 0.17, 0.72, 0.9), signBlue: m(245, 0.12, 0.42, "leather"), bollard: m(80, 0.14, 0.65, "leather"),
   muralA: m(0, 0.15, 0.5, "matte", { neon: true, pattern: { kind: "stripes", freq: 5, angle: 3, width: 4 } }),
@@ -32,7 +35,7 @@ const MATERIALS: Readonly<Partial<Record<StreetSlotName, MaterialSpec>>> = {
 };
 
 export const CITY_STREETS: StreetCatalogue = {
-  version: "streets@5-infill",
+  version: "streets@6-wall-surfaces",
   infill: true,
   lampStyles: {
     lantern: lampStyle("lantern", 3.8, 0, 1, "lampWarm", 10),

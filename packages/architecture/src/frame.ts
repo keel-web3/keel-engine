@@ -98,7 +98,7 @@ export function toWorld(b: Placer, x: number, y: number, z: number): [number, nu
   return [b.frame.x + x * c + z * s, y + (b.frame.y ?? 0), b.frame.z - x * s + z * c];
 }
 
-export interface BoxOptions { readonly grid?: boolean; readonly wedge?: boolean; readonly lo?: number; readonly turn?: number }
+export interface BoxOptions { readonly grid?: boolean | readonly [number, number, number, number]; readonly wedge?: boolean; readonly lo?: number; readonly turn?: number }
 
 const isBuild = (b: Placer): b is Build => "bay" in b;
 
@@ -108,7 +108,7 @@ export function addBox(b: Placer, lod: Lod, x: number, y: number, z: number, w: 
   const c = toWorld(b, x, y, z), yaw = b.frame.yaw + (o.turn ?? 0);
   // (The grid lines up across stacked masses: cells counted from the envelope's left edge and from the ground,
   // offset by a seeded whole number so two buildings in one look never light alike.)
-  const grid = o.grid && isBuild(b) ? [b.bay, b.storey, gridU(b) + (x - w - (b.site.x - b.site.hw)) / b.bay, gridV(b) + (y - h) / b.storey] as const : undefined;
+  const grid = o.grid && typeof o.grid !== "boolean" ? o.grid : o.grid && isBuild(b) ? [b.bay, b.storey, gridU(b) + (x - w - (b.site.x - b.site.hw)) / b.bay, gridV(b) + (y - h) / b.storey] as const : undefined;
   b.solids.push({ lod, layer: layerOf(slot), box: { c, h: [w, h, d], yaw, mat: slotIndex(slot), ...(o.wedge ? { kind: "wedge", lo: o.lo ?? 0 } : {}), ...(grid ? { grid } : {}) } });
   if (layerOf(slot) === 0) b.top = Math.max(b.top, y + h);
 }

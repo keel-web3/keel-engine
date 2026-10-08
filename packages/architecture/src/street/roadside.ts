@@ -150,7 +150,11 @@ export function railRun(p: Placer, len: number): void {
 
 /** A sound wall's panel (its frame at the middle, +z along it, +x toward the road): the panel, an H-pile, the coping. */
 export function wallPanel(p: Placer, len: number, h: number): void {
-  addBox(p, 2, 0, h / 2 - 0.3, 0, 0.14, h / 2 + 0.3, len / 2, "plinth");
+  // One metric surface per panel: seeded once during generation, shared paint at
+  // every mesh LOD. Weathering and climbing growth add no solids or colliders.
+  const key = Math.round(p.frame.x * 31 + p.frame.z * 17);
+  const u = 8 + Math.floor(p.D.u("wallSurfaceU", key) * 900), v = Math.floor(p.D.u("wallSurfaceV", key) * 900);
+  addBox(p, 2, 0, h / 2 - 0.3, 0, 0.14, h / 2 + 0.3, len / 2, "plinth", { grid: [len, h + 0.6, u, v] });
   addBox(p, 1, 0.1, h / 2, -len / 2 + 0.1, 0.18, h / 2 + 0.1, 0.12, "frame");
   addBox(p, 0, 0, h + 0.05, 0, 0.2, 0.06, len / 2, "paving");
 }

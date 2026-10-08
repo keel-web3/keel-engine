@@ -60,7 +60,8 @@ function slotPaint(m: MaterialSpec, look: DistrictLook, night: boolean, hue: num
     const ink = role({ hue: next ?? base.hue + 150, chroma: 0.16, light: 0.62, span: 0.25, finish: "matte" });
     return { paint: { look: role({ ...base, ...glowOff }, pattern), ink, screen: "bayer4", dither: 0.4 }, bloom: null };
   }
-  const paint: SlotPaint = { look: role({ ...base, ...glowOff }), ink: null, screen: lit ? "none" : m.screen ?? "bayer4", dither: lit ? 0 : m.dither ?? 0.8, ...mirror };
+  const detail = m.detail ? { detail: { ...m.detail, grime: Math.min(1, (m.detail.grime ?? 0.4) + 0.45 * look.dirt) } } : {};
+  const paint: SlotPaint = { look: role({ ...base, ...glowOff }), ink: m.detailInk ? role(m.detailInk) : null, ...detail, screen: lit ? "none" : m.screen ?? "bayer4", dither: lit ? 0 : m.dither ?? 0.8, ...mirror };
   const bloom = lit && night && m.bloom ? oklch(Math.min(0.85, base.light + 0.05), base.chroma, base.hue) : null;
   return { paint, bloom: bloom ? [bloom[0] / 255, bloom[1] / 255, bloom[2] / 255, m.bloom!] : null };
 }

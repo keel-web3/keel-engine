@@ -81,9 +81,9 @@ export const DECAL_ATLAS = 1024;
  * A wall's surface material (drawMeshes only, on a box with a facade grid -- BakeBox.grid): pixel-art detail painted
  * between its windows, measured in the facade's own metric cells so it never swims. "brick" running-bond courses and
  * head joints, "panel" precast concrete seams and form-tie dots, "corrugated" vertical ribs and sheet laps, "siding"
- * lap boards, "stucco" a blotchy render, "glass" curtain-wall mullions and transoms, "stone" big ashlar blocks.
+ * lap boards, "stucco" a blotchy render, "glass" curtain-wall mullions and transoms, "stone" big ashlar blocks, "barrier" concrete with seeded wear and climbing vegetation.
  */
-export const WALL_DETAILS = ["none", "brick", "panel", "corrugated", "siding", "stucco", "glass", "stone"] as const;
+export const WALL_DETAILS = ["none", "brick", "panel", "corrugated", "siding", "stucco", "glass", "stone", "barrier"] as const;
 export type WallMaterial = (typeof WALL_DETAILS)[number];
 /**
  * A slot's wall detail (SlotPaint.detail). Every line is one picture pixel wide wherever it lands (it is drawn where
