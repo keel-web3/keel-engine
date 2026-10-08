@@ -185,9 +185,10 @@ export function* planStreetsSteps(sc: StreetCatalogue, city: City, height?: City
   for (const j of streets.junctions) {
     if (junctionIndex++ % 8 === 0) yield 0.08 + 0.12 * junctionIndex / Math.max(1, streets.junctions.length);
     const D = drawsFor(city.site.seed, `junction|${j.node}`);
-    // (Signals where two arterials cross; where a street meets one, its stop line and a post will do.)
-    const arterialRoads = new Set(j.arms.filter((a) => a.cls === "arterial").map((a) => a.group));
-    const signals = arterialRoads.size >= 2 && !j.arms.some((a) => a.cls === "highway" || motorway(a.cls));
+    // Match the traffic topology: a through arterial's two arms also
+    // signal a T-junction. Counting road groups left those signals invisible.
+    const drivingArms = j.arms.filter(a => a.cls !== "alley");
+    const signals = drivingArms.length > 2 && drivingArms.filter(a => a.cls === "arterial").length >= 2 && !drivingArms.some(a => motorway(a.cls));
     // (Where motorways only meet -- a freeway's merge or diverge, a ramp's gore -- nobody stops: no post, no signal.)
     if (j.arms.every((a) => motorway(a.cls))) continue;
     j.arms.forEach((a: JunctionArm, k) => {
