@@ -21,6 +21,6 @@ test("native ground art has a fixed budget, deterministic cover and distinct dra
   }
   assert.ok(cover[0]! > .97, "maintained turf remains covered");
   assert.ok(cover[1]! < .96 && cover[1]! > .7, "rough turf has small exposed soil seams");
-  assert.equal(cover[2], 0); assert.equal(cover[3], 0);
+  assert.ok(cover[2]! > .05 && cover[2]! < .3, "bare ground stays predominantly dirt with sparse grass"); assert.equal(cover[3], 0);
   assert.notDeepEqual(pixels.slice(size * 4, size * 6), pixels.slice(size * 6));
 });

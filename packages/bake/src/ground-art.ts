@@ -59,13 +59,13 @@ export function groundArtPixels(): Uint8Array {
     // Clods and pebbles have faces and contact shadows, not single bright dots.
     const stones = layer === 3 ? 1150 : layer === 2 ? 310 : layer === 1 ? 45 : 8;
     for (let i = 0; i < stones; i++) stamp(STONE, random() * S, random() * S, layer === 3 && random() < .12 ? 2 : 1, false, (random() - .5) * .16 - (layer === 2 ? .1 : 0));
-    if (layer < 2) {
+    if (layer < 3) {
       // A few families of neighbouring fans make clumps; lawn is clipped,
       // rough ground has taller overlapping blades and small bare seams.
-      const clusters = layer === 0 ? 310 : 210;
+      const clusters = layer === 0 ? 310 : layer === 1 ? 210 : 110;
       for (let i = 0; i < clusters; i++) {
         const x = random() * S, y = random() * S, shade = (random() - .5) * .13;
-        for (let j = 0; j < (layer === 0 ? 2 : 4); j++) stamp(TUFT, x + random() * 12, y + random() * 12, layer === 1 && j === 0 ? 2 : 1, true, shade);
+        for (let j = 0; j < (layer === 1 ? 4 : 2); j++) stamp(TUFT, x + random() * 12, y + random() * 12, layer === 1 && j === 0 ? 2 : 1, true, shade);
       }
     }
     if (layer === 1 || layer === 2) for (let i = 0; i < 32; i++) {
