@@ -10,6 +10,7 @@ import { addBox, addPlant, count, pick, subPlacer, toWorld } from "../frame.ts";
 import type { Build } from "../frame.ts";
 import type { ArtKind, LampStyle, MassOp, PropSpot } from "../types.ts";
 import { groundCover } from "./ground-cover.ts";
+import { parkActivity } from "./park-activity.ts";
 import { art } from "./art.ts";
 import { bench, furniture, lamp, tree } from "./furniture.ts";
 
@@ -40,10 +41,21 @@ function piece(b: Build, weights: Readonly<Partial<Record<ArtKind, number>>>): n
 export function park(b: Build, op: Extract<MassOp, { op: "park" }>): void {
   const s = b.site, pw = 1.2;
   addBox(b, 2, s.x, 0.04, s.z, s.hw, 0.04, s.hd, "grass");
-  addBox(b, 1, s.x, 0.09, s.z, s.hw, 0.02, pw, "gravel");
-  addBox(b, 1, s.x, 0.09, s.z, pw, 0.02, s.hd, "gravel");
+  addBox(b, 2, s.x, 0.09, s.z, s.hw, 0.02, pw, "gravel");
+  addBox(b, 2, s.x, 0.09, s.z, pw, 0.02, s.hd, "gravel");
   const clear = piece(b, op.art) + 1.5;
-  groundCover(b, s, (x, z, r) => Math.abs(x - s.x) > pw + r && Math.abs(z - s.z) > pw + r && Math.hypot(x - s.x, z - s.z) > clear + r);
+  for (const side of [-1, 1]) {
+    const points: [number, number][] = [[s.x - s.hw + 1, s.z], [s.x - clear, s.z], [s.x - clear, s.z + side * clear], [s.x + clear, s.z + side * clear], [s.x + clear, s.z], [s.x + s.hw - 1, s.z]];
+    if (clear < s.hw - 1 && clear < s.hd - 1) {
+      for (let i = 2; i <= 4; i++) {
+        const a = points[i - 1]!, c = points[i]!;
+        addBox(b, 2, (a[0] + c[0]) / 2, .09, (a[1] + c[1]) / 2, Math.max(pw, Math.abs(c[0] - a[0]) / 2), .02, Math.max(pw, Math.abs(c[1] - a[1]) / 2), "gravel");
+      }
+      b.walks.push({ key: `${b.key}:park:${side}`, width: pw * 2, clearance: 2.4, path: points.map(([x, z]) => { const p = toWorld(b, x, .11, z); return [p[0], p[2]]; }) });
+    }
+  }
+
+  groundCover(b, s, (x, z, r) => Math.abs(x - s.x) > pw + r && Math.abs(z - s.z) > pw + r && Math.hypot(x - s.x, z - s.z) > clear + pw + r);
   for (let k = 0; k < 12; k++) {
     const side = k % 2 ? 1 : -1, along = b.D.flat("verge", k), length = .4 + b.D.u("vergeL", k) * 1.2;
     const horizontal = k < 6, x = horizontal ? s.x + along * (s.hw - length) : s.x + side * (pw + .06), z = horizontal ? s.z + side * (pw + .06) : s.z + along * (s.hd - length);
@@ -56,7 +68,7 @@ export function park(b: Build, op: Extract<MassOp, { op: "park" }>): void {
     const crown = (kind === "tree" ? 3.5 : kind === "conifer" ? 2.6 : 1.4) * size;
     if (s.hw < crown + 1 || s.hd < crown + 1) continue;
     const x = s.x + b.D.flat("treeX", k) * (s.hw - crown - 0.5), z = s.z + b.D.flat("treeZ", k) * (s.hd - crown - 0.5);
-    if (Math.abs(x - s.x) < pw + 1.6 || Math.abs(z - s.z) < pw + 1.6 || (x - s.x) * (x - s.x) + (z - s.z) * (z - s.z) < (clear + crown) * (clear + crown)) continue;
+    if (Math.abs(x - s.x) < pw + 1.6 || Math.abs(z - s.z) < pw + 1.6 || (x - s.x) * (x - s.x) + (z - s.z) * (z - s.z) < (clear + pw + crown) * (clear + pw + crown)) continue;
     if (trees.some(([tx, tz]) => (tx - x) * (tx - x) + (tz - z) * (tz - z) < 36)) continue;
     trees.push([x, z]);
     prop(b, "tree", x, z, tree(b, x, z, size, kind), false);
@@ -68,6 +80,13 @@ export function park(b: Build, op: Extract<MassOp, { op: "park" }>): void {
     if (Math.abs(x - s.x) < pw + 0.6 || Math.abs(z - s.z) < pw + 0.6) continue;
     const r = b.D.u("under", k);
     addPlant(b, r < 0.2 ? "bush" : r < 0.3 ? "hedge" : r < 0.55 ? "flowers" : "grass", x, 0.08, z, 0.8 + 0.4 * b.D.u("underS", k), Math.floor(b.D.u("underSeed", k) * 1e6));
+  }
+  // Clear lawn quadrants host a few genuine park activities, never the centre art or its paths.
+  let activity = 0;
+  for (let attempt = 0; attempt < 12 && activity < 2; attempt++) {
+    const x = s.x+b.D.flat("parkActiveX",attempt)*(s.hw-3), z = s.z+b.D.flat("parkActiveZ",attempt)*(s.hd-3);
+    if (Math.abs(x-s.x)<pw+2 || Math.abs(z-s.z)<pw+2 || Math.hypot(x-s.x,z-s.z)<clear+3) continue;
+    if (parkActivity(b,x,z,activity)) activity++;
   }
   // A bench facing a path, a lantern at the far end of the other.
   bench(subPlacer(b, s.x + pw + 1, s.z + s.hd * 0.5, -Math.PI / 2));

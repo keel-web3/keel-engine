@@ -14,6 +14,7 @@ import { addBox, addCapsule, subPlacer, toWorld } from "./frame.ts";
 import { keepLevel, thing } from "./foundations.ts";
 import type { Build } from "./frame.ts";
 import { groundCover } from "./street/ground-cover.ts";
+import { parkActivity } from "./street/park-activity.ts";
 import { art } from "./street/art.ts";
 import { bench, lamp, tree } from "./street/furniture.ts";
 import type { LampStyle, MassOp, PropSpot, WaterSpec } from "./types.ts";
@@ -90,7 +91,22 @@ export function commons(b: Build, _op: Extract<MassOp, { op: "commons" }>): void
     const u = x + site.u, v = z + site.v;
     return segs.every(path => away(path, u, v) > r) && (!W || away(W, u, v) > r + 1) && c.features.every(f => dist(f.u - u, f.v - v) > f.r + r);
   });
-  for (const s of segs) { const r = meet(s, ext); if (r) box(r, 1, 0.09, 0.02, W ? "paving" : "gravel"); }
+
+  segs.forEach((segment, i) => {
+    const r = meet(segment, ext); if (r) box(r, 2, .09, .02, W ? "paving" : "gravel");
+    // The lot owns just its share of a block path. Its route follows the same
+    // paved centre line; water and off-lot ground never become shortcuts.
+    const ownPath = meet(segment, own); if (!ownPath) return;
+    const horizontal = segment.x1 - segment.x0 > segment.z1 - segment.z0;
+    const points = horizontal ? [[ownPath.x0, (segment.z0 + segment.z1) / 2], [ownPath.x1, (segment.z0 + segment.z1) / 2]] : [[(segment.x0 + segment.x1) / 2, ownPath.z0], [(segment.x0 + segment.x1) / 2, ownPath.z1]];
+    if (Math.hypot(points[1]![0]! - points[0]![0]!, points[1]![1]! - points[0]![1]!) < 4) return;
+    // Art on an inherited centre path is an obstruction, not a walking route.
+    if (c.features.some(f => points.some(q => Math.hypot(q[0]! - f.u, q[1]! - f.v) < f.r + .6) ||
+      horizontal && Math.abs((segment.z0 + segment.z1) / 2 - f.v) < f.r + .6 && f.u > ownPath.x0 && f.u < ownPath.x1 ||
+      !horizontal && Math.abs((segment.x0 + segment.x1) / 2 - f.u) < f.r + .6 && f.v > ownPath.z0 && f.v < ownPath.z1)) return;
+    b.walks.push({key: `${b.key}:commons:${i}`,width: PATH * 2,clearance: 2.4,path: points.map(q => { const p = toWorld(b, fx(q[0]!), .11, fz(q[1]!)); return [p[0], p[2]] as const; })});
+  });
+
   // The pieces this lot has.
   for (const f of c.features) {
     if (f.lot !== b.key) continue;
@@ -158,6 +174,13 @@ export function commons(b: Build, _op: Extract<MassOp, { op: "commons" }>): void
     if (segs.some((s) => away(s, u, v) < 1.8) || (W && away(W, u, v) < crown + 0.5) || c.features.some((f) => dist(f.u - u, f.v - v) < f.r + crown)) continue;
     if (c.pier && dist(c.pier.u - u, c.pier.v - v) < 9) continue;
     tree(b, fx(u), fz(v), size, kind);
+  }
+  let activity = 0;
+  for (let attempt = 0; attempt < 16 && activity < 2; attempt++) {
+    const u=own.x0+3+(own.x1-own.x0-6)*D.u("activityU",attempt,b.key.length), v=own.z0+3+(own.z1-own.z0-6)*D.u("activityV",attempt,b.key.length);
+    if (own.x1-own.x0<8 || own.z1-own.z0<8 || segs.some(path=>away(path,u,v)<2) || W&&away(W,u,v)<2.5 ||
+      c.features.some(f=>dist(f.u-u,f.v-v)<f.r+2) || c.pier&&dist(c.pier.u-u,c.pier.v-v)<9) continue;
+    if (parkActivity(b,fx(u),fz(v),activity)) activity++;
   }
   // (Every lot of it shows it's the park's: a lantern -- or, out on the lake, a lit jet.)
   if (!b.lights.length && !b.plants.length && !b.props.length) {

@@ -1,8 +1,8 @@
 // The city's SERVICE VEHICLES: a low-floor city bus, a fire engine (a pumper or an aerial ladder), a Type III
-// ambulance, a police cruiser and a three-axle dump truck -- the special styles (traits.ts SPECIAL_STYLES) a game asks
+// ambulance, police cruiser, dump truck, rigid advertising truck and car carriers -- the special styles a game asks
 // for by name to fill its streets, never drawn for a seed and never minted.
 //
-// Four of them are built their own way, as the semi tractor is (semi.ts): their own measurements (serviceRig -- honest
+// They are built their own way, as the semi tractor is (semi.ts): their own measurements (serviceRig -- honest
 // sizes, axles where the real ones are, duals as one wide tyre), their own handling, and their own body
 // (serviceSolids), parted into panels -- doors, wings, the sides behind them, the back -- each its panel's slot, so
 // they wear paint, livery panels and decals as a car does. The police cruiser is the sedan it is, with its kit on
@@ -25,10 +25,10 @@ import type { Solids } from "./solids.ts";
 import type { PanelFace } from "./shapes.ts";
 import { BODY_SLOT } from "./slots.ts";
 
-export type ServiceKind = "bus" | "fire" | "ambulance" | "police" | "dump";
+export type ServiceKind = "bus" | "fire" | "ambulance" | "police" | "dump" | "advertising" | "flatbed" | "flatbed2" | "carrier";
 
 /** Each service vehicle's style name (what `generateCar(seed, { style })` takes). */
-export const SERVICE_STYLES: Readonly<Record<ServiceKind, string>> = { bus: "City Bus", fire: "Fire Engine", ambulance: "Ambulance", police: "Police Cruiser", dump: "Dump Truck" };
+export const SERVICE_STYLES: Readonly<Record<ServiceKind, string>> = { bus: "City Bus", fire: "Fire Engine", ambulance: "Ambulance", police: "Police Cruiser", dump: "Dump Truck", advertising: "Advertising Truck", flatbed: "Flatbed Truck", flatbed2: "Long Flatbed Truck", carrier: "Compact Car Carrier" };
 
 /** A beacon lamp: where it sits (car frame) and which half of the flash it is (slot 30 A, 31 B). */
 export interface BeaconLamp { readonly x: number; readonly y: number; readonly z: number; readonly slot: 30 | 31 }
@@ -63,6 +63,17 @@ const A = BODY_SLOT.beaconA, B = BODY_SLOT.beaconB, P = BODY_SLOT;
 // ---------------------------------------------------------------- measurements
 
 type BusM = { readonly floor: number; readonly winTop: number; readonly fd0: number; readonly fd1: number; readonly cd0: number; readonly cd1: number; readonly bike: number };
+/** The generated bus owns its door and seat measurements, shared by its cabin and passenger authority. */
+const BUS_SEATS = Object.freeze([1.65, .4, -1.05, -2.5].flatMap(z => [-.73, .73].map(x => Object.freeze({ x, y: .94, z }))));
+const NO_BUS_SEATS = Object.freeze([]);
+export function busPassengerSeats(car: Car): readonly { x: number; y: number; z: number }[] {
+  return car.parts.service?.kind === "bus" ? BUS_SEATS : NO_BUS_SEATS;
+}
+export function busPassengerDoor(car: Car): { x: number; y: number; z: number } | null {
+  const sv = car.parts.service;
+  return sv?.kind === "bus" ? { x: car.body.width / 2 + .46, y: sv.m.floor!, z: (sv.m.fd0! + sv.m.fd1!) / 2 } : null;
+}
+
 type FireM = {
   readonly face: number; readonly cabRoof: number; readonly crewRoof: number; readonly roofStep: number; readonly bodyFront: number; readonly bodyRear: number;
   readonly top: number; readonly ly: number; readonly tt: number;
@@ -194,15 +205,19 @@ export function serviceRig(kind: Exclude<ServiceKind, "police">, D: Draws, d: Re
         handling: truckHandling({ massT, kw: 210 + 50 * power01, cd: 0.6, face: 2 * boxHw * (boxTop - 0.45), top: 36 + 3 * power01, accel: 2.0 + 0.6 * power01, brake: 7, grip: 7.4, steer: 0.62, body }),
       };
     }
+    case "advertising":
+    case "flatbed":
+    case "flatbed2":
+    case "carrier":
     case "dump": {
       // A cab over the front axle, a tandem of drive axles under a steel bed, the ram between them.
-      const L = snap(at(D.flat("dump.len"), 8.2, 8.9), 0.05), L2 = L / 2, hw = 1.25, R = 0.53;
+      const L = kind === "advertising" ? 12 : kind === "flatbed2" ? 14.8 : kind === "flatbed" || kind === "carrier" ? 10.1 : snap(at(D.flat("dump.len"), 8.2, 8.9), 0.05), L2 = L / 2, hw = 1.25, R = 0.53;
       const face = snap(L2 - 0.18, 0.01), frontAxle = snap(L2 - 1.35, 0.01), cabRear = snap(face - 1.95, 0.01);
-      const roof = D.u("dump.roof") < 0.4 ? 3.32 : 3.05;
+      const roof = kind === "dump" && D.u("dump.roof") < 0.4 ? 3.32 : 3.05;
       const d2 = snap(-L2 + 1.3, 0.01), d1 = snap(d2 + 1.36, 0.01), rearAxle = snap((d1 + d2) / 2, 0.01);
       // (The bed's sides: a low aggregate body to a tall one -- the seed's.)
-      const floor = 1.42, sideTop = snap(floor + snap(at(D.flat("dump.bed"), 0.9, 1.35), 0.05), 0.01);
-      const z0 = snap(-L2 + 0.08, 0.01), z1 = snap(cabRear - 0.45, 0.01);
+      const floor = kind === "dump" || kind === "advertising" ? 1.42 : 1.22, sideTop = kind === "advertising" ? 5.76 : snap(floor + snap(at(D.flat("dump.bed"), 0.9, 1.35), 0.05), 0.01);
+      const z0 = snap(-L2 + 0.08, 0.01), z1 = snap(cabRear - (kind === "dump" ? 0.45 : 0.16), 0.01);
       const m: DumpM = { face, cabBottom: 1.12, floor, sideTop, frontTop: snap(Math.max(sideTop + 0.25, roof + 0.12), 0.01), lipZ: snap(cabRear + 0.55, 0.01), z0, z1, bedAlt: D.u("dump.bedPaint") < 0.45 ? 1 : 0 };
       const ride = 0.45, belt = 1.95;
       const body = geometry({
@@ -210,15 +225,15 @@ export function serviceRig(kind: Exclude<ServiceKind, "police">, D: Draws, d: Re
         nose: 0.18, noseLo: snap((0.82 - ride) / (belt - ride), 0.02), tail: 0.1, tailLo: 0.28, doorFront: snap(face - 0.28, 0.01), doorRear: snap(face - 1.55, 0.01),
         frontAxle, rearAxle, track: [snap(hw - 0.03 - 0.16, 0.01), snap(hw - 0.03 - 0.31, 0.01)],
       });
-      const beacons: BeaconLamp[] = [{ x: -0.35, y: roof + 0.1, z: snap(face - 0.35, 0.01), slot: A }, { x: 0.35, y: roof + 0.1, z: snap(face - 0.35, 0.01), slot: B }];
+      const beacons: BeaconLamp[] = kind !== "dump" ? [] : [{ x: -0.35, y: roof + 0.1, z: snap(face - 0.35, 0.01), slot: A }, { x: 0.35, y: roof + 0.1, z: snap(face - 0.35, 0.01), slot: B }];
       const service: ServiceParts = {
-        kind, form: "tipper", livery: m.bedAlt ? "steel bed" : "fleet", number: String(1 + Math.floor(D.u("dump.unit") * 98)),
+        kind, form: kind === "dump" ? "tipper" : kind === "advertising" ? "box advertising" : kind === "carrier" ? "compact double deck" : "flatbed", livery: kind !== "dump" ? "fleet" : m.bedAlt ? "steel bed" : "fleet", number: String(1 + Math.floor(D.u("dump.unit") * 98)),
         title: D.pick<string>("dump.title", [["CITY WORKS", 3], ["PUBLIC WORKS", 2], ["ROADS DEPT", 2], ["HAULAGE", 1]]), axles: [frontAxle, d1, d2], beacons, m,
       };
       const bed: DumpBed = { x0: -(hw - 0.07), x1: hw - 0.07, y: floor, z0, z1, top: sideTop, hingeY: 1.16, hingeZ: snap(z0 + 0.1, 0.01) };
       const massT = snap(12.8 + 2.2 * mass01, 0.01);
       return {
-        body, bed, wheels: truckWheels(wheel, R, 0.32, 0.62), mounts: truckMounts(service.axles, body.track), service,
+        body, ...(kind === "dump" ? { bed } : {}), wheels: truckWheels(wheel, R, 0.32, 0.62), mounts: truckMounts(service.axles, body.track), service,
         handling: truckHandling({ massT, kw: 290 + 60 * power01, cd: 0.8, face: 2 * hw * (roof - 0.4), top: 25 + 2 * power01, accel: 1.0 + 0.3 * power01, brake: 5.2, grip: 6.6, steer: 0.6, body }),
       };
     }
@@ -273,6 +288,10 @@ export function serviceLook(sv: ServiceParts, D: Draws, body: Colour): ServiceLo
     }
     case "police":
       return { alt: WHITE, accent: { light: 0.76, chroma: 0.01, hue: 250 }, panels: (["doorL", "doorR"] as const).map((panel) => ({ panel, kind: "livery" as const, colour: WHITE })), beacon: { a: LAMP.red, b: LAMP.blue }, trimChrome: false };
+    case "advertising": return { alt: BLACK, accent: BLACK, panels: [], beacon: null, trimChrome: false };
+    case "flatbed":
+    case "flatbed2":
+    case "carrier": return { alt: body, accent: BLACK, panels: [], beacon: null, trimChrome: false };
     case "dump": {
       // (Its bed in the cab's colour, or bare steel: the bed's sides and tailgate are panels, painted as the bed is.)
       const alt = sv.m.bedAlt ? D.pick<Colour>("dump.bed", [[{ light: 0.44, chroma: 0.01, hue: 250 }, 3], [BLACK, 2], [{ light: 0.3, chroma: 0.01, hue: 250 }, 1]]) : body;
@@ -292,6 +311,10 @@ export function serviceDecals(sv: ServiceParts, seed: string, body: Colour): Car
     case "fire": return [d("lettering", `${sv.title}|${sv.number}`, ["doorL", "doorR"], ["gold", "gold", "white"], "cross"), d("chevrons", "", ["trunk"], ["gold", "body"])];
     case "ambulance": return [d("lettering", sv.title, ["quarterL", "quarterR"], ["accent", "accent", "white"], "star")];
     case "police": return [d("lettering", sv.title, ["doorL", "doorR"], ["black", "gold", "black"], "shield")];
+    case "advertising":
+    case "flatbed":
+    case "flatbed2":
+    case "carrier": return [];
     case "dump": return [d("lettering", `${sv.title.replace(" ", "|")} ${sv.number}`, ["doorL", "doorR"], [ink])];
   }
 }
@@ -327,6 +350,10 @@ export function serviceFace(car: Car, panel: Panel): Partial<PanelFace> {
       if (panel === "trunk") return back(1.56, g.roof - 0.28 - 0.95);
       return {};
     }
+    case "advertising":
+    case "flatbed":
+    case "flatbed2":
+    case "carrier":
     case "dump": {
       const m = sv.m as DumpM;
       if (panel === "doorL" || panel === "doorR") return side(1.27, g.belt - m.cabBottom);
@@ -379,6 +406,10 @@ export function serviceEngine(car: Car): { x0: number; y0: number; z0: number; x
   switch (sv.kind) {
     case "bus": return { x0: -0.5, y0: g.ride + 0.12, z0: -L2 + 0.32, x1: 0.5, y1: 1.0, z1: -L2 + 1.52 };
     case "fire": return { x0: -0.35, y0: 0.72, z0: g.frontAxle - 0.9, x1: 0.35, y1: 1.4, z1: g.frontAxle + 0.3 };
+    case "advertising":
+    case "flatbed":
+    case "flatbed2":
+    case "carrier":
     case "dump": return { x0: -0.35, y0: 0.8, z0: g.frontAxle - 1.0, x1: 0.35, y1: 1.4, z1: g.frontAxle + 0.3 };
     case "ambulance": { const m = sv.m as AmbM; return { x0: -0.35, y0: 0.6, z0: m.cowl + 0.05, x1: 0.35, y1: 0.98, z1: m.nose - 0.3 }; }
     case "police": return null;
@@ -405,8 +436,10 @@ function spans(z0: number, z1: number, gaps: ReadonlyArray<readonly [number, num
 function driver(S: Solids, x: number, seat: number, z: number): void {
   box(S, P.interior, x - 0.24, seat - 0.04, z - 0.16, x + 0.24, seat + 0.08, z + 0.3);
   box(S, P.interior, x - 0.24, seat, z - 0.24, x + 0.24, seat + 0.66, z - 0.14);
-  box(S, P.dark, x - 0.17, seat + 0.08, z - 0.12, x + 0.17, seat + 0.56, z + 0.06);
-  cap(S, P.accent, [x, seat + 0.7, z - 0.03], [x, seat + 0.7, z - 0.03], 0.13);
+  component(S, "driver", () => {
+    box(S, P.dark, x - 0.17, seat + 0.08, z - 0.12, x + 0.17, seat + 0.56, z + 0.06);
+    cap(S, P.accent, [x, seat + 0.7, z - 0.03], [x, seat + 0.7, z - 0.03], 0.13);
+  });
   cap(S, P.dark, [x, seat + 0.36, z + 0.42], [x, seat + 0.42, z + 0.36], 0.17);
 }
 /** A beacon lens: a small box at a lamp's spot, in its half's slot (its dark base behind it). */
@@ -417,6 +450,10 @@ export function serviceSolids(car: Car): Solids {
     case "bus": return busSolids(car);
     case "fire": return fireSolids(car);
     case "ambulance": return ambulanceSolids(car);
+    case "advertising":
+    case "flatbed":
+    case "flatbed2":
+    case "carrier":
     case "dump": return dumpSolids(car);
     case "police": return solids();
   }
@@ -438,7 +475,13 @@ function busSolids(car: Car): Solids {
   box(S, upper, -(hw - 0.02), winTop, back + 0.02, hw - 0.02, roof - 0.06, front - 0.1);
   box(S, roofSlot, -(hw - 0.03), roof - 0.07, back + 0.03, hw - 0.03, roof, front - 0.12);
   // Inside, through the glass: the saloon's dark wall, and the cockpit up front.
-  box(S, P.interior, -(hw - 0.1), belt - 0.02, back + 0.1, hw - 0.1, winTop, front - 1.55);
+  // Keep the saloon open through the actual glass: a solid filler hid every real passenger.
+  box(S, P.interior, -(hw - .1), m.floor - .06, back + .1, hw - .1, m.floor, front - 1.55);
+  for (const seat of busPassengerSeats(car)) {
+    box(S, P.interior, seat.x - .24, seat.y - .08, seat.z - .26, seat.x + .24, seat.y, seat.z + .25);
+    box(S, P.interior, seat.x - .24, seat.y, seat.z - .26, seat.x + .24, seat.y + .5, seat.z - .18);
+    cap(S, P.metal, [seat.x, m.floor, seat.z], [seat.x, seat.y - .08, seat.z], .035);
+  }
   box(S, P.dark, -(hw - 0.08), belt - 0.06, front - 1.6, hw - 0.08, belt, front - 0.12);
 
   // ---- the lower sides, parted: a wing ahead of the front wheel, the long side (the door panel) between the wheels,
@@ -841,14 +884,14 @@ function dumpSolids(car: Car): Solids {
     cap(S, P.dark, [x0, belt + 0.25, face - 0.25], [s * (hw + 0.25), belt + 0.3, face - 0.15], 0.022);
     box(S, P.dark, s * (hw + 0.2), belt - 0.15, face - 0.2, s * (hw + 0.3), belt + 0.45, face - 0.1);
   });
-  component(S, "lightbar", () => {
+  if (sv.kind === "dump") component(S, "lightbar", () => {
     box(S, P.dark, -0.72, roof, face - 0.5, 0.72, roof + 0.05, face - 0.2);
     lens(S, beacon(0), 0.33, 0.05, 0.12); lens(S, beacon(1), 0.33, 0.05, 0.12);
   });
 
   // ---- the ram, between the cab and the bed: a three-stage cylinder from the frame up to the bed's front wall.
   const zr = snap(cabRear - 0.2, 0.01);
-  component(S, "dumpRam", () => {
+  if (sv.kind === "dump") component(S, "dumpRam", () => {
     box(S, P.dark, -0.2, 0.95, zr - 0.12, 0.2, 1.1, zr + 0.12);
     cap(S, P.dark, [0, 1.0, zr], [0, floor + 0.05, zr], 0.12);
     cap(S, P.metal, [0, floor + 0.05, zr], [0, floor + 0.3, zr], 0.09);
@@ -857,7 +900,7 @@ function dumpSolids(car: Car): Solids {
 
   // ---- the bed: floor, long members under it, ribbed sides (its rear quarters), a front wall rising to a lip over the
   // cab, a tailgate (its boot) hung from the top; and the hinge it tips about.
-  component(S, "dumpBed", () => {
+  if (sv.kind === "dump") component(S, "dumpBed", () => {
     box(S, P.dark, -(hw - 0.07), floor - 0.1, z0, hw - 0.07, floor, z1);
     both((s) => {
       const right = s > 0;
@@ -876,6 +919,31 @@ function dumpSolids(car: Car): Solids {
     both((s) => box(S, P.dark, s * (hw - 0.2), floor - 0.1, z0 - 0.1, s * (hw - 0.05), floor + 0.05, z0 - 0.02));
   });
   box(S, P.dark, -0.5, 1.08, z0, 0.5, floor - 0.26, z0 + 0.25);
+
+  if (sv.kind === "advertising") component(S, "advertisingBox", () => {
+    // A rigid box truck: its load shares the cab's frame, axles and road hull. The site mounts its UI on these sides.
+    box(S, P.dark, -1.22, floor, z0, 1.22, sideTop, z1);
+    box(S, P.alt, -1.24, sideTop - 0.03, z0, 1.24, sideTop, z1);
+    both(sd => box(S, sd > 0 ? P.quarterR : P.quarterL, sd * 1.22, floor, z0, sd * 1.24, sideTop - 0.03, z1));
+    box(S, P.trunk, -1.22, floor, z0 - 0.02, 1.22, sideTop - 0.03, z0);
+  });
+  if (sv.kind === "flatbed" || sv.kind === "flatbed2" || sv.kind === "carrier") component(S, "carrierDeck", () => {
+    const deck = (y: number): void => {
+      box(S, P.metal, -1.22, y - 0.09, z0, 1.22, y, z1);
+      both(sd => {
+        box(S, P.dark, sd * 0.62, y - 0.24, z0, sd * 0.76, y - 0.09, z1);
+        box(S, sd > 0 ? P.quarterR : P.quarterL, sd * 1.22, y + 0.04, z0, sd * 1.26, y + 0.14, z1);
+      });
+    };
+    deck(floor);
+    box(S, P.trunk, -1.22, floor - 0.09, z0 - 0.02, 1.22, floor, z0);
+    if (sv.kind === "carrier") {
+      deck(3.14);
+      for (const z of [z0 + 0.3, z1 - 0.3]) both(sd => box(S, P.paint, sd * 1.18, floor, z - 0.06, sd * 1.26, 3.14, z + 0.06));
+    }
+    // Loading ramps travel folded against the tail, inside the physical road envelope.
+    both(sd => box(S, P.metal, sd * 0.55, floor - 0.6, z0 + 0.04, sd * 0.9, floor - 0.12, z0 + 0.1));
+  });
 
   // ---- behind the wheels: mudguards over the tandem, flaps, the under-run bar, the lamps on it.
   both((s) => {
@@ -915,3 +983,16 @@ export function policeKit(S: Solids, car: Car): void {
   cap(S, P.dark, [0.3, deck - 0.01, -L2 + 0.35], [0.3, deck + 0.52, -L2 + 0.33], 0.006);
 }
 
+
+/** Empty cargo mounts on rigid car carriers; +z is forward in the canonical car frame. */
+export function carrierDecks(car: Pick<Car, "parts">): readonly { z: number; lift: number }[] {
+  const sv = car.parts.service;
+  if (!sv || !["flatbed", "flatbed2", "carrier"].includes(sv.kind)) return [];
+  const { z0, z1, floor } = sv.m;
+  const mid = (z0! + z1!) / 2;
+  if (sv.kind === "flatbed2") {
+    const span = (z1! - z0!) / 4;
+    return [{ z: mid + span, lift: floor! }, { z: mid - span, lift: floor! }];
+  }
+  return sv.kind === "carrier" ? [{ z: mid, lift: floor! }, { z: mid, lift: 3.14 }] : [{ z: mid, lift: floor! }];
+}

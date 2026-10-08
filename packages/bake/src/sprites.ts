@@ -92,7 +92,8 @@ export interface SpriteRenderer {
    * Engine, the default for a 3D game: a real 3D object -- a design's solids as one mesh (lookMesh) -- kept on the GPU
    * under a key (null removes it). Drawn by drawMeshes at any position, heading and pose, every frame, no bake.
    */
-  setMesh(key: string, mesh: LookMesh | null): void;
+  /** Optional deterministic source recipe lets a recovery wrapper rebuild the mesh without retaining its upload arrays. */
+  setMesh(key: string, mesh: LookMesh | null, restoreSource?: () => LookMesh | null): void;
   /**
    * Engine: smoke, fire, dust and nitro as SHADER volumes (volumes.ts) -- each puff a ball marched through animated
    * noise, lit, and cut to the palette through the dither screen. Depth-tested against what's drawn, so what stands in
@@ -306,6 +307,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
     link,
     looks: () => { const L = layers(); return { palette: L.palette, looks: L.looks, paints: L.paints, places: L.places, decals: L.decals }; },
     size: () => [W, H] as const,
+    primarySize: () => [canvas.width, canvas.height] as const,
     pages: () => [tex, htex] as const,
   }));
 

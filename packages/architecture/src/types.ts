@@ -195,7 +195,13 @@ export interface ParkedVehicle { readonly key: string; readonly x: number; reado
 export interface ParkingBay extends ParkedVehicle { readonly occupied: boolean; readonly route: readonly (readonly [number, number, number?])[] }
 /** A floor or ramp: heights at local -z and +z, sampled against the car's current level. */
 export interface GarageSurface { readonly x: number; readonly z: number; readonly yaw: number; readonly hw: number; readonly hd: number; readonly back: number; readonly front: number }
-export interface BuildingWalk { readonly key: string; readonly width: number; readonly clearance: number; readonly path: readonly (readonly [number, number])[] }
+export interface BuildingWalk {
+  readonly key: string; readonly width: number; readonly clearance: number;
+  readonly path: readonly (readonly [number, number])[];
+  /** A real park resident's anchored activity, on generator-checked clear ground. */
+  readonly activity?: "fitness" | "play";
+  readonly y?: number;
+}
 export interface BuildingApproach { readonly x: number; readonly z: number; readonly fx: number; readonly fz: number; readonly length: number; readonly halfWidth: number }
 export interface BuildingPlan {
   readonly walks?: readonly BuildingWalk[];

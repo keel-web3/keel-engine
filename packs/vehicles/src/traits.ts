@@ -173,6 +173,30 @@ export const SPECIAL_STYLES: readonly BodyStyle[] = [
     paints: [["white", 20], ["yellow", 14], ["orange", 14], ["red", 10], ["blue", 8], ["forest", 6], ["gunmetal", 5], ["black", 5]],
     force: { ...TRUCK, Headlights: "Round Eyes", Grille: "Slat Grille", "Tail Lights": "Blocks", "Rim Finish": "White", Roof: "Hardtop", Tint: "Clear" },
   },
+  {
+    name: "Advertising Truck", cls: "pickup", weight: 0, dials: { power: 0.6, mass: 1 }, service: "advertising",
+    paints: [["white", 20], ["orange", 14], ["red", 10], ["blue", 8], ["gunmetal", 5]],
+    force: { ...TRUCK, Headlights: "Round Eyes", Grille: "Slat Grille", "Tail Lights": "Blocks", "Rim Finish": "White", Roof: "Hardtop", Tint: "Clear" },
+  },
+
+  {
+    name: "Flatbed Truck", cls: "pickup", weight: 0, dials: { power: 0.6, mass: 1 }, service: "flatbed",
+    paints: [["white", 20], ["orange", 14], ["red", 10], ["blue", 8], ["gunmetal", 5]],
+    force: { ...TRUCK, Headlights: "Round Eyes", Grille: "Slat Grille", "Tail Lights": "Blocks", "Rim Finish": "White", Roof: "Hardtop", Tint: "Clear" },
+  },
+
+  {
+    name: "Long Flatbed Truck", cls: "pickup", weight: 0, dials: { power: 0.6, mass: 1 }, service: "flatbed2",
+    paints: [["white", 20], ["orange", 14], ["red", 10], ["blue", 8], ["gunmetal", 5]],
+    force: { ...TRUCK, Headlights: "Round Eyes", Grille: "Slat Grille", "Tail Lights": "Blocks", "Rim Finish": "White", Roof: "Hardtop", Tint: "Clear" },
+  },
+
+  {
+    name: "Compact Car Carrier", cls: "pickup", weight: 0, dials: { power: 0.6, mass: 1 }, service: "carrier",
+    paints: [["white", 20], ["orange", 14], ["red", 10], ["blue", 8], ["gunmetal", 5]],
+    force: { ...TRUCK, Headlights: "Round Eyes", Grille: "Slat Grille", "Tail Lights": "Blocks", "Rim Finish": "White", Roof: "Hardtop", Tint: "Clear" },
+  },
+
 ];
 
 // ---------------------------------------------------------------- the tables, per class

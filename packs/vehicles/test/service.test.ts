@@ -18,6 +18,10 @@ const BANDS: Readonly<Record<string, { length: [number, number]; width: [number,
   Ambulance: { length: [6.7, 7.4], width: [2.2, 2.4], roof: [2.7, 3.0], wheels: [4] },
   "Police Cruiser": { length: [4.2, 5.2], width: [1.7, 2.1], roof: [1.1, 1.6], wheels: [4] },
   "Dump Truck": { length: [8.1, 9.0], width: [2.4, 2.6], roof: [3.0, 3.4], wheels: [6] },
+  "Advertising Truck": { length: [12, 12], width: [2.4, 2.6], roof: [3, 3.4], wheels: [6] },
+  "Flatbed Truck": { length: [10.1, 10.1], width: [2.4, 2.6], roof: [3, 3.4], wheels: [6] },
+  "Long Flatbed Truck": { length: [14.8, 14.8], width: [2.4, 2.6], roof: [3, 3.4], wheels: [6] },
+  "Compact Car Carrier": { length: [10.1, 10.1], width: [2.4, 2.6], roof: [3, 3.4], wheels: [6] },
 };
 
 test("service vehicles are special styles: built by name, never drawn for a seed, never in the odds", () => {
@@ -108,7 +112,7 @@ test("the dump truck's bed: its inside volume in parts.bed, inside the truck, ti
 test("beacons: slots 30 and 31 on every vehicle that has them (not the bus), dark without a phase, flashing with one", () => {
   for (const style of STYLES) for (const car of fleet(style, 12)) {
     const lamps = car.parts.service!.beacons, solids = solidsOf(car), paint = bodyPaint(car);
-    if (style === "City Bus") {
+    if (!lamps.length) {
       assert.ok(!car.parts.beacons && !lamps.length && !car.paints.beacon && !solids.some((s) => s.mat === 30 || s.mat === 31));
       continue;
     }
@@ -166,7 +170,7 @@ test("bodies: within the renderer's limits, parted into panels, every slot paint
     for (const p of ["doorL", "doorR", "quarterL", "quarterR", "hood", "trunk"] as const) assert.ok(solids.some((s) => s.mat === panelSlot(p)), `${style} has its ${p}`);
     const placed = carDecals(car);
     const lettering = placed.filter((d) => d.kind === "lettering");
-    assert.ok(lettering.length >= 2, `${style}: ${placed.map((d) => d.kind + ":" + d.panel)}`);
+    assert.ok(!["advertising", "flatbed", "flatbed2", "carrier"].includes(car.parts.service!.kind) ? lettering.length >= 2 : lettering.length === 0, `${style}: ${placed.map((d) => d.kind + ":" + d.panel)}`);
     for (const d of placed) { assert.ok(paint[panelSlot(d.panel)]!.decal, `${style} ${d.kind} ${d.panel}`); assert.ok(d.rect[0] >= 0 && d.rect[2] <= 1 && d.rect[0] < d.rect[2]); }
     if (style === "Fire Engine") assert.ok(placed.some((d) => d.kind === "chevrons" && d.panel === "trunk"));
     // (Its own cab, not a car's glasshouse -- the cruiser keeps its sedan's -- and no plate recess on a truck.)

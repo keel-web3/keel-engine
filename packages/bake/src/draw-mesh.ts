@@ -15,7 +15,7 @@
 // of it, the frustum decides what is worth drawing at all (cull.ts).
 
 import { wallArtPixels, WALL_ART_WIDTH, WALL_ART_HEIGHT, WALL_ART_LAYERS } from "./wall-art.ts";
-import { createSizeCache } from "./size-cache.ts";
+import { createTargetCache } from "./target-cache.ts";
 import { SLOTS } from "./indexed.ts";
 import { MESH_GFS, MESH_LIGHTS, MESH_SHADOW_FS, MESH_VS } from "./mesh.ts";
 import type { LookMesh } from "./mesh.ts";
@@ -43,6 +43,8 @@ export interface MeshPassDeps {
   looks(): { palette: WebGLTexture | null; looks: WebGLTexture | null; paints: WebGLTexture | null; places: WebGLTexture | null; decals: WebGLTexture | null } | null;
   /** The picture's size in pixels. */
   size(): readonly [number, number];
+  /** The canvas picture, independent of temporary mirror, bake or export dimensions. */
+  primarySize?(): readonly [number, number];
   /** The sprite pages and their heights: the paint shader declares those samplers even though a mesh never reads them. */
   pages(): readonly [WebGLTexture | null, WebGLTexture | null];
 }
@@ -51,7 +53,7 @@ export interface MeshPassDeps {
 type PaintUniform = "center" | "right" | "up" | "forward" | "k" | "size" | "depth" | "pages" | "looks" | "paints" | "palette" | "places" | "decals" | "anchorDither" | "screen" | "dither" | "outline" | "heights" | "heightOn" | "ds" | "ids" | "idBase";
 
 /** What a frame cost: how many meshes are held, how many were drawn, and how many the frustum threw away. */
-export interface MeshStats { readonly meshes: number; readonly drawn: number; readonly culled: number; readonly triangles: number; readonly bloomPixels: number; readonly reduced: number; readonly shadowDrawn: number; readonly shadowTriangles: number }
+export interface MeshStats { readonly meshes: number; readonly meshBytes: number; readonly drawn: number; readonly culled: number; readonly triangles: number; readonly bloomPixels: number; readonly reduced: number; readonly shadowDrawn: number; readonly shadowTriangles: number; readonly targetWorkspaces: number; readonly targetPixels: number; readonly targetColourBytes: number }
 
 export interface MeshPass {
   setMesh(key: string, mesh: LookMesh | null): void;
@@ -506,7 +508,7 @@ function sameRegionLandState(a: MeshDraw, b: MeshDraw, count: number): boolean {
 
 export function createMeshPass(deps: MeshPassDeps): MeshPass {
   const { gl, link } = deps;
-  const stats = { meshes: 0, drawn: 0, culled: 0, triangles: 0, bloomPixels: 0, reduced: 0, shadowDrawn: 0, shadowTriangles: 0 };
+  const stats = { meshes: 0, meshBytes: 0, drawn: 0, culled: 0, triangles: 0, bloomPixels: 0, reduced: 0, shadowDrawn: 0, shadowTriangles: 0, targetWorkspaces: 0, targetPixels: 0, targetColourBytes: 0 };
   const bloom = createBloomPass(gl, link);
   // (The picture's size, read fresh each frame: the renderer owns it.)
   let W = 1, H = 1;
@@ -514,7 +516,7 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
 
   // Live meshes: built the first time setMesh or drawMeshes is called.
   type MeshU = "model" | "center" | "right" | "up" | "forward" | "k" | "depth" | "tie" | "size" | "snap" | "ground" | "sun" | "look" | "draw" | "lightCount" | "anchor" | "fx" | "wipe" | "lightPos" | "lightDir" | "lightI" | "lightTint" | "slotGlow" | "parts" | "posed" | "lightOwner" | "owner" | "chunk" | "persp" | "proj" | "shadow" | "shadowMat" | "shadowK" | "shadowPass" | "clipRange" | "marked" | "snowK";
-  interface MeshGpu { vao: WebGLVertexArrayObject; bufs: WebGLBuffer[]; count: number; lo: [number, number, number]; hi: [number, number, number]; bounds: Bounds; parts: ReadonlyMap<number, Bounds> }
+  interface MeshGpu { vao: WebGLVertexArrayObject; bufs: WebGLBuffer[]; bytes: number; count: number; lo: [number, number, number]; hi: [number, number, number]; bounds: Bounds; parts: ReadonlyMap<number, Bounds> }
   interface Meshes {
     gprog: WebGLProgram; gu: Record<MeshU, WebGLUniformLocation | null>;
     cprog: WebGLProgram; cu: Record<PaintUniform | "ga" | "gb" | "gc" | "gd" | "gap" | "tints" | "chunkMax" | "mirrorAxes" | "mirrorK" | "fog" | "fogRange" | "fogRay" | "time" | "fKind" | "f0" | "f1" | "f2" | "gKind" | "g0" | "g1" | "g2" | "wxOn" | "wxPersp" | "wxAmt" | "wxRamp" | "wxMapOn" | "wxMap" | "wxBox" | "wxAlt" | "wallArt", WebGLUniformLocation | null>;
@@ -550,8 +552,8 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
     meshState = { gprog, gu, cprog, cu, wallArt, fbo: null, ga: null, gb: null, gc: null, gd: null, zb: null, w: 0, h: 0, tri, meshes: new Map(), poses: null, poseRows: 0, sprog, su, sfbo: gl.createFramebuffer()!, smap: null, ssize: 0, wxMap: null, wxMapKey: null, wxMapVersion: -1 };
     return meshState;
   };
-  // Main, mirror and small GPU atlas bake each retain their workspace.
-  const targets = createSizeCache(3, (W, H) => {
+  // Keep only the current main picture; two auxiliary sizes cover mirror/atlas/export reuse.
+  const targets = createTargetCache(2, (W, H) => {
     const M = { fbo: gl.createFramebuffer()!, ga: null as WebGLTexture | null, gb: null as WebGLTexture | null, gc: null as WebGLTexture | null, gd: null as WebGLTexture | null, zb: null as WebGLRenderbuffer | null, w: W, h: H };
     const make = (internal: number, format: number, type: number): WebGLTexture => {
       const t = gl.createTexture()!;
@@ -586,7 +588,14 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
   });
   const gbuffer = (M: Meshes): void => {
     sizeNow();
-    if (M.w !== W || M.h !== H || !M.ga) Object.assign(M, targets(W, H));
+    const [primaryW, primaryH] = deps.primarySize?.() ?? [W, H];
+    // Always reacquire: a canvas resize may have released a same-sized, previously active workspace.
+    const target = targets.get(W, H, primaryW, primaryH);
+    if (M.fbo !== target.fbo) Object.assign(M, target);
+    const { workspaces, pixels } = targets.stats();
+    stats.targetWorkspaces = workspaces; stats.targetPixels = pixels;
+    // RGBA8 + RGBA32UI + RGBA16I + RGBA8. Depth storage/padding is driver-specific and additional.
+    stats.targetColourBytes = pixels * 32;
   };
 
   // A pose's part matrices: an RGBA32F row of four texels a part, uploaded for the draw that wears it.
@@ -667,7 +676,7 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
   const setMesh = (key: string, mesh: LookMesh | null): void => {
       const M = meshes();
       const old = M.meshes.get(key);
-      if (old) { for (const b of old.bufs) gl.deleteBuffer(b); gl.deleteVertexArray(old.vao); M.meshes.delete(key); }
+      if (old) { for (const b of old.bufs) gl.deleteBuffer(b); gl.deleteVertexArray(old.vao); M.meshes.delete(key); stats.meshBytes -= old.bytes; }
       stats.meshes = M.meshes.size;
       if (!mesh) return;
       const vao = gl.createVertexArray()!;
@@ -691,7 +700,9 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
       bufs.push(ib);
       gl.bindVertexArray(null);
-    M.meshes.set(key, { vao, bufs, count: mesh.indices.length, lo, hi, bounds: [...lo, ...hi], parts: partBounds(mesh) });
+    const bytes = mesh.positions.byteLength + mesh.normals.byteLength + mesh.attrs.byteLength + mesh.bodies.byteLength + mesh.indices.byteLength + (mesh.facade?.byteLength ?? 0);
+    M.meshes.set(key, { vao, bufs, bytes, count: mesh.indices.length, lo, hi, bounds: [...lo, ...hi], parts: partBounds(mesh) });
+    stats.meshBytes += bytes;
     stats.meshes = M.meshes.size;
   };
 

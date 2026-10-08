@@ -543,8 +543,10 @@ function bodySolids(car: Car): Solids {
     });
     // The wheel's hub, ahead of the driver; the stand-in's torso and helmet (the game puts its own driver there).
     cap(S, P.dark, who.hub[0], who.hub[1], who.hubR);
-    box(S, P.dark, who.torso[0], who.torso[1], who.torso[2], who.torso[3], who.torso[4], who.torso[5]);
-    cap(S, P.accent, who.helmet, who.helmet, who.helmetR);
+    component(S, "driver", () => {
+      box(S, P.dark, who.torso[0], who.torso[1], who.torso[2], who.torso[3], who.torso[4], who.torso[5]);
+      cap(S, P.accent, who.helmet, who.helmet, who.helmetR);
+    });
     // The glass: the windscreen, the rear glass, a window each side -- each one pane, its edges the pillars' lines.
     // (Each its own component, "pane:<name>": what a game cracks and breaks pane by pane.)
     for (const name of ["screen", "rear", "left", "right"] as const) component(S, `pane:${name}`, () => pane(S, name === "screen" ? P.screen : P.glass, house.panes[name]!));
@@ -743,16 +745,17 @@ export function geometryKey(car: Car): string {
  * The car's body as a bake shape (one still clip; keyed by its geometry and parts, never its colours or decals) --
  * everything but the glass, which is its own layer (glassDesign), drawn over the body see-through, so the cabin shows.
  */
-export function bodyDesign(car: Car): VehicleDesign {
-  return partDesign(car, "body", (mat) => mat !== BODY_SLOT.glass && mat !== BODY_SLOT.screen);
+export function bodyDesign(car: Car, o: { readonly occupied?: boolean } = {}): VehicleDesign {
+  return partDesign(car, o.occupied === false ? "body-empty" : "body", (mat) => mat !== BODY_SLOT.glass && mat !== BODY_SLOT.screen, o.occupied !== false);
 }
 /** The car's glass as a bake shape: the windscreen, side and rear glass (a glass roof), drawn after the body, see-through. */
 export function glassDesign(car: Car): VehicleDesign {
   return partDesign(car, "glass", (mat) => mat === BODY_SLOT.glass || mat === BODY_SLOT.screen);
 }
-function partDesign(car: Car, part: string, keep: (mat: number) => boolean): VehicleDesign {
+function partDesign(car: Car, part: string, keep: (mat: number) => boolean, occupied = true): VehicleDesign {
   const all = bodySolids(car);
-  const S: Solids = { boxes: all.boxes.filter((b) => keep(b.mat ?? 0)), wedges: all.wedges.filter((b) => keep(b.mat ?? 0)), capsules: all.capsules.filter((c) => keep(c.mat ?? 0)) };
+  const include = (solid: { mat?: number }): boolean => keep(solid.mat ?? 0) && (occupied || all.components?.get(solid) !== "driver");
+  const S: Solids = { boxes: all.boxes.filter(include), wedges: all.wedges.filter(include), capsules: all.capsules.filter(include) };
   const world: BakeWorld = { boxes: S.boxes, wedges: S.wedges, capsules: S.capsules };
   let height = 0, radius = 0;
   for (const b of [...S.boxes, ...S.wedges]) {

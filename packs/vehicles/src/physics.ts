@@ -23,8 +23,8 @@ const ENGINE: Readonly<Record<string, { peak: number; drive: ReadonlyArray<reado
 /** A semi tractor's: a diesel's low peak, driving its rear tandem. */
 const SEMI_ENGINE: { peak: number; drive: ReadonlyArray<readonly [Drivetrain, number]> } = { peak: 1800, drive: [["rwd", 1]] };
 /** A service truck's diesel (the ambulance's revs higher) and where its weight sits (m): a low-floor bus's low, a loaded fire engine's high. */
-const SERVICE_ENGINE: Readonly<Record<string, number>> = { bus: 1900, fire: 2100, ambulance: 3200, dump: 1800 };
-const SERVICE_COM: Readonly<Record<string, number>> = { bus: 1.05, fire: 1.3, ambulance: 1.0, dump: 1.35 };
+const SERVICE_ENGINE: Readonly<Record<string, number>> = { bus: 1900, fire: 2100, ambulance: 3200, dump: 1800, advertising: 1800, flatbed: 1800, flatbed2: 1800, carrier: 1800 };
+const SERVICE_COM: Readonly<Record<string, number>> = { bus: 1.05, fire: 1.3, ambulance: 1.0, dump: 1.35, advertising: 1.6, flatbed: 1.15, flatbed2: 1.2, carrier: 1.5 };
 /** Six forward ratios, first to top (the final drive sets the car's own reach). */
 const GEARS = [3.4, 2.25, 1.62, 1.26, 1.0, 0.8] as const;
 

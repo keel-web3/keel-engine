@@ -34,11 +34,11 @@ import { bodyDesign, glassDesign, spinFrame, spinnerDesign, wheelDesign } from "
 import type { VehicleDesign } from "./shapes.ts";
 
 /** A car's bake shapes: its body, its glass (a see-through layer over it), and its front and rear wheel shapes (the same design twice when they match). */
-export function carDesigns(car: Car): { body: VehicleDesign; glass: VehicleDesign; wheels: readonly [VehicleDesign, VehicleDesign]; spinner: VehicleDesign | null } {
+export function carDesigns(car: Car, o: { readonly occupied?: boolean } = {}): { body: VehicleDesign; glass: VehicleDesign; wheels: readonly [VehicleDesign, VehicleDesign]; spinner: VehicleDesign | null } {
   const front = wheelDesign(car.wheels[0]);
   const rear = wheelDesign(car.wheels[1]);
   // (A spinner is its own design: the game turns it at its own rate, over the wheel's hub.)
-  return { body: bodyDesign(car), glass: glassDesign(car), wheels: [front, rear.key === front.key ? front : rear], spinner: spinnerDesign(car.wheels[0]) };
+  return { body: bodyDesign(car, o), glass: glassDesign(car), wheels: [front, rear.key === front.key ? front : rear], spinner: spinnerDesign(car.wheels[0]) };
 }
 
 /** A wheel as it's drawn this frame: where (world ground point), which way it faces (yaw), which spin frame. */
@@ -71,3 +71,8 @@ export type { ConvertibleSpec, RoofPiece } from "./roof.ts";
 // The glasshouse: each pane's corners and the room inside them -- what cracks, wipers, cockpits and seated drivers fit to.
 export { GLASS_THICKNESS, cabinMargin, ceilingAt, glasshouse, keepInside, reachAt, standIn } from "./glass.ts";
 export type { CabinPlane, GlassCar, GlassPane, Glasshouse, PaneName, StandIn } from "./glass.ts";
+
+export { carrierDecks, busPassengerSeats, busPassengerDoor } from "./service.ts";
+
+export { PERSONAL_TRANSPORT, personalTransportWorld } from "./personal-transport.ts";
+export type { PersonalTransportKind } from "./personal-transport.ts";

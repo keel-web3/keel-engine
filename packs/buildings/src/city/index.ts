@@ -74,6 +74,6 @@ export const CITY_CATALOGUE: Catalogue = {
   ],
   // The corner on an arterial out of downtown: the gas station on the junction.
   corners: { archetype: "gas_station", chance: { strip: 0.35, suburb: 0.3, industrial: 0.15, docks: 0.12, midtown: 0.15, oldtown: 0.08 } },
-  commons: { archetype: "commons", park: { suburb: 0.18, midtown: 0.15, oldtown: 0.1, strip: 0.06, industrial: 0.04, docks: 0.03, core: 0.06 }, lake: 0.35 },
+  commons: { archetype: "commons", park: { suburb: 0.18, midtown: 0.15, oldtown: 0.1, strip: 0.06, industrial: 0.04, docks: 0.03, core: 0.06 }, lake: 1 },
   blend: { reach: 80, max: 0.55 },
 };
