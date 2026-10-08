@@ -20,7 +20,7 @@ export type RoofKind = "flat" | "gable" | "sawtooth";
 
 /** A massing operation (keel/architecture massing.ts): composed in order, each building on the masses before it. */
 export type MassOp =
-  | { readonly op: "extrude" }
+  | { readonly op: "extrude"; readonly passage?: number; readonly clearance?: number }
   | { readonly op: "podium"; readonly storeys: Range }
   | { readonly op: "tower"; readonly inset: Range; readonly tiers?: Range; readonly slab?: boolean }
   | { readonly op: "setbacks"; readonly tiers: Range; readonly step: Range }
@@ -193,7 +193,11 @@ export interface ParkedVehicle { readonly key: string; readonly x: number; reado
 export interface ParkingBay extends ParkedVehicle { readonly occupied: boolean; readonly route: readonly (readonly [number, number, number?])[] }
 /** A floor or ramp: heights at local -z and +z, sampled against the car's current level. */
 export interface GarageSurface { readonly x: number; readonly z: number; readonly yaw: number; readonly hw: number; readonly hd: number; readonly back: number; readonly front: number }
+export interface BuildingWalk { readonly key: string; readonly width: number; readonly clearance: number; readonly path: readonly (readonly [number, number])[] }
+export interface BuildingApproach { readonly x: number; readonly z: number; readonly fx: number; readonly fz: number; readonly length: number; readonly halfWidth: number }
 export interface BuildingPlan {
+  readonly walks?: readonly BuildingWalk[];
+  readonly approaches?: readonly BuildingApproach[];
   readonly surfaces?: readonly GarageSurface[];
   readonly barriers?: readonly (Obb & { readonly yMin: number; readonly yMax: number })[];
   readonly doors?: readonly { readonly x: number; readonly z: number; readonly hw: number; readonly h: number }[];
@@ -296,6 +300,8 @@ export interface StreetCatalogue {
   /** Metres between lamps along a road, by class (0: none), staggered side to side (a highway's masts one side, then the other). */
   readonly spacing: Readonly<Record<RoadClass, number>>;
   /** Maximum repeat spacing for road signs, per direction (m); zero omits that road class. */
+  /** Additional street life appended after established props, retaining their stable resident furniture IDs. */
+  readonly infill?: boolean;
   readonly signEvery?: Readonly<Partial<Record<RoadClass, number>>>;
   /**
    * The widest crown each kind of plant is drawn with at scale 1 (m): a street tree is set back from the kerb (or drawn

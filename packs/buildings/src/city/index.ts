@@ -10,7 +10,7 @@ import { CITY_MATERIALS } from "./materials.ts";
 const look = (share: number, warm: number, dirt: number) => ({ share, warm, dirt });
 
 export const CITY_CATALOGUE: Catalogue = {
-  version: "city@2",
+  version: "city@3",
   archetypes: CITY_ARCHETYPES,
   facades: CITY_FACADES,
   materials: CITY_MATERIALS,

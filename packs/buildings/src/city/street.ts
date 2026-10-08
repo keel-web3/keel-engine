@@ -32,7 +32,8 @@ const MATERIALS: Readonly<Partial<Record<StreetSlotName, MaterialSpec>>> = {
 };
 
 export const CITY_STREETS: StreetCatalogue = {
-  version: "streets@4-signs",
+  version: "streets@5-infill",
+  infill: true,
   lampStyles: {
     lantern: lampStyle("lantern", 3.8, 0, 1, "lampWarm", 10),
     led: lampStyle("arm", 8.5, 2, 1, "lampCool", 15),

@@ -138,7 +138,7 @@ const showroom: Op<"showroom"> = (b) => {
     const n = clamp(Math.round(s.hw / 6), 2, 5), zf = s.z + s.hd - 0.6, ph = 6.5;
     for (let k = 0; k <= n; k += 1) {
       const x = s.x - s.hw + 0.6 + ((2 * s.hw - 1.2) * k) / n;
-      addBox(b, 0, x, ph / 2, zf, 0.06, ph / 2, 0.06, "metal");
+      if (Math.abs(x-s.x)>3.3) addBox(b, 0, x, ph / 2, zf, 0.06, ph / 2, 0.06, "metal");
       addBox(b, 0, x + 0.5, ph - 0.4, zf, 0.45, 0.3, 0.02, k % 2 ? b.neon : "trim");
       if (k < n) addBox(b, 0, x + (s.hw - 0.6) / n, ph - 1.2, zf, (s.hw - 0.6) / n, 0.05, 0.04, k % 2 ? "trim" : b.neon);
     }

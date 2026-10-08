@@ -16,8 +16,9 @@ export function nearestPoint(p: Vec3, lo: Vec3, hi: Vec3): [number, number, numb
 
 /** Radial distance from a point to a box (0 inside it). */
 export function boxDistance(p: Vec3, lo: Vec3, hi: Vec3): number {
-  const q = nearestPoint(p, lo, hi);
-  const dx = q[0] - p[0], dy = q[1] - p[1], dz = q[2] - p[2];
+  const dx = Math.max(lo[0], Math.min(hi[0], p[0])) - p[0];
+  const dy = Math.max(lo[1], Math.min(hi[1], p[1])) - p[1];
+  const dz = Math.max(lo[2], Math.min(hi[2], p[2])) - p[2];
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
 
@@ -57,8 +58,14 @@ export function termError(view: LodView, term: LodTerm, distance: number, down: 
 /** The pixel error of a step: its worst term. */
 export function pixelError(view: LodView, node: Pick<LodNode, "lo" | "hi">, step: LodStep): number {
   const { distance, down } = viewOf(view, node);
+  return pixelErrorAt(view, step, distance, down);
+}
+
+/** Reuse a node's view geometry across all its LOD steps. */
+export function pixelErrorAt(view: LodView, step: LodStep, distance: number, down: number): number {
   let worst = 0;
-  for (const t of step.terms) worst = Math.max(worst, termError(view, t, distance, down));
+  const scale = pixelsPerMetre(view, distance);
+  for (const t of step.terms) worst = Math.max(worst, t.error * facingVisibility(t.facing, down, view.origin[1], t.roofY) * scale);
   return worst;
 }
 

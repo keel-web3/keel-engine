@@ -163,7 +163,8 @@ export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityH
     ...(site2 ? { commons: site2 } : {}),
   });
   for (const op of a.massing) {
-    if (mass(b, op)) continue;
+    const shaped = op.op === "extrude" && op.passage && height ? { ...op, clearance: Math.max(5.2, height.under(f.x, f.z, f.hw, f.hd, f.yaw)[1] - base + 4.8) } : op;
+    if (mass(b, shaped)) continue;
     if (op.op === "roof") roof(b, op);
     else if (op.op === "crown") crown(b, op);
     else if (op.op === "cornice") cornice(b);
@@ -179,7 +180,7 @@ export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityH
   // On the ground: what stands free on the lot set down on the terrace; a plinth under each building mass down past
   // the lowest ground round it; the stoop's steps down from the door.
   let foot = base;
-  if (height) { settle(b, height); foot = plinths(b, height); stoopSteps(b, height, rise); }
+  if (height) { settle(b, height); foot = plinths(b, height); if (!b.walks.length) stoopSteps(b, height, rise); }
   // Collision: the masses standing on the ground (a tower on its podium is inside it) -- within the envelope, the
   // ground its floor was levelled for (what a mass overhangs past it -- a canopy's post, a boathouse over the water --
   // stands on its foundation's edge, not on the ground beyond).
@@ -197,5 +198,5 @@ export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityH
     const [x, , z] = toWorld(b, (x0 + x1) / 2, 0, (z0 + z1) / 2);
     footprint.push({ x, z, hw: (x1 - x0) / 2, hd: (z1 - z0) / 2, yaw: f.yaw });
   }
-  return { key: lot.key, archetype: a.id, condition, wall, solids: b.solids, surfaces: b.surfaces, barriers: b.barriers, doors: b.doors, vehicles: b.vehicles, parking: b.parking, footprint, height: b.top, ...(height ? { base, foot } : {}), ...(door ? { door } : {}), lights: b.lights, props: b.props, plants: b.plants, ads: b.ads, ...(b.water.length ? { water: b.water } : {}), ...(b.anchors.length ? { anchors: b.anchors } : {}) };
+  return { key: lot.key, archetype: a.id, condition, wall, solids: b.solids, walks: b.walks, surfaces: b.surfaces, barriers: b.barriers, doors: b.doors, vehicles: b.vehicles, parking: b.parking, footprint, height: b.top, ...(height ? { base, foot } : {}), ...(door ? { door } : {}), lights: b.lights, props: b.props, plants: b.plants, ads: b.ads, ...(b.water.length ? { water: b.water } : {}), ...(b.anchors.length ? { anchors: b.anchors } : {}) };
 }

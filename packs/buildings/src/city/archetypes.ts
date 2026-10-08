@@ -35,7 +35,7 @@ const ROADSIDE = { roads: { highway: 2, arterial: 1.5, street: 0.45, alley: 0 } 
 export const CITY_ARCHETYPES: readonly Archetype[] = [
   {
     id: "walkup", fits: { minFront: 8, minDepth: 10 }, storeys: [3, 6], setbacks: [0, 0, 3],
-    massing: [{ op: "extrude" }, { op: "cornice" }, { op: "roof", kinds: { flat: 1 } }],
+    massing: [{ op: "extrude", passage: .28 }, { op: "cornice" }, { op: "roof", kinds: { flat: 1 } }],
     facades: ["walkup"], materials: { redBrick: 5, brownBrick: 3, buffBrick: 1.5, limestone: 0.5, stucco: 0.5 },
     signs: [{ kind: "storefront", chance: 0.85 }, { kind: "blade", chance: 0.45 }, { kind: "awning", chance: 0.35 }],
     roof: [{ kind: "waterTower", chance: 0.45 }, { kind: "bulkhead", chance: 0.5 }, { kind: "chimney", chance: 0.3, count: [1, 2] }],
@@ -48,7 +48,7 @@ export const CITY_ARCHETYPES: readonly Archetype[] = [
   },
   {
     id: "loft", fits: { minFront: 16, minDepth: 16 }, storeys: [5, 10], setbacks: [0, 0, 0],
-    massing: [{ op: "extrude" }, { op: "bands", every: [2, 3] }, { op: "cornice" }, { op: "roof", kinds: { flat: 1 } }],
+    massing: [{ op: "extrude", passage: .45 }, { op: "bands", every: [2, 3] }, { op: "cornice" }, { op: "roof", kinds: { flat: 1 } }],
     facades: ["loft"], materials: { redBrick: 3, brownBrick: 4, buffBrick: 1, concreteLight: 1 },
     signs: [{ kind: "storefront", chance: 0.6 }, { kind: "rooftop", chance: 0.25 }, { kind: "billboard", chance: 0.25 }, { kind: "floodlight", chance: 0.2 }],
     roof: [{ kind: "waterTower", chance: 0.55 }, { kind: "bulkhead", chance: 0.5 }, { kind: "hvac", chance: 0.4, count: [1, 3] }],

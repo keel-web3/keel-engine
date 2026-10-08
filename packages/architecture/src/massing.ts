@@ -15,6 +15,7 @@ import type { MassOp } from "./types.ts";
 import { park, plaza } from "./street/parks.ts";
 import { BUSINESS_OPS, parkingRows } from "./business.ts";
 import { CIVIC_OPS } from "./civic.ts";
+import { keepLevel } from "./foundations.ts";
 import { commons } from "./commons.ts";
 
 type Op<K extends MassOp["op"]> = (b: Build, op: Extract<MassOp, { op: K }>) => void;
@@ -22,7 +23,30 @@ type Op<K extends MassOp["op"]> = (b: Build, op: Extract<MassOp, { op: K }>) => 
 /** Snap a height to whole storeys (at least one). */
 const storeysOf = (b: Build, h: number): number => Math.max(b.storey, Math.round(h / b.storey) * b.storey);
 
-const extrude: Op<"extrude"> = (b) => {
+const extrude: Op<"extrude"> = (b, op) => {
+  // A street block can share its upper floors across a real ground-level passage.
+  // Side wings support the span; collision keeps the two wings, never a solid box over the walkway.
+  const site = b.site, clear = op.clearance ?? 5.2;
+  if (!b.derelict && site.hw >= 8 && site.hd >= 7 && b.height >= clear + 3 && b.D.u("passage") < (op.passage ?? 0)) {
+    const gap = 2.5, wing = (site.hw - gap) / 2, recess = 2.4;
+    for (const side of [-1, 1]) addMass(b, { x: site.x + side * (gap + wing), z: site.z - recess / 2, hw: wing, hd: site.hd - recess / 2, y0: 0, y1: clear, slot: b.wall });
+    addMass(b, { ...site, y0: clear, y1: b.height, slot: b.wall });
+    // A cantilever covers the pavement without planting columns in its walking band.
+    const front = b.frame.hd + 2.4, back = site.z + site.hd - recess;
+    addBox(b, 2, site.x, clear + .16, (front + back) / 2, site.hw, .16, (front - back) / 2, "concreteLight");
+    const path = (key: string, points: readonly (readonly [number, number])[], width: number) => {
+      b.walks.push({ key: `${b.key}:${key}`, width, clearance: clear, path: points.map(([x,z]) => { const p=toWorld(b,x,0,z); return [p[0],p[2]] as const; }) });
+    };
+    path('passage', [[site.x, front], [site.x, site.z - site.hd - .6]], 3.6);
+    path('arcade', [[site.x-site.hw, b.frame.hd+.8], [site.x+site.hw, b.frame.hd+.8]], 2.4);
+    addBox(b, 1, site.x, .035, site.z, gap-.3, .035, site.hd+.6, "concreteLight");
+    const lightsFrom=b.solids.length;
+    for (let z=site.z-site.hd+2; z<site.z+site.hd; z+=8) addBox(b, 0, site.x, clear-.06, z, .8, .03, .15, "sodium");
+    keepLevel(b,lightsFrom);
+    const p=toWorld(b,site.x,clear,site.z);
+    b.barriers.push({x:p[0],z:p[2],yaw:b.frame.yaw,hw:site.hw,hd:site.hd,yMin:p[1],yMax:(b.frame.y??0)+b.height});
+    return;
+  }
   const s = b.site;
   if (!b.derelict) { addMass(b, { ...s, y0: 0, y1: b.height, slot: b.wall }); return; }
   // (Derelict: the lower floors boarded up, the rest dark.)

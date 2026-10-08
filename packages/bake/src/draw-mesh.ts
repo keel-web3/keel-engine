@@ -529,7 +529,8 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
     meshState = { gprog, gu, cprog, cu, fbo: null, ga: null, gb: null, gc: null, gd: null, zb: null, w: 0, h: 0, tri, meshes: new Map(), poses: null, poseRows: 0, sprog, su, sfbo: gl.createFramebuffer()!, smap: null, ssize: 0, wxMap: null, wxMapKey: null, wxMapVersion: -1 };
     return meshState;
   };
-  const targets = createSizeCache(2, (W, H) => {
+  // Main, mirror and small GPU atlas bake each retain their workspace.
+  const targets = createSizeCache(3, (W, H) => {
     const M = { fbo: gl.createFramebuffer()!, ga: null as WebGLTexture | null, gb: null as WebGLTexture | null, gc: null as WebGLTexture | null, gd: null as WebGLTexture | null, zb: null as WebGLRenderbuffer | null, w: W, h: H };
     const make = (internal: number, format: number, type: number): WebGLTexture => {
       const t = gl.createTexture()!;

@@ -48,7 +48,7 @@ export interface StreetPlan {
 
 /** What the city's grid hands the streets (none of it needed): substations to run a line in to, feeds from the land round it. */
 export interface StreetGrid {
-  readonly driveways?: readonly { x:number; z:number; fx:number; fz:number }[];
+  readonly driveways?: readonly { x:number; z:number; fx:number; fz:number; length?:number; halfWidth?:number }[];
   readonly substations?: readonly { readonly x: number; readonly z: number }[];
   readonly feeds?: readonly { readonly x: number; readonly z: number }[];
 }
@@ -135,7 +135,7 @@ export function* planStreetsSteps(sc: StreetCatalogue, city: City, height?: City
     l.push({ x, z, r, gap }); placed.set(k, l);
   };
   // ---- the ways into the lots: each building's door, and the line from it out to the kerb.
-  const doors: { x: number; z: number; fx: number; fz: number }[] = [];
+  const doors: { x: number; z: number; fx: number; fz: number; length?: number; halfWidth?: number }[] = [];
   for (const lot of city.lots) {
     if (lot.height[1] <= 0) continue;
     const f = frameOf(lot), fx = dsin(f.yaw), fz = dcos(f.yaw);
@@ -143,13 +143,18 @@ export function* planStreetsSteps(sc: StreetCatalogue, city: City, height?: City
   }
   doors.push(...(grid.driveways ?? []));
   const doorHash = new Map<string, number[]>();
-  doors.forEach((d, i) => { const k = `${Math.floor(d.x / 32)},${Math.floor(d.z / 32)}`, l = doorHash.get(k) ?? []; l.push(i); doorHash.set(k, l); });
+  doors.forEach((d, i) => {
+    const ex=d.x+d.fx*(d.length??12), ez=d.z+d.fz*(d.length??12);
+    for(let x=Math.floor(Math.min(d.x,ex)/32);x<=Math.floor(Math.max(d.x,ex)/32);x++) for(let z=Math.floor(Math.min(d.z,ez)/32);z<=Math.floor(Math.max(d.z,ez)/32);z++) {
+      const k=`${x},${z}`, l=doorHash.get(k)??[];l.push(i);doorHash.set(k,l);
+    }
+  });
   yield 0.08;
   const byDoor = (x: number, z: number, r: number): boolean => {
     const cx = Math.floor(x / 32), cz = Math.floor(z / 32);
     for (let a = -1; a <= 1; a += 1) for (let b = -1; b <= 1; b += 1) for (const i of doorHash.get(`${cx + a},${cz + b}`) ?? []) {
-      const d = doors[i]!, t = Math.max(0, Math.min(12, (x - d.x) * d.fx + (z - d.z) * d.fz)), qx = x - d.x - d.fx * t, qz = z - d.z - d.fz * t;
-      if (qx * qx + qz * qz < (DOOR_CLEAR + r) * (DOOR_CLEAR + r)) return true;
+      const d = doors[i]!, t = Math.max(0, Math.min(d.length ?? 12, (x - d.x) * d.fx + (z - d.z) * d.fz)), qx = x - d.x - d.fx * t, qz = z - d.z - d.fz * t;
+      if (qx * qx + qz * qz < ((d.halfWidth ?? DOOR_CLEAR) + r) ** 2) return true;
     }
     return false;
   };
@@ -230,6 +235,20 @@ export function* planStreetsSteps(sc: StreetCatalogue, city: City, height?: City
     runs.push({ e, kind, s0, s1, lampS0, lampS1, D });
   }
 
+  // Existing residents walk the immutable 45%-of-sidewalk polyline. Added furniture must leave that corridor clear.
+  let protectWalk = false;
+  const blocksWalk = (e: RoadEdge, side: 1 | -1, t: number, x: number, z: number, radius: number): boolean => {
+    const last = e.path.length - 16, off = SIDEWALK[e.cls].kerb + SIDEWALK[e.cls].slab * .45;
+    if (last - 15 < 8) return false;
+    const first = Math.max(15, 15 + Math.floor((t - 27) / 4) * 4), end = Math.min(last, t + 12);
+    for (let k = first; k < end; k += 4) {
+      const a = spot(e, side, k, off), b = spot(e, side, Math.min(last, k + 4), off);
+      const dx = b.x - a.x, dz = b.z - a.z, u = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+      if ((x - a.x - u * dx) ** 2 + (z - a.z - u * dz) ** 2 < (radius + .4) ** 2) return true;
+    }
+    return false;
+  };
+
   /** Put a piece on one side of a road near arc length s (nudged along a little to find room); whether it went down. */
   const put = (run: Run, side: 1 | -1, s: number, out: number, r: number, gap: number, post: boolean, kerbClear: number, from: number, to: number, make: (x: number, z: number, yaw: number) => void): boolean => {
     for (const nudge of [0, 1.5, -1.5, 3, -3]) {
@@ -237,6 +256,7 @@ export function* planStreetsSteps(sc: StreetCatalogue, city: City, height?: City
       if (t < from || t > to) continue;
       const p = spot(run.e, side, t, out);
       if (!fits(run.e, p.x, p.z, r, post, kerbClear) || !roomAt(p.x, p.z, r, gap) || (!post && byDoor(p.x, p.z, r))) continue;
+      if (protectWalk && blocksWalk(run.e, side, t, p.x, p.z, r)) continue;
       make(p.x, p.z, p.yaw);
       claim(p.x, p.z, r, gap);
       return true;
@@ -371,6 +391,43 @@ export function* planStreetsSteps(sc: StreetCatalogue, city: City, height?: City
       along, spot, fits, roomAt, claim, clear, byDoor, chunkAt, yAt, districtAt, blockDist, props, plants, ads, barriers, signs, note,
     });
     for (const part of infrastructure) yield 0.9 + 0.09 * part;
+  }
+
+  // Infill is appended: changing density must not rename the furniture used by existing resident checkpoints.
+  protectWalk = true;
+  if (sc.infill) for (const run of runs) {
+    const {e,kind}=run;if(kind==="highway"||e.bridge||e.cls==="alley")continue;
+    const D=drawsFor(city.site.seed,`infill|${e.id}`),kerbW=SIDEWALK[e.cls].kerb,slabW=SIDEWALK[e.cls].slab;
+    const style=sc.lampStyles[sc.lampsBy?.[kind]?.[e.cls]??sc.lamps[kind]];
+    for(let s=run.lampS0+12,n=0;s<run.lampS1;s+=32,n++){
+      const side:1|-1=n%2?1:-1;
+      if(style)put(run,side,s,kerbW+.5,FOOT.lamp.r,FOOT.lamp.gap,false,kerbW+.15,run.lampS0,run.lampS1,(x,z,yaw)=>{
+        const l=lamp(placerAt(D,x,z,yaw-side*Math.PI/2,chunkAt(x,z),plants,ads,yAt(x,z)),style);
+        lights.push(...l.lights);pushProp({kind:"lamp",x,z,r:Math.max(.25,l.r),breaks:true});
+      });
+    }
+    const plant:PlantKind=kind==="docks"||kind==="strip"?"palm":"street",crown=sc.crowns?.[plant]??2;
+    // Reserve the entire tree opening (up to .87 m half-width), not just its trunk. Narrow sidewalks
+    // keep their walking lane; extra trees belong on wider pavements and the site's planting beds.
+    const out=kerbW+slabW-.9,scale=Math.min(1,(out-.3)/crown);
+    if(scale>=.65 && out-(kerbW+slabW*.45)>=1.3)for(const side of [-1,1] as const)for(let s=run.s0+8+4*D.u("treePhase",side+1),n=0;s<run.s1;s+=18,n++){
+      if(kind==="industrial"&&D.u("treeSparse",n,side+1)>.35)continue;
+      put(run,side,s,out,.9,FOOT.tree.gap,false,crown*scale+.2-.9,run.s0,run.s1,(x,z,yaw)=>{
+        const p=placerAt(drawsFor(city.site.seed,`infill-tree|${e.id}|${side}|${n}`),x,z,yaw-side*Math.PI/2,chunkAt(x,z),plants,ads,yAt(x,z));
+        tree(p,0,0,scale,plant);pushProp({kind:"tree",x,z,r:.35*scale,breaks:false});
+      });
+    }
+    for(let s=run.s0+24,n=0;s<run.s1;s+=72,n++){
+      const kind=n%3===0?"bench":n%3===1?"bin":"planter",foot=FOOT[kind],side:1|-1=n%2?1:-1;
+      if(kind==="bench"&&slabW<2.8)continue;
+      const out=kerbW+slabW-foot.r-.04;
+      if(out-(kerbW+slabW*.45)<foot.r+.4)continue;
+      put(run,side,s,out,foot.r,foot.gap,false,kerbW+.15,run.s0,run.s1,(x,z,yaw)=>{
+        const p=placerAt(D,x,z,yaw-side*Math.PI/2,chunkAt(x,z),plants,ads,yAt(x,z));
+        pushProp({kind,x,z,r:furniture(p,kind),breaks:true});
+      });
+    }
+    yield .995;
   }
 
   return {

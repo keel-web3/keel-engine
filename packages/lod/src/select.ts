@@ -8,7 +8,7 @@
 //   const lod = createLodSelector({ tau: 2, triangles: 40_000 });
 //   for (const pick of lod.select(projection, nodes, dt)) for (const r of rangesOf(pick, node)) draw(r);
 
-import { coarsestUnder, pixelError, viewOf } from "./error.ts";
+import { coarsestUnder, pixelErrorAt, viewOf } from "./error.ts";
 import type { LodNode, LodPick, LodPolicy, LodView } from "./types.ts";
 
 export interface LodSelector {
@@ -69,7 +69,8 @@ export function createLodSelector(policy: LodPolicy = {}): LodSelector {
       const byKey = new Map<string, LodNode>();
       for (const node of nodes) {
         byKey.set(node.key, node);
-        const errors = node.steps.map((st) => pixelError(view, node, st));
+        const { distance, down } = viewOf(view, node);
+        const errors = node.steps.map((st) => pixelErrorAt(view, st, distance, down));
         let s = states.get(node.key);
         if (!s) {
           // (A node seen for the first time takes its level at once: there is nothing on screen yet to fade from.)
@@ -77,7 +78,7 @@ export function createLodSelector(policy: LodPolicy = {}): LodSelector {
           states.set(node.key, s);
         } else step(s, node, errors, dt);
         s.seen = frame;
-        picks.push(pickOf(node.key, s, viewOf(view, node).distance));
+        picks.push(pickOf(node.key, s, distance));
       }
       for (const [key, s] of states) if (s.seen !== frame) states.delete(key);
       triangles = 0;

@@ -5,6 +5,8 @@
 import type { City, CityHeight } from "@keel-engine/city";
 import { blockVariant, lookOf } from "./paint.ts";
 import { lakeLevel, lakeOf } from "./commons.ts";
+import { withSiteAccess } from "./site-access.ts";
+import { withApproaches } from "./approaches.ts";
 import { planLot } from "./plan.ts";
 import type { BuildingPlan, Catalogue, DistrictLook, WaterSpec } from "./types.ts";
 import { zoningOf } from "./zoning.ts";
@@ -33,7 +35,7 @@ export function* planCitySteps(cat: Catalogue, city: City, height?: CityHeight):
   for (const lot of city.lots) {
     let plans = byBlock.get(lot.block);
     if (!plans) { plans = []; byBlock.set(lot.block, plans); firstDistrict.set(lot.block, lot.district); }
-    plans.push(planLot(cat, city, lot, height));
+    plans.push(withSiteAccess(withApproaches(planLot(cat, city, lot, height), city, lot, height), city, lot, height));
     if (++made % 16 === 0) yield made / Math.max(1, city.lots.length) * 0.9;
   }
   const zoning = zoningOf(cat, city);

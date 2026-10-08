@@ -7,7 +7,7 @@
 // ranges (MeshDraw.range) and the two passes (projectionOf's clip planes).
 // Design: docs/LOD_SYSTEM.md.
 
-export { boxDistance, coarsestUnder, facingVisibility, nearestPoint, pixelError, pixelsPerMetre, rangesOf, termError, viewOf } from "./error.ts";
+export { boxDistance, coarsestUnder, facingVisibility, nearestPoint, pixelError, pixelErrorAt, pixelsPerMetre, rangesOf, termError, viewOf } from "./error.ts";
 export { createLodSelector, pickTriangles } from "./select.ts";
 export type { LodSelector } from "./select.ts";
 export { gridTiles } from "./grid.ts";
