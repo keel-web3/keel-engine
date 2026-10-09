@@ -190,6 +190,13 @@ export function bodyPaint(car: Car, options: PaintOptions = {}): LayerPaint {
   }
   // A bus's destination sign (the neon slot on a vehicle with no kit): black glass, its route and destination in amber.
   const sv = car.parts.service;
+  if (sv?.kind === "advertising" && sv.m.compact === 1) {
+    // The enclosure and unlit LEDs are hardware, independent of the cab's paint,
+    // patina, reflective sheen or theme. A thin charcoal bezel around black LEDs.
+    out[BODY_SLOT.alt] = slot(role({ light: .12, chroma: .008, hue: 260 }, "matte", .06), "none", 0);
+    for (const p of ["quarterL", "quarterR", "trunk"] as const) out[panelSlot(p)] = out[BODY_SLOT.alt]!;
+    out[BODY_SLOT.dark] = slot(role({ light: .045, chroma: .005, hue: 260 }, "matte", .025), "none", 0);
+  }
   if (sv?.kind === "bus") {
     const sign = signDecal(`${sv.number} ${DESTINATIONS[Number(sv.number) % DESTINATIONS.length]}`);
     out[BODY_SLOT.neon] = slot(role({ light: 0.12, chroma: 0.01, hue: 260 }, "matte", 0.2), "none", 0, { decal: { decal: sign, rect: [0, 0, 1, 1], flipU: true, flipV: false, inks: [role(SIGN_AMBER, "glow", 0.3)] } });

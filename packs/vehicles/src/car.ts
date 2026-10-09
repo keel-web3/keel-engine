@@ -301,6 +301,9 @@ export interface Car {
 }
 
 export interface CarOptions {
+  /** Advertising body profile. City is the compact van cutaway; legacy-tandem
+   * reconstructs accepted historical trucks for explicit validation/migration. */
+  readonly advertisingBody?: "city" | "legacy-tandem" | undefined;
   /** Visible fitted mechanical upgrades, independent of the immutable seed traits. */
   readonly mechanical?: MechanicalUpgrades;
   /** Pin the body style by name, or the class (a style of it, by weight). */
@@ -716,7 +719,7 @@ export function generateCar(seed: string, options: CarOptions = {}): Car {
   const rig = style.semi ? semiRig(D, d, wheelF) : null;
   // A service vehicle: the same for the bus, the fire engine, the ambulance and the dump truck; the cruiser keeps the
   // sedan it drew and wears its kit. Each wears its fleet's second colour, its livery panels, its beacons, its lettering.
-  const svcRig = svc && svc !== "police" ? serviceRig(svc, D, d, wheelF) : null;
+  const svcRig = svc && svc !== "police" ? serviceRig(svc, D, d, wheelF, options.advertisingBody) : null;
   const service = svcRig ? svcRig.service : svc === "police" ? policeParts(D, { archetype: cls, body, dials: d }) : null;
   const look = service ? serviceLook(service, D, bodyC) : null;
   if (service) decals.push(...serviceDecals(service, seed, bodyC));

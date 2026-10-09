@@ -18,7 +18,7 @@ const BANDS: Readonly<Record<string, { length: [number, number]; width: [number,
   Ambulance: { length: [6.7, 7.4], width: [2.2, 2.4], roof: [2.7, 3.0], wheels: [4] },
   "Police Cruiser": { length: [4.2, 5.2], width: [1.7, 2.1], roof: [1.1, 1.6], wheels: [4] },
   "Dump Truck": { length: [8.1, 9.0], width: [2.4, 2.6], roof: [3.0, 3.4], wheels: [6] },
-  "Advertising Truck": { length: [12, 12], width: [2.4, 2.6], roof: [3, 3.4], wheels: [6] },
+  "Advertising Truck": { length: [6, 6], width: [2, 2], roof: [2.2, 2.3], wheels: [4] },
   "Flatbed Truck": { length: [10.1, 10.1], width: [2.4, 2.6], roof: [3, 3.4], wheels: [6] },
   "Long Flatbed Truck": { length: [14.8, 14.8], width: [2.4, 2.6], roof: [3, 3.4], wheels: [6] },
   "Compact Car Carrier": { length: [10.1, 10.1], width: [2.4, 2.6], roof: [3, 3.4], wheels: [6] },
@@ -53,7 +53,8 @@ test("each style generates for many seeds, within its size band, on the right wh
       // (Their handling is a lorry's, their physics sane.)
       const { spec } = physicsOf(car);
       assert.ok(spec.mass === car.handling.massKg && spec.mass > 1000 && Number.isFinite(spec.finalDrive) && spec.finalDrive > 0, style);
-      if (style !== "Police Cruiser") assert.ok(car.handling.massKg > 5000 && car.handling.topSpeed < 40, `${style} ${car.handling.massKg} kg`);
+      if (style === "Advertising Truck") assert.ok(car.handling.massKg >= 4250 && car.handling.massKg <= 4600 && car.handling.topSpeed < 27, `${style} compact van mass/speed`);
+      else if (style !== "Police Cruiser") assert.ok(car.handling.massKg > 5000 && car.handling.topSpeed < 40, `${style} ${car.handling.massKg} kg`);
       assert.ok(car.paints.type === null && car.paints.neon === null && car.paints.effect === null && car.wheels[0].spinner === "none", style);
     }
   }
