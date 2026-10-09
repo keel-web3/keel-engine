@@ -7,7 +7,7 @@ import { SLOT, STREET_SLOT } from "./slots.ts";
 import type { BuildingPlan, PlantSpot, PropSpot, Solid } from "./types.ts";
 
 /** One site frame for entrances, frontage paving and planting; access corridors are reserved before landscaping. */
-export function withSiteAccess(plan: BuildingPlan, city: City, lot: Lot, height?: CityHeight): BuildingPlan {
+export function withSiteAccess(plan: BuildingPlan, city: City, lot: Lot, height?: CityHeight, options: {readonly residentAccessOnly?: boolean} = {}): BuildingPlan {
   if (plan.archetype === "none" || !plan.footprint.length) return plan;
   const f = frameOf(lot),
     c = dcos(f.yaw),
@@ -52,7 +52,7 @@ export function withSiteAccess(plan: BuildingPlan, city: City, lot: Lot, height?
           const t = (i + 0.5) / n,
             x = door.x + dx * t,
             z = door.z + dz * t;
-          solids.push({
+          if (!options.residentAccessOnly) solids.push({
             lod: 1,
             box: {
               c: [x, (height?.heightAt(x, z) ?? 0) + 0.018, z],
@@ -65,6 +65,9 @@ export function withSiteAccess(plan: BuildingPlan, city: City, lot: Lot, height?
       }
     }
   }
+  // This final landscaping pass cannot add a walk or change its path. The server
+  // retains exact mass/entrance/parking decisions without constructing these visual beds.
+  if (options.residentAccessOnly) return {...plan, walks, solids};
   const plants: PlantSpot[] = [...(plan.plants ?? [])],
     props: PropSpot[] = [...(plan.props ?? [])],
     D = drawsFor(city.site.seed, `lot-planting|${lot.key}`);

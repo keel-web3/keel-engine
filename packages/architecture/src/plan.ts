@@ -114,7 +114,7 @@ function envelope(a: Archetype, f: Frame): Build["site"] {
  * The plan for a lot's building. With the city's height (keel/city cityHeight) it stands on its lot's pad, a plinth
  * stepping down to the land where it falls away; without, on flat ground at 0.
  */
-export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityHeight): BuildingPlan {
+export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityHeight, options: {readonly residentAccessOnly?: boolean} = {}): BuildingPlan {
   const D = drawsOf(city, lot), empty = { key: lot.key, archetype: "none", condition: "pristine" as Condition, wall: "concreteLight" as SlotName, solids: [], footprint: [], height: 0 };
   if (lot.height[1] <= 0) return empty;
   const z = zoningOf(cat, city), commons = z.commons.get(lot.block), common = commons ? cat.archetypes.find((x) => x.id === cat.commons?.archetype) : undefined;
@@ -157,6 +157,7 @@ export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityH
   }
   const hues = district?.hues.length ?? 1;
   const b = createBuild({
+    ...(options.residentAccessOnly ? {emitSolids:false} : {}),
     key: lot.key, D, frame: f, site, bay: within(D, "bay", facade.bay), storey, groundH: within(D, "groundH", facade.groundH),
     storeys, height: Math.max(storey, storeys * storey), wall, derelict: condition === "derelict",
     neon: NEON_SLOTS[count(D, "neon", [0, Math.min(3, hues - 1)])]!,
@@ -170,6 +171,9 @@ export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityH
     else if (op.op === "cornice") cornice(b);
     else if (op.op === "bands") bands(b, op);
   }
+  let foot = base;
+  // These final visual details never add or alter resident access paths or footprint masses.
+  if (!options.residentAccessOnly) {
   rooftop(b, a.roof);
   signs(b, a.signs);
   // A mural on a blank side wall where the building turns onto a road (not on glass, not on a wreck).
@@ -179,8 +183,8 @@ export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityH
   if (turn && main && main.hw >= 3 && main.hd >= 3 && !b.derelict && !GLASS.has(wall) && D.u("muralRoll") < muralChance) mural(b, turn);
   // On the ground: what stands free on the lot set down on the terrace; a plinth under each building mass down past
   // the lowest ground round it; the stoop's steps down from the door.
-  let foot = base;
   if (height) { settle(b, height); foot = plinths(b, height); if (!b.walks.length) stoopSteps(b, height, rise); }
+  }
   // Collision: the masses standing on the ground (a tower on its podium is inside it) -- within the envelope, the
   // ground its floor was levelled for (what a mass overhangs past it -- a canopy's post, a boathouse over the water --
   // stands on its foundation's edge, not on the ground beyond).

@@ -27,6 +27,8 @@ export interface Frame {
 
 /** What places solids: a frame to place them in, and where they go (buildings, street furniture, parks). */
 export interface Placer {
+  /** Explicit server resident metadata mode. The canonical placement arithmetic still runs. */
+  readonly emitSolids?: boolean;
   readonly D: Draws;
   readonly frame: Frame;
   readonly solids: Solid[];
@@ -105,6 +107,7 @@ const isBuild = (b: Placer): b is Build => "bay" in b;
 /** A box in the placer's frame: centre (x, y, z), half extents (w, h, d), its slot. `grid` gives it the facade grid. */
 export function addBox(b: Placer, lod: Lod, x: number, y: number, z: number, w: number, h: number, d: number, slot: AnySlot, o: BoxOptions = {}): void {
   if (w <= 0 || h <= 0 || d <= 0) return;
+  if (b.emitSolids === false) { if (layerOf(slot) === 0) b.top = Math.max(b.top, y + h); return; }
   const c = toWorld(b, x, y, z), yaw = b.frame.yaw + (o.turn ?? 0);
   // (The grid lines up across stacked masses: cells counted from the envelope's left edge and from the ground,
   // offset by a seeded whole number so two buildings in one look never light alike.)
@@ -115,6 +118,7 @@ export function addBox(b: Placer, lod: Lod, x: number, y: number, z: number, w: 
 
 /** A capsule between two points of the placer's frame. */
 export function addCapsule(b: Placer, lod: Lod, a: readonly [number, number, number], e: readonly [number, number, number], r: number, slot: AnySlot): void {
+  if (b.emitSolids === false) { if (layerOf(slot) === 0) b.top = Math.max(b.top, a[1] + r, e[1] + r); return; }
   b.solids.push({ lod, layer: layerOf(slot), capsule: { a: toWorld(b, a[0], a[1], a[2]), b: toWorld(b, e[0], e[1], e[2]), r, mat: slotIndex(slot) } });
   if (layerOf(slot) === 0) b.top = Math.max(b.top, a[1] + r, e[1] + r);
 }
@@ -122,7 +126,7 @@ export function addCapsule(b: Placer, lod: Lod, a: readonly [number, number, num
 /** A placer at a point of another's frame, turned from it (a bench in a park), writing to the same solids. */
 export function subPlacer(p: Placer, x: number, z: number, turn = 0): Placer {
   const [wx, wy, wz] = toWorld(p, x, 0, z);
-  return { D: p.D, frame: { x: wx, z: wz, y: wy, yaw: p.frame.yaw + turn, hw: 0, hd: 0 }, solids: p.solids, plants: p.plants, ads: p.ads, top: 0 };
+  return { D: p.D, frame: { x: wx, z: wz, y: wy, yaw: p.frame.yaw + turn, hw: 0, hd: 0 }, solids: p.solids, plants: p.plants, ads: p.ads, top: 0, ...(p.emitSolids === false ? {emitSolids:false} : {}) };
 }
 
 /** A placer at a point of the world, turned to a heading (street furniture: its +z faces the way it faces). */

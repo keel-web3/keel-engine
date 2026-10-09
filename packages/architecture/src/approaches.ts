@@ -6,7 +6,7 @@ import { SLOT } from "./slots.ts";
 import type { BuildingPlan, BuildingApproach, GarageSurface, Solid } from "./types.ts";
 
 /** Join every garage/lot entrance to its own frontage, retaining a smooth supported apron across the sidewalk. */
-export function withApproaches(plan: BuildingPlan, city: City, lot: Lot, height?: CityHeight): BuildingPlan {
+export function withApproaches(plan: BuildingPlan, city: City, lot: Lot, height?: CityHeight, options: {readonly residentAccessOnly?: boolean} = {}): BuildingPlan {
   const frame = frameOf(lot),
     fx = dsin(frame.yaw),
     fz = dcos(frame.yaw);
@@ -56,7 +56,7 @@ export function withApproaches(plan: BuildingPlan, city: City, lot: Lot, height?
         x = road.x + dx * t,
         z = road.z + dz * t;
       surfaces.push({ x, z, yaw, hw: halfWidth, hd: length / (2 * n), back: y0, front: y1 });
-      solids.push({
+      if (!options.residentAccessOnly) solids.push({
         lod: 1,
         box: {
           c: [x, Math.max(y0, y1) - 0.012, z],

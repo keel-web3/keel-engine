@@ -22,20 +22,20 @@ export interface BlockPlan {
 }
 
 /** Every lot planned, grouped by block (on the city's height, if given). */
-export function planCity(cat: Catalogue, city: City, height?: CityHeight): BlockPlan[] {
-  const steps = planCitySteps(cat, city, height);
+export function planCity(cat: Catalogue, city: City, height?: CityHeight, options: {readonly residentAccessOnly?: boolean} = {}): BlockPlan[] {
+  const steps = planCitySteps(cat, city, height, options);
   for (;;) { const next = steps.next(); if (next.done) return next.value; }
 }
 
 /** The same city plan, pausing after small batches of lots and blocks for a loading screen. */
-export function* planCitySteps(cat: Catalogue, city: City, height?: CityHeight): Generator<number, BlockPlan[], void> {
+export function* planCitySteps(cat: Catalogue, city: City, height?: CityHeight, options: {readonly residentAccessOnly?: boolean} = {}): Generator<number, BlockPlan[], void> {
   const byBlock = new Map<number, BuildingPlan[]>();
   const firstDistrict = new Map<number, number>();
   let made = 0;
   for (const lot of city.lots) {
     let plans = byBlock.get(lot.block);
     if (!plans) { plans = []; byBlock.set(lot.block, plans); firstDistrict.set(lot.block, lot.district); }
-    plans.push(withSiteAccess(withApproaches(planLot(cat, city, lot, height), city, lot, height), city, lot, height));
+    plans.push(withSiteAccess(withApproaches(planLot(cat, city, lot, height, options), city, lot, height, options), city, lot, height, options));
     if (++made % 16 === 0) yield made / Math.max(1, city.lots.length) * 0.9;
   }
   const zoning = zoningOf(cat, city);
