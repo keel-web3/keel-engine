@@ -38,11 +38,15 @@ test("canonical rigid carriers have fitted cargo mounts, rolling axles and ordin
 });
 
 test("advertising vehicle is one canonical box truck with no trailer coupling or emergency flash", () => {
-  const car = generateCar("advert:box", { style: "Advertising Truck" });
-  const body = carDesigns(car).body;
-  assert.equal(car.parts.service!.kind, "advertising"); assert.ok(!car.parts.semi && !car.parts.bed && !car.parts.beacons);
-  assert.equal(car.body.length, 12); assert.equal(car.mounts.length, 6);
-  assert.ok(body.components!.includes("advertisingBox") && !body.components!.includes("dumpRam"));
-  assert.ok(body.height >= 5.76 && body.height <= 5.82);
-  assert.equal(carrierDecks(car).length, 0);
+  for(const [advertisingBody,length,axles,minHeight,maxHeight] of [
+    ["city",6,4,2.9,2.96], ["legacy-tandem",12,6,5.76,5.82],
+  ] as const){
+    const car=generateCar("advert:box",{style:"Advertising Truck",advertisingBody}),body=carDesigns(car).body;
+    assert.equal(car.parts.service!.kind,"advertising");assert.ok(!car.parts.semi&&!car.parts.bed&&!car.parts.beacons);
+    assert.equal(car.body.length,length);assert.equal(car.mounts.length,axles);
+    assert.ok(body.components!.includes("advertisingBox")&&!body.components!.includes("dumpRam"));
+    assert.ok(body.height>=minHeight&&body.height<=maxHeight,`${advertisingBody}: the generated enclosure has its real road height`);
+    assert.equal(carrierDecks(car).length,0);
+    if(advertisingBody==='city')assert.deepEqual(car,generateCar("advert:box",{style:"Advertising Truck"}),'compact city van is the default; legacy shape is explicit');
+  }
 });
