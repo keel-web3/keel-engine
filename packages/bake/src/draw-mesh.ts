@@ -22,11 +22,15 @@ import type { LookMesh } from "./mesh.ts";
 import { LAYER_FS } from "./paint-shader.ts";
 import { BLOOM_REACH, createBloomPass, hasBloom } from "./bloom.ts";
 import { screenBounds } from "./screen-bounds.ts";
+import { CAPSULE_VS, CAPSULE_GFS } from "./capsule-shaders.ts";
+import { compatibleMeshInstances, instancedMeshVertex, instancedMeshFragment, MESH_INSTANCE_LIMIT } from "./mesh-instances.ts";
+import { shaderLodEligible, shaderLodFootprintEligible } from "./shader-lod.ts";
 import { projectedMeshError } from "./mesh-lod.ts";
 import { frustumOf, visible } from "./cull.ts";
 import { partBounds, posedBounds } from "./draw-bounds.ts";
 import type { Bounds } from "./draw-bounds.ts";
 import { shadowView } from "./shadow-view.ts";
+import { shadowMeshError } from "./shadow-mesh-lod.ts";
 import { defaultMeshSun, projectionOf, shotOfView } from "./project.ts";
 import type { Projection } from "./project.ts";
 import { depthKappa } from "./depth.ts";
@@ -36,6 +40,8 @@ import { filterUniforms } from "./filters.ts";
 
 /** What the mesh pass needs from the renderer around it. */
 export interface MeshPassDeps {
+  /** Disable analytic upload for a scene/target whose complete-frame measurements reject it. */
+  readonly shaderLod?: boolean;
   readonly gl: WebGL2RenderingContext;
   /** Link a program (the renderer's own compiler, so a shader error reads the same). */
   link(vs: string, fs: string, what: string): WebGLProgram;
@@ -53,10 +59,13 @@ export interface MeshPassDeps {
 type PaintUniform = "center" | "right" | "up" | "forward" | "k" | "size" | "depth" | "pages" | "looks" | "paints" | "palette" | "places" | "decals" | "anchorDither" | "screen" | "dither" | "outline" | "heights" | "heightOn" | "ds" | "ids" | "idBase";
 
 /** What a frame cost: how many meshes are held, how many were drawn, and how many the frustum threw away. */
-export interface MeshStats { readonly meshes: number; readonly meshBytes: number; readonly drawn: number; readonly culled: number; readonly triangles: number; readonly bloomPixels: number; readonly reduced: number; readonly shadowDrawn: number; readonly shadowTriangles: number; readonly targetWorkspaces: number; readonly targetPixels: number; readonly targetColourBytes: number }
+/** Last mesh pass. submissions/instanced count camera G-buffer geometry; shadow/effect work is separate. */
+export interface MeshStats { readonly meshes: number; readonly meshBytes: number; readonly drawn: number; readonly culled: number; readonly triangles: number; readonly bloomPixels: number; readonly reduced: number; readonly shaderReduced: number; readonly submissions: number; readonly instanced: number; readonly instanceBytes: number; readonly shadowReduced: number; readonly shadowDrawn: number; readonly shadowTriangles: number; readonly targetWorkspaces: number; readonly targetPixels: number; readonly targetColourBytes: number }
 
 export interface MeshPass {
   setMesh(key: string, mesh: LookMesh | null): void;
+  /** Compile optional batching during loading, never during a draw. */
+  prepareInstances(): void;
   /** Draw through a pixel view (orthographic: every existing game) or any projection (project.ts: a chase or hood cam). */
   draw(view: PixelView | Projection, draws: readonly MeshDraw[], style?: MeshStyle): void;
   readonly stats: MeshStats;
@@ -508,17 +517,18 @@ function sameRegionLandState(a: MeshDraw, b: MeshDraw, count: number): boolean {
 
 export function createMeshPass(deps: MeshPassDeps): MeshPass {
   const { gl, link } = deps;
-  const stats = { meshes: 0, meshBytes: 0, drawn: 0, culled: 0, triangles: 0, bloomPixels: 0, reduced: 0, shadowDrawn: 0, shadowTriangles: 0, targetWorkspaces: 0, targetPixels: 0, targetColourBytes: 0 };
+  const stats = { meshes: 0, meshBytes: 0, drawn: 0, culled: 0, triangles: 0, bloomPixels: 0, reduced: 0, shaderReduced: 0, submissions: 0, instanced: 0, instanceBytes: 0, shadowReduced: 0, shadowDrawn: 0, shadowTriangles: 0, targetWorkspaces: 0, targetPixels: 0, targetColourBytes: 0 };
   const bloom = createBloomPass(gl, link);
   // (The picture's size, read fresh each frame: the renderer owns it.)
   let W = 1, H = 1;
   const sizeNow = (): void => { const [w, h] = deps.size(); W = w; H = h; };
 
   // Live meshes: built the first time setMesh or drawMeshes is called.
-  type MeshU = "model" | "center" | "right" | "up" | "forward" | "k" | "depth" | "tie" | "size" | "snap" | "ground" | "sun" | "look" | "draw" | "lightCount" | "anchor" | "fx" | "wipe" | "lightPos" | "lightDir" | "lightI" | "lightTint" | "slotGlow" | "parts" | "posed" | "lightOwner" | "owner" | "chunk" | "persp" | "proj" | "shadow" | "shadowMat" | "shadowK" | "shadowPass" | "clipRange" | "marked" | "snowK";
-  interface MeshGpu { vao: WebGLVertexArrayObject; bufs: WebGLBuffer[]; bytes: number; count: number; lo: [number, number, number]; hi: [number, number, number]; bounds: Bounds; parts: ReadonlyMap<number, Bounds> }
+  type MeshU = "batch" | "model" | "center" | "right" | "up" | "forward" | "k" | "depth" | "tie" | "size" | "snap" | "ground" | "sun" | "look" | "draw" | "lightCount" | "anchor" | "fx" | "wipe" | "lightPos" | "lightDir" | "lightI" | "lightTint" | "slotGlow" | "parts" | "posed" | "lightOwner" | "owner" | "chunk" | "persp" | "proj" | "shadow" | "shadowMat" | "shadowK" | "shadowPass" | "clipRange" | "marked" | "snowK" | "bodyLo" | "bodySpan";
+  interface MeshGpu { vao: WebGLVertexArrayObject; bufs: WebGLBuffer[]; bytes: number; count: number; lo: [number, number, number]; hi: [number, number, number]; bounds: Bounds; parts: ReadonlyMap<number, Bounds>; analytic?: Pick<import("./capsule-shader-mesh.ts").CapsuleShaderData, "bounds" | "capsules">; auto?: { gpu: MeshGpu; error: number; maxPixels: number } }
+  type SelectedDraw = MeshDraw & { shaderGpu?: MeshGpu; polygonMesh?: string };
   interface Meshes {
-    gprog: WebGLProgram; gu: Record<MeshU, WebGLUniformLocation | null>;
+    gprog: WebGLProgram; gu: Record<MeshU, WebGLUniformLocation | null>; bprog: WebGLProgram | null; abprog: WebGLProgram | null; bu: Record<MeshU, WebGLUniformLocation | null> | null; abu: Record<MeshU, WebGLUniformLocation | null> | null; batchFailed: boolean; abatchFailed: boolean; batchTexture: WebGLTexture | null; batchData: Float32Array | null; instancesPrepared: boolean; aprog: WebGLProgram | null; analyticFailed: boolean; au: Record<MeshU, WebGLUniformLocation | null> | null;
     cprog: WebGLProgram; cu: Record<PaintUniform | "ga" | "gb" | "gc" | "gd" | "gap" | "tints" | "chunkMax" | "mirrorAxes" | "mirrorK" | "fog" | "fogRange" | "fogRay" | "time" | "fKind" | "f0" | "f1" | "f2" | "gKind" | "g0" | "g1" | "g2" | "wxOn" | "wxPersp" | "wxAmt" | "wxRamp" | "wxMapOn" | "wxMap" | "wxBox" | "wxAlt" | "wallArt", WebGLUniformLocation | null>;
     fbo: WebGLFramebuffer | null; ga: WebGLTexture | null; gb: WebGLTexture | null; gc: WebGLTexture | null; gd: WebGLTexture | null; zb: WebGLRenderbuffer | null; w: number; h: number;
     tri: WebGLVertexArrayObject; meshes: Map<string, MeshGpu>; poses: WebGLTexture | null; poseRows: number;
@@ -531,7 +541,7 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
     if (meshState) return meshState;
     const gprog = link(MESH_VS, MESH_GFS, "Mesh");
     const g = (n: string) => gl.getUniformLocation(gprog, n);
-    const gu = { model: g("uModel"), center: g("uCenter"), right: g("uRight"), up: g("uUp"), forward: g("uForward"), k: g("uK"), depth: g("uDepthRange"), tie: g("uTie"), size: g("uSize"), snap: g("uSnap"), ground: g("uGround"), sun: g("uSun"), look: g("uLook"), draw: g("uDraw"), lightCount: g("uLightCount"), anchor: g("uAnchor"), fx: g("uFx"), wipe: g("uWipe"), lightPos: g("uLightPos"), lightDir: g("uLightDir"), lightI: g("uLightI"), lightTint: g("uLightTint"), slotGlow: g("uSlotGlow"), parts: g("uParts"), posed: g("uPosed"), lightOwner: g("uLightOwner"), owner: g("uOwner"), chunk: g("uChunk"), persp: g("uPersp"), proj: g("uProj"), shadow: g("uShadow"), shadowMat: g("uShadowMat"), shadowK: g("uShadowK"), shadowPass: g("uShadowPass"), clipRange: g("uClipRange"), marked: g("uMarked"), snowK: g("uSnowK") };
+    const gu = { batch: g("uBatch"), model: g("uModel"), center: g("uCenter"), right: g("uRight"), up: g("uUp"), forward: g("uForward"), k: g("uK"), depth: g("uDepthRange"), tie: g("uTie"), size: g("uSize"), snap: g("uSnap"), ground: g("uGround"), sun: g("uSun"), look: g("uLook"), draw: g("uDraw"), lightCount: g("uLightCount"), anchor: g("uAnchor"), fx: g("uFx"), wipe: g("uWipe"), lightPos: g("uLightPos"), lightDir: g("uLightDir"), lightI: g("uLightI"), lightTint: g("uLightTint"), slotGlow: g("uSlotGlow"), parts: g("uParts"), posed: g("uPosed"), lightOwner: g("uLightOwner"), owner: g("uOwner"), chunk: g("uChunk"), persp: g("uPersp"), proj: g("uProj"), shadow: g("uShadow"), shadowMat: g("uShadowMat"), shadowK: g("uShadowK"), shadowPass: g("uShadowPass"), clipRange: g("uClipRange"), marked: g("uMarked"), snowK: g("uSnowK"), bodyLo: g("uBodyLo"), bodySpan: g("uBodySpan") };
     const sprog = link(MESH_VS, MESH_SHADOW_FS, "Mesh shadow");
     const sg = (n: string) => gl.getUniformLocation(sprog, n);
     const su = { ...gu } as Record<MeshU, WebGLUniformLocation | null>;
@@ -549,8 +559,46 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
     gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.activeTexture(gl.TEXTURE0);
     const tri = gl.createVertexArray()!;
-    meshState = { gprog, gu, cprog, cu, wallArt, fbo: null, ga: null, gb: null, gc: null, gd: null, zb: null, w: 0, h: 0, tri, meshes: new Map(), poses: null, poseRows: 0, sprog, su, sfbo: gl.createFramebuffer()!, smap: null, ssize: 0, wxMap: null, wxMapKey: null, wxMapVersion: -1 };
+    meshState = { gprog, gu, bprog: null, abprog: null, bu: null, abu: null, batchFailed: false, abatchFailed: false, batchTexture: null, batchData: null, instancesPrepared: false, aprog: null, analyticFailed: false, au: null, cprog, cu, wallArt, fbo: null, ga: null, gb: null, gc: null, gd: null, zb: null, w: 0, h: 0, tri, meshes: new Map(), poses: null, poseRows: 0, sprog, su, sfbo: gl.createFramebuffer()!, smap: null, ssize: 0, wxMap: null, wxMapKey: null, wxMapVersion: -1 };
     return meshState;
+  };
+  // Optional analytic shaders fail closed on unsupported drivers; the reference remains resident.
+  const analyticProgram = (M: Meshes): boolean => {
+    if (M.analyticFailed) return false;
+    if (M.aprog) return true;
+    try {
+      M.aprog = link(CAPSULE_VS, CAPSULE_GFS, "Analytic capsule mesh");
+      M.au = { ...M.gu };
+      // Match the canonical names explicitly; e.g. depth is uDepthRange, not uDepth.
+      const names: Partial<Record<MeshU, string>> = { depth: "uDepthRange", fx: "uFx", lightPos: "uLightPos", lightDir: "uLightDir", lightI: "uLightI", slotGlow: "uSlotGlow" };
+      for (const key of Object.keys(M.au) as MeshU[]) M.au[key] = gl.getUniformLocation(M.aprog, names[key] ?? `u${key[0]!.toUpperCase()}${key.slice(1)}`);
+      return true;
+    } catch {
+      if (M.aprog) gl.deleteProgram(M.aprog);
+      M.aprog = null; M.au = null;
+      M.analyticFailed = true;
+      return false;
+    }
+  };
+  const instanceProgram = (M: Meshes, analytic: boolean): void => {
+    const key = analytic ? 'abprog' : 'bprog', uniforms = analytic ? 'abu' : 'bu', failed = analytic ? 'abatchFailed' : 'batchFailed';
+    if (M[key] || M[failed]) return;
+    try {
+      M[key] = link(instancedMeshVertex(analytic ? CAPSULE_VS : MESH_VS), instancedMeshFragment(analytic ? CAPSULE_GFS : MESH_GFS), analytic ? 'Instanced analytic capsule mesh' : 'Instanced mesh');
+      const U = M[uniforms] = { ...M.gu };
+      const names: Partial<Record<MeshU, string>> = { depth: 'uDepthRange', fx: 'uFx', lightPos: 'uLightPos', lightDir: 'uLightDir', lightI: 'uLightI', slotGlow: 'uSlotGlow' };
+      for (const k of Object.keys(U) as MeshU[]) U[k] = gl.getUniformLocation(M[key]!, names[k] ?? `u${k[0]!.toUpperCase()}${k.slice(1)}`);
+    } catch { if (M[key]) gl.deleteProgram(M[key]); M[key] = null; M[uniforms] = null; M[failed] = true; }
+  };
+  const instanceTable = (M: Meshes): void => {
+    if (M.batchTexture) return;
+    M.batchData ??= new Float32Array(MESH_INSTANCE_LIMIT * 24);
+    M.batchTexture = gl.createTexture()!;
+    gl.activeTexture(gl.TEXTURE11); gl.bindTexture(gl.TEXTURE_2D, M.batchTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, 6, MESH_INSTANCE_LIMIT, 0, gl.RGBA, gl.FLOAT, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.activeTexture(gl.TEXTURE0); stats.instanceBytes = MESH_INSTANCE_LIMIT * 24 * 4;
   };
   // Keep only the current main picture; two auxiliary sizes cover mirror/atlas/export reuse.
   const targets = createTargetCache(2, (W, H) => {
@@ -673,12 +721,13 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
     if (from) for (let j = 0; j < Math.min(SLOTS, from.length); j += 1) into[j] = from[j]!;
     return into;
   };
-  const setMesh = (key: string, mesh: LookMesh | null): void => {
+  const releaseGpu = (g: MeshGpu): void => {
+    if (g.auto) releaseGpu(g.auto.gpu);
+    for (const b of g.bufs) gl.deleteBuffer(b);
+    gl.deleteVertexArray(g.vao); stats.meshBytes -= g.bytes;
+  };
+  const uploadMesh = (mesh: LookMesh): MeshGpu => {
       const M = meshes();
-      const old = M.meshes.get(key);
-      if (old) { for (const b of old.bufs) gl.deleteBuffer(b); gl.deleteVertexArray(old.vao); M.meshes.delete(key); stats.meshBytes -= old.bytes; }
-      stats.meshes = M.meshes.size;
-      if (!mesh) return;
       const vao = gl.createVertexArray()!;
       gl.bindVertexArray(vao);
       const buf = (loc: number, data: Float32Array, size: number): WebGLBuffer => {
@@ -695,17 +744,33 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
       const bufs = [buf(0, mesh.positions, 3), buf(1, mesh.normals, 3), buf(2, mesh.attrs, 4), buf(3, mesh.bodies, 3)];
       // (Facade feet only where the mesh has a grid: otherwise location 4 reads the generic -1 set before each pass.)
       if (mesh.facade) bufs.push(buf(4, mesh.facade, 1));
+      if (mesh.capsuleShader) bufs.push(buf(5, mesh.capsuleShader.a, 4), buf(6, mesh.capsuleShader.b, 4));
       const ib = gl.createBuffer()!;
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, mesh.indices, gl.STATIC_DRAW);
       bufs.push(ib);
       gl.bindVertexArray(null);
-    const bytes = mesh.positions.byteLength + mesh.normals.byteLength + mesh.attrs.byteLength + mesh.bodies.byteLength + mesh.indices.byteLength + (mesh.facade?.byteLength ?? 0);
-    M.meshes.set(key, { vao, bufs, bytes, count: mesh.indices.length, lo, hi, bounds: [...lo, ...hi], parts: partBounds(mesh) });
+    const bytes = mesh.positions.byteLength + mesh.normals.byteLength + mesh.attrs.byteLength + mesh.bodies.byteLength + mesh.indices.byteLength + (mesh.facade?.byteLength ?? 0) + (mesh.capsuleShader ? mesh.capsuleShader.a.byteLength + mesh.capsuleShader.b.byteLength : 0);
+    const g: MeshGpu = { vao, bufs, bytes, count: mesh.indices.length, lo, hi, bounds: [...lo, ...hi], parts: partBounds(mesh), ...(mesh.capsuleShader ? { analytic: { bounds: mesh.capsuleShader.bounds, capsules: mesh.capsuleShader.capsules } } : {}) };
     stats.meshBytes += bytes;
+    // Candidates are explicitly prepared outside the frame loop. Compile here, before their first visible use.
+    if (mesh.capsuleShader) analyticProgram(M);
+    if (M.instancesPrepared) {
+      instanceProgram(M, !!mesh.capsuleShader);
+      if (M.bprog || M.abprog) instanceTable(M);
+    }
+    if (deps.shaderLod !== false && mesh.shaderDetail && analyticProgram(M)) g.auto = { gpu: uploadMesh(mesh.shaderDetail.mesh), error: mesh.shaderDetail.error, maxPixels: mesh.shaderDetail.maxPixels };
+    return g;
+  };
+  const setMesh = (key: string, mesh: LookMesh | null): void => {
+    const M = meshes(), old = M.meshes.get(key);
+    if (old) { releaseGpu(old); M.meshes.delete(key); }
+    if (mesh) M.meshes.set(key, uploadMesh(mesh));
     stats.meshes = M.meshes.size;
+    if (!stats.meshes && M.batchTexture) { gl.deleteTexture(M.batchTexture); M.batchTexture = null; M.batchData = null; stats.instanceBytes = 0; }
   };
 
+  let shaderProspects = new Uint8Array(0);
   const draw = (view: PixelView | Projection, draws: readonly MeshDraw[], style: MeshStyle = {}): void => {
     sizeNow();
     // One projection either way. A pixel view resolves to the orthographic one with the range it always had, so an
@@ -731,29 +796,74 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
     const planes = style.cull === false ? null : frustumOf(proj);
     const shown = planes ? submitted.filter(d => {
       const b = boundsFor(d);
-      const pad = d.lod ? d.lod.error * Math.hypot(d.matrix[0]!, d.matrix[1]!, d.matrix[2]!, d.matrix[4]!, d.matrix[5]!, d.matrix[6]!, d.matrix[8]!, d.matrix[9]!, d.matrix[10]!) : 0;
+      const lodError = Math.max(d.lod?.error ?? 0, !d.parts && !d.range && style.shaderLod !== false ? M0.meshes.get(d.mesh)?.auto?.error ?? 0 : 0);
+      const pad = lodError ? lodError * Math.hypot(d.matrix[0]!, d.matrix[1]!, d.matrix[2]!, d.matrix[4]!, d.matrix[5]!, d.matrix[6]!, d.matrix[8]!, d.matrix[9]!, d.matrix[10]!) : 0;
       return visible(planes, b.lo, b.hi, d.matrix, pad);
     }) : submitted;
     stats.drawn = shown.length;
     stats.culled = draws.length - shown.length;
-    stats.reduced = 0;
+    stats.reduced = stats.shaderReduced = stats.submissions = stats.instanced = 0;
     // No visible geometry means no material resolve or bloom. A caller-supplied after pass may still
     // need the cleared G-buffer (for example water), so preserve that path and explicit screen clears.
     if (!shown.length && !style.after) {
-      stats.triangles = stats.shadowDrawn = stats.shadowTriangles = stats.bloomPixels = 0;
+      stats.triangles = stats.shadowReduced = stats.shadowDrawn = stats.shadowTriangles = stats.bloomPixels = 0;
       if (style.clear) {
         gl.clearColor(style.clear[0], style.clear[1], style.clear[2], 1); gl.depthMask(true);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       }
       return;
     }
-    draws = style.lod === false || !shown.some(d => d.lod) ? shown : shown.map((d) => {
-      if (!d.lod || d.parts || d.range || !M0.meshes.has(d.lod.mesh)) return d;
-      const g = M0.meshes.get(d.mesh);
-      if (!g || !(projectedMeshError(proj, g.lo, g.hi, d.matrix, d.lod.error) < .25)) return d;
+    const automaticShader = style.shaderLod !== true;
+    if (automaticShader && style.shaderLod !== false && style.lod !== false && M0.aprog && shown.length >= 8) {
+      if (shaderProspects.length < shown.length) shaderProspects = new Uint8Array(Math.max(shown.length, shaderProspects.length * 2));
+      shaderProspects.fill(0, 0, shown.length);
+      let start = 0;
+      for (let i = 0; i <= shown.length; i++) {
+        const d = shown[i], fine = d && M0.meshes.get(d.mesh), explicit = d?.lod?.shader;
+        const gpu = explicit ? M0.meshes.get(explicit.mesh) : fine?.auto?.gpu;
+        const prospect = d && !d.parts && !d.range && gpu?.analytic && fine!.count >= 4096 * 3 && gpu.count < fine!.count * .75
+          && shaderLodFootprintEligible(proj, fine!.lo, fine!.hi, d.matrix, explicit ? explicit.maxPixels : fine!.auto!.maxPixels);
+        if (!prospect) { if (i - start >= 8) shaderProspects.fill(1, start, i); start = i + 1; }
+      }
+    } else if (automaticShader) shaderProspects.fill(0);
+    draws = style.lod === false ? shown : shown.map((d, drawIndex): SelectedDraw => {
+      if (d.parts || d.range) return d;
+      const fine = M0.meshes.get(d.mesh)!;
+      const coarse = d.lod && M0.meshes.get(d.lod.mesh);
+      const polygon = d.lod && coarse && projectedMeshError(proj, fine.lo, fine.hi, d.matrix, d.lod.error) < .25;
+      // Disabled/rejected optional programs do no analytic work in the frame loop.
+      // Read the held descriptor directly rather than allocating one per visible draw.
+      if (style.shaderLod !== false && M0.aprog && (!automaticShader || shaderProspects[drawIndex] === 1)) {
+        const explicit = d.lod?.shader, explicitGpu = explicit && M0.meshes.get(explicit.mesh);
+        const auto = explicit ? undefined : fine.auto;
+        const gpu = explicit ? explicitGpu?.analytic ? explicitGpu : undefined : auto?.gpu;
+        if (gpu && (!automaticShader || (polygon ? coarse!.count : fine.count) >= 4096 * 3) && gpu.count < (polygon ? coarse!.count : fine.count) * .75
+            && shaderLodEligible(proj, fine.lo, fine.hi, d.matrix, explicit ? explicit.error : auto!.error, explicit ? explicit.maxPixels : auto!.maxPixels)) {
+          stats.reduced++; stats.shaderReduced++;
+          return { ...d, shaderGpu: gpu, ...(polygon ? { polygonMesh: d.lod!.mesh } : {}) };
+        }
+      }
+      if (!polygon) return d;
       stats.reduced++;
-      return { ...d, mesh: d.lod.mesh };
+      return { ...d, mesh: d.lod!.mesh };
     });
+    // A crowded scene with four shader wheels between every ordinary body paid more
+    // in pipeline switches than it saved in vertices. Default selection requires
+    // a contiguous run of eight eligible draws. Explicit true is a measured override.
+    if (automaticShader && stats.shaderReduced) {
+      const selected = draws as SelectedDraw[];
+      for (let start = 0; start < selected.length;) {
+        if (!selected[start]!.shaderGpu) { start++; continue; }
+        let end = start + 1;
+        while (end < selected.length && selected[end]!.shaderGpu) end++;
+        if (end - start < 8) for (let i = start; i < end; i++) {
+          const d = selected[i]!;
+          selected[i] = d.polygonMesh ? { ...shown[i]!, mesh: d.polygonMesh } : shown[i]!;
+          stats.shaderReduced--; if (!d.polygonMesh) stats.reduced--;
+        }
+        start = end;
+      }
+    }
       const { screen = 4, dither = 0.9, outline = 3, clear = null, ambient = 0.16, lights = [], gap = 0.06 } = style;
       const L = deps.looks();
       if (!L || !L.palette || !L.looks || !L.paints) throw new Error("setLooks first.");
@@ -773,7 +883,7 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
       const box = (draw: MeshDraw) => ({ draw, matrix: draw.matrix, bounds: boundsFor(draw).bounds });
       const shadow = shadowK > 0 ? shadowView(shown.map(box), submitted.map(box), s0, size, sh?.cull !== false) : null;
       const sunMat = shadow?.matrix;
-      stats.shadowDrawn = shadow?.casters.length ?? 0; stats.shadowTriangles = 0;
+      stats.shadowReduced = 0; stats.shadowDrawn = shadow?.casters.length ?? 0; stats.shadowTriangles = 0;
       if (sunMat) {
         if (!M.smap || M.ssize !== size) {
           if (M.smap) gl.deleteTexture(M.smap);
@@ -803,12 +913,21 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
         // The shadow program shares pose flags across consecutive casters.
         // Reset the existing uniform cache at this pass boundary, as below.
         unsent();
+        let shadowVao: WebGLVertexArrayObject | null = null;
         for (const { draw: d } of shadow!.casters) {
-          const g = M.meshes.get(d.mesh);
+          let g = M.meshes.get(d.mesh);
           if (!g || (d.fade ?? 1) <= 0) continue;
+          if (style.shadowLod === true && d.lod && !d.parts && !d.range && !g.analytic) {
+            const coarse = M.meshes.get(d.lod.mesh);
+            if (coarse && !coarse.analytic && coarse.count < g.count * .75) {
+              const budget = shadowMeshError(sunMat!, d.matrix, g.lo, g.hi, d.lod.error, size);
+              // Quarter of a shadow texel and one tenth of the minimum receiver depth bias.
+              if (budget.pixels < .25 && budget.depth < .00012) { g = coarse; stats.shadowReduced++; }
+            }
+          }
           modelTo(M.su.model, d.matrix as Float32List);
           if (d.parts && d.parts.length >= 16) { poseTexture(M, d.parts); u1(1, M.su.parts, 12, true); u1(0, M.su.posed, 1, true); } else u1(0, M.su.posed, 0, true);
-          gl.bindVertexArray(g.vao);
+          if (style.vertexBindings === false || shadowVao !== g.vao) { gl.bindVertexArray(g.vao); shadowVao = g.vao; }
           // (A range draws that stretch of the indices only: a level's prefix, or a fading delta.)
           const [off, cnt] = d.range ?? [0, g.count];
           const count = Math.max(0, Math.min(cnt, g.count - off));
@@ -826,25 +945,6 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
       gl.clearBufferiv(gl.COLOR, 2, [0, 0, 0, 0]);
       gl.clearBufferfv(gl.COLOR, 3, [0, 0, 0, 0]);
       gl.clearBufferfv(gl.DEPTH, 0, [1]);
-      gl.useProgram(M.gprog);
-      gl.vertexAttrib1f(4, -1);
-      const G = M.gu;
-      gl.uniform3f(G.center, ctr[0], ctr[1], ctr[2]);
-      gl.uniform3f(G.right, right[0], right[1], right[2]);
-      gl.uniform3f(G.up, up[0], up[1], up[2]);
-      gl.uniform3f(G.forward, forward[0], forward[1], forward[2]);
-      gl.uniform1f(G.k, k); gl.uniform1f(G.depth, range); gl.uniform1f(G.tie, style.tie ?? 0.005);
-      // (An orthographic view sorts over its own span when it names one -- deep enough for a tall scene; project.ts.)
-      gl.uniform1f(G.clipRange, persp ? range : proj.clipFar ?? range);
-      gl.uniform2f(G.size, W, H);
-      // (Ground depth is the orthographic sprite convention; under perspective depth is the view's own, always.)
-      gl.uniform1i(G.ground, !persp && (style.depth ?? "ground") === "ground" ? 1 : 0);
-      gl.uniform1i(G.persp, persp ? 1 : 0);
-      gl.uniformMatrix4fv(G.proj, false, proj.clip);
-      gl.uniform3f(G.sun, s0[0] / sl, s0[1] / sl, s0[2] / sl);
-      gl.uniform1i(G.shadowPass, 0);
-      gl.uniform1f(G.shadowK, sunMat ? shadowK : 0);
-      if (sunMat) { gl.uniformMatrix4fv(G.shadowMat, false, sunMat); gl.activeTexture(gl.TEXTURE13); gl.bindTexture(gl.TEXTURE_2D, M.smap); gl.uniform1i(G.shadow, 13); gl.activeTexture(gl.TEXTURE0); }
       const nl = Math.min(MESH_LIGHTS, lights.length);
       lights.slice(0, nl).forEach((l, i) => {
         lightPos.set([l.pos[0], l.pos[1], l.pos[2], l.radius], i * 4);
@@ -853,28 +953,78 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
         lightTint[i] = l.tint ?? 0;
         lightOwner[i] = l.owner ?? 0;
       });
-      gl.uniform1i(G.lightCount, nl);
-      if (nl) { gl.uniform4fv(G.lightPos, lightPos); gl.uniform4fv(G.lightDir, lightDir); gl.uniform1fv(G.lightI, lightI); gl.uniform1fv(G.lightTint, lightTint); gl.uniform1fv(G.lightOwner, lightOwner); }
+      let activeAnalytic = false, activeBatch = false;
+      const bindGeometry = (analytic: boolean, batch = false): Record<MeshU, WebGLUniformLocation | null> => {
+        const G = batch ? analytic ? M.abu! : M.bu! : analytic ? M.au! : M.gu, program = batch ? analytic ? M.abprog! : M.bprog! : analytic ? M.aprog! : M.gprog;
+        gl.useProgram(program);
+        gl.vertexAttrib1f(4, -1);
+
+        gl.uniform3f(G.center, ctr[0], ctr[1], ctr[2]);
+        gl.uniform3f(G.right, right[0], right[1], right[2]);
+        gl.uniform3f(G.up, up[0], up[1], up[2]);
+        gl.uniform3f(G.forward, forward[0], forward[1], forward[2]);
+        gl.uniform1f(G.k, k); gl.uniform1f(G.depth, range); gl.uniform1f(G.tie, style.tie ?? 0.005);
+        // (An orthographic view sorts over its own span when it names one -- deep enough for a tall scene; project.ts.)
+        gl.uniform1f(G.clipRange, persp ? range : proj.clipFar ?? range);
+        gl.uniform2f(G.size, W, H);
+        // (Ground depth is the orthographic sprite convention; under perspective depth is the view's own, always.)
+        gl.uniform1i(G.ground, !persp && (style.depth ?? "ground") === "ground" ? 1 : 0);
+        gl.uniform1i(G.persp, persp ? 1 : 0);
+        gl.uniformMatrix4fv(G.proj, false, proj.clip);
+        gl.uniform3f(G.sun, s0[0] / sl, s0[1] / sl, s0[2] / sl);
+        gl.uniform1i(G.shadowPass, 0);
+        gl.uniform1f(G.shadowK, sunMat ? shadowK : 0);
+        if (sunMat) { gl.uniformMatrix4fv(G.shadowMat, false, sunMat); gl.activeTexture(gl.TEXTURE13); gl.bindTexture(gl.TEXTURE_2D, M.smap); gl.uniform1i(G.shadow, 13); gl.activeTexture(gl.TEXTURE0); }
+        gl.uniform1i(G.lightCount, nl);
+        if (nl) { gl.uniform4fv(G.lightPos, lightPos); gl.uniform4fv(G.lightDir, lightDir); gl.uniform1fv(G.lightI, lightI); gl.uniform1fv(G.lightTint, lightTint); gl.uniform1fv(G.lightOwner, lightOwner); }
+        unsent();
+        activeAnalytic = analytic; activeBatch = batch;
+        if (batch) gl.uniform1i(G.batch, 11);
+        return G;
+      };
+      let G = bindGeometry(false);
+      let analyticBounds: readonly number[] | undefined;
       let triangles = 0;
+      let geometryVao: WebGLVertexArrayObject | null = null;
       // (Draws sharing a seam write the first one's id: one surface to the outline -- MeshDraw.seam.)
       const seams = new Map<number, number>();
       draws.forEach((d, i) => { if (d.seam && !seams.has(d.seam)) seams.set(d.seam, i); });
       unsent();
       for (let i = 0; i < draws.length; i += 1) {
         const d = draws[i]!;
-        const g = M.meshes.get(d.mesh);
+        const g = (d as SelectedDraw).shaderGpu ?? M.meshes.get(d.mesh);
         if (!g || (d.fade ?? 1) <= 0) continue;
+        const analytic = !!g.analytic;
+        let instances = 1;
+        if (style.meshInstances === true && (analytic ? M.abprog : M.bprog)) {
+          while (instances < MESH_INSTANCE_LIMIT && i + instances < draws.length) {
+            const next = draws[i + instances]!, ng = (next as SelectedDraw).shaderGpu ?? M.meshes.get(next.mesh);
+            if (ng !== g || !compatibleMeshInstances(d, next)) break;
+            instances++;
+          }
+          if (instances < 4) instances = 1;
+        }
+        const batch = instances > 1;
+        if (analytic !== activeAnalytic || batch !== activeBatch) { G = bindGeometry(analytic, batch); analyticBounds = undefined; }
+        if (g.analytic && analyticBounds !== g.analytic.bounds) {
+          const b = analyticBounds = g.analytic.bounds;
+          gl.uniform3f(G.bodyLo, b[0], b[1], b[2]);
+          gl.uniform3f(G.bodySpan, Math.max(1e-4, b[3] - b[0]), Math.max(1e-4, b[4] - b[1]), Math.max(1e-4, b[5] - b[2]));
+        }
         const m = d.matrix;
         const at = d.anchor ?? [m[12]!, m[13]!, m[14]!];
         // (Where the thing sits in the picture: its dither's anchor. An orthographic draw also snaps its whole picture
         // to that whole pixel, so a moving car never crawls; a perspective draw doesn't -- nothing there is pixel-locked.)
         const [ax, ay] = proj.project([at[0], at[1], at[2]]);
         const sx = Math.floor(ax + 0.5), sy = Math.floor(ay + 0.5);
-        modelTo(G.model, m as Float32List);
+        if (!batch) modelTo(G.model, m as Float32List);
         // (The rest only when it differs from the draw before's: see `sent`.)
-        u2(0, G.snap, persp ? 0 : sx - ax, persp ? 0 : -(sy - ay), false);
-        u2(2, G.anchor, sx, sy, true);
-        u1(4, G.look, d.look, true); u1(5, G.draw, d.seam ? seams.get(d.seam)! : i, true); u1(6, G.owner, d.owner ?? 0, false);
+        if (!batch) {
+          u2(0, G.snap, persp ? 0 : sx - ax, persp ? 0 : -(sy - ay), false);
+          u2(2, G.anchor, sx, sy, true);
+          u1(4, G.look, d.look, true); u1(5, G.draw, d.seam ? seams.get(d.seam)! : i, true);
+        }
+        u1(6, G.owner, d.owner ?? 0, false);
         u1(7, G.chunk, Math.max(1, Math.min(31, Math.round(d.chunk ?? 1))), true);
         u1(8, G.marked, d.marked ? 1 : 0, true);
         u1(9, G.snowK, style.weather ? Math.max(0, Math.min(1, d.snow ?? 1)) : 0, false);
@@ -882,7 +1032,7 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
         u4(12, G.fx, d.light ?? 1, d.flash ?? 0, d.fadeInvert ? -(d.fade ?? 1) : d.fade ?? 1, ambient);
         glowTo(G.slotGlow, d.glow);
         if (d.parts && d.parts.length >= 16) { poseTexture(M, d.parts); u1(16, G.parts, 12, true); u1(17, G.posed, 1, true); } else u1(17, G.posed, 0, true);
-        gl.bindVertexArray(g.vao);
+        if (style.vertexBindings === false || geometryVao !== g.vao) { gl.bindVertexArray(g.vao); geometryVao = g.vao; }
         const [off, cnt] = d.range ?? [0, g.count];
         let n = Math.max(0, Math.min(cnt, g.count - off));
         if (style.regionLandBatch !== false && d.regionLandBatch && d.range && n === cnt) {
@@ -891,8 +1041,21 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
             n += draws[i]!.range![1];
           }
         }
-        gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_INT, off * 4);
-        triangles += n / 3;
+        if (batch) {
+          for (let j = 0; j < instances; j++) {
+            const item = draws[i + j]!, model = item.matrix, base = j * 24;
+            for (let k = 0; k < 16; k++) M.batchData![base + k] = model[k]!;
+            const anchor = item.anchor ?? [model[12]!, model[13]!, model[14]!], [x, y] = proj.project([anchor[0]!, anchor[1]!, anchor[2]!]), xx = Math.floor(x + .5), yy = Math.floor(y + .5);
+            M.batchData![base + 16] = item.look; M.batchData![base + 17] = item.seam ? seams.get(item.seam)! : i + j;
+            M.batchData![base + 18] = persp ? 0 : xx - x; M.batchData![base + 19] = persp ? 0 : -(yy - y);
+            M.batchData![base + 20] = xx; M.batchData![base + 21] = yy;
+          }
+          gl.activeTexture(gl.TEXTURE11); gl.bindTexture(gl.TEXTURE_2D, M.batchTexture);
+          gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 6, instances, gl.RGBA, gl.FLOAT, M.batchData!.subarray(0, instances * 24)); gl.activeTexture(gl.TEXTURE0);
+          gl.drawElementsInstanced(gl.TRIANGLES, n, gl.UNSIGNED_INT, off * 4, instances);
+          stats.instanced += instances; i += instances - 1;
+        } else gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_INT, off * 4);
+        stats.submissions++; triangles += n / 3 * instances;
       }
       stats.triangles = triangles;
       gl.bindVertexArray(null);
@@ -1009,5 +1172,11 @@ export function createMeshPass(deps: MeshPassDeps): MeshPass {
       bloom.draw(M.ga!, M.gb!, draws.map((d) => d.bloom), W, H, reach, rect, style.bloomCache, style.bloomSeparable);
   };
 
-  return { setMesh, draw, get stats() { return { ...stats }; } };
+  const prepareInstances = (): void => {
+    const M = meshes(); M.instancesPrepared = true;
+    instanceProgram(M, false);
+    if (M.aprog) instanceProgram(M, true);
+    if (stats.meshes && (M.bprog || M.abprog)) instanceTable(M);
+  };
+  return { setMesh, prepareInstances, draw, get stats() { return { ...stats }; } };
 }

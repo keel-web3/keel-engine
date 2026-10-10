@@ -3,7 +3,7 @@
   "version": "0.1.2",
   "private": true,
   "type": "module",
-  "description": "Design once, draw fast: bake designs into sprite atlases at load, instanced sprites, spatial hashing and culling.",
+  "description": "Cached procedural geometry, automatic error-bounded shader LOD, shared mesh pooling and optional compatible instancing; indexed sprite atlases, spatial culling and streamed preparation. Agent guide: docs/OPTIMIZED_GAMES.md in keel-engine.",
   "exports": {
     ".": "./src/index.ts",
     "./mesh": "./src/mesh.ts",
@@ -17,7 +17,10 @@
     "./population": "./src/population.ts",
     "./runtime": "./src/runtime.ts",
     "./geometry": "./src/geometry.ts",
-    "./solid-lod": "./src/solid-lod.ts"
+    "./solid-lod": "./src/solid-lod.ts",
+    "./mesh-pool": "./src/mesh-pool.ts",
+    "./mesh-detail": "./src/mesh-detail.ts",
+    "./shader-detail": "./src/shader-mesh-detail.ts"
   },
   "dependencies": {
     "@keel-engine/runtime": "workspace:*",

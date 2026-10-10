@@ -10,7 +10,7 @@ export type { PixelView, PixelViewSpec, Vec3 } from "./view.ts";
 export { INSTANCE_FLOATS, LAYER_INSTANCE_FLOATS, LayerInstances, SpriteInstances, createSpriteRenderer } from "./sprites.ts";
 export type { AtlasPage, BillboardCamera, BillboardStyle, LayerStyle, LookTextures, MeshDraw, MeshFog, MeshGBuffer, MeshLight, MeshStyle, MeshWeather, SpriteRenderer } from "./sprites.ts";
 // Live meshes: the default for a 3D game -- a design as a real 3D object drawn every frame through its looks (bakes stay for stills, NFTs, far LODs).
-export { MESH_LIGHTS, lookMesh, meshBounds, mergeMeshes, meshMatrix, mulMatrix, poseMatrices, worldsBounds } from "./mesh.ts";
+export { MESH_LIGHTS, lookMesh, lookMeshSteps, meshBounds, mergeMeshes, meshMatrix, mulMatrix, poseMatrices, worldsBounds } from "./mesh.ts";
 export type { LookMesh, LookMeshOptions } from "./mesh.ts";
 // Crossed cards: thousands of grass tufts, bushes and reeds as one mesh, cut to leafy silhouettes in the G-buffer pass.
 export { CARD_KINDS, cardsMesh } from "./cards.ts";
@@ -18,6 +18,8 @@ export type { CardKind, CardSpot, CardsOptions } from "./cards.ts";
 // The projection contract every pass shares, and the culling that rides on it.
 export { DEPTH_RANGE, NEAR, axesOf, defaultMeshSun, orthoDepthRange, projectionOf, shotOfView } from "./project.ts";
 export type { ClipPlanes, OrthoShot, PerspShot, Projection, Shot } from "./project.ts";
+export { capsuleShaderMesh, capsuleSurfaceError } from "./capsule-shader-mesh.ts";
+export type { CapsuleShaderData } from "./capsule-shader-mesh.ts";
 // Levels of detail as one mesh: nested prefixes a draw picks by index range (keel/lod chooses which).
 export { coarseLayerMesh, layeredMesh, layeredMeshSteps, prefixMesh, solidSize, worldError, prepareMeshDetail } from "./lod-mesh.ts";
 export type { LayeredMesh, MeshLayer, MeshDetail, MeshHolder } from "./lod-mesh.ts";
@@ -115,3 +117,9 @@ export type {SpriteCamera,SpriteLook,SpriteFraming,SpriteView,SpecimenAudit} fro
 export {specimenAtDetail,specimenDetail,emitterSlots} from './specimen-detail.ts';
 
 export { GROUND_ART_SIZE, GROUND_ART_LAYERS, GROUND_ART_METRES, groundArtPixels, uploadGroundArt } from "./ground-art.ts";
+
+export { prepareShaderMeshDetail } from "./shader-mesh-detail.ts";
+export { createMeshPool } from "./mesh-pool.ts";
+export type { MeshPool } from "./mesh-pool.ts";
+export { meshDetailReport } from "./mesh-detail.ts";
+export type { MeshCost, MeshDetailReport } from "./mesh-detail.ts";

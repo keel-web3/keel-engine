@@ -966,7 +966,7 @@ function advertisingSolids(car: Car): Solids {
   // Real rear wheels sit below the box, not under a floating billboard. Short
   // side skirts stop at the wheel opening; rear bumper/lights stay on the frame.
   both(sd => {
-    for (const [a,b] of [[led.rear + .04,wr0],[wr1,led.front - .02]]) box(S, P.alt, sd * .68, .45, a, sd * .99, led.floor, b);
+    for (const [a,b] of [[led.rear + .04,wr0],[wr1,led.front - .02]] as const) box(S, P.alt, sd * .68, .45, a, sd * .99, led.floor, b);
     arch(S, P.alt, sd * .992, g.rearAxle, R, .055, .023);
     box(S, P.alt, sd * .68, .19, wr0 - .06, sd * .98, .60, wr0 - .03);
     box(S, P.tail, sd * .69, .55, -2.965, sd * .92, .72, -2.945);

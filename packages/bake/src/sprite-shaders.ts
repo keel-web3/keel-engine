@@ -214,7 +214,7 @@ export interface MeshDraw {
   readonly mesh: string;
   /** Optional prebuilt replacement, used only below a quarter-pixel projected error. Error is in local metres.
    * Bounds/UVs must describe the same object. Ranges and per-part poses always keep the full mesh. */
-  readonly lod?: { readonly mesh: string; readonly error: number };
+  readonly lod?: { readonly mesh: string; readonly error: number; readonly shader?: { readonly mesh: string; readonly error: number; readonly maxPixels: number } };
   /** Its transform (column-major 4x4: meshMatrix, mulMatrix). */
   readonly matrix: ArrayLike<number>;
   /** The look table's index it's painted with. */
@@ -295,6 +295,14 @@ export interface MeshLight {
 export interface MeshStyle extends Omit<LayerStyle, "heights"> {
   /** Diagnostic override: false keeps full geometry for draws with a prebuilt replacement. */
   readonly lod?: boolean;
+  /** Automatic analytic detail amortizes program changes over runs of eight. True forces all geometrically eligible detail; false keeps polygons. */
+  readonly shaderLod?: boolean | "auto";
+  /** Batch compatible adjacent rigid draws after renderer.prepareMeshInstances() during loading. Benchmark this opt-in per scene. */
+  readonly meshInstances?: boolean;
+  /** Diagnostic reference: false repeats each vertex-array binding instead of reusing it. */
+  readonly vertexBindings?: boolean;
+  /** Opt-in polygon shadow LOD, using the light map error/depth budget rather than camera distance. */
+  readonly shadowLod?: boolean;
   readonly sun?: readonly [number, number, number];
   readonly ambient?: number;
   readonly lights?: readonly MeshLight[];

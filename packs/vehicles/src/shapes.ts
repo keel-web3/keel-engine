@@ -754,7 +754,7 @@ export function glassDesign(car: Car): VehicleDesign {
 }
 function partDesign(car: Car, part: string, keep: (mat: number) => boolean, occupied = true): VehicleDesign {
   const all = bodySolids(car);
-  const include = (solid: { mat?: number }): boolean => keep(solid.mat ?? 0) && (occupied || all.components?.get(solid) !== "driver");
+  const include = (solid: { mat?: number | undefined }): boolean => keep(solid.mat ?? 0) && (occupied || all.components?.get(solid) !== "driver");
   const S: Solids = { boxes: all.boxes.filter(include), wedges: all.wedges.filter(include), capsules: all.capsules.filter(include) };
   const world: BakeWorld = { boxes: S.boxes, wedges: S.wedges, capsules: S.capsules };
   let height = 0, radius = 0;

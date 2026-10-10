@@ -1,3 +1,4 @@
+import { automaticShaderDetail } from "./capsule-shader-mesh.ts";
 import { bodySpace, meshBounds } from "./geometry.ts";
 export { bodySpace, meshBounds } from "./geometry.ts";
 // Look meshes: a design's solids (the same boxes, wedges and capsules the baker
@@ -23,6 +24,10 @@ import type { BakeBox, BakeCapsule, BakeWorld } from "./bake.ts";
  * space reads, so a stripe runs down the whole car centred instead of restarting on every panel), and the triangles.
  */
 export interface LookMesh {
+  /** Automatic render-only candidate, owned and released with this mesh. Structured-clone safe. */
+  readonly shaderDetail?: { readonly mesh: LookMesh; readonly error: number; readonly maxPixels: number };
+  /** Analytic candidate only; prepareShaderMeshDetail owns the full/polygon fallback. */
+  readonly capsuleShader?: import("./capsule-shader-mesh.ts").CapsuleShaderData;
   readonly positions: Float32Array;
   readonly normals: Float32Array;
   readonly attrs: Float32Array;
@@ -36,6 +41,8 @@ export interface LookMesh {
 }
 
 export interface LookMeshOptions {
+  /** Prepare eligible analytic detail once (default true); false keeps only polygon buffers. */
+  readonly shaderLod?: boolean;
   /** Segments round a capsule (default 12) and rings per hemisphere (default 3). */
   readonly around?: number;
   readonly rings?: number;
@@ -209,6 +216,7 @@ function capsuleMesh(B: Builder, cap: BakeCapsule, around: number, rings: number
 
 /** Several meshes as one (a design's parts that always move together). Parts stay apart for the outline. */
 export function mergeMeshes(meshes: readonly LookMesh[]): LookMesh {
+  if (meshes.some(m => m.capsuleShader)) throw new Error("Prepare shader detail from the combined recipe, before meshing");
   let nv = 0, ni = 0;
   for (const m of meshes) { nv += m.positions.length / 3; ni += m.indices.length; }
   const positions = new Float32Array(nv * 3), normals = new Float32Array(nv * 3), attrs = new Float32Array(nv * 4), bodies = new Float32Array(nv * 3), indices = new Uint32Array(ni);
@@ -286,14 +294,14 @@ function finishMesh(B: Builder, bounds: LookMeshOptions["bounds"]): LookMesh {
 }
 
 /** A design's posed solids as one look mesh (made once; drawn at any position, heading and spin). */
-export function lookMesh(world: BakeWorld, { around = 12, rings = 3, bounds, chordError }: LookMeshOptions = {}): LookMesh {
+export function lookMesh(world: BakeWorld, { around = 12, rings = 3, bounds, chordError, shaderLod }: LookMeshOptions = {}): LookMesh {
   const B = new Builder();
   appendWorld(B, world, around, rings, chordError);
-  return finishMesh(B, bounds);
+  return automaticShaderDetail(world, finishMesh(B, bounds), { around, rings, ...(bounds ? { bounds } : {}), ...(chordError !== undefined ? { chordError } : {}), ...(shaderLod !== undefined ? { shaderLod } : {}) });
 }
 
 /** Same mesh bytes, yielding between small batches of solids when workers are unavailable. */
-export function* lookMeshSteps(world: BakeWorld, { around = 12, rings = 3, bounds, chordError }: LookMeshOptions = {}): Generator<void, LookMesh, void> {
+export function* lookMeshSteps(world: BakeWorld, { around = 12, rings = 3, bounds, chordError, shaderLod }: LookMeshOptions = {}): Generator<void, LookMesh, void> {
   const B = new Builder();
   let count = 0;
   for (const kind of ["boxes", "wedges", "capsules"] as const) for (const solid of world[kind] ?? []) {
@@ -301,7 +309,7 @@ export function* lookMeshSteps(world: BakeWorld, { around = 12, rings = 3, bound
     if (++count % 32 === 0) yield;
   }
   yield;
-  return finishMesh(B, bounds);
+  return automaticShaderDetail(world, finishMesh(B, bounds), { around, rings, ...(bounds ? { bounds } : {}), ...(chordError !== undefined ? { chordError } : {}), ...(shaderLod !== undefined ? { shaderLod } : {}) });
 }
 
 /** A mesh's own bounds: [minX, minY, minZ, maxX, maxY, maxZ] (what to pass every mesh of one thing). */
@@ -411,6 +419,11 @@ flat out float vPart;
 out float vScene;
 out float vView;
 out float vFacade;
+// Keep raster/paint interpolation identical across uniform and instanced model sources.
+// Otherwise driver contraction can move a UV across a pixel/palette boundary.
+invariant gl_Position;
+invariant vW; invariant vN; invariant vAttr; invariant vBody; invariant vPart;
+invariant vScene; invariant vView; invariant vFacade;
 void main() {
   vec3 lp = aPos, ln = aNorm;
   vFacade = aFacade;

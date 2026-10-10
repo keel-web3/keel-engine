@@ -11,6 +11,7 @@ export { solidSize } from "./solid-lod.ts";
 //   const levels = m.layers.map((l) => l.indices).reverse(); // [c0, c1, c2] for a LodNode
 //   sr.drawMeshes(view, [{ mesh: key, matrix, look, range: [0, levels[1]] }]);
 
+import { automaticShaderDetail } from "./capsule-shader-mesh.ts";
 import type { BakeBox, BakeCapsule, BakeWorld } from "./bake.ts";
 import { bodySpace, lookMesh, lookMeshSteps, meshBounds, mergeMeshes, worldsBounds } from "./mesh.ts";
 import type { LookMesh, LookMeshOptions } from "./mesh.ts";
@@ -28,13 +29,30 @@ export interface LayeredMesh extends LookMesh {
  * space is measured over ALL the runs (or `bounds`), so a coarse level and a fine one paint alike.
  */
 export function layeredMesh(runs: readonly BakeWorld[], options: LookMeshOptions = {}): LayeredMesh {
-  const parts = runs.map((w) => lookMesh(w, options));
+  const parts = runs.map((w) => lookMesh(w, { ...options, shaderLod: false }));
   const merged = mergeMeshes(parts);
   const layers: MeshLayer[] = [];
   let indices = 0, vertices = 0;
   for (const p of parts) { indices += p.indices.length; vertices += p.positions.length / 3; layers.push({ indices, vertices }); }
   const bodies = bodySpace(merged.positions, options.bounds ?? meshBounds(merged.positions));
-  return { ...merged, bodies, layers };
+  return { ...layeredShaderDetail(runs, { ...merged, bodies }, options), layers };
+}
+
+/** Preserve run-order part IDs even though BakeWorld groups solids by type. */
+function layeredShaderDetail(runs: readonly BakeWorld[], mesh: LookMesh, options: LookMeshOptions): LookMesh {
+  const world: BakeWorld = { boxes: runs.flatMap(w => w.boxes ?? []), wedges: runs.flatMap(w => w.wedges ?? []), capsules: runs.flatMap(w => w.capsules ?? []) };
+  const detail = automaticShaderDetail(world, mesh, options);
+  if (!detail.shaderDetail) return detail;
+  const offsets: number[] = []; let part = 0;
+  for (const w of runs) { offsets.push(part); part += (w.boxes?.length ?? 0) + (w.wedges?.length ?? 0) + (w.capsules?.length ?? 0); }
+  const mapping: number[] = [];
+  for (const kind of ["boxes", "wedges", "capsules"] as const) runs.forEach((w, i) => {
+    const start = offsets[i]! + (kind === "boxes" ? 0 : (w.boxes?.length ?? 0) + (kind === "capsules" ? w.wedges?.length ?? 0 : 0));
+    for (let j = 0; j < (w[kind]?.length ?? 0); j++) mapping.push(start + j);
+  });
+  const attrs = detail.shaderDetail.mesh.attrs;
+  for (let i = 3; i < attrs.length; i += 4) attrs[i] = mapping[attrs[i]!]!;
+  return detail;
 }
 
 /** Layered geometry with exactly the same output, built in interruptible solid batches. */
@@ -42,13 +60,13 @@ export function* layeredMeshSteps(runs: readonly BakeWorld[], options: LookMeshO
   const parts: LookMesh[] = [], layers: MeshLayer[] = [];
   let indices = 0, vertices = 0;
   for (const world of runs) {
-    const mesh = yield* lookMeshSteps(world, options);
+    const mesh = yield* lookMeshSteps(world, { ...options, shaderLod: false });
     parts.push(mesh); indices += mesh.indices.length; vertices += mesh.positions.length / 3;
     layers.push({ indices, vertices }); yield;
   }
   const merged = mergeMeshes(parts);
   const bodies = bodySpace(merged.positions, options.bounds ?? meshBounds(merged.positions));
-  return { ...merged, bodies, layers };
+  return { ...layeredShaderDetail(runs, { ...merged, bodies }, options), layers };
 }
 
 /** Generate just the first run, preserving the complete recipe's paint coordinates and empty detail levels.
@@ -87,7 +105,7 @@ export function worldError(world: BakeWorld): number {
 /** A cached fine mesh and a prebuilt capsule approximation. All levels come from the SAME posed world. */
 export interface MeshDetail {
   readonly mesh: string;
-  readonly lod: { readonly mesh: string; readonly error: number };
+  readonly lod: { readonly mesh: string; readonly error: number; readonly shader?: { readonly mesh: string; readonly error: number; readonly maxPixels: number } };
 }
 /** The owner controls cache lifetime/refcounts; hit callbacks must not run, as with REDLINE's holdMesh. */
 export type MeshHolder = (key: string, make: () => LookMesh) => string;

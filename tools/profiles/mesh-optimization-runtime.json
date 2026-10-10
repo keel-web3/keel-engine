@@ -1,0 +1,41 @@
+{
+  "name": "mesh-optimization-runtime",
+  "features": [
+    {
+      "module": "@keel-engine/bake/mesh",
+      "exports": [
+        "lookMesh",
+        "meshBounds",
+        "meshMatrix"
+      ]
+    },
+    {
+      "module": "@keel-engine/bake/mesh-pool",
+      "exports": [
+        "createMeshPool"
+      ]
+    },
+    {
+      "module": "@keel-engine/bake/mesh-detail",
+      "exports": [
+        "meshDetailReport"
+      ]
+    },
+    {
+      "module": "@keel-engine/bake/shader-detail",
+      "exports": [
+        "prepareShaderMeshDetail"
+      ]
+    }
+  ],
+  "maxGzipBytes": 24000,
+  "forbidInputs": [
+    "/import/",
+    "/audio/",
+    "/particles/",
+    "/sprites.ts",
+    "/draw-mesh.ts",
+    "/gif.ts",
+    "/dither.ts"
+  ]
+}

@@ -1,5 +1,7 @@
 # @keel-engine/bake
 
+For live 3D games and agent-built procedural pipelines, start with [the optimization guide](../../docs/OPTIMIZED_GAMES.md) and [automatic shader detail](../../docs/SHADER_LOD.md). `lookMesh` prepares eligible analytic detail, `createMeshPool` shares geometry across transforms/looks, and `meshDetailReport` plus renderer stats expose preparation, residency and submission costs. Compatible adjacent instancing is separately measurable through `MeshStyle.meshInstances`.
+
 Design once, draw fast. Building a thing's model and posing it is expensive;
 drawing a sprite isn't. So a game bakes every design it uses — each entity
 variant (with its attributes), object and prop — into sprite atlases at load,

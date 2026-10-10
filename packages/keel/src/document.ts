@@ -151,7 +151,7 @@ export async function buildGameDocument(gameId: string, workspace: readonly Work
     verified.push(v);
     bundles.push({ manifest: v.manifest, code: new TextDecoder().decode(v.bytes), bytes: v.bytes });
   }
-  const fragments = [];
+  const fragments: Awaited<ReturnType<typeof buildKeelInlineModuleFragment>>[] = [];
   for (const p of options.pageScripts ?? []) {
     fragments.push(await buildKeelInlineModuleFragment({
       moduleId: p.id, version: p.version, mediaType: "text/javascript", ...(p.aliases ? { aliases: p.aliases } : {}),

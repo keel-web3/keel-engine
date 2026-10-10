@@ -15,16 +15,16 @@ test('actual engine document builder applies the saved mode to page scripts and 
   await mkdir(join(dir, 'src'));
   await writeFile(join(dir, 'src/index.ts'), 'export async function main(host){host.textContent="Storage fixture";}');
   const module: WorkspaceModule = { manifest: defineManifest({ id: 'fixtures/storage', version: '1.0.0',
-    kind: 'game', phase: 'game', weight: 0, needs: [], provides: [] }), packageName: '@fixture/storage', dir, origin: 'project' };
+    kind: 'game', phase: 'render', weight: 0, needs: [], provides: [] }), packageName: '@fixture/storage', dir, origin: 'project' };
   const shell = await buildKeelInlineShellFragments();
   const repeated = new TextEncoder().encode('globalThis.fixtureValue=7;\n'.repeat(2048));
   const tiny = new TextEncoder().encode('x=1');
   for (const payloadStorage of [undefined, 'raw'] as const) {
-    const result = await buildGameDocument('fixtures/storage', [module], { modules: 'dev', shell, payloadStorage,
+    const result = await buildGameDocument('fixtures/storage', [module], { modules: 'dev', shell, ...(payloadStorage ? { payloadStorage } : {}),
       pageScripts: [{ id: 'fixture/repeated', version: '1', bytes: repeated, weight: -1 },
                     { id: 'fixture/tiny', version: '1', bytes: tiny, weight: 0 }] });
     for (const report of result.modules) {
-      const part = result.document.parts.find(part => part.moduleId === report.id)!;
+      const part = result.document.parts.find(part => part.kind === 'existing' && part.moduleId === report.id)!;
       const item = JSON.parse(new TextDecoder().decode(part.bytes).replace(/^,|,$/g, ''));
       assert.equal(report.stored, item.embedded.storedIntegrity.byteLength);
       if (payloadStorage === 'raw') {

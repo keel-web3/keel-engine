@@ -17,6 +17,7 @@
 // (x181/128 until certain) over a FIXED vector of chips, None included.
 
 import type { Archetype } from "./car.ts";
+import type { ServiceKind } from "./service.ts";
 
 export const ONE_PPM = 1_000_000;
 
@@ -56,7 +57,7 @@ export interface BodyStyle {
    * A service vehicle (service.ts): a bus, a fire engine, an ambulance, a police cruiser or a dump truck. Every one but
    * the cruiser (a sedan's body with its kit on) has its own measurements and body, as the semi has.
    */
-  readonly service?: "bus" | "fire" | "ambulance" | "police" | "dump";
+  readonly service?: ServiceKind;
   /** Its own paint table (the family drawn when the game pins none): a fleet's colours, not the class's. */
   readonly paints?: ReadonlyArray<readonly [PaintKey, number]>;
 }

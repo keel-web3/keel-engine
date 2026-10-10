@@ -14,9 +14,9 @@ test('advertising vehicles carry one enclosed, road-height box with three fitted
   assert.equal(sv.m.sideTop,box.top);assert.equal(sv.m.floor,box.floor);
   assert.ok(Math.abs(sv.m.z0!-box.rear)<1e-12&&Math.abs(sv.m.z1!-box.front)<1e-12);
   assert.ok(box.front<car.body.cabRear,'the enclosed body starts behind the cab');
-  assert.ok(body.boxes!.some(s=>s.h[1]>1&&s.h[2]>2&&Math.abs(s.c[0])<1e-12),'the generator supplies a complete enclosed body');
-  assert.ok(body.boxes!.filter(s=>Math.abs(Math.abs(s.c[0])-(box.side.x-.015))<1e-12&&Math.abs(s.h[2]-box.side.w/2)<1e-12).length>=2,'both side screens belong to the generator');
-  assert.ok(body.boxes!.some(s=>Math.abs(s.c[2]-(box.back.z+.015))<1e-12&&Math.abs(s.h[0]-box.back.w/2)<1e-12),'rear screen belongs to the generator');
+  assert.ok(body.boxes!.some(s=>s.h[1]!>1&&s.h[2]!>2&&Math.abs(s.c[0]!)<1e-12),'the generator supplies a complete enclosed body');
+  assert.ok(body.boxes!.filter(s=>Math.abs(Math.abs(s.c[0]!)-(box.side.x-.015))<1e-12&&Math.abs(s.h[2]!-box.side.w/2)<1e-12).length>=2,'both side screens belong to the generator');
+  assert.ok(body.boxes!.some(s=>Math.abs(s.c[2]!-(box.back.z+.015))<1e-12&&Math.abs(s.h[0]!-box.back.w/2)<1e-12),'rear screen belongs to the generator');
   for(const screen of [box.side,box.back]){
    assert.ok(screen.y-screen.h/2>=box.floor&&screen.y+screen.h/2+box.bezel<box.top);
   }

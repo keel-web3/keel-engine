@@ -63,6 +63,10 @@ engine through the same pipeline and compare the digests.
 `docs/ARCHITECTURE.md` explains how the parts fit. `docs/CONVENTIONS.md`
 explains how a package is written.
 
+## Building optimized games
+
+Read [the game optimization guide](docs/OPTIMIZED_GAMES.md) for representation choices, geometry pooling, automatic shader detail, compatible instancing, worker/LOD preparation, effect bounds and frame-time validation. The same public paths work for procedural games and agent-built games; defaults retain the canonical geometry and fall back safely.
+
 ## Quick start (through the SDK)
 
 You make games with the engine through the KEEL SDK, which carries it as

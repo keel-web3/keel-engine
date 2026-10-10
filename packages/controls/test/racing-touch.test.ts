@@ -32,7 +32,7 @@ function fixture(){
 }
 test('two thumbs steer and slide pedals through drift, boost and brake without losing throttle or keeping stale actions',()=>{
  const f=fixture();pointer(f.el('steer'),'pointerdown',1,120,164);pointer(f.el('gas'),'pointerdown',2,220,160);
- let v=f.held();assert(v[0]>0.8);assert.deepEqual(v.slice(1,5),[1,0,0,0]);
+ let v=f.held();assert(v[0]!>0.8);assert.deepEqual(v.slice(1,5),[1,0,0,0]);
  pointer(f.doc,'pointermove',1,120,900);assert.equal(f.held()[0],v[0],'vertical travel cannot weaken a one-axis wheel');
  for(const [x,expected]of [[630,[1,0,1,0]],[830,[1,0,0,1]],[430,[0,1,0,0]],[1400,[0,0,0,0]],[220,[1,0,0,0]]] as const){pointer(f.doc,'pointermove',2,x,160);assert.deepEqual(f.held().slice(1,5),expected)}
  pointer(f.doc,'pointerup',1);assert.equal(f.held()[0],0);assert.equal(f.held()[1],1);

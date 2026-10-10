@@ -1,3 +1,10 @@
 # KEEL storage and shell integration
 
 **Shared storage and shell policy:** Default payloadStorage is Compact: native bytes stored once, beneficial compatible lossless compression, no generated encoded sibling. Raw preserves supplied bytes and intentional creator formatting. Shell selection is independent. Default to the registered KEEL verification shell; explicit viewer=none preserves creator-owned HTML/direct artifacts without a canonical protection claim. Requirements below for canonical shell records, protected K, and canonical mounting apply to the verification-shell choice. Native-container composers require native storage inventory, decoded source and selected-chain reader proof; their transient return encoding is not another stored copy. Read `docs/KEEL_PAYLOAD_STORAGE.md` and `docs/KEEL_BINARY_RESOURCE_DELIVERY.md`. Persist both choices and reject unsupported readers instead of silently changing storage or presentation.
+
+
+# Optimized game construction
+
+When building or optimizing a game, read [docs/OPTIMIZED_GAMES.md](docs/OPTIMIZED_GAMES.md) and use the public engine/generator paths it describes. Reuse geometry independently of looks, use worker/preparation caches, generator-owned LOD/culling and eligible analytic detail, and measure compatible draw batching when CPU submission matters. `createMeshPool` and `meshDetailReport` expose reusable ownership and costs; `meshStats` distinguishes logical objects from GPU submissions and geometry/effect residency.
+
+Choose changes from measured bottlenecks. Record exact source/artifact identity, preparation cost, CPU/GPU/frame percentiles, image fidelity and memory. Keep valid content, physics, identity, controls and the requested design. Require shader/compiler fallback and resource cleanup tests. Whole-scene and intended-device evidence decide performance claims; a triangle or standalone kernel decrease does not prove FPS. Follow the game's shared-world/release instructions when integrating or shipping engine changes.

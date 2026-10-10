@@ -3,7 +3,8 @@
 export { directionFor, planBake } from "./plan.ts";
 export { pixelView } from "./view.ts";
 export { LAYER_INSTANCE_FLOATS, LayerInstances, createSpriteRenderer } from "./sprites.ts";
-export { lookMesh, meshBounds, mergeMeshes, meshMatrix, mulMatrix, worldsBounds } from "./mesh.ts";
+export { lookMesh, lookMeshSteps, meshBounds, mergeMeshes, meshMatrix, mulMatrix, worldsBounds } from "./mesh.ts";
+export { capsuleShaderMesh, capsuleSurfaceError } from "./capsule-shader-mesh.ts";
 export { cardsMesh } from "./cards.ts";
 export { defaultMeshSun, orthoDepthRange, projectionOf, shotOfView } from "./project.ts";
 export { coarseLayerMesh, layeredMesh, layeredMeshSteps, prefixMesh, solidSize, prepareMeshDetail } from "./lod-mesh.ts";
@@ -28,3 +29,9 @@ export { shadowView } from "./shadow-view.ts";
 export { LOOK_TEXELS, LOOKS_PER_ROW, PAINTS_PER_ROW, PALETTE_ROW, PLACES_PER_ROW } from "./looks.ts";
 
 export { GROUND_ART_SIZE, GROUND_ART_LAYERS, GROUND_ART_METRES, groundArtPixels, uploadGroundArt } from "./ground-art.ts";
+
+export { prepareShaderMeshDetail } from "./shader-mesh-detail.ts";
+export { createMeshPool } from "./mesh-pool.ts";
+export type { MeshPool } from "./mesh-pool.ts";
+export { meshDetailReport } from "./mesh-detail.ts";
+export type { MeshCost, MeshDetailReport } from "./mesh-detail.ts";

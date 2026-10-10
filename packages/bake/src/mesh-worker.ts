@@ -2,7 +2,7 @@
 import { layeredMesh } from './lod-mesh.ts';
 import type { LayeredMesh } from './lod-mesh.ts';
 import type { BakeWorld } from './bake.ts';
-import type { LookMeshOptions } from './mesh.ts';
+import type { LookMesh, LookMeshOptions } from './mesh.ts';
 export interface MeshWorker {
   readonly available: boolean;
   readonly pending: number;
@@ -51,7 +51,8 @@ export function serveMeshWorker(): void {
   scope.onmessage = ({data}: MessageEvent<{id: number; runs: BakeWorld[]; options: LookMeshOptions}>) => {
     try {
       const mesh = layeredMesh(data.runs, data.options);
-      const transfer = [mesh.positions, mesh.normals, mesh.attrs, mesh.bodies, mesh.indices, ...(mesh.facade ? [mesh.facade] : [])].map(a => a.buffer as ArrayBuffer);
+      const buffers = (m: LookMesh): ArrayBuffer[] => [m.positions, m.normals, m.attrs, m.bodies, m.indices, ...(m.facade ? [m.facade] : []), ...(m.capsuleShader ? [m.capsuleShader.a, m.capsuleShader.b] : [])].map(a => a.buffer as ArrayBuffer);
+      const transfer = [...buffers(mesh), ...(mesh.shaderDetail ? buffers(mesh.shaderDetail.mesh) : [])];
       scope.postMessage({id:data.id, mesh}, [...new Set(transfer)]);
     } catch(error) { scope.postMessage({id:data.id, error:String(error)}); }
   };

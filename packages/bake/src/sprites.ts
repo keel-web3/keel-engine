@@ -94,6 +94,8 @@ export interface SpriteRenderer {
    */
   /** Optional deterministic source recipe lets a recovery wrapper rebuild the mesh without retaining its upload arrays. */
   setMesh(key: string, mesh: LookMesh | null, restoreSource?: () => LookMesh | null): void;
+  /** Opt-in batching shaders/storage: prepare during loading after scene benchmarking. */
+  prepareMeshInstances(): void;
   /**
    * Engine: smoke, fire, dust and nitro as SHADER volumes (volumes.ts) -- each puff a ball marched through animated
    * noise, lit, and cut to the palette through the dither screen. Depth-tested against what's drawn, so what stands in
@@ -149,7 +151,7 @@ export interface SpriteRenderer {
   readonly gl: WebGL2RenderingContext;
 }
 
-export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas, { width, height, capacity = 8192 }: { width: number; height: number; capacity?: number }): SpriteRenderer {
+export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas, { width, height, capacity = 8192, shaderLod = true }: { width: number; height: number; capacity?: number; shaderLod?: boolean }): SpriteRenderer {
   const gl = canvas.getContext("webgl2", { antialias: false, alpha: false, depth: true, preserveDrawingBuffer: false }) as WebGL2RenderingContext | null;
   if (!gl) throw new Error("WebGL2 isn't available.");
   const prog = linkProgram(gl, VS, FS, "Sprite");
@@ -303,7 +305,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
   // The live mesh pass (draw-mesh.ts): made the first time a mesh is set or drawn; it shares the look textures.
   let meshState2: MeshPass | null = null;
   const meshPass = (): MeshPass => (meshState2 ??= createMeshPass({
-    gl,
+    gl, shaderLod,
     link,
     looks: () => { const L = layers(); return { palette: L.palette, looks: L.looks, paints: L.paints, places: L.places, decals: L.decals }; },
     size: () => [W, H] as const,
@@ -477,6 +479,7 @@ export function createSpriteRenderer(canvas: HTMLCanvasElement | OffscreenCanvas
       gl.activeTexture(gl.TEXTURE0);
     },
     setMesh(key, mesh) { meshPass().setMesh(key, mesh); },
+    prepareMeshInstances() { meshPass().prepareInstances(); },
     drawMeshes(view, draws, style = {}) { meshPass().draw(view, draws, style); },
     get meshStats() { return meshPass().stats; },
     drawVolumes(view, volumes, style = {}) {

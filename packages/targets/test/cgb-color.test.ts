@@ -17,7 +17,7 @@ test('map-position attributes, VRAM banks and signed tile IDs select independent
 test('lossless joint palette packing respects fixed scene slots and BG-zero priority',()=>{
  const demands=[{key:'rest',zeroColor:32767,nonzeroColors:[31,992]},{key:'turn',zeroColor:32767,nonzeroColors:[31744,31]},{key:'duplicate',zeroColor:32767,nonzeroColors:[32767]}];
  const p=packLosslessPalettes(demands,{limit:3,fixed:[{id:2,colors:[0,1,2,3]}]});assert.ok(p.ok);if(!p.ok)return;
- for(const d of demands){const colors=p.palettes[p.assignments.get(d.key)!]!;assert.equal(paletteIndex(colors,d.zeroColor,true),0);for(const c of d.nonzeroColors)assert.ok(paletteIndex(colors,c,false)>0);}
+ for(const d of demands){const colors:readonly number[]=p.palettes[p.assignments.get(d.key)!]!;assert.equal(paletteIndex(colors,d.zeroColor,true),0);for(const c of d.nonzeroColors)assert.ok(paletteIndex(colors,c,false)>0);}
  assert.deepEqual(packLosslessPalettes([...demands].reverse(),{limit:3,fixed:[{id:2,colors:[0,1,2,3]}]}),p);
  assert.equal(packLosslessPalettes([{key:'bad',zeroColor:0,nonzeroColors:[1,2,3,4]}]).ok,false);
  assert.deepEqual(packLosslessPalettes([{key:'a',zeroColor:0,nonzeroColors:[1]},{key:'b',zeroColor:2,nonzeroColors:[1]}],{limit:1}),{ok:false,reason:'palette-capacity',nodes:2});
