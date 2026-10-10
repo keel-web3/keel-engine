@@ -1,0 +1,24 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/run-progression",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "title": "Pinball survival progression",
+    "description": "Bounded class abilities, score modifiers and seed-bound upgrade drafts.",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/core@^0.1"
+    ],
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/core/rng": "keel/core",
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}
