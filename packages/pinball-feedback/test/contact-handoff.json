@@ -1,0 +1,120 @@
+{
+  "schema": "pinball-feedback-contact-handoff/1",
+  "status": "SOURCE_AND_NATIVE_CONTACT_SCOPED_PASS_NOT_STAGE_OR_ART_APPROVAL",
+  "revision": "pinball-feedback/2026-10-08.4",
+  "sources": {
+    "src/index.ts": "2e4de8b6de4cd835594c5625659935ad4293d76d909fbe58bf492e905fdf9250",
+    "src/spatial.ts": "72e7352e39bc369ebf6e9c04e8414a4a28f60cab097ac8746e994cc7092d9daa",
+    "src/module.ts": "4fece61a9fd92d1362ff0f824a9c78eaf2b861255ebf45d78cfd352379c57cf5",
+    "package.json": "edd8ae406c77d692817243fd768285502f84b26814f2a0bf8f7f514a3e5dffe0",
+    "keel.module.json": "e2a9bd3ba35595adb4f721637a43020f7bddd8870330eb30d8452e8d5327d280",
+    "keel/link.json": "ef18db49087ae2bcc2b77daf8bdce0a2feaa066acd488387c7a7530026a06b19",
+    "test/contact.test.ts": "ec9ac59ca66018d149acff0fa566e35a452ca92226cd13cf0d0fb7b4b499ddb8",
+    "test/contact.test.mjs": "9f278a3515c64374fe158b025b466ce956389f38e011ccfe30337bf2deb4cc63",
+    "test/contact-cross-runtime.ts": "bbffbe7102335e841eb9bc4efe3064a6a2de9863463a5950be93db7109c0e19b",
+    "test/contact-cross-runtime.mjs": "b8677b865fa51264d8e8c79260549ee05880a7cbdbe43fc54196f07543b16d56",
+    "test/contact-bun-result.json": "4145728c677c8f81d337aa7f5df00fe2e41b77983e71e00eec7e7750dfa6b135",
+    "test/contact-node-result.json": "ae28be8ba4c596049b20d26bb99427e8f4ef001f53004bd3ad597634b28fb65b",
+    "test/fixtures/manifest.json": "44a2ee535f8c3b7d3891abdbc64f82bd5d02df593daa0d3ff46d672c287bedb9"
+  },
+  "priorPhase3": {
+    "source": "work/design-reset/feedback-phase23/modules/keel/pinball-feedback/src/index.ts",
+    "sha256": "3d2822a6039af352984f2f45b5d76c33a25d518cef5a26ffe511f5b033cfb08d",
+    "unchanged": true
+  },
+  "validation": {
+    "bunVersion": "1.3.14",
+    "nodeVersion": "25.8.2",
+    "bunGroupsPassed": 12,
+    "nodeNewGroupsPassed": 3,
+    "focusedStrictTypeScript": "PASS",
+    "actualNativeAndPortableFrames": 1027,
+    "sameRuntimePhase3SoundsAndMechanismPoses": "EXACT for both complete native tapes",
+    "duplicateFrameAndDuplicateContact": "one burst per mechanism activation",
+    "negativeCases": [
+      "missing contact",
+      "stale activation tick",
+      "unrelated collider",
+      "contradictory mechanism id",
+      "wrong arena",
+      "missing arena",
+      "missing x",
+      "NaN y",
+      "infinite elevation",
+      "wrong explicit layer"
+    ],
+    "nodeBunExactFields": [
+      "framesSha256",
+      "soundsSha256",
+      "effectsSha256"
+    ],
+    "recoilScope": "Pre-existing Math.exp/Math.cos pose-only Node/Bun ULP remains unchanged by explicit root instruction. No full pose parity claim."
+  },
+  "bounds": {
+    "particleCap": 32,
+    "pulseCap": 12,
+    "peakParticles": 16,
+    "peakPulses": 2,
+    "configuredMaximumParticles": 2048,
+    "configuredMaximumPulses": 512,
+    "eventHistoryCap": 8192,
+    "frameEventCap": 4096,
+    "contactScan": "one pass over current bounded event list, one first-valid-contact position per native mechanism",
+    "springSparkDurationTicks": 28,
+    "springSparkSpeedMaximumExclusive": 1.7,
+    "pulseDurationTicks": 24,
+    "reducedMotionPulseTicks": 12
+  },
+  "contactProof": {
+    "name": "right-spring-0",
+    "event": {
+      "id": "373:0:bumper",
+      "tick": 373,
+      "type": "bumper",
+      "ownerId": 0,
+      "arenaId": "compact22",
+      "colliderId": "compact22.spring",
+      "x": 1018.62890625,
+      "y": 1495.8759765625,
+      "elevation": 0,
+      "energy": 6.8798828125
+    },
+    "mechanism": {
+      "id": "compact22.spring",
+      "arenaId": "compact22",
+      "kind": "spring",
+      "durationTicks": 36,
+      "activationTick": 373,
+      "activationSerial": 1,
+      "intensity": 391
+    },
+    "pose": {
+      "arenaId": "compact22",
+      "x": 1002,
+      "y": 1560,
+      "layer": 0,
+      "elevation": 0,
+      "id": "compact22.spring",
+      "kind": "spring",
+      "recoil": 0.3818359375,
+      "pulse": 0.3818359375,
+      "charge": 0,
+      "transportPhase": null,
+      "transportProgress": 0
+    },
+    "pulse": {
+      "id": "compact22.spring:1",
+      "kind": "spark",
+      "arenaId": "compact22",
+      "x": 1018.62890625,
+      "y": 1495.8759765625,
+      "layer": 0,
+      "elevation": 0,
+      "alpha": 1,
+      "radius": 6.56015625,
+      "ownerId": 0
+    }
+  },
+  "rules": "Use only explicit finite x/y/elevation and matching explicit arena from a same-ID native bumper/rail contact whose tick equals current activationTick. Descriptor layer is used only when event layer is absent; contradictory explicit layer rejects the contact. No current-body fallback. Missing/malformed spring/bumper contact suppresses burst. Noncontact mechanism actuation retains descriptor-center fallback. Mechanism recoil/glow center and sound calculation unchanged.",
+  "packageNote": "New direct core dependency declared consistently in package.json, source manifest, keel.module external list and link imports for canonical dsin/dcos burst trajectories. Root owns fresh compiled module/stage integration."
+}

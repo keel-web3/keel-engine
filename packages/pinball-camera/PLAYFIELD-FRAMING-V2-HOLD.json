@@ -1,0 +1,30 @@
+{
+  "schema": "playfield-framing-source-hold@2",
+  "status": "SOURCE_ONLY_UNEXECUTED",
+  "revision": "source-playfield-framing/2",
+  "files": {
+    "src/playfield-framing-v2.ts": "6f45184ae262d5b129f86507200a9d129a2f11ddf83f4effff3da32875f1bd6c",
+    "test/playfield-framing-v2.test.ts": "cad9f90afc6c208618ef9ec2b9ef3bf25b6dc662f86fb4fb276f0dbd30e96cc3",
+    "PLAYFIELD-FRAMING-V2-SOURCE.md": "70d827f146312fc7c4fd642fcb78efe3918af27bea27206aadb736bc94acc011"
+  },
+  "preservedV1": {
+    "src/playfield-framing.ts": "acbe4c142354168f9bc76d517c20657bafa3657cfba6ab6722c9344461c1e081",
+    "test/playfield-framing.test.ts": "c49d7b645c002f2719d39bca50618f3d8d89fe6c906aa1fce5e6024fb8513cf3"
+  },
+  "changes": [
+    "Explicit typed field iteration for strict TypeScript",
+    "Transition entry source ownership, native arena and point-plane support",
+    "Per-vertex path width profile bounds",
+    "Capture HOLD includes actual source mouth and native intake without destination room"
+  ],
+  "execution": {
+    "authorTests": 0,
+    "authorTypechecks": 0,
+    "authorBuilds": 0,
+    "authorNativeRuns": 0,
+    "authorBrowserRuns": 0,
+    "rootSoleExecutor": true
+  },
+  "defaultsChanged": false,
+  "runtimeIntegration": false
+}

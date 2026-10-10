@@ -1,0 +1,2 @@
+import {defineManifest} from '@keel-engine/runtime';
+export const manifest=defineManifest({id:'keel/pinball-progression',version:'0.1.0',kind:'runtime',needs:['keel/runtime@^0.1','keel/codec@^0.1','keel/pinball-arena@^0.1'],title:'Ordered physical pinball progression',description:'Source-bound ordered contact objectives, rearm, future-tick transactional native drop-target and gate outputs, and deterministic snapshots. Native adapters require arena integration.'});

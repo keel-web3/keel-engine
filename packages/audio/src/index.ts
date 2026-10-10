@@ -49,3 +49,9 @@ export { CAR_AUDIO_VERSION, CAR_LOOPS, CAR_MATERIALS, CAR_SHOTS, CAR_SOUNDS, CAR
 export type { CarLoopName, CarMaterial, CarShotName, CarSoundName, CarSoundRecipe } from "./car.ts";
 export { createCarAudio } from "./car-player.ts";
 export type { CarAudio, CarAudioOptions, CarPlayParams, CarVoice } from "./car-player.ts";
+export {PINBALL_SOUNDS,isPinballSound,pinballSoundRecipe,pinballSoundSample} from './pinball.ts';
+export type {PinballSoundName,PinballSoundStyle,PinballSoundRecipe} from './pinball.ts';
+export {createPinballAudio} from './pinball-player.ts';
+export type {PinballAudioOptions,PinballPlayParams,PinballVoice} from './pinball-player.ts';
+export {PINBALL_MUSIC_THEMES,PINBALL_MUSIC_BLUEPRINTS,pinballMusicRecipe,pinballMusicSamples,createPinballMusic} from './pinball-music.ts';
+export type {PinballMusicTheme,PinballMusicBlueprint,PinballMusicRecipe,PinballMusicSamples,PinballMusicOptions} from './pinball-music.ts';

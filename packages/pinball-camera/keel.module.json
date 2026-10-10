@@ -1,0 +1,19 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-pinball-camera",
+  "version": "0.1.7",
+  "description": "Deterministic native-tick ball follow with safe viewport framing, camera-only selected-exit anticipation, optional native-launch overview transition, configurable readability, source waiting-bank preview, and opt-in native-clock coherent depth with retained-sample inverse and opt-in exact room/connector axis framing.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/pinball-camera"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/runtime"
+    ]
+  }
+}

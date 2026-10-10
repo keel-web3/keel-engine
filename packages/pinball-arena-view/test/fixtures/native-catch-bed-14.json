@@ -1,0 +1,807 @@
+{
+  "scope": "Exact immutable physical14 native fan/guide/pair input for source overlay intersection regression. Not an injected gameplay pose or qualified new field.",
+  "physicalInputSha256": "560d7c29735e9128257a83d4822085e59b95b6d2112569a0783170157a493726",
+  "physicalWorldSha256": "497b0367f82349f8b21dca345951c6eb72fa2bb08ba448f23dd1bbe20bacc3ee",
+  "unitScale": 0.025,
+  "field": {
+    "id": "assembly.1",
+    "stations": [
+      {
+        "id": "assembly.1.bank.0.catch",
+        "ownerId": 0,
+        "teamId": 0,
+        "x": 4370,
+        "y": 3000,
+        "layer": 0,
+        "elevation": 0,
+        "launchX": 4560,
+        "launchY": 2440,
+        "launchVx": 10,
+        "launchVy": 0,
+        "flipperIds": [
+          "assembly.1.bank.0.catch.left",
+          "assembly.1.bank.0.catch.right"
+        ]
+      },
+      {
+        "id": "assembly.1.basin.bank.0.catch",
+        "ownerId": -1,
+        "teamId": -1,
+        "x": 4370,
+        "y": 1400,
+        "layer": 0,
+        "elevation": 0,
+        "launchX": 4580,
+        "launchY": 1400,
+        "launchVx": 10,
+        "launchVy": 0,
+        "flipperIds": [
+          "assembly.1.basin.bank.0.catch.left",
+          "assembly.1.basin.bank.0.catch.right"
+        ]
+      },
+      {
+        "id": "assembly.1.terrace.bank.0.catch",
+        "ownerId": -1,
+        "teamId": -1,
+        "x": 4870,
+        "y": 3850,
+        "layer": 1,
+        "elevation": 115,
+        "launchX": 5080,
+        "launchY": 3850,
+        "launchVx": 10,
+        "launchVy": 0,
+        "flipperIds": [
+          "assembly.1.terrace.bank.0.catch.left",
+          "assembly.1.terrace.bank.0.catch.right"
+        ]
+      }
+    ],
+    "flippers": [
+      {
+        "id": "assembly.1.bank.0.catch.left",
+        "ownerId": 0,
+        "side": "left",
+        "pivotX": 4500,
+        "pivotY": 3106.5,
+        "length": 95,
+        "radius": 8,
+        "restAngle": -121,
+        "activeAngle": -80,
+        "layer": 0,
+        "elevation": 0
+      },
+      {
+        "id": "assembly.1.bank.0.catch.right",
+        "ownerId": 0,
+        "side": "right",
+        "pivotX": 4500,
+        "pivotY": 2893.5,
+        "length": 95,
+        "radius": 8,
+        "restAngle": 121,
+        "activeAngle": 80,
+        "layer": 0,
+        "elevation": 0
+      },
+      {
+        "id": "assembly.1.basin.bank.0.catch.left",
+        "ownerId": -1,
+        "side": "left",
+        "pivotX": 4500,
+        "pivotY": 1507.5,
+        "length": 94,
+        "radius": 8,
+        "restAngle": -121,
+        "activeAngle": -74,
+        "layer": 0,
+        "elevation": 0
+      },
+      {
+        "id": "assembly.1.basin.bank.0.catch.right",
+        "ownerId": -1,
+        "side": "right",
+        "pivotX": 4500,
+        "pivotY": 1292.5,
+        "length": 94,
+        "radius": 8,
+        "restAngle": 121,
+        "activeAngle": 74,
+        "layer": 0,
+        "elevation": 0
+      },
+      {
+        "id": "assembly.1.terrace.bank.0.catch.left",
+        "ownerId": -1,
+        "side": "left",
+        "pivotX": 5000,
+        "pivotY": 3958.5,
+        "length": 95,
+        "radius": 8,
+        "restAngle": -119,
+        "activeAngle": -76,
+        "layer": 1,
+        "elevation": 115
+      },
+      {
+        "id": "assembly.1.terrace.bank.0.catch.right",
+        "ownerId": -1,
+        "side": "right",
+        "pivotX": 5000,
+        "pivotY": 3741.5,
+        "length": 95,
+        "radius": 8,
+        "restAngle": 119,
+        "activeAngle": 76,
+        "layer": 1,
+        "elevation": 115
+      }
+    ],
+    "rails": [
+      {
+        "id": "assembly.1.bank.0.catch.outer-left-upper",
+        "ax": 4900,
+        "ay": 3620,
+        "bx": 4710,
+        "by": 3400,
+        "radius": 3,
+        "restitution": 0.88,
+        "layer": 0,
+        "elevation": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.bank.0.catch.outer-left-lower",
+        "ax": 4710,
+        "ay": 3400,
+        "bx": 4500,
+        "by": 3106.5,
+        "radius": 3,
+        "restitution": 0.88,
+        "layer": 0,
+        "elevation": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.bank.0.catch.outer-right-upper",
+        "ax": 4900,
+        "ay": 2480,
+        "bx": 4710,
+        "by": 2700,
+        "radius": 3,
+        "restitution": 0.88,
+        "layer": 0,
+        "elevation": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.bank.0.catch.outer-right-lower",
+        "ax": 4710,
+        "ay": 2700,
+        "bx": 4500,
+        "by": 2893.5,
+        "radius": 3,
+        "restitution": 0.88,
+        "layer": 0,
+        "elevation": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.lower.merge-basin.outer.0",
+        "ax": 5210,
+        "ay": 3780,
+        "bx": 4940,
+        "by": 3540,
+        "radius": 3,
+        "restitution": 0.3,
+        "layer": 0,
+        "elevation": 0,
+        "elevationB": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.lower.merge-basin.inner.0",
+        "ax": 5210,
+        "ay": 3260,
+        "bx": 4940,
+        "by": 3460,
+        "radius": 3,
+        "restitution": 0.3,
+        "layer": 0,
+        "elevation": 0,
+        "elevationB": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.basin.bank.0.catch.outer-left-upper",
+        "ax": 4900,
+        "ay": 2020,
+        "bx": 4710,
+        "by": 1800,
+        "radius": 3,
+        "restitution": 0.88,
+        "layer": 0,
+        "elevation": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.basin.bank.0.catch.outer-left-lower",
+        "ax": 4710,
+        "ay": 1800,
+        "bx": 4500,
+        "by": 1507.5,
+        "radius": 3,
+        "restitution": 0.88,
+        "layer": 0,
+        "elevation": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.basin.bank.0.catch.outer-right-upper",
+        "ax": 4900,
+        "ay": 880,
+        "bx": 4710,
+        "by": 1100,
+        "radius": 3,
+        "restitution": 0.88,
+        "layer": 0,
+        "elevation": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.basin.bank.0.catch.outer-right-lower",
+        "ax": 4710,
+        "ay": 1100,
+        "bx": 4500,
+        "by": 1292.5,
+        "radius": 3,
+        "restitution": 0.88,
+        "layer": 0,
+        "elevation": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.fork-basin.drain-left.0",
+        "ax": 4310,
+        "ay": 2080,
+        "bx": 4310,
+        "by": 1500,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 0,
+        "elevation": 0,
+        "elevationB": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.fork-basin.drain-right.0",
+        "ax": 4310,
+        "ay": 1300,
+        "bx": 4310,
+        "by": 720,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 0,
+        "elevation": 0,
+        "elevationB": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.upper-terrace.drain-left.0",
+        "ax": 4810,
+        "ay": 4530,
+        "bx": 4810,
+        "by": 3950,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 1,
+        "elevation": 115,
+        "elevationB": 115,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.upper-terrace.drain-right.0",
+        "ax": 4810,
+        "ay": 3750,
+        "bx": 4810,
+        "by": 3350,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 1,
+        "elevation": 115,
+        "elevationB": 115,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.terrace.bank.0.catch.outer-left-upper",
+        "ax": 5400,
+        "ay": 4470,
+        "bx": 5210,
+        "by": 4250,
+        "radius": 3,
+        "restitution": 0.88,
+        "layer": 1,
+        "elevation": 115,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.terrace.bank.0.catch.outer-left-lower",
+        "ax": 5210,
+        "ay": 4250,
+        "bx": 5000,
+        "by": 3958.5,
+        "radius": 3,
+        "restitution": 0.88,
+        "layer": 1,
+        "elevation": 115,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.terrace.bank.0.catch.outer-right-upper",
+        "ax": 5400,
+        "ay": 3330,
+        "bx": 5210,
+        "by": 3550,
+        "radius": 3,
+        "restitution": 0.88,
+        "layer": 1,
+        "elevation": 115,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.terrace.bank.0.catch.outer-right-lower",
+        "ax": 5210,
+        "ay": 3550,
+        "bx": 5000,
+        "by": 3741.5,
+        "radius": 3,
+        "restitution": 0.88,
+        "layer": 1,
+        "elevation": 115,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.fork-basin.edge.1.part.0.0",
+        "ax": 4310,
+        "ay": 720,
+        "bx": 4800,
+        "by": 720,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 0,
+        "elevation": 0,
+        "elevationB": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.fork-basin.edge.2.part.0.0",
+        "ax": 4800,
+        "ay": 720,
+        "bx": 5150,
+        "by": 750,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 0,
+        "elevation": 0,
+        "elevationB": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.fork-basin.edge.3.part.0.0",
+        "ax": 5150,
+        "ay": 750,
+        "bx": 5150,
+        "by": 957.3623046875,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 0,
+        "elevation": 0,
+        "elevationB": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.fork-basin.edge.3.part.1.0",
+        "ax": 5150,
+        "ay": 1076.994140625,
+        "bx": 5150,
+        "by": 1324.2333984375,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 0,
+        "elevation": 0,
+        "elevationB": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.fork-basin.edge.3.part.2.0",
+        "ax": 5150,
+        "ay": 1427.9140625,
+        "bx": 5150,
+        "by": 1579.4482421875,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 0,
+        "elevation": 0,
+        "elevationB": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.fork-basin.edge.3.part.3.0",
+        "ax": 5150,
+        "ay": 1691.1044921875,
+        "bx": 5150,
+        "by": 2050,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 0,
+        "elevation": 0,
+        "elevationB": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.fork-basin.edge.4.part.0.0",
+        "ax": 5150,
+        "ay": 2050,
+        "bx": 4800,
+        "by": 2080,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 0,
+        "elevation": 0,
+        "elevationB": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.fork-basin.edge.5.part.0.0",
+        "ax": 4800,
+        "ay": 2080,
+        "bx": 4310,
+        "by": 2080,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 0,
+        "elevation": 0,
+        "elevationB": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.upper-terrace.edge.1.part.0.0",
+        "ax": 4810,
+        "ay": 3350,
+        "bx": 5300,
+        "by": 3050,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 1,
+        "elevation": 115,
+        "elevationB": 115,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.upper-terrace.edge.2.part.0.0",
+        "ax": 5300,
+        "ay": 3050,
+        "bx": 5650,
+        "by": 3200,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 1,
+        "elevation": 115,
+        "elevationB": 115,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.upper-terrace.edge.3.part.0.0",
+        "ax": 5650,
+        "ay": 3391.0205078125,
+        "bx": 5650,
+        "by": 3685.509765625,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 1,
+        "elevation": 115,
+        "elevationB": 115,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.upper-terrace.edge.3.part.1.0",
+        "ax": 5650,
+        "ay": 3796.9384765625,
+        "bx": 5650,
+        "by": 3876.5302734375,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 1,
+        "elevation": 115,
+        "elevationB": 115,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.upper-terrace.edge.3.part.2.0",
+        "ax": 5650,
+        "ay": 3980,
+        "bx": 5650,
+        "by": 4290.408203125,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 1,
+        "elevation": 115,
+        "elevationB": 115,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.upper-terrace.edge.4.part.0.0",
+        "ax": 5650,
+        "ay": 4370,
+        "bx": 5527.55078125,
+        "by": 4467.958984375,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 1,
+        "elevation": 115,
+        "elevationB": 115,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.upper-terrace.edge.4.part.1.0",
+        "ax": 5435.7138671875,
+        "ay": 4541.4287109375,
+        "bx": 5350,
+        "by": 4610,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 1,
+        "elevation": 115,
+        "elevationB": 115,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.upper-terrace.edge.5.part.0.0",
+        "ax": 5350,
+        "ay": 4610,
+        "bx": 4810,
+        "by": 4530,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 1,
+        "elevation": 115,
+        "elevationB": 115,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.miss-guide.1.0",
+        "ax": 4310,
+        "ay": 2320,
+        "bx": 4860,
+        "by": 2280,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 0,
+        "elevation": 0,
+        "elevationB": 0,
+        "material": "steel",
+        "kind": "guide"
+      },
+      {
+        "id": "assembly.1.miss-guide.5.0",
+        "ax": 4860,
+        "ay": 3552,
+        "bx": 4310,
+        "by": 3680,
+        "radius": 3,
+        "restitution": 0.9,
+        "layer": 0,
+        "elevation": 0,
+        "elevationB": 0,
+        "material": "steel",
+        "kind": "guide"
+      }
+    ],
+    "surfaces": [
+      {
+        "id": "assembly.1.bank.0.catch.fan",
+        "kind": "playfield",
+        "role": "catch",
+        "polygon": [
+          {
+            "x": 4310,
+            "y": 3400
+          },
+          {
+            "x": 4310,
+            "y": 2600
+          },
+          {
+            "x": 4900,
+            "y": 2480
+          },
+          {
+            "x": 4850,
+            "y": 2700
+          },
+          {
+            "x": 4850,
+            "y": 3400
+          },
+          {
+            "x": 4900,
+            "y": 3620
+          }
+        ],
+        "layer": 0,
+        "height": 0,
+        "material": "pinball-inlay",
+        "biome": {
+          "forge": 0.125,
+          "neon": 0.875,
+          "garden": 0,
+          "glacier": 0,
+          "ruins": 0
+        }
+      },
+      {
+        "id": "assembly.1.basin.bank.0.catch.fan",
+        "kind": "playfield",
+        "role": "catch",
+        "polygon": [
+          {
+            "x": 4310,
+            "y": 1800
+          },
+          {
+            "x": 4310,
+            "y": 1000
+          },
+          {
+            "x": 4900,
+            "y": 880
+          },
+          {
+            "x": 4850,
+            "y": 1100
+          },
+          {
+            "x": 4850,
+            "y": 1800
+          },
+          {
+            "x": 4900,
+            "y": 2020
+          }
+        ],
+        "layer": 0,
+        "height": 0,
+        "material": "pinball-inlay",
+        "biome": {
+          "forge": 0.125,
+          "neon": 0.875,
+          "garden": 0,
+          "glacier": 0,
+          "ruins": 0
+        }
+      },
+      {
+        "id": "assembly.1.terrace.bank.0.catch.fan",
+        "kind": "playfield",
+        "role": "catch",
+        "polygon": [
+          {
+            "x": 4810,
+            "y": 4250
+          },
+          {
+            "x": 4810,
+            "y": 3450
+          },
+          {
+            "x": 5400,
+            "y": 3330
+          },
+          {
+            "x": 5350,
+            "y": 3550
+          },
+          {
+            "x": 5350,
+            "y": 4250
+          },
+          {
+            "x": 5400,
+            "y": 4470
+          }
+        ],
+        "layer": 1,
+        "height": 115,
+        "material": "pinball-inlay",
+        "biome": {
+          "forge": 0.125,
+          "neon": 0.875,
+          "garden": 0,
+          "glacier": 0,
+          "ruins": 0
+        }
+      }
+    ],
+    "hazards": [
+      {
+        "id": "assembly.1.bank.0.catch.drain",
+        "kind": "drain",
+        "x": 4360,
+        "y": 3000,
+        "radius": 90,
+        "layer": 0,
+        "elevation": 0,
+        "damage": 1,
+        "cooldownTicks": 180
+      },
+      {
+        "id": "assembly.1.basin.bank.0.catch.drain",
+        "kind": "drain",
+        "x": 4360,
+        "y": 1400,
+        "radius": 90,
+        "layer": 0,
+        "elevation": 0,
+        "damage": 1,
+        "cooldownTicks": 180
+      },
+      {
+        "id": "assembly.1.terrace.bank.0.catch.drain",
+        "kind": "drain",
+        "x": 4860,
+        "y": 3850,
+        "radius": 90,
+        "layer": 1,
+        "elevation": 115,
+        "damage": 1,
+        "cooldownTicks": 180
+      },
+      {
+        "id": "assembly.1.void",
+        "kind": "drain",
+        "x": 5450,
+        "y": 3000,
+        "radius": 100,
+        "layer": 0,
+        "elevation": 0,
+        "damage": 1,
+        "cooldownTicks": 180
+      }
+    ]
+  }
+}

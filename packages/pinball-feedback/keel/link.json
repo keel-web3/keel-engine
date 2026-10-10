@@ -1,0 +1,28 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/pinball-feedback",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/core@^0.1",
+      "keel/runtime@^0.1",
+      "keel/pinball-arena@^0.1",
+      "keel/audio@^0.1"
+    ],
+    "title": "Pinball mechanism feedback",
+    "description": "Bounded seeded mechanism poses, particles, lamp pulses and sound cues from admitted pinball state and events.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/audio": "keel/audio",
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/pinball-arena": "keel/pinball-arena",
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

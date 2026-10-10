@@ -1,0 +1,15 @@
+{
+  "name": "@keel-engine/pinball-robot-art",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/pinball-arena": "workspace:*",
+    "@keel-engine/pinball-pixel-art": "workspace:*"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/pinball-pixel-art",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/core@^0.1",
+      "keel/ui@^0.1",
+      "keel/pinball-arena@^0.1",
+      "keel/pinball-feedback@^0.1"
+    ],
+    "title": "Procedural arcade pinball pixel art",
+    "description": "Authored indexed pixel clusters, cast-metal and ceramic assemblies, seeded source-bound room recipes and conservative noncontact scenic envelopes. Art admission remains separate from module readiness.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/runtime": "keel/runtime",
+    "@keel-engine/ui": "keel/ui"
+  },
+  "manifests": {}
+}

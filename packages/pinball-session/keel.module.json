@@ -1,0 +1,22 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-pinball-session",
+  "version": "0.1.0",
+  "description": "Deterministic live score pressure, loadouts, physically admitted equipment crates, health recovery and portable full-session control replay for shared arena modes.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/pinball-session"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/codec/hash",
+      "@keel-engine/core/hash",
+      "@keel-engine/pinball-arena",
+      "@keel-engine/runtime"
+    ]
+  }
+}

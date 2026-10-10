@@ -1,0 +1,2 @@
+import{defineManifest}from'@keel-engine/runtime';
+export const manifest=defineManifest({id:'keel/pinball-pixel-art',version:'0.1.0',kind:'runtime',needs:['keel/runtime@^0.1','keel/core@^0.1','keel/ui@^0.1','keel/pinball-arena@^0.1','keel/pinball-feedback@^0.1'],title:'Procedural arcade pinball pixel art',description:'Authored indexed pixel clusters, cast-metal and ceramic assemblies, seeded source-bound room recipes and conservative noncontact scenic envelopes. Art admission remains separate from module readiness.'});

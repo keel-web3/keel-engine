@@ -1,0 +1,21 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-pinball-pixel-art",
+  "version": "0.1.0",
+  "description": "Authored indexed pixel clusters, cast-metal and ceramic assemblies, seeded source-bound room recipes and conservative noncontact scenic envelopes. Art admission remains separate from module readiness.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/pinball-pixel-art"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/core",
+      "@keel-engine/runtime",
+      "@keel-engine/ui"
+    ]
+  }
+}

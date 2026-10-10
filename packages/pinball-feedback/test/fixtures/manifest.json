@@ -1,0 +1,10 @@
+{
+  "source": "Immutable compact-apron-v4 authority17 tapes and immutable feedback phase3 comparison source; copies only, originals unchanged.",
+  "files": {
+    "phase3/module.ts": "faad5b2a7ebc5ca4a061cd445d61acb06509d693c21b4ebc719e2899415147f7",
+    "phase3/spatial.ts": "72e7352e39bc369ebf6e9c04e8414a4a28f60cab097ac8746e994cc7092d9daa",
+    "phase3/index.ts": "3d2822a6039af352984f2f45b5d76c33a25d518cef5a26ffe511f5b033cfb08d",
+    "compact-apron-v4/right-spring-0.kpr": "85b173698112a6c6cd2a095942893f1de342f618dab246efd0b2f012abe6e4fe",
+    "compact-apron-v4/left-target-0.kpr": "a45f15d20e9045923494f635619efc4e04406e33976df249038ce5a5991296e4"
+  }
+}

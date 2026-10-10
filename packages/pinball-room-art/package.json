@@ -1,0 +1,16 @@
+{
+  "name": "@keel-engine/pinball-room-art",
+  "version": "0.1.2",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/pinball-arena": "workspace:*",
+    "@keel-engine/pinball-pixel-art": "workspace:*",
+    "@keel-engine/pinball-feedback": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

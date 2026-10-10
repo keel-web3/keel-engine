@@ -1,0 +1,118 @@
+{
+  "kernelSha256": "08780ec9ebd361a1a36514695262a4e42911a4771305c84101587d532e19e53a",
+  "map": "emberline.table.v1",
+  "results": [
+    {
+      "threshold": null,
+      "ticks": 1209,
+      "seconds": 10.075,
+      "score": 200,
+      "shots": 0,
+      "contacts": {
+        "launch": 1,
+        "rail": 29,
+        "bumper": 2,
+        "flipper": 4,
+        "drain": 1,
+        "gameover": 1
+      },
+      "phase": "gameover",
+      "ball": {
+        "id": "ball-1",
+        "ownerId": 0,
+        "layer": 0,
+        "x": 304.58203125,
+        "y": 959.0693359375,
+        "vx": 0.4853515625,
+        "vy": 4.5205078125,
+        "radius": 9,
+        "active": false
+      },
+      "transcriptSha256": "1f82a3867ec6a01032c2fb9692b56da9c41182981995f8540fff61377c1d6aff"
+    },
+    {
+      "threshold": 825,
+      "ticks": 595,
+      "seconds": 4.958333333333333,
+      "score": 400,
+      "shots": 1,
+      "contacts": {
+        "launch": 1,
+        "rail": 23,
+        "bumper": 4,
+        "flipper": 2,
+        "drain": 1,
+        "gameover": 1
+      },
+      "phase": "gameover",
+      "ball": {
+        "id": "ball-1",
+        "ownerId": 0,
+        "layer": 0,
+        "x": 353.658203125,
+        "y": 959.0322265625,
+        "vx": 12.748046875,
+        "vy": 3.919921875,
+        "radius": 9,
+        "active": false
+      },
+      "transcriptSha256": "5e6fc033072004c95555f42a2d158813bc540a95c9205e65ff14743d2abc0073"
+    },
+    {
+      "threshold": 850,
+      "ticks": 3845,
+      "seconds": 32.041666666666664,
+      "score": 2200,
+      "shots": 5,
+      "contacts": {
+        "launch": 1,
+        "rail": 108,
+        "bumper": 22,
+        "flipper": 14,
+        "drain": 1,
+        "gameover": 1
+      },
+      "phase": "gameover",
+      "ball": {
+        "id": "ball-1",
+        "ownerId": 0,
+        "layer": 0,
+        "x": 353.34765625,
+        "y": 959.037109375,
+        "vx": -6.130859375,
+        "vy": 6.7236328125,
+        "radius": 9,
+        "active": false
+      },
+      "transcriptSha256": "460be699e85849e0fdd0b18e5c4d3d432587cb396c38b5fcf86e42c312c0961c"
+    },
+    {
+      "threshold": 860,
+      "ticks": 2059,
+      "seconds": 17.158333333333335,
+      "score": 1100,
+      "shots": 2,
+      "contacts": {
+        "launch": 1,
+        "rail": 63,
+        "bumper": 11,
+        "flipper": 7,
+        "drain": 1,
+        "gameover": 1
+      },
+      "phase": "gameover",
+      "ball": {
+        "id": "ball-1",
+        "ownerId": 0,
+        "layer": 0,
+        "x": 309.595703125,
+        "y": 959.0478515625,
+        "vx": 12.25390625,
+        "vy": 3.8212890625,
+        "radius": 9,
+        "active": false
+      },
+      "transcriptSha256": "f2bd25e0fcdb8feb50390e0d9316479471755951737c1d71d4eaa07cf3f73b99"
+    }
+  ]
+}

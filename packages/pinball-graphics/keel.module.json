@@ -1,0 +1,21 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-pinball-graphics",
+  "version": "0.1.0",
+  "description": "Independent art style and device-bounded geometry, lighting, shadows, pixel targets and effects. Capability plans do not certify frame rate or native console export.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/pinball-graphics"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/core",
+      "@keel-engine/runtime",
+      "@keel-engine/targets"
+    ]
+  }
+}

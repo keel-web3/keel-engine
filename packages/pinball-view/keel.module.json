@@ -1,0 +1,19 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-pinball-view",
+  "version": "0.1.0",
+  "description": "Optional Canvas2D pinball presentation driven by canonical table geometry and frames, with cached layers and bounded cosmetic effects.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/pinball-view"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/runtime"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/pinball-room-lighting",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/pinball-pixel-art@^0.1",
+      "keel/pinball-feedback@^0.1"
+    ],
+    "title": "Native impact pixel lighting",
+    "description": "Bounded original indexed material light ramps driven by actual native feedback positions. Preserves authored sprite shade clusters and leaves current bodies and blades above reflected impact light. No simulation or world admission.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

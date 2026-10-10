@@ -1,0 +1,2 @@
+import {defineManifest} from '@keel-engine/runtime';
+export const manifest=defineManifest({id:'keel/pinball-pixel-view',version:'0.1.1',kind:'runtime',needs:['keel/runtime@^0.1','keel/pinball-arena@^0.1','keel/pinball-feedback@^0.1'],title:'Native pinball pixel presentation',description:'Bounded indexed pixel art from exact live authority frames, native mechanism feedback and nearest viewport presentation.'});

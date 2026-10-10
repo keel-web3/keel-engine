@@ -1,0 +1,12 @@
+import {createRequire} from 'node:module';
+import {resolve} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {spawnSync} from 'node:child_process';
+import {mkdtempSync,rmSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+const here=fileURLToPath(new URL('.',import.meta.url)),engine=resolve(here,'../../..'),work=resolve(engine,'..'),require=createRequire(resolve(engine,'package.json')),{build}=require('esbuild');
+const {canonicalSourcePlugin}=await import(resolve(work,'pinball-reboot/tools/canonical-source.mjs'));
+const checkpoint=resolve(process.argv[2]??resolve(work,'design-reset/family-development/iteration26/checkpoints/compact-pacing26-v1')),tape=process.argv[3]??'coaster-next-left-970',scratch=mkdtempSync(resolve(tmpdir(),'pinball-camera-')),out=resolve(scratch,'native-evidence.mjs');
+const frozen={name:'exact-frozen-native-dependencies',setup(b){b.onResolve({filter:/^@keel-engine\/(pinball-arena|pinball-replay)$/},args=>({path:resolve(checkpoint,'engine/packages',args.path.split('/')[1],'src/index.ts')}));}};
+await build({entryPoints:[resolve(here,'native-evidence.ts')],outfile:out,bundle:true,format:'esm',platform:'node',target:'es2022',plugins:[frozen,canonicalSourcePlugin(engine)]});
+const run=spawnSync(process.execPath,[out],{stdio:'inherit',env:{...process.env,CAMERA_EVIDENCE_ROOT:checkpoint,CAMERA_EVIDENCE_TAPE:tape,CAMERA_EVIDENCE_OUT:resolve(here,'evidence-'+tape+'.json')}});rmSync(scratch,{recursive:true,force:true});process.exitCode=run.status??1;

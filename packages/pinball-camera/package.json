@@ -1,0 +1,13 @@
+{
+  "name": "@keel-engine/pinball-camera",
+  "version": "0.1.7",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/pinball-arena": "workspace:*"
+  }
+}

@@ -1,0 +1,103 @@
+{
+  "schema": "keel-pinball-progression-source-hold@1",
+  "revision": "ordered-mechanisms/2026-10-08.1",
+  "status": "SOURCE_AUTHORED_UNEXECUTED_NOT_INTEGRATED",
+  "scope": "packages/pinball-progression only; no arena or held assembler edits",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "344b6a06af5938820570f8a7f57922f8936e1e5ac89b2708e2ab7355478060c0",
+      "bytes": 10804
+    },
+    {
+      "path": "keel/entry.ts",
+      "sha256": "13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001",
+      "bytes": 2452
+    },
+    {
+      "path": "keel/link.json",
+      "sha256": "774f81ba4cebfc676ae5177cfa339484a42752d11e60edaba30334586c07a954",
+      "bytes": 758
+    },
+    {
+      "path": "keel.module.json",
+      "sha256": "c7373195db36f29bc29177d86c357a22a90de169b4331453fb316aa27e7dcc8f",
+      "bytes": 660
+    },
+    {
+      "path": "package.json",
+      "sha256": "a6ee7f947db691dbf8ac9ba6c5109c6c04571547792b1c4dabb10e9bf6cae8a0",
+      "bytes": 453
+    },
+    {
+      "path": "src/adapters.ts",
+      "sha256": "9b9c8162ac0a4889f646300711204db7a8157ac6b692f46dd2093af19b49b308",
+      "bytes": 2609
+    },
+    {
+      "path": "src/compiler.ts",
+      "sha256": "7bd5c46b99a3cf72a617b9490194571fb6d73735575aa21d65bafb7c260006e7",
+      "bytes": 10352
+    },
+    {
+      "path": "src/controller.ts",
+      "sha256": "331e789b15cd290ff60faa4a5eb50528602b06b4278632e0b23c6ef3f5320aae",
+      "bytes": 20805
+    },
+    {
+      "path": "src/index.ts",
+      "sha256": "5a38a48106f59c151dfd5f7ff3a5b96861778c92bb86a76c9804b85a44bde22b",
+      "bytes": 313
+    },
+    {
+      "path": "src/module.ts",
+      "sha256": "826a14c63dad65a1c90a194fec9c6d42ff2739f612697d534cc468c6e99d6d25",
+      "bytes": 469
+    },
+    {
+      "path": "src/types.ts",
+      "sha256": "8866f3cb0cdd06b4406278f3803912f1d228e21623e4467a553f66e92e659162",
+      "bytes": 6213
+    },
+    {
+      "path": "src/validation.ts",
+      "sha256": "6fcb920d055b421243981c40560a9f5410e0e22df44920c0144d8af6e6dd559a",
+      "bytes": 2620
+    },
+    {
+      "path": "test/progression.test.ts",
+      "sha256": "2aa663c3afac4480cfb1756ccbcc86da6fee6ff84b83b14c3650b9d5484a215e",
+      "bytes": 12152
+    },
+    {
+      "path": "tsconfig.json",
+      "sha256": "e6869424b46820f01ee4a6aab6c2a63e9f66cff5e46339444b04d1613feaaf7d",
+      "bytes": 128
+    }
+  ],
+  "sourceManifestSha256": "86ae3ce65e0a12b20a4adf90239f42ff7afd0edd7437d438b864ee8b12328ef2",
+  "authoredTestCount": 14,
+  "testsExecutedByAuthor": 0,
+  "nativeRuns": 0,
+  "portableBuilds": 0,
+  "browserRuns": 0,
+  "pending": [
+    "Focused authored tests and strict TypeScript",
+    "Workspace/package/module linkage",
+    "Arena19 raw numeric observations and source-shot cursor hooks",
+    "Full-separation rearm proof",
+    "Controlled gate single-writer policy replacing free approach qualification",
+    "Atomic native enabled batch and occupancy/served-sweep safety",
+    "Arena plus progression snapshot transaction",
+    "Room dictionary/frame/reliable transition integration",
+    "Actual connected legal-input native evidence"
+  ],
+  "unsupported": [
+    "spinner",
+    "moving diverter",
+    "magnet",
+    "spatial enemy",
+    "owned multiball",
+    "capture-trigger objectives"
+  ]
+}

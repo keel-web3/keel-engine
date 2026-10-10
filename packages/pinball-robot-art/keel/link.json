@@ -1,0 +1,26 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/pinball-robot-art",
+    "version": "0.1.1",
+    "kind": "runtime",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/core@^0.1",
+      "keel/pinball-arena@^0.1",
+      "keel/pinball-pixel-art@^0.1"
+    ],
+    "title": "Seeded rolling robot pixel shells",
+    "description": "Indexed spherical robot shells with fixed light and curved seeded marks. Observed signed native XY displacement drives cosmetic no-slip ground-roll orientation; no native spin or angular momentum is claimed. Bounded native disk presentation, explicit contact bindings, replay resets and historical eight-frame sprite API.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

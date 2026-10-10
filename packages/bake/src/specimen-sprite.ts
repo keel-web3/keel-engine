@@ -177,7 +177,8 @@ export interface SpecimenAudit {turnRatio:number;thinnestView:number;fill:{width
 export function auditSpecimen(program:Program,seed:string,size=32,camera:SpriteCamera=SPRITE_CAMERA,views=16):SpecimenAudit {
  const areas:number[]=[],phases=new Set<string>(),frames:Uint8Array[]=[];let x0=size,x1=-1,y0=size,y1=-1,moving=0,outline=0,body=0;
  for(let view=0;view<views;view++){const {pixels:p,shades:s}=specimenSprite(program,seed,0,view,views,size,camera);let a=0;for(let i=0;i<p.length;i++)if(p[i]&&!s[i])a++;areas.push(a);}
- for(let phase=0;phase<FRAMES;phase++){const {pixels,shades}=specimenSprite(program,seed,phase,1,views,size,camera);frames.push(pixels);phases.add(Buffer.from(pixels).toString('base64'));
+ // Exact byte sequences, portable to browser/KEEL modules without Node Buffer.
+ for(let phase=0;phase<FRAMES;phase++){const {pixels,shades}=specimenSprite(program,seed,phase,1,views,size,camera);frames.push(pixels);phases.add(pixels.join(','));
   for(let i=0;i<pixels.length;i++){if(pixels[i]&&!shades[i]){const x=i%size,y=(i/size)|0;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;if(phase===0){body++;if(pixels[i]===1)outline++;}}if(pixels[i]!==frames[0]![i])moving++;}}
  // A loop closes when the join (last -> first) changes no more pixels than the largest ordinary step.
  const diff=(a:Uint8Array,b:Uint8Array)=>{let n=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])n++;return n;};

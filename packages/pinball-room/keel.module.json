@@ -1,0 +1,21 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-pinball-room",
+  "version": "0.1.0",
+  "description": "Bounded owner-admitted input and compact shared public frames; independent of host, rendering and cosmetics.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/pinball-room"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/codec/hash",
+      "@keel-engine/pinball-arena",
+      "@keel-engine/runtime"
+    ]
+  }
+}

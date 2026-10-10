@@ -1,0 +1,2 @@
+import{defineManifest}from'@keel-engine/runtime';
+export const manifest=defineManifest({id:'keel/pinball-room-lighting',version:'0.1.0',kind:'runtime',needs:['keel/runtime@^0.1','keel/pinball-pixel-art@^0.1','keel/pinball-feedback@^0.1'],title:'Native impact pixel lighting',description:'Bounded original indexed material light ramps driven by actual native feedback positions. Preserves authored sprite shade clusters and leaves current bodies and blades above reflected impact light. No simulation or world admission.'});

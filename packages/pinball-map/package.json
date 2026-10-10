@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/pinball-map",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic modular KEEL pinball-map",
+  "exports": {
+    ".": "./src/index.ts",
+    "./runtime": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/pinball-input",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/input@^0.1",
+      "keel/pinball-arena@^0.1",
+      "keel/pinball-session@^0.1"
+    ],
+    "title": "Pinball device input",
+    "description": "Held flippers and latched keyboard, controller and touch controls, sampled as canonical arena input with separate session medicine actions.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/pinball-arena": "keel/pinball-arena",
+    "@keel-engine/pinball-session": "keel/pinball-session",
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

@@ -1,0 +1,25 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-pinball-run",
+  "version": "0.1.0",
+  "description": "Deterministic stage objectives, class abilities, health, drafts and campaign checkpoints over canonical pinball worlds.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/pinball-run"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/codec/hash",
+      "@keel-engine/pinball-map",
+      "@keel-engine/pinball-mapgen",
+      "@keel-engine/pinball-physics",
+      "@keel-engine/pinball-world",
+      "@keel-engine/run-progression",
+      "@keel-engine/runtime"
+    ]
+  }
+}

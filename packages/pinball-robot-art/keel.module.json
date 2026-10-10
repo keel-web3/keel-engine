@@ -1,0 +1,20 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-pinball-robot-art",
+  "version": "0.1.1",
+  "description": "Indexed spherical robot shells with fixed light and curved seeded marks. Observed signed native XY displacement drives cosmetic no-slip ground-roll orientation; no native spin or angular momentum is claimed. Bounded native disk presentation, explicit contact bindings, replay resets and historical eight-frame sprite API.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/pinball-robot-art"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/core",
+      "@keel-engine/runtime"
+    ]
+  }
+}

@@ -1,0 +1,1 @@
+{"name":"@keel-engine/pinball-visibility","version":"0.1.0","private":true,"type":"module","exports":{".":"./src/index.ts"},"dependencies":{"@keel-engine/runtime":"workspace:*","@keel-engine/bake":"workspace:*"}}

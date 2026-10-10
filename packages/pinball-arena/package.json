@@ -1,0 +1,16 @@
+{
+  "name": "@keel-engine/pinball-arena",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Canonical multi-owner integer WASM arena physics, field mechanisms and snapshots.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./runtime": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/codec": "workspace:*"
+  }
+}

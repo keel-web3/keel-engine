@@ -1,0 +1,2 @@
+import {defineManifest} from '@keel-engine/runtime';
+export const manifest=defineManifest({id:'keel/pinball-session',version:'0.1.0',kind:'runtime',needs:['keel/runtime@^0.1','keel/core@^0.1','keel/codec@^0.1','keel/pinball-arena@^0.1'],title:'Pinball match and RPG rules',description:'Deterministic live score pressure, loadouts, physically admitted equipment crates, health recovery and portable full-session control replay for shared arena modes.'});

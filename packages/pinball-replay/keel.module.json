@@ -1,0 +1,21 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-pinball-replay",
+  "version": "0.1.0",
+  "description": "Bounded admitted-input and command tapes, exact authority identity, portable integrity checks and independent playback.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/pinball-replay"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/codec/hash",
+      "@keel-engine/pinball-arena",
+      "@keel-engine/runtime"
+    ]
+  }
+}
