@@ -1,4 +1,5 @@
-import { Output, Mp4OutputFormat, BufferTarget, CanvasSource, AudioSampleSource, AudioSample, Quality, canEncodeVideo, canEncodeAudio } from 'mediabunny';
+import { Output, Mp4OutputFormat, StreamTarget, CanvasSource, AudioSampleSource, AudioSample, Quality, canEncodeVideo, canEncodeAudio } from 'mediabunny';
+import { createBlobTarget } from './blob-target.ts';
 
 export interface FixedFrameAudio {
   readonly rate: number;
@@ -38,15 +39,19 @@ export async function createFixedFrameEncoder(options: FixedFrameOptions) {
   if (!await canEncodeVideo('avc', { width, height, bitrate: videoBitrate, frameRate: fps, fullCodecString: codecString, latencyMode: 'realtime' })) throw new Error('This browser cannot encode H.264 MP4');
   if (sound && !await canEncodeAudio('aac', { sampleRate: sound.rate, numberOfChannels: sound.channels.length, bitrate: audioBitrate })) throw new Error('This browser cannot encode the MP4 soundtrack');
   check();
-  const target = new BufferTarget(), output = new Output({ format: new Mp4OutputFormat({ fastStart: 'in-memory' }), target });
+  const file = createBlobTarget();
+  const target = new StreamTarget(new WritableStream({ write({ data, position }) { file.write(data, position); } }), { chunked: true, chunkSize: 1024 * 1024 });
+  // Packet counts are known, so reserve normal fast-start metadata. No fragmented
+  // transport, whole-movie reallocation, or media-sized finalization copy.
+  const output = new Output({ format: new Mp4OutputFormat({ fastStart: 'reserve' }), target });
   const canvas = new OffscreenCanvas(width, height), draw = canvas.getContext('2d', { alpha: false });
   if (!draw) throw new Error('MP4 scale canvas is unavailable');
   const video = new CanvasSource(canvas, { codec: 'avc', quality: new Quality({ bitrate: videoBitrate }), latencyMode: 'realtime', fullCodecString: codecString, keyFrameInterval: 2 });
-  output.addVideoTrack(video, { frameRate: fps });
+  output.addVideoTrack(video, { frameRate: fps, maximumPacketCount: frames });
   const audio = sound ? new AudioSampleSource({ codec: 'aac', quality: new Quality({ bitrate: audioBitrate }) }) : null;
-  if (audio) output.addAudioTrack(audio);
+  if (audio && sound) output.addAudioTrack(audio, { maximumPacketCount: Math.ceil(sound.channels[0]!.length / 1024) + 32 });
   let count = 0, pending = false, closed = false, audioError: unknown;
-  const cancel = async () => { if (!closed) { closed = true; await output.cancel(); } };
+  const cancel = async () => { if (!closed) { closed = true; await output.cancel(); file.clear(); } };
   const abort = () => { void cancel().catch(() => {}); };
   signal?.addEventListener('abort', abort, { once: true });
   try { await output.start(); check(); } catch (error) { signal?.removeEventListener('abort', abort); await cancel(); throw error; }
@@ -71,7 +76,7 @@ export async function createFixedFrameEncoder(options: FixedFrameOptions) {
     },
     async finish() {
       check(); if (closed || pending || count !== frames) throw new Error('MP4 is missing frames');
-      try { video.close(); await audioDone; check(); if (audioError) throw audioError; await output.finalize(); closed = true; return { blob: new Blob([target.buffer!], { type: 'video/mp4' }), frames: count }; }
+      try { video.close(); await audioDone; check(); if (audioError) throw audioError; await output.finalize(); closed = true; const blob = file.finish(); file.clear(); return { blob, frames: count }; }
       catch (error) { await cancel(); throw error; }
       finally { signal?.removeEventListener('abort', abort); }
     },
