@@ -9,12 +9,12 @@ import { runInNewContext } from 'node:vm';
 import { MODULE_RUNTIME, packageModularOutputs } from '../src/modular-resources.mjs';
 const compact = async source => (await transform(source,{minify:true,target:'es2022'})).code;
 
-async function compile(root, names) {
+async function compile(root, names, options={}) {
   const result = await build({ entryPoints: Object.fromEntries(names.map(name => [name, resolve(root, name + '.js')])), absWorkingDir: root,
     outdir: resolve(root, 'dist'), entryNames: '[name]', chunkNames: 'chunk-[hash]', bundle: true, splitting: true,
     format: 'esm', write: false, metafile: true, target: 'es2022' });
   return packageModularOutputs({ result, transform, compact, typescript: ts, roots: { fixture: root }, workingDir: root,
-    entryIds: new Map(names.map(name => [resolve(root, name + '.js'), 'fixture.' + name])) });
+    entryIds: new Map(names.map(name => [resolve(root, name + '.js'), 'fixture.' + name])),...options });
 }
 
 test('static cyclic modules share live bindings across facades without eager factory execution', async () => {
@@ -68,4 +68,23 @@ test('unknown absolute source roots reject', async () => {
 
 test('unknown relative source roots also reject', async () => {
   await assert.rejects(() => synthetic('../outside-fixture/shared.js'), /Unregistered module source root/);
+});
+
+
+test('declared async imports remain lazy, share the verified cache and record their edge', async () => {
+  const root=await mkdtemp(resolve(tmpdir(),'keel-module-static-async-'));
+  try {
+    await writeFile(resolve(root,'game.js'),'export const load=()=>import("./other.js");');
+    await writeFile(resolve(root,'other.js'),'globalThis.loaded=(globalThis.loaded||0)+1;export const value=7;');
+    const resources=await compile(root,['game','other'],{staticAsyncImports:true});
+    const context={};runInNewContext(MODULE_RUNTIME,context);
+    for(const resource of resources)runInNewContext(resource.bytes.toString(),context);
+    const game=context.__KEEL_STATIC_MODULES__.require('fixture.game');
+    assert.equal(context.loaded,undefined);
+    const pending=game.load();assert.equal(context.loaded,undefined);
+    const [a,b]=await Promise.all([pending,game.load()]);
+    assert.equal(a.value,7);assert.equal(a,b);assert.equal(context.loaded,1);
+    assert(resources.find(r=>r.id==='fixture.game').dependencies.includes('fixture.other'));
+    assert(resources.every(r=>!r.bytes.toString().includes('import(')));
+  } finally {await rm(root,{recursive:true,force:true});}
 });

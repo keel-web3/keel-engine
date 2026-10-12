@@ -36,6 +36,12 @@ export interface CaptureOptions {
 }
 
 export interface VideoOptions {
+  /** Optional sound already routed to a MediaStreamDestination. */
+  readonly audio?: MediaStream | undefined;
+  /** Cancel an incomplete recording without returning a partial movie. */
+  readonly signal?: AbortSignal | undefined;
+  /** Refuse MIME fallback when the caller needs a particular container. */
+  readonly requireType?: boolean | undefined;
   readonly seconds?: number | undefined;
   readonly fps?: number | undefined;
   /** A MIME type to try first (else VP9, VP8, plain WebM: the first the browser records). */
@@ -158,12 +164,13 @@ export function createCapture(canvas: HTMLCanvasElement, { renderer = null, step
     return { target: big, copy };
   }
 
-  function recorder(stream: MediaStream, type: string | null): { rec: MediaRecorder; done: Promise<Blob> } {
+  function recorder(stream: MediaStream, type: string | null, requireType = false): { rec: MediaRecorder; done: Promise<Blob> } {
     const mime = pickMime(type, (t) => MediaRecorder.isTypeSupported(t));
+    if (requireType && (!type || mime !== type)) throw new Error("Requested video container is not supported: " + type);
     const rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8e6 } as MediaRecorderOptions);
     const chunks: Blob[] = [];
     rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
-    const done = new Promise<Blob>((r) => { rec.onstop = () => r(new Blob(chunks, { type: mime } as BlobPropertyBag)); });
+    const done = new Promise<Blob>((resolve, reject) => { rec.onstop = () => resolve(new Blob(chunks, { type: rec.mimeType || mime } as BlobPropertyBag)); rec.onerror = () => reject(new Error("Video recorder failed")); });
     return { rec, done };
   }
 
@@ -173,17 +180,30 @@ export function createCapture(canvas: HTMLCanvasElement, { renderer = null, step
       return new Promise((r) => canvas.toBlob(r, "image/png"));
     },
 
-    async video({ seconds = 10, fps = 60, type = null, scale = null } = {}) {
+    async video({ seconds = 10, fps = 60, type = null, scale = null, audio, signal, requireType = false } = {}) {
+      if (signal?.aborted) throw new DOMException("Capture cancelled", "AbortError");
       const { target, copy } = blownUp(scale);
-      let on = true;
+      const picture = target.captureStream(fps);
+      const stream = audio ? new MediaStream([...picture.getVideoTracks(), ...audio.getAudioTracks()]) : picture;
+      let prepared: ReturnType<typeof recorder>;
+      try { prepared = recorder(stream, type, requireType); }
+      catch (error) { for (const track of picture.getTracks?.() ?? []) track.stop(); throw error; }
+      const { rec, done } = prepared;
+      let on = true, timer: ReturnType<typeof setTimeout> | undefined;
       const pump = (): void => { if (!on) return; copy(); requestAnimationFrame(pump); };
-      pump();
-      const { rec, done } = recorder(target.captureStream(fps), type);
-      rec.start(250);
-      await sleep(seconds * 1000);
-      on = false;
-      rec.stop();
-      return done;
+      const finish = (): void => { on = false; clearTimeout(timer); if (rec.state !== "inactive") rec.stop(); };
+      const cancelled = (): void => finish();
+      signal?.addEventListener("abort", cancelled, { once: true });
+      try {
+        pump(); rec.start(250); timer = setTimeout(finish, seconds * 1000);
+        const movie = await done;
+        if (signal?.aborted) throw new DOMException("Capture cancelled", "AbortError");
+        return movie;
+      } finally {
+        on = false; clearTimeout(timer); signal?.removeEventListener("abort", cancelled);
+        if (rec.state === "recording" || rec.state === "paused") rec.stop();
+        for (const track of picture.getTracks?.() ?? []) track.stop();
+      }
     },
 
     async film({ seconds = 10, fps = 30, type = null, scale = null } = {}) {
