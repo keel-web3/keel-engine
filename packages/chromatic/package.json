@@ -1,0 +1,9 @@
+{
+  "name": "@keel-engine/chromatic",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "exports": { ".": "./src/cartridge.mjs" },
+  "scripts": { "test": "node --test test/*.test.mjs" }
+}
