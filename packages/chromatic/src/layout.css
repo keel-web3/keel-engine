@@ -52,3 +52,10 @@
 .chromatic-live-screen:fullscreen{display:flex;flex-direction:column;justify-content:center}
 .chromatic-live-screen:fullscreen video{flex:1;min-height:0}
 .chromatic-live-screen:fullscreen .chromatic-actions{flex:none;justify-content:center;margin:12px 0 0}
+
+.chromatic-rom-preview{width:160px;max-width:100%;height:auto;image-rendering:pixelated;border:2px solid var(--line)}
+.chromatic-hash{overflow-wrap:anywhere}
+.chromatic-select{display:grid;gap:8px;margin:16px 0}
+.chromatic-select select{max-width:100%;width:100%;min-width:0;padding:10px;background:var(--paper);color:var(--ink);border:2px solid var(--line);font:inherit}
+.chromatic-writer{border-top:2px solid var(--line);margin-top:24px;padding-top:16px}
+.chromatic-writer .chromatic-check{align-items:flex-start;overflow-wrap:anywhere}

@@ -16,10 +16,12 @@ export function unsupportedCommand(line:string):boolean;
 export class DeviceDecoder {push(chunk:Uint8Array):DeviceEvent[]}
 export type Report=Record<string,string|number|boolean>;
 export interface Health {versions:Report;network:Report|null;relay:Report|null;networkError:string|null;observedAt:string}
+export interface CartridgeLease {release():void;request<T>(command:string,handler:(event:DeviceEvent)=>T|undefined,options?:{timeout?:number}):Promise<T>;sendChunk(bytes:Uint8Array):Promise<void>;fail(error:Error):void}
 export class ConsoleSession {
  port:SerialPort;closed:boolean;
  constructor(port:SerialPort,onDisconnect?:()=>void);
  open():Promise<this>;close():Promise<void>;
+ beginCartridgeWrite():CartridgeLease;
  beginInput():{tap(mask:number):Promise<boolean>;release():void};
  request<T>(command:string,handler:(event:DeviceEvent)=>T|undefined,options?:{timeout?:number}):Promise<T>;
  json(command:string,required:string[],allowed?:string[]):Promise<Report>;

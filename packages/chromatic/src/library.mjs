@@ -23,14 +23,20 @@ export async function getBytes(entry) {
   if (!(bytes instanceof Uint8Array) || bytes.byteLength !== entry.bytes || await sha256(bytes) !== entry.sha256) throw new Error('The stored file did not verify. Do not use it for restoration.');
   return bytes;
 }
-export async function saveEntry(bytes, {name, kind, verification = 'file-hash', group = null, tags = '', source = 'local-file'} = {}) {
+export async function saveEntry(bytes, {name, kind, verification = 'file-hash', group = null, tags = '', source = 'local-file', annotation} = {}) {
   if (!(bytes instanceof Uint8Array) || !bytes.length || bytes.length > 64 * 1048576) throw new Error('Choose a nonempty file of at most 64 MiB.');
   if (!['rom', 'sav'].includes(kind)) throw new Error('Choose a Game Boy ROM or save file.');
   const metadata = kind === 'rom' ? inspectRom(bytes) : null;
   if (source !== 'cartridge-backup' && metadata && (!metadata.headerChecksumValid || metadata.oversized || !metadata.declaredBytes)) throw new Error('The ROM header or declared size is invalid. The file was not imported.');
   const hash = await sha256(bytes), existing = (await listEntries()).find(e => e.sha256 === hash);
-  if (existing) {await getBytes(existing); return existing;}
-  const entry = {sha256: hash, name: String(name || metadata?.title || 'Local file').slice(0, 120), kind, bytes: bytes.byteLength, metadata, verification, group, tags: String(tags).slice(0, 240), source, createdAt: new Date().toISOString(), storage: 'indexeddb'};
+  if (existing) {
+    await getBytes(existing);
+    let result=existing;
+    if(group){result={...result,backupGroups:[...new Set([...(result.backupGroups||[]),...(result.group?[result.group]:[]),group])]};await transact(['entries'],'readwrite',tx=>tx.objectStore('entries').put(result));}
+    if(annotation){const current=normalizeAnnotation(result.annotation),provided=normalizeAnnotation(annotation);for(const key of Object.keys(current))if(!current[key])current[key]=provided[key];return editEntry(result,result.source==='site-release'?name||result.name:result.name,result.tags,current);}
+    return result;
+  }
+  const entry = {sha256: hash, name: String(name || metadata?.title || 'Local file').slice(0, 120), kind, bytes: bytes.byteLength, metadata, verification, group, backupGroups:group?[group]:[], tags: String(tags).slice(0, 240), source, createdAt: new Date().toISOString(), storage: 'indexeddb',...(annotation?{annotation:normalizeAnnotation(annotation)}:{})};
   let dir = null;
   if (bytes.byteLength >= 4 * 1048576) {
     dir = await root();
@@ -58,5 +64,5 @@ export async function importRelease(release) {
   const response = await fetch(url); if (!response.ok) throw new Error('The release ROM could not be downloaded.');
   const bytes = new Uint8Array(await response.arrayBuffer());
   if (bytes.length !== release.romBytes || await sha256(bytes) !== release.romSha256) throw new Error('The download does not match the published release hash.');
-  return saveEntry(bytes, {kind: 'rom', name: 'Current site release', source: 'site-release'});
+  return saveEntry(bytes, {kind: 'rom', name: release.title || 'Current site release', source: 'site-release',annotation:{title:release.title||'',author:release.creator||'',version:release.revisionLabel||release.snapshotDate||'',description:release.description||'',website:release.github||'',license:release.license||'',previewImage:release.previewImage?new URL(release.previewImage,location.href).href:''}});
 }

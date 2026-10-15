@@ -103,8 +103,8 @@ export class ConsoleSession {
       if (!this.closed) {this.closed = true; this.pending?.reject(new Error('Chromatic disconnected. No operation was verified.')); try {await this.port.close();} catch {} this.onDisconnect();}
     }
   }
-  send(text) {
-    const write = async () => {if (this.closed) throw new Error('Connect the console first.'); const writer = this.port.writable.getWriter(); try {await writer.write(new TextEncoder().encode(text));} finally {writer.releaseLock();}};
+  send(text, allowed = () => true) {
+    const write = async () => {if (this.closed) throw new Error('Connect the console first.'); if(!allowed())return; const writer = this.port.writable.getWriter(); try {await writer.write(text instanceof Uint8Array ? text : new TextEncoder().encode(text));} finally {writer.releaseLock();}};
     // A device can answer before the OS write promise settles. Serialize writes even
     // when the next request starts immediately after that response.
     this.sending = (this.sending ?? Promise.resolve()).then(write); return this.sending;
@@ -112,12 +112,34 @@ export class ConsoleSession {
   request(command, handle, {timeout = 8000} = {}) {
     if (!READ_COMMAND.test(command)) throw new Error('This adapter only permits documented read commands.');
     if (this.inputOwner) throw new Error('Disable live controls before another console operation.');
+    if (this.cartridgeOwner) throw new Error('A cartridge write owns this console.');
     return this.#perform(command,handle,{timeout});
+  }
+  /** Explicit cartridge ownership; normal requests remain read-only. Never retries a write. */
+  beginCartridgeWrite() {
+    if(this.closed||this.pending||this.inputOwner||this.cartridgeOwner)throw new Error('Connect an idle console before a cartridge write.');
+    const owner={active:true};this.cartridgeOwner=owner;
+    const allowed=()=>owner.active&&this.cartridgeOwner===owner;
+    return {
+      release:()=>{owner.active=false;if(this.cartridgeOwner===owner)this.cartridgeOwner=null;},
+      request:(command,handle,options={})=>{
+        if(!allowed())throw new Error('Cartridge write permission was released.');
+        if(!READ_COMMAND.test(command)&&!/^cart usb write (?:rom [0-9]+ [a-f0-9]{8} [a-f0-9]{64}|sav)(?: bin)?$/.test(command))throw new Error('Unsupported cartridge write command.');
+        return this.#perform(command,handle,{...options,allowed});
+      },
+      sendChunk:(data)=>{
+        if(!allowed()||!this.pending?.command.startsWith('cart usb write '))throw new Error('No active cartridge write requested these bytes.');
+        if(!(data instanceof Uint8Array)||data.length>1040)throw new Error('Invalid cartridge data frame.');
+        const target=this.pending;
+        return this.send(data,()=>allowed()&&this.pending===target);
+      },
+      fail:(error)=>{this.pending?.reject(error);void this.close();}
+    };
   }
   /** Exclusive opt-in input ownership. Only bounded game-button taps are allowed.
    * Firmware releases each tap itself, even if the page or USB connection disappears. */
   beginInput() {
-    if (this.closed || this.pending || this.inputOwner) throw new Error('Connect an idle console before enabling controls.');
+    if (this.closed || this.pending || this.inputOwner || this.cartridgeOwner) throw new Error('Connect an idle console before enabling controls.');
     const owner={active:true};this.inputOwner=owner;
     return {
       release:()=>{owner.active=false;if(this.inputOwner===owner)this.inputOwner=null;},
@@ -162,7 +184,7 @@ export class ConsoleSession {
   async close() {
     if (this.closing) return this.closing;
     this.closing = (async () => {
-      const wasOpen = !this.closed; this.closed = true; if(this.inputOwner)this.inputOwner.active=false;this.inputOwner=null; this.pending?.reject(new Error('Console closed.'));
+      const wasOpen = !this.closed; this.closed = true; if(this.inputOwner)this.inputOwner.active=false;this.inputOwner=null; if(this.cartridgeOwner)this.cartridgeOwner.active=false;this.cartridgeOwner=null; this.pending?.reject(new Error('Console closed.'));
       // Give received bytes a brief quiet period before canceling the OS stream.
       const end = Date.now() + 1000; while (Date.now() - this.lastRx < 100 && Date.now() < end) await delay(50);
       try {await this.reader?.cancel(); await this.pumping;} catch {}
