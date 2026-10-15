@@ -10,7 +10,7 @@ class Port {
  constructor(reply){this.reply=reply;this.commands=[];this.closed=false;this.writable=new WritableStream({write:bytes=>{const line=new TextDecoder().decode(bytes).trim();if(line){this.commands.push(line);this.reply?.(line,this);}}});}
  getInfo(){return {usbVendorId:0x374e,usbProductId:0x0101};}
  async open(options){this.options=options;this.readable=new ReadableStream({start:c=>this.controller=c});}
- async setSignals(signals){this.signals=signals;}
+ async setSignals(signals){this.signals={...this.signals,...signals};}
  async close(){this.closed=true;}
  line(s){this.controller.enqueue(encode(s));}
  bytes(b){for(let at=0;at<b.length;at+=37)this.controller.enqueue(b.slice(at,at+37));}
@@ -41,3 +41,5 @@ test('USB bridge checks endpoints then reads IDCODE without configuration/erase 
  const packets=[];let dataRead=0;const d={vendorId:0x33aa,productId:0x0120,configuration:null,async open(){},async close(){},async selectConfiguration(n){this.configuration={configurationValue:n,interfaces:[{interfaceNumber:0,alternate:{endpoints:[{endpointNumber:2,direction:'out'},{endpointNumber:1,direction:'in'},{endpointNumber:3,direction:'in'}]}}]};},async claimInterface(n){assert.equal(n,0);},async transferOut(ep,b){assert.equal(ep,2);packets.push([...b]);return {status:'ok',bytesWritten:b.length};},async transferIn(ep,n){const b=ep===3?new Uint8Array(4):++dataRead===1?new Uint8Array([0x1b,0x28,1]):new Uint8Array([0]);assert.equal(b.length,n);return {status:'ok',data:new DataView(b.buffer)};}};
  await openBridge(d);assert.deepEqual(await readBridgeId(d),{idcode:0x1281b,expected:true});assert.deepEqual(packets,[[0x20,7,2,0x21,0,0,0xab,60],[0x5b,5,0x1f],[0x5b,3,3],[0x6b,6,0x11,0x5b,0,1],[0x5b,1,1,0x9b,5,0],[0x5b,2,1],[0x7c,2,255,255,255,0x8b],[0x6c,6,255,0x5c,0,0x81,0x8b],[0x5b,1,1]]);
 });
+
+test('a console still booting receives another read-only wake within the same deadline',async()=>{let queries=0;const p=new Port((cmd,p)=>{if(++queries===2)p.line('{"mcu":"1.0.2","fpga":"18.21"}');});const s=await new ConsoleSession(p).open();const v=await s.json('fwversion',['mcu','fpga']);assert.equal(v.mcu,'1.0.2');assert.deepEqual(p.commands,['fwversion','fwversion']);await s.close();});

@@ -11,16 +11,22 @@ export function chooseBridge(nav) {
 }
 export async function grantedDevices(nav) {
   const [ports, bridges] = await Promise.all([nav.serial?.getPorts?.() ?? [], nav.usb?.getDevices?.() ?? []]);
-  return {ports: ports.filter(p => {const i = p.getInfo(); return i.usbVendorId === CONSOLE_FILTER.usbVendorId && i.usbProductId === CONSOLE_FILTER.usbProductId;}), bridges: bridges.filter(d => d.vendorId === BRIDGE_FILTER.vendorId && d.productId === BRIDGE_FILTER.productId)};
+  return {ports: ports.filter(p => {if(p.connected===false)return false;const i = p.getInfo(); return i.usbVendorId === CONSOLE_FILTER.usbVendorId && i.usbProductId === CONSOLE_FILTER.usbProductId;}), bridges: bridges.filter(d => d.vendorId === BRIDGE_FILTER.vendorId && d.productId === BRIDGE_FILTER.productId)};
+}
+// A permission grant can outlive the handle. A delayed open must not leave a hidden owner.
+async function openedWithin(open,close,label){
+ let expired=false,timer;
+ const work=Promise.resolve().then(open).then(async value=>{if(expired){await close().catch(()=>{});throw new Error(label+' opened after its deadline and was released.');}return value;});
+ try{return await Promise.race([work,new Promise((_,reject)=>{timer=setTimeout(()=>{expired=true;reject(new Error(label+' did not open. Close other Chromatic tabs or device tools, then reconnect here.'));},10000);})]);}finally{clearTimeout(timer);}
 }
 export async function openBridge(device) {
   if (device.vendorId !== BRIDGE_FILTER.vendorId || device.productId !== BRIDGE_FILTER.productId) throw new Error('Choose the Chromatic GWU2X bridge.');
-  await device.open();
+  await openedWithin(()=>device.open(),()=>device.close(),'USB bridge');
   try {
     if (device.configuration?.configurationValue !== 1) await device.selectConfiguration(1);
     const endpoints = device.configuration.interfaces.find(i => i.interfaceNumber === 0)?.alternate?.endpoints ?? [];
     for (const [number, direction] of [[2, 'out'], [1, 'in'], [3, 'in']]) if (!endpoints.some(e => e.endpointNumber === number && e.direction === direction)) throw new Error('The USB bridge endpoints do not match the published GWU2X interface.');
-    await device.claimInterface(0);
+    await openedWithin(()=>device.claimInterface(0),()=>device.close(),'USB bridge interface');
     return device;
   } catch (e) {await device.close().catch(() => {}); throw e;}
 }
@@ -68,9 +74,9 @@ export class ConsoleSession {
   async open() {
     const i = this.port.getInfo();
     if (i.usbVendorId !== CONSOLE_FILTER.usbVendorId || i.usbProductId !== CONSOLE_FILTER.usbProductId) throw new Error('Choose the Chromatic console, not another serial device.');
-    await this.port.open({baudRate: 115200, dataBits: 8, stopBits: 1, parity: 'none', flowControl: 'none', bufferSize: 65536});
+    await openedWithin(()=>this.port.open({baudRate:115200,dataBits:8,stopBits:1,parity:'none',flowControl:'none',bufferSize:65536}),()=>this.port.close(),'Console');
     this.closed = false;
-    try {await this.port.setSignals({dataTerminalReady: false, requestToSend: false}); if (!this.port.readable || !this.port.writable) throw new Error('The console has no data stream.'); this.reader = this.port.readable.getReader(); this.pumping = this.pump();}
+    try {await this.port.setSignals({dataTerminalReady:false}); await this.port.setSignals({requestToSend:false}); await this.port.setSignals({dataTerminalReady:false}); if (!this.port.readable || !this.port.writable) throw new Error('The console has no data stream.'); this.reader = this.port.readable.getReader(); this.pumping = this.pump();}
     catch (e) {await this.close(); throw e;}
     return this;
   }
@@ -80,7 +86,7 @@ export class ConsoleSession {
       while (!this.closed) {
         let item;
         try {item = await this.reader.read();} catch (e) {
-          if (!this.closed && /^(Break|Framing|Parity|BufferOverrun)Error$/.test(e.name) && this.port.readable && breaks++ < 3 && !this.pending) {this.reader.releaseLock(); this.reader = this.port.readable.getReader(); this.decoder = new DeviceDecoder(); continue;}
+          if (!this.closed && /^(Break|Framing|Parity|BufferOverrun)Error$/.test(e.name) && this.port.readable && breaks++ < 20 && (!this.pending || !this.pending.command.startsWith('cart usb read '))) {this.reader.releaseLock(); this.reader = this.port.readable.getReader(); this.decoder = new DeviceDecoder(); continue;}
           throw e;
         }
         if (item.done) break;
@@ -108,12 +114,16 @@ export class ConsoleSession {
     if (this.closed) throw new Error('Connect the console first.');
     if (this.pending) throw new Error('Another console operation is running.');
     return new Promise((resolve, reject) => {
-      let timer; const job = {command, handle, resolve: v => finish(resolve, v), reject: e => finish(reject, e)};
-      const finish = (fn, value) => {clearTimeout(timer); if (this.pending === job) this.pending = null; fn(value);};
+      let timer,retry; const job = {command, handle, resolve: v => finish(resolve, v), reject: e => finish(reject, e)};
+      const finish = (fn, value) => {clearTimeout(timer); clearInterval(retry); if (this.pending === job) this.pending = null; fn(value);};
       this.pending = job;
       timer = setTimeout(() => {job.reject(new Error('The Chromatic did not complete the command. Reconnect before trying again.')); void this.close();}, timeout);
       // The console sleeps. Wake before every command; do not toggle reset/boot pins.
-      void (async () => {await this.send('\r\n'); await delay(150); if (this.pending !== job) return; await this.send('\r\n'); await delay(50); if (this.pending !== job) return; await this.send(command + '\r\n');})().catch(e => {job.reject(e); void this.close();});
+      const sendRequest=async () => {if(this.pending!==job)return;await this.send('\r\n'); await delay(150); if (this.pending !== job) return; await this.send('\r\n'); await delay(50); if (this.pending !== job) return; await this.send(command + '\r\n');};
+      const send=()=>void sendRequest().catch(e=>{job.reject(e);void this.close();});send();
+      // USB open can restart the MCU. These two status queries are idempotent and
+      // may arrive before its console registers commands. Re-wake within one deadline.
+      if(command==='fwversion'||command==='cart usb status')retry=setInterval(send,1500);
     });
   }
   async json(command, required, allowed = required) {
