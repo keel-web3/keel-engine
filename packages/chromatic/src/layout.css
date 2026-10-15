@@ -1,0 +1,42 @@
+/* Layout only. Fonts, colors, frames and interaction states come from the site's global theme. */
+.chromatic{max-width:1200px;margin:0 auto;padding:88px clamp(12px,3vw,32px) 32px}
+.chromatic h1{font-size:32px;line-height:1.25;margin:12px 0}
+.chromatic h2{font-size:24px;line-height:1.35;margin:8px 0 16px}
+.chromatic h3{font-size:20px;line-height:1.4;margin:8px 0}
+.chromatic p{margin:12px 0}
+.chromatic-title{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.chromatic-preview-notice{border-block:2px solid var(--line);padding:12px 0}
+.chromatic-tabs,.chromatic-options,.chromatic-actions{display:flex;flex-wrap:wrap;gap:8px}
+.chromatic-tabs{margin:20px 0}
+.chromatic-tabs button{text-transform:uppercase}
+.chromatic .package-action{width:auto;max-width:100%;white-space:normal;text-align:center;min-height:44px;line-height:1.4}
+.chromatic .package-action:disabled{pointer-events:auto;cursor:not-allowed}
+.chromatic :is(button,a,summary,label:has(input[type=radio]),label:has(input[type=checkbox])){cursor:pointer}
+.chromatic .package-action:disabled:hover{background:var(--white);color:var(--ink)}
+.chromatic input:disabled{cursor:not-allowed}
+.chromatic-scenarios{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin:24px 0;padding-block:16px;border-block:2px solid var(--line)}
+.chromatic-choices{min-width:0;border:0;padding:0;margin:0}
+.chromatic-choices legend{padding:0 0 12px}
+.chromatic-choices label{gap:8px}
+.chromatic input[type=radio],.chromatic input[type=checkbox]{width:18px;height:18px;margin:0;flex:none;accent-color:var(--ink);cursor:pointer}
+.chromatic-choices label:focus-within{outline:2px solid var(--ink);outline-offset:3px}
+.chromatic-split{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.chromatic-split>*,.chromatic-panel{min-width:0}
+.chromatic-panel{padding:20px;border:2px solid var(--line);background:var(--white);margin-bottom:16px}
+.chromatic .chromatic-kicker{color:var(--shade);margin:0 0 10px}
+.chromatic .chromatic-metric{font-size:28px;line-height:1.4;margin:20px 0}
+.chromatic-facts{margin:12px 0}
+.chromatic-facts>div{display:grid;grid-template-columns:minmax(100px,.8fr) minmax(0,1.2fr);gap:16px;border-bottom:2px solid var(--line);padding:10px 0}
+.chromatic-facts dd{margin:0;overflow-wrap:anywhere}
+.chromatic-actions{margin-top:20px}
+.chromatic details{margin:16px 0}
+.chromatic summary{padding:10px 0;text-decoration:underline;text-underline-offset:4px}
+.chromatic-steps,.chromatic-timeline{padding:0;list-style:none;margin:20px 0}
+.chromatic-steps li{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;border-bottom:2px solid var(--line);padding:16px 0}
+.chromatic-timeline li{border-left:2px solid var(--magenta);padding:0 0 24px 20px}
+.chromatic-check{display:flex;align-items:center;gap:12px;margin:20px 0}
+.chromatic-form label{display:grid;gap:8px;margin:16px 0}
+.chromatic-form input{width:100%;padding:10px;border:2px solid var(--line);background:var(--paper);color:var(--ink)}
+.chromatic-status:not(:empty){padding:16px;border-left:4px solid var(--cyan);margin-top:24px;background:var(--white)}
+.chromatic-privacy{border-top:2px solid var(--line);padding-top:20px}
+@media(max-width:760px){.chromatic{padding-top:72px}.chromatic h1{font-size:24px}.chromatic-title{flex-wrap:wrap}.chromatic-split,.chromatic-scenarios{grid-template-columns:1fr;gap:20px}.chromatic-panel{padding:16px}.chromatic-facts>div{gap:10px}.chromatic .chromatic-metric{font-size:24px}}

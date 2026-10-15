@@ -4,6 +4,21 @@
   "type": "module",
   "license": "MIT",
   "private": true,
-  "exports": { ".": "./src/cartridge.mjs" },
-  "scripts": { "test": "node --test test/*.test.mjs" }
+  "exports": {
+    ".": "./src/cartridge.mjs",
+    "./react": "./src/preview.tsx",
+    "./controls": "./src/controls.tsx",
+    "./layout.css": "./src/layout.css"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "peerDependencies": {
+    "react": ">=19"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  }
 }
