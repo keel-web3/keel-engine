@@ -8,7 +8,7 @@ The helper runs on the same computer as the browser and forwards only six-byte C
 
 With Bun 1.3.14 or newer installed: `bun helper/main.mjs` (or add `--egress`). Open the private launch link printed in the terminal. It stays on the selected game's own site. Enter the device address reported under Device health, then choose **Check Wi-Fi response**. The check sends one HELLO_PROBE and closes after a HELLO reply or five seconds. It never resets the device or transfers a game byte.
 
-The macOS Apple Silicon executable is an unsigned command-line development build. Extract it and run `./chromatic-wifi` in Terminal. macOS may require approval to run downloaded software; this project does not bypass that protection. Other systems can run the same source with Bun. Stop with Ctrl+C.
+For macOS 13 or newer on Apple Silicon, download the signed and notarized app from [GitHub Releases](https://github.com/Ravonus/chromatic-helper/releases). Extract the ZIP, open Chromatic Helper, then choose Open CRUCIBLE or Open EGRESS. Keep its window open; closing it stops the helper. The app embeds its runtime, so Terminal and Bun are not required. Other platforms can run the source with Bun and stop with Ctrl+C. The earlier unsigned command-line download had an invalid embedded signature and is superseded by this release.
 
 The launch token is generated on each run, carried in a URL fragment, removed from the page URL, and used only to authenticate the loopback WebSocket. Do not share the launch link. The helper binds only 127.0.0.1, checks the Host and exact EGRESS/CRUCIBLE Origin, allows one page at a time, and accepts neither USB/console commands nor arbitrary network payloads. Traffic remains on the local network. CWL2 itself is unauthenticated and unencrypted; the token protects the local helper, not the radio link. Use a trusted local network.
 
@@ -42,3 +42,7 @@ The CWL2 core, WASM wrapper and service adapter are GPL-3.0-only. The independen
 https://install.shinyrelay.com/download/shiny-relay-src-1.0.2.tar.gz
 
 The upstream protocol specification is included as `upstream/PROTOCOL.md`. Modifications are the WASM host wrapper, JavaScript adapters, helper, UI integration and tests. No firmware image or user device data is bundled. See SOURCE.json for exact upstream-file hashes.
+
+## Mac release gate
+
+`macos/build-app.sh OUTPUT SOURCE_REVISION` builds the native AppKit launcher and bundled helper. `python3 macos/release-macos.py APP OUTPUT` requires a Developer ID Application identity and Apple notary credentials, signs nested code with hardened runtime, verifies signatures, submits to Apple, staples the accepted ticket and requires Gatekeeper acceptance before creating the distribution ZIP. Credentials come from the local keychain/environment and never belong in this repository. The runtime uses only the JIT entitlement. Every public release must include source on GitHub, the exact source revision, hashes, build instructions and license notices. Test the packaged artifact, not only an unsigned development binary.

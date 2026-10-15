@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Package already built helper plus complete protocol/UI source. Usage: python3 package-downloads.py OUTPUT_DIR"""
 from pathlib import Path
-import hashlib,tarfile,sys,shutil
+import hashlib,tarfile,sys,shutil,subprocess
 package=Path(__file__).resolve().parent
 out=Path(sys.argv[1]).resolve();out.mkdir(parents=True,exist_ok=True)
+# Distribution gate: a locally runnable binary is not a valid Mac release.
+subprocess.run(['codesign','--verify','--strict',str(package/'dist/chromatic-wifi')],check=True)
+subprocess.run(['spctl','--assess','--type','execute',str(package/'dist/chromatic-wifi')],check=True)
 with tarfile.open(out/'source.tar.gz','w:gz') as archive:
- for name in ['chromatic-wireless','chromatic']:
-  root=package.parent/name
-  archive.add(root,arcname=name,filter=lambda entry:None if entry.name.endswith('/dist/chromatic-wifi') or '/node_modules/' in entry.name else entry)
+ for name in ['helper','src','upstream','test','macos','dist/cwl.mjs','dist/cwl.wasm','LICENSE','LICENSES','SOURCE.json','README.md','package.json','build.sh','package-downloads.py']:
+  archive.add(package/name,arcname='chromatic-wireless/'+name,filter=lambda entry:None if '/__pycache__' in entry.name or entry.name.endswith('.pyc') else entry)
 with tarfile.open(out/'chromatic-wifi-macos-arm64.tar.gz','w:gz') as archive:
  archive.add(package/'dist/chromatic-wifi',arcname='chromatic-wifi')
  for name in ['README.md','LICENSE','SOURCE.json','LICENSES']:archive.add(package/name,arcname=name)

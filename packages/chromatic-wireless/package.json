@@ -1,6 +1,6 @@
 {
   "name": "@keel-engine/chromatic-wireless",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "license": "(MIT AND GPL-3.0-only)",
@@ -8,6 +8,7 @@
     "build:wasm": "sh build.sh",
     "test": "node --test test/peer.test.mjs test/client.test.mjs && bun test test/helper.test.mjs",
     "helper": "bun helper/main.mjs",
-    "build:helper": "bun build helper/main.mjs --compile --outfile dist/chromatic-wifi"
+    "build:helper": "bun build helper/main.mjs --compile --outfile dist/chromatic-wifi",
+    "build:app": "bash macos/build-app.sh"
   }
 }
