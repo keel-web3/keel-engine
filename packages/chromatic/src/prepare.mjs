@@ -3,12 +3,12 @@ import {grantedDevices,ConsoleSession} from './transport.mjs';
 import {readCartInfo,readCartStatus} from './cbu1.mjs';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 /** Only volatile FPGA preparation. Never cancel an existing cartridge operation. */
-export async function prepareCartridge({nav,session,bridge,onSession=()=>{},onStage=()=>{},onDisconnect=()=>{}},{fetchImage=fetchEngine,loadImage=loadSram,wait=sleep,reconnectMs=30000}={}){
+export async function prepareCartridge({nav,session,bridge,onSession=()=>{},onStage=()=>{},onDisconnect=()=>{},onProgress=()=>{}},{fetchImage=fetchEngine,loadImage=loadSram,wait=sleep,reconnectMs=30000}={}){
  if(!session||session.closed||!bridge?.opened)throw new Error('Connect both the console and USB bridge before reading the cartridge.');
  const original=session.port,known=await grantedDevices(nav);
  if(known.ports.length!==1||known.ports[0]!==original||known.bridges.length!==1||known.bridges[0]!==bridge)throw new Error('Keep only this Chromatic connected before preparing cartridge access.');
  onStage('Checking for an unfinished cartridge operation');await readCartStatus(session);
- onStage('Downloading and checking the temporary engine');const image=await fetchImage();
+ onStage('Downloading and checking the temporary engine');const image=await fetchImage(p=>{onStage(p.cached?'Verified engine loaded from local cache':'Downloading and checking the temporary engine');onProgress({...p,phase:'Engine download'});});
  // Install the listener before closing; only physical USB loss counts, not port.close().
  let lost=false;const disconnected=e=>{if(e.port===original||e.target===original)lost=true;};
  nav.serial.addEventListener('disconnect',disconnected);
@@ -16,7 +16,7 @@ export async function prepareCartridge({nav,session,bridge,onSession=()=>{},onSt
  try{
   onStage('Loading temporary FPGA access; the screen and console will restart');
   await session.close();
-  await loadImage(bridge,image,(n,total)=>onStage(`Loading temporary FPGA access · ${Math.floor(n/total*100)}%`));
+  await loadImage(bridge,image,(n,total)=>{onStage(`Loading temporary FPGA access · ${Math.floor(n/total*100)}%`);onProgress({received:n,total,phase:'Temporary FPGA upload'});});
   onStage('Waiting for the console to return after the FPGA restart');
   const end=Date.now()+reconnectMs;let returned;
   while(Date.now()<end){

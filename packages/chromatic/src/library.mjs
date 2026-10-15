@@ -1,3 +1,4 @@
+import {normalizeAnnotation} from './metadata.mjs';
 import {inspectRom} from './cartridge.mjs';
 const DATABASE = 'keel-chromatic-library-v1';
 export async function sha256(bytes) {return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2, '0')).join('');}
@@ -40,8 +41,8 @@ export async function saveEntry(bytes, {name, kind, verification = 'file-hash', 
     await getBytes(entry); return entry;
   } catch (e) {await deleteEntry(entry).catch(() => {}); throw e;}
 }
-export async function editEntry(entry, name, tags) {
-  const updated = {...entry, name: String(name).trim().slice(0, 120) || entry.name, tags: String(tags).slice(0, 240)};
+export async function editEntry(entry, name, tags, annotation=entry.annotation) {
+  const updated = {...entry, name: String(name).trim().slice(0, 120) || entry.name, tags: String(tags).slice(0, 240),annotation:normalizeAnnotation(annotation)};
   await transact(['entries'], 'readwrite', tx => tx.objectStore('entries').put(updated)); return updated;
 }
 export async function deleteEntry(entry) {

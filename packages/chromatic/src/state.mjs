@@ -1,0 +1,4 @@
+/** Local navigation and interruption evidence. Never stores ports, tokens or write consent. */
+export const VIEWS=['connect','health','cart','firmware','library','recovery','wireless','live'];
+export function readPageState(site,storage=globalThis.localStorage){try{const data=JSON.parse(storage.getItem(`chromatic-page-${site}`)||'null');if(!data||data.version!==1)return null;return {view:VIEWS.includes(data.view)?data.view:'connect',operation:data.operation&&typeof data.operation.label==='string'?{label:data.operation.label.slice(0,160),state:data.operation.state==='running'?'interrupted':data.operation.state,at:data.operation.at}:null};}catch{return null;}}
+export function savePageState(site,data,storage=globalThis.localStorage){try{storage.setItem(`chromatic-page-${site}`,JSON.stringify({version:1,view:VIEWS.includes(data.view)?data.view:'connect',operation:data.operation??null}));return true;}catch{return false;}}

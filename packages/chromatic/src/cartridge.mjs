@@ -17,7 +17,7 @@ export function inspectRom(bytes) {
   for(let i=0;i<bytes.length;i++) if(i!==0x14e && i!==0x14f) global=(global+bytes[i])&65535;
   const declaredBytes=sizes.get(bytes[0x148]) ?? null;
   const type=bytes[0x147];
-  return {title, actualBytes:bytes.length, declaredBytes, ramBytes:type===5||type===6?512:ramSizes[bytes[0x149]]??null, mapper:mappers.get(type)??null, cartridgeType:type, cgb: cgb===0xc0?'required':cgb===0x80?'supported':'no', headerChecksumValid:header===bytes[0x14d], globalChecksumValid:global===(bytes[0x14e]<<8|bytes[0x14f]), trimmed:declaredBytes!==null&&bytes.length<declaredBytes, oversized:declaredBytes!==null&&bytes.length>declaredBytes, capacityEvidence:false};
+  return {title, actualBytes:bytes.length, declaredBytes, ramBytes:type===5||type===6?512:ramSizes[bytes[0x149]]??null, mapper:mappers.get(type)??null, cartridgeType:type, cgb: cgb===0xc0?'required':cgb===0x80?'supported':'no', headerChecksumValid:header===bytes[0x14d], globalChecksumValid:global===(bytes[0x14e]<<8|bytes[0x14f]), trimmed:declaredBytes!==null&&bytes.length<declaredBytes, oversized:declaredBytes!==null&&bytes.length>declaredBytes, licensee:bytes[0x14b]===0x33?String.fromCharCode(bytes[0x144],bytes[0x145]):bytes[0x14b].toString(16).padStart(2,'0'),licenseeFormat:bytes[0x14b]===0x33?'new':'old',version:bytes[0x14c],region:bytes[0x14a]===0?'Japan':bytes[0x14a]===1?'International':'Unknown',sgb:bytes[0x146]===3,capacityEvidence:false};
 }
 
 function rangesValid(ranges, limit) {

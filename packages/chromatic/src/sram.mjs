@@ -4,10 +4,9 @@
 // No SPI access or nonvolatile flash write instructions are implemented here.
 export const ENGINE_URL='https://install.shinyrelay.com/cart/engine.fs';
 export const ENGINE_SHA256='6e30f490e9d4702f5a96f63e368afb56802ba7c9e38544428302b8fbd10204ee';
-export async function fetchEngine(){
- const response=await fetch(ENGINE_URL,{credentials:'omit',referrerPolicy:'no-referrer',signal:AbortSignal.timeout(30000)});
- if(!response.ok)throw new Error('Temporary engine download failed. Nothing on the device was changed.');
- return checkEngine(new Uint8Array(await response.arrayBuffer()));
+import {verifiedDownload} from './download.mjs';
+export async function fetchEngine(onProgress=()=>{}){
+ return checkEngine(await verifiedDownload(ENGINE_URL,{sha256:ENGINE_SHA256,size:7341130,onProgress}));
 }
 export async function checkEngine(bytes){
  const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');

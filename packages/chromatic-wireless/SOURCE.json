@@ -1,0 +1,10 @@
+{
+  "source": "Shiny Relay 1.0.2 source archive",
+  "url": "https://install.shinyrelay.com/download/shiny-relay-src-1.0.2.tar.gz",
+  "license": "GPL-3.0-only",
+  "unmodifiedFiles": {
+    "cwl_proto.c": "47a703d9e339f8162f7669721541b32d859fc9f349cc9266d97f1e2c56506349",
+    "cwl_proto.h": "5f3a21d6c9a7545bd6b35cf35f05e991313fa348345d5c0441b6a65e08f9ad7a",
+    "PROTOCOL.md": "edf3257170212beb5abea9a79393533c84eb3e4893e1f7a65a2fd0994ed0c55d"
+  }
+}
