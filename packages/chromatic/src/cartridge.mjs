@@ -4,7 +4,7 @@ const hash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 const sizes = new Map([...Array(9)].map((_, code) => [code, 32768 * 2 ** code]));
 sizes.set(0x52, 72 * 16384); sizes.set(0x53, 80 * 16384); sizes.set(0x54, 96 * 16384);
 const ramSizes = [0, 2048, 8192, 32768, 131072, 65536];
-const mappers = new Map([[0x00,'ROM'],[0x01,'MBC1'],[0x02,'MBC1'],[0x03,'MBC1'],[0x05,'MBC2'],[0x06,'MBC2'],[0x0f,'MBC3'],[0x10,'MBC3'],[0x11,'MBC3'],[0x12,'MBC3'],[0x13,'MBC3'],[0x19,'MBC5'],[0x1a,'MBC5'],[0x1b,'MBC5'],[0x1c,'MBC5'],[0x1d,'MBC5'],[0x1e,'MBC5']]);
+const mappers = new Map([[0x00,'ROM'],[0x08,'ROM'],[0x09,'ROM'],[0x01,'MBC1'],[0x02,'MBC1'],[0x03,'MBC1'],[0x05,'MBC2'],[0x06,'MBC2'],[0x0f,'MBC3'],[0x10,'MBC3'],[0x11,'MBC3'],[0x12,'MBC3'],[0x13,'MBC3'],[0x19,'MBC5'],[0x1a,'MBC5'],[0x1b,'MBC5'],[0x1c,'MBC5'],[0x1d,'MBC5'],[0x1e,'MBC5']]);
 
 export function inspectRom(bytes) {
   if (!(bytes instanceof Uint8Array) || bytes.length < 0x150) throw new Error('ROM is shorter than its header.');

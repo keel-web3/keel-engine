@@ -8,7 +8,7 @@ export function planCartridgeWrite(rom,info,backupRom,save){
  if(!(rom instanceof Uint8Array)||rom.length<32768||rom.length%16384)throw new Error('Choose a complete bank-aligned ROM.');
  const header=inspectRom(rom);
  if(!header.headerChecksumValid||header.oversized||!header.declaredBytes)throw new Error('The selected ROM header is invalid.');
- if(header.mapper!=='MBC5')throw new Error('This USB writer supports MBC5 ROMs. RTC/MBC3 cartridges need their compatible external programmer.');
+ if(!['MBC5','ROM'].includes(header.mapper))throw new Error('This USB writer supports ROM-only and MBC5 images. RTC/MBC3 cartridges need their compatible external programmer.');
  if(!info.engine||info.flashBytes>2*1048576||header.declaredBytes>info.flashBytes||rom.length>info.flashBytes||info.ramBytes!==32768||!Number.isSafeInteger(header.ramBytes)||header.ramBytes>info.ramBytes)throw new Error('This ROM or cartridge exceeds the current USB writer limits (2 MiB ROM, 32 KiB save access).');
  if(!(backupRom instanceof Uint8Array)||backupRom.length!==info.flashBytes)throw new Error('A complete verified backup of the connected cartridge is required.');
  if(!(save instanceof Uint8Array)||save.length!==info.ramBytes)throw new Error('The selected save must cover the cartridge save range exactly.');

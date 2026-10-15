@@ -21,7 +21,7 @@ export function CartridgeWriter({site,session,cart,entries,releases,busy,run,ref
  if(!entry)blocked='Save a published release to the library below, or import a ROM, then choose it here.';
  else if(restoring&&!paired)blocked='This ROM backup has no matching save backup. Restore is blocked so your current save is not silently replaced.';
  else if(!entry.metadata?.headerChecksumValid)blocked='This file has an invalid header and cannot be flashed.';
- else if(entry.metadata.mapper!=='MBC5')blocked='RTC / MBC3 images require an external programmer compatible with that cartridge. This USB adapter supports MBC5.';
+ else if(!['MBC5','ROM'].includes(entry.metadata.mapper||''))blocked='RTC / MBC3 images require an external programmer compatible with that cartridge. This USB adapter supports ROM-only and MBC5 images.';
  else if(cart&&(entry.metadata.declaredBytes!>cart.flashBytes||entry.bytes>cart.flashBytes||cart.flashBytes>2097152||cart.ramBytes!==32768||entry.metadata.ramBytes!>cart.ramBytes))blocked='The selected ROM does not fit this USB adapter’s verified 2 MiB ROM / 32 KiB save range. Download it for a compatible external writer.';
  function backupForWrite(){run('Backing up cartridge before flash',async()=>{
   if(!session||!cart)throw new Error('Connect and identify the cartridge first.');
