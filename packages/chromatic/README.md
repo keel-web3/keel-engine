@@ -1,15 +1,23 @@
 # @keel-engine/chromatic
 
-Initial shared cartridge metadata and compatible-release selector. Both site previews use identical vendored bytes from this package. No firmware images or third-party protocol code are included.
+One shared implementation, vendored identically into EGRESS and CRUCIBLE. Site adapters supply the existing DialogueBox/cast, header, footer and theme. ActionButton is also used by each homepage. Layout CSS does not define another theme.
 
-`inspectRom(Uint8Array)` reads actual/declaration sizes, mapper, RAM and checksums. Those values describe a game's requirements, **not** physical cart capacity.
+## Implemented
 
-`selectVariant(capability, variants, writer)` chooses the highest-content validated release supported by the verified physical cartridge. No global 2 MiB limit. It separates addressability, save memory, mapper/peripherals, protected bytes, and writer limits. Protected comparisons are bound to a full range, release SHA and device-connection epoch. Unknown facts fail closed. Every result has `canWrite: false`: selection is never write consent.
+- Web Serial and WebUSB choosers invoked synchronously from a user click; previously permitted device discovery, explicit reconnection and disconnect handling.
+- 115200 console with low DTR/RTS, wake newlines before each command, bounded parsing, timeouts, port cleanup and no raw console retention.
+- Firmware-reported versions and allowlisted Wi-Fi/relay status. Passwords, pairing codes, device IDs and URLs are discarded. Unsupported commands remain unsupported, never successful fixtures.
+- Read-only GWU2X/GW5A IDCODE path, adapted from Apache-2.0 openFPGALoader. USB claim and JTAG response are distinct evidence.
+- CBU1 cartridge identity and ROM/save backup from the published firmware source. Every frame and full read have CRC checks; two complete device reads must agree. Busy/unfinished operations are not canceled or resumed automatically. Reads may interrupt link sessions.
+- Local IndexedDB library; blobs >=4 MiB use OPFS when available. SHA-256 deduplication and storage readback; real import, rename/tags, export and delete. Current site ROM import verifies the exact served size/hash. Damaged cartridge ROM headers can be retained as backups; uploaded ROM headers must validate.
+- ROM requirements and compatible release selector. A ROM header never proves physical flash capacity. The general selector has no global 2 MiB limit; the published hardware adapter does.
 
-Run `node --test test/*.test.mjs`. Tests use synthetic cartridge/ROM fixtures; they do not establish device support.
+## Boundaries
 
-Pending: documented hardware adapters, simulator transports/fault injection, persistent local library, backup/write executor, validated CRUCIBLE profile builds, save migration and physical-device verification. The public preview labels its example devices and planned builds; it cannot flash hardware.
+This release performs no firmware, FPGA configuration or cartridge writes. Firmware image dump/identity, rollback/recovery, temporary SRAM engine loading and cartridge install remain unimplemented. Use official installers/preparation links; no third-party firmware image is redistributed. CRUCIBLE smaller recipe editions are not built. Only actual published releases are shown.
 
-## Optional React preview
+CBU1 needs compatible Shiny Relay firmware and a prepared cartridge FPGA engine. The current engine addresses at most 2 MiB and exposes 32 KiB of save access. Returned geometry is labeled firmware-reported; it does not certify arbitrary board/mapper support.
 
-`src/preview.tsx` owns the shared simulated flow. `src/controls.tsx` owns ActionButton and keyboard-accessible ChoiceGroup. Both sites use ActionButton for Play, Open box, Manual and Chromatic actions. Site adapters supply their existing DialogueBox and cast, and wrap the route in their shared SiteHeader/SiteFooter. `layout.css` only lays out content; all fonts, colors, button skins and focus states inherit from each site. No parallel theme or standalone HTML shell is used.
+Tests exercise the real transports with simulated browser devices and fault injection. They do not establish physical device compatibility or speed. An owner must approve real browser permission prompts; initial runs read status/IDCODE, with no persistent writes. No physical timing comparison or rollback proof is claimed.
+
+Run `node --test test/*.test.mjs`. Both sites run the same `browser-tests/chromatic.spec.ts` against static exports. No analytics or outbound device-data requests are used on `/chromatic/`.
