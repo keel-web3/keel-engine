@@ -111,6 +111,29 @@ export class ConsoleSession {
   }
   request(command, handle, {timeout = 8000} = {}) {
     if (!READ_COMMAND.test(command)) throw new Error('This adapter only permits documented read commands.');
+    if (this.inputOwner) throw new Error('Disable live controls before another console operation.');
+    return this.#perform(command,handle,{timeout});
+  }
+  /** Exclusive opt-in input ownership. Only bounded game-button taps are allowed.
+   * Firmware releases each tap itself, even if the page or USB connection disappears. */
+  beginInput() {
+    if (this.closed || this.pending || this.inputOwner) throw new Error('Connect an idle console before enabling controls.');
+    const owner={active:true};this.inputOwner=owner;
+    return {
+      release:()=>{owner.active=false;if(this.inputOwner===owner)this.inputOwner=null;},
+      tap:(mask)=>{
+        if (!owner.active || this.inputOwner!==owner) throw new Error('Live controls are disabled.');
+        if (!Number.isInteger(mask)||mask<1||mask>255) throw new Error('Choose game buttons only.');
+        const command=`poke ${mask.toString(16)} 80`;
+        return this.#perform(command,event=>{
+          if(event.kind!=='line')return;
+          const start=event.line.indexOf('{'),end=event.line.lastIndexOf('}');if(start<0||end<start)return;
+          try{const value=JSON.parse(event.line.slice(start,end+1));if(typeof value.mcu==='string'&&typeof value.fpga==='string')return true;}catch{}
+        },{timeout:4000,wire:command+'\r\nfwversion',allowed:()=>owner.active&&this.inputOwner===owner});
+      }
+    };
+  }
+  #perform(command, handle, {timeout=8000,wire=command,allowed=()=>true}={}) {
     if (this.closed) throw new Error('Connect the console first.');
     if (this.pending) throw new Error('Another console operation is running.');
     return new Promise((resolve, reject) => {
@@ -119,7 +142,7 @@ export class ConsoleSession {
       this.pending = job;
       timer = setTimeout(() => {job.reject(new Error('The Chromatic did not complete the command. Reconnect before trying again.')); void this.close();}, timeout);
       // The console sleeps. Wake before every command; do not toggle reset/boot pins.
-      const sendRequest=async () => {if(this.pending!==job)return;await this.send('\r\n'); await delay(150); if (this.pending !== job) return; await this.send('\r\n'); await delay(50); if (this.pending !== job) return; await this.send(command + '\r\n');};
+      const sendRequest=async () => {if(this.pending!==job)return;await this.send('\r\n'); await delay(150); if (this.pending !== job) return; await this.send('\r\n'); await delay(50); if (this.pending !== job) return; if(!allowed()){job.reject(new Error('Live controls were disabled before the tap was sent.'));return;} await this.send(wire + '\r\n');};
       const send=()=>void sendRequest().catch(e=>{job.reject(e);void this.close();});send();
       // USB open can restart the MCU. These two status queries are idempotent and
       // may arrive before its console registers commands. Re-wake within one deadline.
@@ -139,7 +162,7 @@ export class ConsoleSession {
   async close() {
     if (this.closing) return this.closing;
     this.closing = (async () => {
-      const wasOpen = !this.closed; this.closed = true; this.pending?.reject(new Error('Console closed.'));
+      const wasOpen = !this.closed; this.closed = true; if(this.inputOwner)this.inputOwner.active=false;this.inputOwner=null; this.pending?.reject(new Error('Console closed.'));
       // Give received bytes a brief quiet period before canceling the OS stream.
       const end = Date.now() + 1000; while (Date.now() - this.lastRx < 100 && Date.now() < end) await delay(50);
       try {await this.reader?.cancel(); await this.pumping;} catch {}

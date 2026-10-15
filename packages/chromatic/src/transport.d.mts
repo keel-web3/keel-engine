@@ -20,6 +20,7 @@ export class ConsoleSession {
  port:SerialPort;closed:boolean;
  constructor(port:SerialPort,onDisconnect?:()=>void);
  open():Promise<this>;close():Promise<void>;
+ beginInput():{tap(mask:number):Promise<boolean>;release():void};
  request<T>(command:string,handler:(event:DeviceEvent)=>T|undefined,options?:{timeout?:number}):Promise<T>;
  json(command:string,required:string[],allowed?:string[]):Promise<Report>;
 }

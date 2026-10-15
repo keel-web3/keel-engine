@@ -22,3 +22,9 @@ CBU1 needs compatible Shiny Relay firmware and a prepared cartridge FPGA engine.
 Tests exercise the real transports with simulated browser devices and fault injection. They do not establish physical device compatibility or speed. An owner must approve real browser permission prompts; initial runs read status/IDCODE, with no persistent writes. No physical timing comparison or rollback proof is claimed.
 
 Run `node --test test/*.test.mjs`. Both sites run the same `browser-tests/chromatic.spec.ts` against static exports. Set `CHROMATIC_ENGINE_FILE` to a downloaded official `engine.fs` for deterministic offline browser tests of the preparation path; the production digest check still applies. No analytics or outbound device-data requests are used on `/chromatic/`.
+
+## Capture and input status (2026-10-15)
+
+Both sites now share the Live / OBS view: explicit Chromatic-only video selection, optional matching game audio, full screen/PiP, frame freshness, cancellation and stream cleanup. The permission-discovery action is separately labelled: it briefly opens and immediately closes the browser's default camera/microphone solely to reveal device labels. That temporary stream is never rendered, stored or sent. Media permission, physical footage and working OBS capture are separate from the synthetic browser tests.
+
+`ConsoleSession.beginInput()` is a local prototype, not yet vendored or exposed by the public sites. Its exclusive lease blocks ordinary read operations, accepts only game-button masks (bits 0–7), sends a fixed 80 ms `poke` followed by a firmware response check, never retries input, and rejects overlapping taps. Firmware owns the release timer. Releasing the lease before transmission suppresses the tap. A console response does not prove physical game input. No continuous holds, remote input service or online pairing is implemented. Hardware acceptance remains pending normal gameplay and physical video.
