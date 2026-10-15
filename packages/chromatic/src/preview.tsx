@@ -32,7 +32,7 @@ export function ChromaticSupport({site,release,dialogue}:{site:'egress'|'crucibl
  const [connected,setConnected]=useState(false),[bridgeConnected,setBridgeConnected]=useState(false),[bridgeId,setBridgeId]=useState<{idcode:number;expected:boolean}|null>(null);
  const [health,setHealth]=useState<Health|null>(null),[cart,setCart]=useState<CartInfo|null>(null),[entries,setEntries]=useState<LibraryEntry[]>([]),[libraryReady,setLibraryReady]=useState(false);
  const [busy,setBusy]=useState(''),[notice,setNotice]=useState(''),[progress,setProgress]=useState('');
- const session=useRef<ConsoleSession|null>(null),bridge=useRef<UsbDevice|null>(null),locked=useRef(false),alive=useRef(false),file=useRef<HTMLInputElement>(null);
+ const session=useRef<ConsoleSession|null>(null),bridge=useRef<UsbDevice|null>(null),locked=useRef(false),operationFailed=useRef(false),alive=useRef(false),file=useRef<HTMLInputElement>(null);
  const refresh=async()=>{setEntries(await listEntries());setLibraryReady(true);};
  async function refreshGrants(){setGrants(await grantedDevices(navigator as unknown as BrowserDevices));}
  useEffect(()=>{
@@ -45,18 +45,18 @@ export function ChromaticSupport({site,release,dialogue}:{site:'egress'|'crucibl
   return()=>{alive.current=false;nav.serial?.removeEventListener('connect',update);nav.serial?.removeEventListener('disconnect',disconnected);nav.usb?.removeEventListener('connect',update);nav.usb?.removeEventListener('disconnect',disconnected);void session.current?.close();void bridge.current?.close();};
  },[]);
  function run(label:string,job:()=>Promise<void>){
-  if(locked.current)return;locked.current=true;setBusy(label);setNotice('');setProgress('');
+  if(locked.current)return;locked.current=true;operationFailed.current=false;setBusy(label);setNotice('');setProgress('');
   // Invoke synchronously: requestPort/requestDevice must retain the click's user activation.
   let work:Promise<void>;try{work=job();}catch(e){work=Promise.reject(e);}
-  void work.catch(e=>setNotice(permissionError(e))).finally(()=>{locked.current=false;setBusy('');setProgress('');});
+  void work.catch(e=>{operationFailed.current=true;setNotice(permissionError(e));}).finally(()=>{locked.current=false;setBusy('');setProgress('');});
  }
- function connectConsole(port?:SerialPort){run('Opening console',async()=>{
-  const selected=port??await chooseConsole(navigator as unknown as BrowserDevices);if(!alive.current)return;
-  const next=new ConsoleSession(selected,()=>{if(session.current===next){session.current=null;setConnected(false);setHealth(null);setCart(null);setNotice('Console disconnected. Connect again before another device operation.');}});
+ function connectConsole(port?:SerialPort){run(port?'Opening console':'Waiting for console permission in the browser',async()=>{
+  const selected=port??await chooseConsole(navigator as unknown as BrowserDevices);if(!alive.current)return;setBusy('Opening console');
+  const next=new ConsoleSession(selected,()=>{if(session.current===next){session.current=null;setConnected(false);setHealth(null);setCart(null);if(!locked.current&&!operationFailed.current)setNotice('Console disconnected. Connect again before another device operation.');}});
   session.current=next;try{await next.open();}catch(error){await next.close();if(session.current===next)session.current=null;throw error;}if(!alive.current){await next.close();return;}setConnected(true);setNotice('Console port opened at 115200 baud. Run the health check to read its firmware response.');await refreshGrants();
  });}
- function connectBridge(device?:UsbDevice){run('Opening USB bridge',async()=>{
-  const selected=device??await chooseBridge(navigator as unknown as BrowserDevices);if(!alive.current)return;
+ function connectBridge(device?:UsbDevice){run(device?'Opening USB bridge':'Waiting for USB bridge permission in the browser',async()=>{
+  const selected=device??await chooseBridge(navigator as unknown as BrowserDevices);if(!alive.current)return;setBusy('Opening USB bridge');
   bridge.current=selected;try{await openBridge(selected);}catch(error){if(bridge.current===selected)bridge.current=null;throw error;}if(!alive.current){await selected.close();return;}setBridgeConnected(true);setNotice('USB bridge opened. Run the health check to read the FPGA IDCODE.');await refreshGrants();
  });}
  function checkHealth(){run('Reading device health',async()=>{
