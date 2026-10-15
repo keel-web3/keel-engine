@@ -103,7 +103,7 @@ export function ChromaticSupport({site,release,dialogue}:{site:'egress'|'crucibl
  return <div className="chromatic" data-site={site}>
   <div className="chromatic-title"><div><p className="room-kicker">CHROMATIC</p><h1>On a Chromatic</h1></div><a className="package-action" href="/">Back to game</a></div>
   <p className="chromatic-preview-notice">{connected?'Console connected':'Console not connected'} · {bridgeConnected?'USB bridge connected':'USB bridge not connected'}</p>
-  <nav className="chromatic-tabs" aria-label="Chromatic support">{tabs.map(tab=><ActionButton key={tab} primary={view===tab} aria-pressed={view===tab} onClick={()=>setView(tab)}>{tab==='cart'?'Cartridge':tab==='wireless'?'Wi-Fi':tab==='live'?'Live / OBS':tab}</ActionButton>)}</nav>
+  <nav className="chromatic-tabs" aria-label="Chromatic support">{tabs.map(tab=><ActionButton key={tab} disabled={!restored} primary={view===tab} aria-pressed={view===tab} onClick={()=>setView(tab)}>{tab==='cart'?'Cartridge':tab==='wireless'?'Wi-Fi':tab==='live'?'Live / OBS':tab}</ActionButton>)}</nav>
   {dialogue(lines[view])}
   {busy&&<section className="chromatic-progress" aria-label="Operation progress"><p>{meter?.phase||busy} · {elapsed}s</p><progress max={meter?.total||1} value={meter?.total?meter.received:undefined}/>{meter?.total&&<p>{size(meter.received)} / {size(meter.total)} · {Math.floor(meter.received/meter.total*100)}%</p>}<p>{progress||'Waiting for the device or browser response…'}</p></section>}
   <div id="cp-screen" key={view} className="chromatic-screen" aria-busy={!!busy}>
