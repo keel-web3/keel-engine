@@ -2,7 +2,7 @@
 import {useEffect,useState} from 'react';
 import {recognizeRelease,annotationForRelease,type PublishedRelease} from './releases.mjs';
 import {ActionButton} from './controls';
-import {getBytes,saveEntry,sha256,type LibraryEntry} from './library.mjs';
+import {getBytes,saveEntry,type LibraryEntry} from './library.mjs';
 import {readCartInfo,verifiedBackup,type CartInfo} from './cbu1.mjs';
 import {planCartridgeWrite,writeVerifiedCartridge,type WriteProgress} from './write.mjs';
 import type {ConsoleSession} from './transport.mjs';
@@ -16,14 +16,14 @@ export function CartridgeWriter({site,session,cart,entries,releases,busy,run,ref
  const restoring=entry?.source==='cartridge-backup'||!!restoreGroup;
  const journalKey=`keel-cartridge-write:${site}`;
  useEffect(()=>{setReceipt(null);setConsent(false);},[session,cart]);
- useEffect(()=>{try{const last=JSON.parse(localStorage.getItem(journalKey)||'null');if(last&&last.state!=='complete')setResult(`Previous write ${last.state==='running'?'was interrupted':last.state}. Backup group: ${last.backupGroup}. Nothing will restart automatically. Reconnect and check cartridge status first.`);}catch{}},[journalKey]);
+ useEffect(()=>{try{const last=JSON.parse(localStorage.getItem(journalKey)||'null');if(last&&last.state!=='complete')setResult(`Previous write ${last.state==='running'?'was interrupted':last.state}. ${last.backupGroup?`Backup group: ${last.backupGroup}.`:'No new backup was retained for this write.'} Nothing will restart automatically. Reconnect and check cartridge status first.`);}catch{}},[journalKey]);
  let blocked='';
  if(!entry)blocked='Save a published release to the library below, or import a ROM, then choose it here.';
  else if(restoring&&!paired)blocked='This ROM backup has no matching save backup. Restore is blocked so your current save is not silently replaced.';
  else if(!entry.metadata?.headerChecksumValid)blocked='This file has an invalid header and cannot be flashed.';
  else if(!['MBC5','ROM'].includes(entry.metadata.mapper||''))blocked='RTC / MBC3 images require an external programmer compatible with that cartridge. This USB adapter supports ROM-only and MBC5 images.';
  else if(cart&&(entry.metadata.declaredBytes!>cart.flashBytes||entry.bytes>cart.flashBytes||cart.flashBytes>2097152||cart.ramBytes!==32768||entry.metadata.ramBytes!>cart.ramBytes))blocked='The selected ROM does not fit this USB adapter’s verified 2 MiB ROM / 32 KiB save range. Download it for a compatible external writer.';
- function backupForWrite(){run('Backing up cartridge before flash',async()=>{
+ function backupForWrite(){setConsent(false);setReceipt(null);run('Backing up cartridge before flash',async()=>{
   if(!session||!cart)throw new Error('Connect and identify the cartridge first.');
   const info=await readCartInfo(session);if(JSON.stringify(info)!==JSON.stringify(cart))throw new Error('The cartridge changed. Read its identity again.');
   const data=await verifiedBackup(session,info,p=>onProgress({phase:`Backup ${p.kind.toUpperCase()} · read ${p.pass}/2`,received:p.received,total:p.total}));
@@ -36,25 +36,27 @@ export function CartridgeWriter({site,session,cart,entries,releases,busy,run,ref
   setReceipt({session,info,rom:data.rom,save:data.sav,group:actualGroup,romEntry});setConsent(false);await refresh();notify('Current cartridge and save backed up twice and verified in local storage. Review the selected ROM before flashing.');
  });}
  function flash(){run(restoring?'Restoring cartridge backup':'Flashing selected ROM',async()=>{
-  if(!session||!cart||!entry||!receipt||receipt.session!==session||!consent||blocked)throw new Error('A fresh backup and explicit write confirmation are required.');
+  if(!session||!cart||!entry||!consent||blocked||(receipt&&receipt.session!==session))throw new Error('Connect and identify the cartridge, then acknowledge replacing its game and save.');
+  setConsent(false);
   const target=await getBytes(entry),save=restoring&&paired?await getBytes(paired):new Uint8Array(cart.ramBytes);
-  // The receipt retains the exact verified bytes. Recheck its persistent copy before any write.
-  await getBytes(receipt.romEntry);const plan=planCartridgeWrite(target,cart,receipt.rom,save);
-  const record={state:'running',romSha256:entry.sha256,romName:entry.name,backupGroup:receipt.group,backupRomSha256:receipt.romEntry.sha256,at:new Date().toISOString()};
+  // An optional receipt retains verified bytes; no backup is created by the direct-write path.
+  if(receipt)await getBytes(receipt.romEntry);const plan=planCartridgeWrite(target,cart,receipt?.rom??null,save);
+  const record={state:'running',romSha256:entry.sha256,romName:entry.name,backupGroup:receipt?.group??null,backupRomSha256:receipt?.romEntry.sha256??null,backupSkipped:!receipt,at:new Date().toISOString()};
   localStorage.setItem(journalKey,JSON.stringify(record));setResult('');
-  try{const verified=await writeVerifiedCartridge(session,receipt.info,plan,onProgress);localStorage.setItem(journalKey,JSON.stringify({...record,state:'complete',...verified}));setResult(`${entry.name} written and read back successfully. The ROM and save match their expected SHA-256 hashes. Power the Chromatic off and on to play.`);notify(`${entry.name}: ROM and save readback verified. Your previous cartridge backup remains in the library.`);}
-  catch(error){localStorage.setItem(journalKey,JSON.stringify({...record,state:'outcome-unverified'}));setResult('The write did not complete verification. Keep the backup. Do not assume the cartridge is bootable or start a different write; reconnect and check status first.');throw error;}
+  try{const verified=await writeVerifiedCartridge(session,cart,plan,onProgress);localStorage.setItem(journalKey,JSON.stringify({...record,state:'complete',...verified}));setResult(`${entry.name} written and read back successfully. The ROM and save match their expected SHA-256 hashes. Power the Chromatic off and on to play.`);notify(`${entry.name}: ROM and save readback verified. ${receipt?'Your previous cartridge backup remains in the library.':'No new backup of the previous game or save was made.'}`);}
+  catch(error){localStorage.setItem(journalKey,JSON.stringify({...record,state:'outcome-unverified'}));setResult('The write did not complete verification. Keep any existing backup. Do not assume the cartridge is bootable or start a different write; reconnect and check status first.');throw error;}
   finally{setConsent(false);setReceipt(null);}
  });}
  return <section className="chromatic-writer" aria-label="Flash and restore cartridge"><h3>Flash / restore cartridge</h3>
-  <p>Choose a game from your local library. A verified backup comes first, then review and confirm. Choose one of your earlier ROM backups to put it and its paired save back.</p>
+  <p>Choose a game from your local library. Back up first if you want a recovery copy, or acknowledge the risk and flash without a new backup. Choose one of your earlier ROM backups to put it and its paired save back.</p>
   <label className="chromatic-select">ROM to write<select value={selected} disabled={busy} onChange={e=>{setSelected(e.target.value);setConsent(false);setResult('');}}><option value="">Choose a ROM or cartridge backup</option>{roms.map(e=><option key={e.sha256} value={e.sha256}>{e.name}{e.source==='cartridge-backup'?' · backup':''}</option>)}</select></label>
-  {entry&&<><p><b>{entry.annotation?.title||entry.name}</b> · {size(entry.bytes)} · {entry.metadata?.mapper}</p>{entry.annotation?.previewImage&&<img className="chromatic-rom-preview" src={entry.annotation.previewImage} alt={`${entry.name} preview`} width={160} height={144} loading="lazy" referrerPolicy="no-referrer"/>}<p className="chromatic-hash">SHA-256 {entry.sha256}</p><p>{restoring&&paired?'The matching save from this backup group will be restored.':'A fresh empty save will be written. Your current game and save remain in the verified backup.'}</p></>}
+  {entry&&<><p><b>{entry.annotation?.title||entry.name}</b> · {size(entry.bytes)} · {entry.metadata?.mapper}</p>{entry.annotation?.previewImage&&<img className="chromatic-rom-preview" src={entry.annotation.previewImage} alt={`${entry.name} preview`} width={160} height={144} loading="lazy" referrerPolicy="no-referrer"/>}<p className="chromatic-hash">SHA-256 {entry.sha256}</p><p>{restoring&&paired?'The matching save from this backup group will be restored.':'A fresh empty save will be written, replacing the cartridge’s current save.'}</p></>}
   {blocked&&<p role="note">{blocked}</p>}
   {!cart&&<p>Connect the console and USB bridge, then read cartridge identity above.</p>}
-  <div className="chromatic-actions"><ActionButton disabled={busy||!session||!cart||!!blocked} onClick={backupForWrite}>Back up before flashing</ActionButton></div>
-  {receipt&&<><p>Backup ready: {receipt.info.title||'Cartridge'} · ROM and save verified by two device reads. Group {receipt.group.slice(0,8)}.</p><label className="chromatic-check"><input type="checkbox" checked={consent} disabled={busy||!!blocked} onChange={e=>setConsent(e.target.checked)}/>I approve replacing this cartridge’s game and save with the selected ROM and save above. Existing game data will be erased; saves may be lost if I discard the verified backup.</label></>}
-  <div className="chromatic-actions"><ActionButton primary disabled={busy||!receipt||!entry||!consent||!!blocked||!session} onClick={flash}>{restoring?'Restore selected backup':'Flash selected ROM'}</ActionButton></div>
+  <div className="chromatic-actions"><ActionButton disabled={busy||!session||!cart||!!blocked} onClick={backupForWrite}>Back up before flashing (optional)</ActionButton></div>
+  {receipt&&<p>Backup ready: {receipt.info.title||'Cartridge'} · ROM and save verified by two device reads. Group {receipt.group.slice(0,8)}.</p>}
+  {entry&&<label className="chromatic-check"><input type="checkbox" checked={consent} disabled={busy||!!blocked||!session||!cart} onChange={e=>setConsent(e.target.checked)}/>{receipt?'I approve replacing this cartridge’s game and save. My verified backup remains in the local library.':'I understand flashing will replace this cartridge’s game and save. I choose to continue without a new backup and accept that the current data may be permanently lost.'}</label>}
+  <div className="chromatic-actions"><ActionButton primary disabled={busy||!cart||!entry||!consent||!!blocked||!session} onClick={flash}>{restoring?'Restore selected backup':'Flash selected ROM'}</ActionButton></div>
   {result&&<p role="status">{result}</p>}
   <p>Direct USB writes use the firmware’s chip checks and preserve protected bytes. ROM and save are read back after writing. Keep this tab and cable connected. A failed or interrupted write is never retried automatically. Hardware acceptance of this new browser writer is still pending.</p>
  </section>;

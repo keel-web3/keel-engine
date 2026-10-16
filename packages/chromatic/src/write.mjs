@@ -10,10 +10,10 @@ export function planCartridgeWrite(rom,info,backupRom,save){
  if(!header.headerChecksumValid||header.oversized||!header.declaredBytes)throw new Error('The selected ROM header is invalid.');
  if(!['MBC5','ROM'].includes(header.mapper))throw new Error('This USB writer supports ROM-only and MBC5 images. RTC/MBC3 cartridges need their compatible external programmer.');
  if(!info.engine||info.flashBytes>2*1048576||header.declaredBytes>info.flashBytes||rom.length>info.flashBytes||info.ramBytes!==32768||!Number.isSafeInteger(header.ramBytes)||header.ramBytes>info.ramBytes)throw new Error('This ROM or cartridge exceeds the current USB writer limits (2 MiB ROM, 32 KiB save access).');
- if(!(backupRom instanceof Uint8Array)||backupRom.length!==info.flashBytes)throw new Error('A complete verified backup of the connected cartridge is required.');
+ if(backupRom!==null&&(!(backupRom instanceof Uint8Array)||backupRom.length!==info.flashBytes))throw new Error('The supplied backup does not cover the connected cartridge.');
  if(!(save instanceof Uint8Array)||save.length!==info.ramBytes)throw new Error('The selected save must cover the cartridge save range exactly.');
  if(!Number.isSafeInteger(info.writableBytes)||info.writableBytes<32768||info.writableBytes>info.flashBytes)throw new Error('The writable range is not known.');
- for(let i=info.writableBytes;i<rom.length;i++)if(rom[i]!==backupRom[i])throw new Error('The selected ROM changes protected cartridge bytes. Nothing can be written.');
+ for(let i=info.writableBytes;backupRom&&i<rom.length;i++)if(rom[i]!==backupRom[i])throw new Error('The selected ROM changes protected cartridge bytes. Nothing can be written.');
  return {writeRom:rom.slice(0,Math.min(rom.length,info.writableBytes)),verifyRom:rom,save,header};
 }
 export function cartridgeDataFrame(offset,data,binary){
@@ -42,21 +42,27 @@ export async function streamCartridgeWrite(lease,kind,bytes,{binary=true,onProgr
  },{timeout:Math.max(300000,bytes.length*20+120000)});
  return {sha256:hash,crc32:crc};
 }
-/** The caller must obtain an explicit review/confirmation and a fresh two-read backup. */
+/** The caller must obtain an explicit review/confirmation, including data-loss acknowledgment when no backup is retained. */
 export async function writeVerifiedCartridge(session,expectedInfo,plan,onProgress=()=>{}){
  const fresh=await readCartInfo(session);
- if(JSON.stringify(fresh)!==JSON.stringify(expectedInfo))throw new Error('The cartridge changed after backup. Read and back it up again.');
+ if(JSON.stringify(fresh)!==JSON.stringify(expectedInfo))throw new Error('The cartridge changed after review. Read its identity and confirm again.');
  const lease=session.beginCartridgeWrite();
  try{
+  // Protected bytes are compared against the device even when the user skips backup.
+  const offset=plan.writeRom.length,tail=plan.verifyRom.subarray(offset);
+  if(tail.length){
+   const current=await readCartRange(lease,'rom',tail.length,{offset,onProgress:(received,total)=>onProgress({phase:'Checking protected bytes',received,total})});
+   if(current.some((byte,i)=>byte!==tail[i]))throw new Error('The selected ROM changes protected cartridge bytes. Nothing was written.');
+  }
   onProgress({phase:'Writing ROM',received:0,total:plan.writeRom.length});
   await streamCartridgeWrite(lease,'rom',plan.writeRom,{binary:fresh.binary,onProgress});
   onProgress({phase:'Reading ROM back',received:0,total:plan.verifyRom.length});
   const rom=await readCartRange(lease,'rom',plan.verifyRom.length,{skipblank:fresh.skipblank,onProgress:(received,total)=>onProgress({phase:'Reading ROM back',received,total})});
-  if(await sha256(rom)!==await sha256(plan.verifyRom))throw new Error('ROM readback differs from the selected file. Keep the backup; do not retry automatically.');
+  if(await sha256(rom)!==await sha256(plan.verifyRom))throw new Error('ROM readback differs from the selected file. Keep any backup; do not retry automatically.');
   onProgress({phase:'Writing save',received:0,total:plan.save.length});
   await streamCartridgeWrite(lease,'sav',plan.save,{binary:fresh.binary,onProgress});
   const save=await readCartRange(lease,'sav',plan.save.length,{onProgress:(received,total)=>onProgress({phase:'Reading save back',received,total})});
-  if(await sha256(save)!==await sha256(plan.save))throw new Error('ROM verified, but save readback differs. Keep the backup; save restore is incomplete.');
+  if(await sha256(save)!==await sha256(plan.save))throw new Error('ROM verified, but save readback differs. Keep any backup; save restore is incomplete.');
   return {romSha256:await sha256(rom),saveSha256:await sha256(save),verified:true};
  }finally{lease.release();}
 }
