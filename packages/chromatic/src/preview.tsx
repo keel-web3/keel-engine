@@ -17,6 +17,14 @@ type View='connect'|'health'|'cart'|'firmware'|'library'|'recovery'|'wireless'|'
 const tabs:View[]=['connect','health','cart','firmware','library','recovery','wireless','live'];
 const lines:Record<View,string>={connect:'TWO DOORS. ONE MACHINE.',health:'LISTENING BEFORE TOUCHING.',cart:'THE VESSEL CHOOSES WHAT IT CAN CARRY.',firmware:'KEEP A WAY BACK.',library:'NOTHING LEAVES THIS SHELF.',recovery:'KEEP THE OLD SHAPE CLOSE.',wireless:'WAIT FOR THE ANSWER.',live:'THE MACHINE IS THE STAGE.'};
 const size=(n:number)=>n>=1048576?`${Number((n/1048576).toFixed(2))} MiB`:`${Number((n/1024).toFixed(2))} KiB`;
+type ProgressMeter={received:number;total:number|null;phase:string};
+function OperationProgress({busy,meter,elapsed,progress}:{busy:string;meter:ProgressMeter|null;elapsed:number;progress:string}){
+ const phase=meter?.phase||busy;
+ const [start,setStart]=useState({at:Date.now(),received:meter?.received||0});
+ useEffect(()=>{setStart({at:Date.now(),received:meter?.received||0});},[busy,phase]);
+ const seconds=Math.max(0,(Date.now()-start.at)/1000),rate=seconds>=2&&meter?Math.max(0,meter.received-start.received)/seconds:0;
+ return <section className="chromatic-progress" aria-label="Operation progress"><p>{phase} · {Math.floor(seconds)}s this step · {elapsed}s total</p><progress max={meter?.total||1} value={meter?.total?meter.received:undefined}/>{meter?.total&&<p>{size(meter.received)} / {size(meter.total)} · {Math.floor(meter.received/meter.total*100)}%{rate>0&&` · ${size(rate)}/s`}</p>}<p>{progress||'Waiting for the device or browser response…'}</p></section>;
+}
 const unknown='Not checked';
 function Facts({rows}:{rows:[string,ReactNode][]}){return <dl className="chromatic-facts">{rows.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{label==='Wi-Fi network'||label==='IP address'?<span data-private="true">{value}</span>:value}</dd></div>)}</dl>;}
 function Actions({children}:{children:ReactNode}){return <div className="chromatic-actions">{children}</div>;}
@@ -127,7 +135,7 @@ export function ChromaticSupport({site,release,dialogue}:{site:'egress'|'crucibl
   <p className="chromatic-preview-notice">{connected?'Console connected':'Console not connected'} · {bridgeConnected?'USB bridge connected':'USB bridge not connected'}</p>
   <nav className="chromatic-tabs" aria-label="Chromatic support">{tabs.map(tab=><ActionButton key={tab} disabled={!restored||!!busy} primary={view===tab} aria-pressed={view===tab} onClick={()=>setView(tab)}>{tab==='cart'?'Cartridge':tab==='wireless'?'Wi-Fi':tab==='live'?'Live / OBS':tab}</ActionButton>)}</nav>
   {dialogue(lines[view])}
-  {busy&&<section className="chromatic-progress" aria-label="Operation progress"><p>{meter?.phase||busy} · {elapsed}s</p><progress max={meter?.total||1} value={meter?.total?meter.received:undefined}/>{meter?.total&&<p>{size(meter.received)} / {size(meter.total)} · {Math.floor(meter.received/meter.total*100)}%</p>}<p>{progress||'Waiting for the device or browser response…'}</p></section>}
+  {busy&&<OperationProgress busy={busy} meter={meter} elapsed={elapsed} progress={progress}/>}
   <div id="cp-screen" key={view} className="chromatic-screen" aria-busy={!!busy}>
   {view==='connect'&&<Panel><h2>Connect your Chromatic</h2><p>Turn it on and connect a USB data cable. Close other device tools first. Previously paired devices reconnect automatically when this page opens or the device is plugged in. The console and FPGA bridge each need permission once.</p><p>Opening the console can restart the running session on some USB drivers. The health check reads firmware status and the FPGA identity; it does not install or erase anything.</p>
    {!support?<p>Checking browser support…</p>:<><ol className="chromatic-steps"><li><span>1. Console · firmware, Wi-Fi and cartridge access</span>{support.serial?<ActionButton disabled={!!busy||connected} onClick={()=>connectConsole()}>Choose console</ActionButton>:<p>Web Serial unavailable. Open this page directly in desktop Chrome or Edge.</p>}</li><li><span>2. USB bridge · FPGA identity</span>{support.usb?<ActionButton disabled={!!busy||bridgeConnected} onClick={()=>connectBridge()}>Choose USB bridge</ActionButton>:<p>WebUSB unavailable. Open this page directly in desktop Chrome or Edge.</p>}</li></ol>

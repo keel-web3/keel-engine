@@ -13,7 +13,7 @@ class Port {
  line(s){this.c.enqueue(enc.encode(s+'\r\n'));}
  async open(){this.readable=new ReadableStream({start:c=>this.c=c});this.writable=new WritableStream({write:b=>this.receive(b)});}
  receive(b){
-  if(b[0]===0xa5){const v=new DataView(b.buffer,b.byteOffset,b.byteLength),offset=v.getUint32(4,true),n=v.getUint16(8,true);assert.deepEqual([...b.slice(0,4)],[0xa5,67,66,68]);assert.equal(b.length,14+n);assert.equal(v.getUint32(10+n,true),crc32(b.subarray(4,10+n)));this.job.bytes.set(b.subarray(10,10+n),offset);if(this.options.disconnect){this.c.error(new Error('USB unplugged'));return;}if(offset+n<this.job.bytes.length){this.line(`CBU1 want ${offset+n} ${Math.min(1024,this.job.bytes.length-offset-n)} bin`);return;}const j=this.job;if(this.options.duplicateWant)this.line(`CBU1 want ${offset} ${n} bin`);assert.equal(crc32(j.bytes),j.crc);if(j.kind==='rom')this.flash.set(j.bytes);else this.save=j.bytes;this.line(j.kind==='rom'?`CBU1 done rom ${j.bytes.length} ${hex(j.crc)}`:`CBU1 done sav ${hex(j.crc)}`);this.line('CBU1 ready');this.job=null;return;
+  if(b[0]===0xa5){const v=new DataView(b.buffer,b.byteOffset,b.byteLength),offset=v.getUint32(4,true),n=v.getUint16(8,true);assert.deepEqual([...b.slice(0,4)],[0xa5,67,66,68]);assert.equal(b.length,14+n);assert.equal(v.getUint32(10+n,true),crc32(b.subarray(4,10+n)));this.job.bytes.set(b.subarray(10,10+n),offset);if(this.options.disconnect){this.c.error(new Error('USB unplugged'));return;}if(offset+n<this.job.bytes.length){this.line(`CBU1 want ${offset+n} ${Math.min(1024,this.job.bytes.length-offset-n)} bin`);return;}const j=this.job;if(j.kind==='rom')for(const line of this.options.verificationLines||[])this.line(line);if(this.options.duplicateWant)this.line(`CBU1 want ${offset} ${n} bin`);assert.equal(crc32(j.bytes),j.crc);if(j.kind==='rom')this.flash.set(j.bytes);else this.save=j.bytes;this.line(j.kind==='rom'?`CBU1 done rom ${j.bytes.length} ${hex(j.crc)}`:`CBU1 done sav ${hex(j.crc)}`);this.line('CBU1 ready');this.job=null;return;
   }
   const cmd=new TextDecoder().decode(b).trim();if(!cmd)return;this.commands.push(cmd);
   if(cmd==='cart usb status'){this.line('CBU1 status idle');return;}
@@ -54,4 +54,30 @@ for(const mismatch of [false,true])test(`no-backup protected tail is checked bef
  else{assert.equal((await writeVerifiedCartridge(s,geometry,plan)).verified,true);assert.deepEqual(p.flash,target);}
  assert.equal(p.commands.find(c=>c.startsWith('cart usb read')),'cart usb read rom 32768 32768');
  await s.close();
+});
+
+const FULL_CHECKS=['CBU1 time rom verify 180000','CBU1 time rom check-header 6000','CBU1 time rom total 370000 erases=32 retries=0'];
+test('completed firmware SHA/boot-block checks remove the redundant ROM download, retaining save readback',async()=>{
+ const p=new Port({verificationLines:FULL_CHECKS}),s=await new ConsoleSession(p).open();
+ const result=await writeVerifiedCartridge(s,info,planCartridgeWrite(rom(),info,null,save));
+ assert.equal(result.romVerification,'firmware-sha256-crc32');assert.equal(result.deviceTimings.verify,180000);
+ assert.equal(result.deviceTimings.total,370000);assert.deepEqual(p.commands.filter(c=>c.startsWith('cart usb read')),['cart usb read sav 0 32768']);
+ assert.deepEqual(p.flash,rom());assert.deepEqual(p.save,save);await s.close();
+});
+for(const lines of [[],['CBU1 time rom verify 10'],['CBU1 time rom check-header 10'],['CBU1 time rom check-header 10','CBU1 time rom verify 10'],['CBU1 progress rom verify 32768 32768 95','CBU1 progress rom check-header 32768 32768 99']])test('missing or incomplete completed-phase evidence keeps full ROM readback: '+JSON.stringify(lines),async()=>{
+ const p=new Port({verificationLines:lines}),s=await new ConsoleSession(p).open();
+ assert.equal((await writeVerifiedCartridge(s,info,planCartridgeWrite(rom(),info,null,save))).romVerification,'browser-sha256');
+ assert.ok(p.commands.some(c=>c.startsWith('cart usb read rom')));await s.close();
+});
+test('firmware failure after completed checks cannot turn into successful verification or a save write',async()=>{
+ const p=new Port({verificationLines:[...FULL_CHECKS,'CBU1 fail rom code=13']}),s=await new ConsoleSession(p).open();
+ await assert.rejects(writeVerifiedCartridge(s,info,planCartridgeWrite(rom(),info,null,save)),/code=13/);
+ assert.equal(p.commands.some(c=>c.startsWith('cart usb write sav')),false);await s.close();
+});
+test('firmware verification still checks the protected tail both before and after writing',async()=>{
+ const wireInfo=INFO.replace('flash=32768','flash=65536'),geometry=parseCartInfo(wireInfo),target=protectedRom();
+ const p=new Port({info:wireInfo,verificationLines:FULL_CHECKS});p.flash=new Uint8Array(65536).fill(255);p.flash.set(rom(1));
+ const s=await new ConsoleSession(p).open(),result=await writeVerifiedCartridge(s,geometry,planCartridgeWrite(target,geometry,null,save));
+ assert.equal(result.romVerification,'firmware-sha256-crc32');
+ assert.deepEqual(p.commands.filter(c=>c.startsWith('cart usb read rom')),['cart usb read rom 32768 32768','cart usb read rom 32768 32768']);await s.close();
 });
