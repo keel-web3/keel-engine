@@ -52,18 +52,18 @@ export function ChromaticSupport({site,release,dialogue}:{site:'egress'|'crucibl
  const [connected,setConnected]=useState(false),[bridgeConnected,setBridgeConnected]=useState(false),[bridgeId,setBridgeId]=useState<{idcode:number;expected:boolean}|null>(null);
  const [health,setHealth]=useState<Health|null>(null),[cart,setCart]=useState<CartInfo|null>(null),[entries,setEntries]=useState<LibraryEntry[]>([]),[libraryReady,setLibraryReady]=useState(false);
  const [busy,setBusy]=useState(''),[notice,setNotice]=useState(''),[progress,setProgress]=useState(''),[elapsed,setElapsed]=useState(0);
- const prepared=useRef(false);
+ const prepared=useRef(false),autoConnectPaused=useRef(false);
  const session=useRef<ConsoleSession|null>(null),bridge=useRef<UsbDevice|null>(null),locked=useRef(false),operationFailed=useRef(false),alive=useRef(false),file=useRef<HTMLInputElement>(null);
  const refresh=async()=>{setEntries(await listEntries());setLibraryReady(true);};
- async function refreshGrants(){setGrants(await grantedDevices(navigator as unknown as BrowserDevices));}
+ async function refreshGrants(){const found=await grantedDevices(navigator as unknown as BrowserDevices);if(alive.current)setGrants(found);return found;}
  useEffect(()=>{
-  alive.current=true; const nav=navigator as unknown as BrowserDevices;
+  alive.current=true;let disposed=false; const nav=navigator as unknown as BrowserDevices;
   setSupport({serial:!!nav.serial?.requestPort&&isSecureContext,usb:!!nav.usb?.requestDevice&&isSecureContext});
-  void refreshGrants().catch(e=>setNotice(permissionError(e)));void refresh().catch(e=>setNotice('Local library unavailable: '+permissionError(e)));
-  const update=()=>{void refreshGrants().catch(()=>{});};
-  const disconnected=(event:Event)=>{const e=event as Event&{port?:SerialPort;device?:UsbDevice};if(e.port===session.current?.port||event.target===session.current?.port){void session.current?.close();}if(e.device===bridge.current){bridge.current=null;setBridgeConnected(false);setBridgeId(null);setNotice('USB bridge disconnected.');}update();};
+  const update=()=>{void refreshGrants().then(found=>{if(!disposed)reconnectPermitted(found);}).catch(e=>{if(!disposed)setNotice(permissionError(e));});};
+  update();void refresh().catch(e=>setNotice('Local library unavailable: '+permissionError(e)));
+  const disconnected=(event:Event)=>{const e=event as Event&{port?:SerialPort;device?:UsbDevice};if(e.port===session.current?.port||event.target===session.current?.port){void session.current?.close();}if(e.device===bridge.current){bridge.current=null;setBridgeConnected(false);setBridgeId(null);setNotice('USB bridge disconnected.');}void refreshGrants().catch(()=>{});};
   nav.serial?.addEventListener('connect',update);nav.serial?.addEventListener('disconnect',disconnected);nav.usb?.addEventListener('connect',update);nav.usb?.addEventListener('disconnect',disconnected);
-  return()=>{alive.current=false;nav.serial?.removeEventListener('connect',update);nav.serial?.removeEventListener('disconnect',disconnected);nav.usb?.removeEventListener('connect',update);nav.usb?.removeEventListener('disconnect',disconnected);void session.current?.close();void bridge.current?.close();};
+  return()=>{disposed=true;alive.current=false;nav.serial?.removeEventListener('connect',update);nav.serial?.removeEventListener('disconnect',disconnected);nav.usb?.removeEventListener('connect',update);nav.usb?.removeEventListener('disconnect',disconnected);void session.current?.close();void bridge.current?.close();};
  },[]);
  useEffect(()=>{if(!busy){setElapsed(0);return;}const start=Date.now(),timer=setInterval(()=>setElapsed(Math.floor((Date.now()-start)/1000)),1000);return()=>clearInterval(timer);},[busy]);
  function run(label:string,job:()=>Promise<void>){
@@ -72,15 +72,32 @@ export function ChromaticSupport({site,release,dialogue}:{site:'egress'|'crucibl
   let work:Promise<void>;try{work=job();}catch(e){work=Promise.reject(e);}
   void work.catch(e=>{operationFailed.current=true;setNotice(permissionError(e));}).finally(()=>{locked.current=false;journal.current={label,state:operationFailed.current?'failed':'complete',at:Date.now()};savePageState(site,{view:viewRef.current,operation:journal.current});setBusy('');setProgress('');setMeter(null);});
  }
- function connectConsole(port?:SerialPort){run(port?'Opening console':'Waiting for console permission in the browser',async()=>{
-  const selected=port??await chooseConsole(navigator as unknown as BrowserDevices);if(!alive.current)return;setBusy('Opening console');
+ async function attachConsole(selected:SerialPort){
+  if(!alive.current||session.current&&!session.current.closed)return;setBusy('Opening console');
   const next=new ConsoleSession(selected,()=>{if(session.current===next){session.current=null;setConnected(false);prepared.current=false;setHealth(null);setCart(null);if(!locked.current&&!operationFailed.current)setNotice('Console disconnected. Connect again before another device operation.');}});
   session.current=next;try{await next.open();}catch(error){await next.close();if(session.current===next)session.current=null;throw error;}if(!alive.current){await next.close();return;}setBusy('Checking the console response');try{await next.json('fwversion',['mcu','fpga'],['mcu','fpga','chromatic']);}catch(error){await next.close();throw error;}if(next.closed)throw new Error('Console disconnected before it could be verified.');setConnected(true);setNotice('Console responded to the firmware check. Browser pairing alone does not mean a device is connected.');await refreshGrants();
- });}
- function connectBridge(device?:UsbDevice){run(device?'Opening USB bridge':'Waiting for USB bridge permission in the browser',async()=>{
-  const selected=device??await chooseBridge(navigator as unknown as BrowserDevices);if(!alive.current)return;setBusy('Opening USB bridge');
+ }
+ async function attachBridge(selected:UsbDevice){
+  if(!alive.current||bridge.current)return;setBusy('Opening USB bridge');
   bridge.current=selected;try{await openBridge(selected);}catch(error){if(bridge.current===selected)bridge.current=null;throw error;}if(!alive.current){await selected.close();return;}setBusy('Checking the FPGA response');try{const id=await readBridgeId(selected);if(!id.expected)throw new Error('The bridge does not identify as a Chromatic FPGA.');setBridgeId(id);}catch(error){await selected.close().catch(()=>{});bridge.current=null;throw error;}setBridgeConnected(true);setNotice('USB bridge responded with the Chromatic FPGA IDCODE.');await refreshGrants();
- });}
+ }
+ function connectConsole(port?:SerialPort){autoConnectPaused.current=false;run(port?'Opening console':'Waiting for console permission in the browser',async()=>{await attachConsole(port??await chooseConsole(navigator as unknown as BrowserDevices));});}
+ function connectBridge(device?:UsbDevice){autoConnectPaused.current=false;run(device?'Opening USB bridge':'Waiting for USB bridge permission in the browser',async()=>{await attachBridge(device??await chooseBridge(navigator as unknown as BrowserDevices));});}
+ function reconnectPermitted(found:{ports:SerialPort[];bridges:UsbDevice[]}){
+  if(!alive.current||locked.current||autoConnectPaused.current||journal.current?.state==='interrupted')return;
+  if(found.ports.length>1||found.bridges.length>1){setNotice('More than one permitted Chromatic is available. Choose the console and bridge to reconnect below.');return;}
+  if((session.current&&!session.current.closed||!found.ports.length)&&(bridge.current||!found.bridges.length))return;
+  run('Reconnecting paired Chromatic',async()=>{
+   const failures:string[]=[];
+   if(found.ports.length===1&&(!session.current||session.current.closed))try{await attachConsole(found.ports[0]!);}catch(e){failures.push('Console: '+permissionError(e));}
+   // The bridge may enumerate while the console handshake is completing.
+   const latest=await refreshGrants();
+   if(alive.current&&!autoConnectPaused.current&&latest.bridges.length===1&&!bridge.current)try{await attachBridge(latest.bridges[0]!);}catch(e){failures.push('USB bridge: '+permissionError(e));}
+   if(!alive.current)return;
+   if(failures.length){operationFailed.current=true;setNotice(failures.join(' ')+' Close other Chromatic tabs or device tools, then use Reconnect here.');}
+   else setNotice('Previously paired Chromatic connections checked automatically. Cartridge access and writes still require your action.');
+  });
+ }
  function checkHealth(){run('Reading device health',async()=>{
   setHealth(null);setBridgeId(null);const failures:string[]=[];
   if(session.current&&!session.current.closed){try{setHealth(await readHealth(session.current));}catch(e){failures.push(permissionError(e));}}
@@ -112,11 +129,11 @@ export function ChromaticSupport({site,release,dialogue}:{site:'egress'|'crucibl
   {dialogue(lines[view])}
   {busy&&<section className="chromatic-progress" aria-label="Operation progress"><p>{meter?.phase||busy} · {elapsed}s</p><progress max={meter?.total||1} value={meter?.total?meter.received:undefined}/>{meter?.total&&<p>{size(meter.received)} / {size(meter.total)} · {Math.floor(meter.received/meter.total*100)}%</p>}<p>{progress||'Waiting for the device or browser response…'}</p></section>}
   <div id="cp-screen" key={view} className="chromatic-screen" aria-busy={!!busy}>
-  {view==='connect'&&<Panel><h2>Connect your Chromatic</h2><p>Turn it on and connect a USB data cable. Close other device tools first. The console and FPGA bridge each have their own browser permission.</p><p>Opening the console can restart the running session on some USB drivers. The health check reads firmware status and the FPGA identity; it does not install or erase anything.</p>
+  {view==='connect'&&<Panel><h2>Connect your Chromatic</h2><p>Turn it on and connect a USB data cable. Close other device tools first. Previously paired devices reconnect automatically when this page opens or the device is plugged in. The console and FPGA bridge each need permission once.</p><p>Opening the console can restart the running session on some USB drivers. The health check reads firmware status and the FPGA identity; it does not install or erase anything.</p>
    {!support?<p>Checking browser support…</p>:<><ol className="chromatic-steps"><li><span>1. Console · firmware, Wi-Fi and cartridge access</span>{support.serial?<ActionButton disabled={!!busy||connected} onClick={()=>connectConsole()}>Choose console</ActionButton>:<p>Web Serial unavailable. Open this page directly in desktop Chrome or Edge.</p>}</li><li><span>2. USB bridge · FPGA identity</span>{support.usb?<ActionButton disabled={!!busy||bridgeConnected} onClick={()=>connectBridge()}>Choose USB bridge</ActionButton>:<p>WebUSB unavailable. Open this page directly in desktop Chrome or Edge.</p>}</li></ol>
    {!!grants.ports.length&&!connected&&<Actions>{grants.ports.map((port,i)=><ActionButton key={i} disabled={!!busy} onClick={()=>connectConsole(port)}>Reconnect permitted console {i+1}</ActionButton>)}</Actions>}
    {!!grants.bridges.length&&!bridgeConnected&&<Actions>{grants.bridges.map((device,i)=><ActionButton key={i} disabled={!!busy} onClick={()=>connectBridge(device)}>Reconnect permitted bridge {i+1}</ActionButton>)}</Actions>}</>}
-   <Actions><ActionButton primary disabled={!!busy||!connected&&!bridgeConnected} onClick={checkHealth}>Run read-only health check</ActionButton>{connected&&<ActionButton disabled={!!busy} onClick={()=>run('Disconnecting console',async()=>{await session.current?.close();})}>Disconnect console</ActionButton>}{bridgeConnected&&<ActionButton disabled={!!busy} onClick={()=>run('Disconnecting USB bridge',async()=>{await bridge.current?.close();bridge.current=null;setBridgeConnected(false);setBridgeId(null);})}>Disconnect USB bridge</ActionButton>}{navButton('Open local library','library')}</Actions>
+   <Actions><ActionButton primary disabled={!!busy||!connected&&!bridgeConnected} onClick={checkHealth}>Run read-only health check</ActionButton>{connected&&<ActionButton disabled={!!busy} onClick={()=>{autoConnectPaused.current=true;run('Disconnecting console',async()=>{await session.current?.close();});}}>Disconnect console</ActionButton>}{bridgeConnected&&<ActionButton disabled={!!busy} onClick={()=>{autoConnectPaused.current=true;run('Disconnecting USB bridge',async()=>{await bridge.current?.close();bridge.current=null;setBridgeConnected(false);setBridgeId(null);});}}>Disconnect USB bridge</ActionButton>}{navButton('Open local library','library')}</Actions>
   </Panel>}
   {view==='live'&&<LiveCapture/>}
   {view==='wireless'&&<WifiSupport token={wifiToken} initialIp={typeof health?.network?.ip==='string'?health.network.ip:undefined}/>}
