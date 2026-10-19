@@ -10,6 +10,8 @@ export type Rect = readonly [number, number, number, number];
 
 export interface ButtonControl {
   readonly type: "button";
+  /** Exact hit rectangle in overlay fractions; overrides anchor/size geometry. */
+  readonly rect?: Rect;
   readonly id: string;
   readonly label?: string;
   readonly anchor: Anchor;
@@ -33,6 +35,8 @@ export interface ButtonControl {
 }
 export interface StickControl {
   readonly type: "stick";
+  /** Exact fixed-stick rectangle in overlay fractions; overrides at/radius geometry. */
+  readonly rect?: Rect;
   /** The ids it writes: x (right +) and y (down +). Leave one out for a one-axis stick (a steering slider). */
   readonly x?: string;
   readonly y?: string;
