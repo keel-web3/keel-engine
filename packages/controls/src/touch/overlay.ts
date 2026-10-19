@@ -86,6 +86,9 @@ export function createTouchSurface(host: HTMLElement, virtual: VirtualControls, 
       el.style.setProperty("animation", "none", "important");
       el.style.setProperty("transition", "none", "important");
       el.style.setProperty("transform", el.style.transform || "none", "important");
+      // Transparent labels still participate in browser hit testing. Clip their
+      // overflow so a long pedal label cannot intercept a neighbouring control.
+      el.style.setProperty("overflow", "hidden", "important");
     }
     const row: VisualRow = { id, type, bounds: [0, 0, 0, 0], value: 0, secondaryValue: 0, pressed: false };
     visualRows.push(row); visualEntries.push({ row, el, x: id, ...(y ? { y } : {}) });
