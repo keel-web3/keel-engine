@@ -33,8 +33,8 @@ export type { AtlasSprite, AtlasStats, UiAtlas } from "./atlas.ts";
 export { ICON_NAMES, ICON_RECIPES, iconBitmap, iconMask, rampOf, shadeIcon } from "./icons.ts";
 export type { IconOptions } from "./icons.ts";
 
-export { ANCHORS, PAINT_ONLY, UiNode, WIDGETS, stateOf } from "./node.ts";
-export type { Align, Anchor, FontRole, Justify, NodeProps, Size, WidgetType } from "./node.ts";
+export { ANCHORS, DRIVING_KINDS, DRIVING_VARIANTS, PAINT_ONLY, UiNode, WIDGETS, stateOf } from "./node.ts";
+export type { Align, Anchor, DrivingKind, DrivingVariant, FontRole, Justify, NodeProps, Size, WidgetType } from "./node.ts";
 export { arrange, frameOf, measure as measureNode, padOf } from "./layout.ts";
 export type { LayoutContext } from "./layout.ts";
 export { Ui, createUi, keyName, mergeRects, uiScaleFor } from "./ui.ts";
@@ -47,6 +47,8 @@ export { buildNode, docOf, findDoc, overrideDoc, walkDoc } from "./doc.ts";
 export type { NodeDoc, ScreenDoc } from "./doc.ts";
 export { generateHud, generateLoading, generateMenu } from "./generate.ts";
 export type { CommandButton, Generated, GenerateOptions, HudLayout, HudOptions, HudSlots, LoadingOptions, MenuButton, MenuItem, MenuOptions, ResourceSlot } from "./generate.ts";
+export { DRIVING_GENERATOR, generateDrivingHud } from "./driving.ts";
+export type { DrivingHudOptions, DrivingPart } from "./driving.ts";
 
 // Presenting the layer: a 2D canvas over the game's, or the game's own WebGL2 context.
 export { createCanvasPresenter, createGlPresenter } from "./present.ts";

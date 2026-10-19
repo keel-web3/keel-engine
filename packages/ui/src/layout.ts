@@ -98,6 +98,7 @@ export function measure(n: UiNode, ctx: LayoutContext, cache: Map<UiNode, { w: n
       break;
     }
     case "icon": { const s = p.iconSize ?? defaultIcon(ctx); w = Math.max(w, s); h = Math.max(h, s); break; }
+    case "driving": { w = Math.max(w, 64); h = Math.max(h, 64); break; }
     case "bar": { w = Math.max(w, 48); h = Math.max(h, p.text ? ctx.font(p.font ?? "small").lineHeight + 1 : 4); break; }
     case "slider": { w = Math.max(w, 64); h = Math.max(h, ctx.theme.type.body + 3); break; }
     case "toggle": { const t = p.text ? textOf(n, ctx) : null; w = Math.max(w, ctx.theme.type.body + 4 + (t ? ctx.theme.space.gap + t.w : 0)); h = Math.max(h, ctx.theme.type.body + 4, t?.h ?? 0); break; }

@@ -103,12 +103,18 @@ export const uiScaleFor = (width: number, height: number, reference: readonly [n
   Math.max(1, Math.floor(Math.min(width / reference[0], height / reference[1])));
 
 const INTERACTIVE = new Set(["button", "list", "tabs", "slider", "toggle", "minimap"]);
+// Only active Ui registrations are counted. A caller may borrow another Ui's
+// public atlas; its creator's disposal waits for that borrower's disposal.
+// External/manual atlas references remain the caller's explicit responsibility.
+const ATLAS_LEASES = new WeakMap<UiAtlas, { users: number; disposeWhenUnused: boolean }>();
 
 export class Ui implements LayoutContext {
   theme: Theme;
   scale: number;
   layer: Bitmap;
   readonly atlas: UiAtlas;
+  private readonly ownsAtlas: boolean;
+  private disposed = false;
   readonly root: UiNode;
   readonly content: UiNode;
   readonly overlay: UiNode;
@@ -118,7 +124,7 @@ export class Ui implements LayoutContext {
   private screenW: number;
   private screenH: number;
   private readonly reference: readonly [number, number];
-  private readonly scaleFixed: number | ((width: number, height: number) => number) | undefined;
+  private scaleFixed: number | ((width: number, height: number) => number) | undefined;
   private safe: SafeArea;
   private fontOverrides: Partial<Record<FontRole, PixelFont>>;
   private fonts = new Map<string, PixelFont>();
@@ -156,6 +162,7 @@ export class Ui implements LayoutContext {
     this.safe = o.safe ?? {};
     this.fontOverrides = { ...(o.fonts ?? {}) };
     this.atlas = o.atlas ?? createAtlas(1024);
+    this.ownsAtlas = o.atlas === undefined;
     this.layer = createBitmap(Math.ceil(o.width / this.scale), Math.ceil(o.height / this.scale));
     const nav = o.navigation ?? true;
     this.navigation = typeof nav === "boolean" ? { tab: nav, arrows: nav, enter: nav } : { tab: nav.tab ?? true, arrows: nav.arrows ?? true, enter: nav.enter ?? true };
@@ -170,6 +177,9 @@ export class Ui implements LayoutContext {
     this.content.parent = this.root;
     this.overlay.parent = this.root;
     for (const n of this.root.walk()) n.host = host;
+    const lease = ATLAS_LEASES.get(this.atlas) ?? { users: 0, disposeWhenUnused: false };
+    lease.users++;
+    ATLAS_LEASES.set(this.atlas, lease);
   }
 
   /** The UI's own size (layer pixels). */
@@ -179,6 +189,7 @@ export class Ui implements LayoutContext {
   // --- Fonts, frames, icons, text (the paint context) -------------------------
 
   font(role: FontRole): PixelFont {
+    if (this.disposed) throw new Error("UI is disposed.");
     const o = this.fontOverrides[role];
     if (o) return o;
     const size = this.theme.type[role];
@@ -189,12 +200,14 @@ export class Ui implements LayoutContext {
   }
   /** Use a font for a role (an imported one); null goes back to the theme's. */
   setFont(role: FontRole, font: PixelFont | null): void {
+    if (this.disposed) return;
     if (font) this.fontOverrides[role] = font; else delete this.fontOverrides[role];
     this.texts.clear();
     this.needsLayout = true;
     this.dirtyAll();
   }
   frame(kind: FrameKind, state: FrameState): { t: FrameTemplate; c: FrameColours } {
+    if (this.disposed) throw new Error("UI is disposed.");
     const key = `${kind}/${state}`;
     let f = this.frames.get(key);
     if (!f) { f = { t: frameTemplate(frameShape(this.theme, kind, state)), c: frameColours(this.theme, kind, state) }; this.frames.set(key, f); }
@@ -205,6 +218,7 @@ export class Ui implements LayoutContext {
    * painted in the tone each node asks for). It wins over the grammar's. Re-registering a name replaces it.
    */
   registerIcon(name: string, icon: Bitmap | LevelIcon): void {
+    if (this.disposed) return;
     this.customIcons.set(name, icon);
     this.iconVersions.set(name, (this.iconVersions.get(name) ?? 0) + 1);
     this.dirtyAll();
@@ -214,6 +228,7 @@ export class Ui implements LayoutContext {
   private iconVersions = new Map<string, number>();
   /** A themed icon's sprite: drawn in the theme's culture's family (iconfamily.ts), or in `family` ("plain": the grammar's own). */
   icon(name: string, size: number, tone?: string, family?: IconFamily, on?: Rgba) {
+    if (this.disposed) throw new Error("UI is disposed.");
     const custom = this.customIcons.get(name);
     const t = this.theme;
     const over = on !== undefined && !custom ? on : undefined;
@@ -245,6 +260,7 @@ export class Ui implements LayoutContext {
     }
   }
   text(n: UiNode, src: string, role: FontRole, width: number | undefined, opts: { align?: "left" | "center" | "right"; caps?: boolean; maxLines?: number; wrap?: boolean } = {}): TextLayout {
+    if (this.disposed) throw new Error("UI is disposed.");
     const font = this.font(role);
     const key = `${font.key}|${width ?? ""}|${opts.align ?? ""}|${opts.caps ? 1 : 0}|${opts.maxLines ?? ""}|${opts.wrap === false ? 0 : 1}|${src}`;
     let t = this.texts.get(key);
@@ -261,17 +277,19 @@ export class Ui implements LayoutContext {
 
   /** Show a screen (a layout document): it replaces what the content showed. */
   load(doc: ScreenDoc | UiNode): UiNode {
+    if (this.disposed) throw new Error("UI is disposed.");
     const node = doc instanceof UiNode ? doc : buildNode(doc.root);
     for (const c of [...this.content.children]) this.content.remove(c);
     this.content.add(node);
     this.hovered = this.pressed = this.focused = null;
     return node;
   }
-  node(id: string): UiNode | undefined { if (this.needsLayout) this.layout(); return this.ids.get(id); }
+  node(id: string): UiNode | undefined { if (this.disposed) return undefined; if (this.needsLayout) this.layout(); return this.ids.get(id); }
   /** Set a node's props by id (a no-op for an id that isn't there). */
   set(id: string, props: Partial<NodeProps>): void { this.node(id)?.set(props); }
 
   on(type: UiEvent, fn: UiListener): () => void {
+    if (this.disposed) return () => {};
     let s = this.listeners.get(type);
     if (!s) { s = new Set(); this.listeners.set(type, s); }
     s.add(fn);
@@ -280,6 +298,7 @@ export class Ui implements LayoutContext {
   private emit(type: UiEvent, id: string, value: unknown, node: UiNode | null): void { for (const f of this.listeners.get(type) ?? []) f(id, value, node); }
 
   setTheme(theme: Theme): void {
+    if (this.disposed) return;
     this.theme = theme;
     this.frames.clear();
     this.texts.clear();
@@ -292,6 +311,7 @@ export class Ui implements LayoutContext {
   }
 
   resize(width: number, height: number, safe?: SafeArea): void {
+    if (this.disposed) return;
     this.screenW = width; this.screenH = height;
     if (safe) this.safe = safe;
     this.scale = this.scaleAt(width, height);
@@ -302,6 +322,7 @@ export class Ui implements LayoutContext {
   get screen(): { width: number; height: number } { return { width: this.screenW, height: this.screenH }; }
 
   invalidate(n: UiNode, layout: boolean, content = false): void {
+    if (this.disposed) return;
     this.dirty.push(n.paint);
     if (!layout || this.needsLayout && this.after.includes(n)) return;
     // (A counter's text changed: if its content measures the same, nothing can move -- repaint it, no layout.)
@@ -312,7 +333,32 @@ export class Ui implements LayoutContext {
     this.needsLayout = true;
     this.after.push(n);
   }
-  dirtyAll(): void { this.dirty = [{ x: 0, y: 0, w: this.layer.w, h: this.layer.h }]; }
+  dirtyAll(): void { if (!this.disposed) this.dirty = [{ x: 0, y: 0, w: this.layer.w, h: this.layer.h }]; }
+
+  /** Detach callbacks, trees and pixel storage. A supplied atlas remains its caller's property. */
+  dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    for (const n of this.root.walk()) { n.host = null; n.parent = null; n.props = {}; n.fit = null; }
+    this.root.children.length = this.content.children.length = this.overlay.children.length = 0;
+    this.hovered = this.pressed = this.focused = this.keyDown = null;
+    this.listeners.clear(); this.ids.clear(); this.hotkeys.clear();
+    this.fonts.clear(); this.frames.clear(); this.texts.clear(); this.customIcons.clear(); this.iconVersions.clear();
+    this.fontOverrides = {}; this.after = []; this.dirty = []; this.spinners = []; this.toasts = [];
+    this.scaleFixed = undefined;
+    this.layer = createBitmap(0, 0);
+    const lease = ATLAS_LEASES.get(this.atlas);
+    if (lease) {
+      lease.users--;
+      if (this.ownsAtlas) lease.disposeWhenUnused = true;
+      if (lease.users === 0) {
+        ATLAS_LEASES.delete(this.atlas);
+        if (lease.disposeWhenUnused) { if (this.atlas.dispose) this.atlas.dispose(); else this.atlas.clear(); }
+      }
+    }
+    this.needsLayout = false;
+    this.stats.nodes = this.stats.painted = this.stats.pixels = this.stats.rects = 0;
+  }
 
   private layout(): void {
     this.needsLayout = false;
@@ -363,6 +409,7 @@ export class Ui implements LayoutContext {
 
   /** Redraw what changed; the rectangles redrawn (layer pixels). Nothing changed: none, and no work. */
   render(): Rect[] {
+    if (this.disposed) return [];
     if (this.needsLayout) this.layout();
     if (!this.dirty.length) { this.stats.painted = 0; this.stats.pixels = 0; this.stats.rects = 0; return []; }
     const rects = mergeRects(this.dirty, this.layer.w, this.layer.h);
@@ -391,6 +438,7 @@ export class Ui implements LayoutContext {
 
   /** Advance animations (spinners, toasts, tooltip delay) by dt seconds. */
   update(dt: number): void {
+    if (this.disposed) return;
     const t0 = this.time;
     this.time += dt;
     for (const s of this.spinners) if (s.visible && Math.floor(t0 * 10) !== Math.floor(this.time * 10)) this.dirty.push(s.paint);
@@ -416,12 +464,14 @@ export class Ui implements LayoutContext {
   // --- Overlays ---------------------------------------------------------------
 
   toast(text: string, { tone, seconds = 3 }: { tone?: string; seconds?: number } = {}): UiNode {
+    if (this.disposed) throw new Error("UI is disposed.");
     const n = new UiNode("toast", { text, anchor: "t", y: -16, maxW: 200, ...(tone ? { tone } : {}) });
     this.overlay.add(n);
     this.toasts.push({ node: n, age: 0, life: seconds });
     return n;
   }
   modal({ title, text, buttons = [{ text: "OK", action: "ok", primary: true }], scrim }: { title?: string; text?: string; buttons?: ReadonlyArray<{ text: string; action: string; primary?: boolean; hotkey?: string }>; scrim?: "solid" | "dither" }): UiNode {
+    if (this.disposed) throw new Error("UI is disposed.");
     const box = new UiNode("panel", { anchor: "c", maxW: 220, ...(title ? { title } : {}) }, "#modal-panel");
     if (text) box.add(new UiNode("label", { text, wrap: true, maxW: 200 }));
     const row = new UiNode("row", { justify: "end", w: "fill" });
@@ -434,7 +484,7 @@ export class Ui implements LayoutContext {
     if (first) this.setFocus(first, false);
     return back;
   }
-  close(node: UiNode): void { node.parent?.remove(node); if (this.focused && !this.focused.visible) this.focused = null; }
+  close(node: UiNode): void { if (this.disposed) return; node.parent?.remove(node); if (this.focused && !this.focused.visible) this.focused = null; }
   private get activeModal(): UiNode | null { for (let i = this.overlay.children.length - 1; i >= 0; i -= 1) { const c = this.overlay.children[i]!; if (c.type === "modal" && !c.props.hidden) return c; } return null; }
 
   private showTip(n: UiNode): void {
@@ -459,6 +509,7 @@ export class Ui implements LayoutContext {
 
   /** The interactive node at a layer point (topmost), or null. */
   hitTest(x: number, y: number): UiNode | null {
+    if (this.disposed) return null;
     if (this.needsLayout) this.layout();
     const modal = this.activeModal;
     const scan = (n: UiNode): UiNode | null => {
@@ -483,6 +534,7 @@ export class Ui implements LayoutContext {
 
   /** The pointer moved to screen pixel (sx, sy). Returns whether it's over the UI (or dragging on the minimap). */
   pointerMove(sx: number, sy: number): boolean {
+    if (this.disposed) return false;
     const { x, y } = this.toLayer(sx, sy);
     this.pointerAt = { x, y };
     if (this.pressed?.type === "minimap") { const n = this.pressed; this.emit("minimap", n.id, this.minimapPoint(n, sx, sy, "drag"), n); return true; }
@@ -505,6 +557,7 @@ export class Ui implements LayoutContext {
   }
   /** A button went down at screen pixel (sx, sy) (`button`: 0 left, 1 middle, 2 right). Returns whether the UI took it. */
   pointerDown(sx: number, sy: number, { button = 0 }: PointerOptions = {}): boolean {
+    if (this.disposed) return false;
     this.pointerMove(sx, sy);
     const n = this.hovered;
     this.focusVisible = false;
@@ -526,6 +579,7 @@ export class Ui implements LayoutContext {
     return true;
   }
   pointerUp(sx: number, sy: number, { button }: PointerOptions = {}): boolean {
+    if (this.disposed) return false;
     const { x, y } = this.toLayer(sx, sy);
     const n = this.pressed;
     this.pressed = null;
@@ -548,6 +602,7 @@ export class Ui implements LayoutContext {
 
   /** A key went down or up (a KeyboardEvent's code or key). Returns whether the UI used it. */
   key(code: string, down: boolean, { shift = false }: { shift?: boolean } = {}): boolean {
+    if (this.disposed) return false;
     const k = keyName(code);
     const modal = this.activeModal;
     if (this.hotkeysStale && !this.needsLayout) this.rekey();
@@ -586,6 +641,7 @@ export class Ui implements LayoutContext {
   }
   /** A gamepad's buttons this frame: the d-pad moves focus, A presses, B backs out. */
   pad(s: PadState): void {
+    if (this.disposed) return;
     const edge = (b: keyof PadState) => !!s[b] && !this.padPrev[b];
     const up = (b: keyof PadState) => !s[b] && !!this.padPrev[b];
     if (edge("up")) this.key("ArrowUp", true);
@@ -600,6 +656,7 @@ export class Ui implements LayoutContext {
 
   get focus(): UiNode | null { return this.focused; }
   setFocus(n: UiNode | null, visible = true): void {
+    if (this.disposed) return;
     if (this.focused === n) { this.focusVisible = visible; return; }
     if (this.focused) { this.focused.focus = false; this.invalidate(this.focused, false); }
     this.focused = n;

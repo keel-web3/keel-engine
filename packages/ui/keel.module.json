@@ -15,7 +15,9 @@
     "external": [
       "@keel-engine/codec/runtime",
       "@keel-engine/codec/schemas/common",
-      "@keel-engine/core"
+      "@keel-engine/core",
+      "@keel-engine/core/color",
+      "@keel-engine/core/storage"
     ]
   }
 }

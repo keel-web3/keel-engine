@@ -9,11 +9,11 @@ import { seedText } from "@keel-engine/codec/schemas/common";
 //   keel/ui/screen       a layout document: the node tree, its ids/tones/icons through shared tables
 
 import { SCREEN_IDS } from "@keel-engine/core";
-import { alt, array, bool, enumOf, extend, fixed, named, num, optional, planes, recursive, ref, string, struct, tuple, uint, varint, varuint } from "@keel-engine/codec/runtime";
+import { alt, array, bool, enumOf, extend, fixed, named, num, optional, planes, recursive, ref, registerSchema, string, struct, tuple, uint, varint, varuint } from "@keel-engine/codec/runtime";
 import type { Infer, Type } from "@keel-engine/codec/runtime";
 import { FRAME_KINDS } from "./frames.ts";
 import { SERIFS, SOFTS, ZEROS } from "./genfont.ts";
-import { ANCHORS, WIDGETS } from "./node.ts";
+import { ANCHORS, DRIVING_KINDS, DRIVING_VARIANTS, WIDGETS } from "./node.ts";
 import { CORNERS, CULTURES, FILLS, ICON_STYLES, MOTIONS, TONES } from "./theme.ts";
 import type { NodeDoc } from "./doc.ts";
 
@@ -97,8 +97,9 @@ const size = alt([varint(), ref("sizes")]);
 const u = () => optional(varuint());
 
 /** A layout document's node: every prop optional, children recursive. */
-export const UI_NODE: Type<NodeDoc> = recursive<NodeDoc>((self) => extend(struct({
-  type: enumOf(WIDGETS, { capacity: 64 }),
+function nodeSchema(driving: boolean): Type<NodeDoc> { return recursive<NodeDoc>((self) => {
+  const legacy = extend(struct({
+  type: enumOf(driving ? WIDGETS : WIDGETS.slice(0, -1), { capacity: 64 }),
   id: optional(ref("ids")),
   anchor: optional(enumOf(ANCHORS, { capacity: 16 })),
   x: optional(varint()),
@@ -152,10 +153,27 @@ export const UI_NODE: Type<NodeDoc> = recursive<NodeDoc>((self) => extend(struct
   reflow: optional(bool()),
   iconFill: optional(bool()),
   hp: optional(num()),
-}) as unknown as Type<NodeDoc>);
+});
+  return (driving ? extend(legacy, {
+  // A separate extension group keeps the original group's field bitmap unchanged.
+  drivingKind: optional(enumOf(DRIVING_KINDS, { capacity: 16 })),
+  drivingVariant: optional(enumOf(DRIVING_VARIANTS, { capacity: 4 })),
+  secondaryValue: optional(num()),
+  secondaryMax: optional(num()),
+  drivingRedline: optional(num()),
+}) : legacy) as unknown as Type<NodeDoc>;
+}); }
 
-export const UI_SCREEN = named("keel/ui/screen", struct({
+export const UI_NODE: Type<NodeDoc> = nodeSchema(true);
+const LEGACY_UI_NODE = nodeSchema(false);
+
+const screenSchema = (root: Type<NodeDoc>, version: number) => named("keel/ui/screen", struct({
   screen: string(),
   theme: optional(struct({ generator: ref("modules"), seed: seedText, culture: enumOf(CULTURES, { capacity: 16 }), pins: THEME_PINS }, { open: true })),
-  root: UI_NODE,
-}, { open: true }), { doc: "A UI screen: its layout tree (and the theme recipe it was made with)." });
+  root,
+}, { open: true }), { version, doc: "A UI screen: its layout tree (and the theme recipe it was made with)." });
+/** The original schema is retained in the module's schema inventory for stored id-header documents. */
+export const UI_SCREEN_V1 = screenSchema(LEGACY_UI_NODE, 1);
+export const UI_SCREEN = screenSchema(UI_NODE, 2);
+registerSchema(UI_SCREEN_V1);
+registerSchema(UI_SCREEN);
