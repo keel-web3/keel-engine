@@ -33,7 +33,8 @@ export function hitFace(X: number, Y: number): Hit {
 export interface KeyMotion { readonly travel: number; readonly squash: number }
 export type KeyState = Partial<Record<KeyId, KeyMotion>>;
 
-const DPAD_TILT = (4.2 * Math.PI) / 180;
+// (The rock keeps the pressed arm tip's travel, about 0.82 mm, now that the arms are shorter: 4.2 deg at a 22.4 mm span.)
+const DPAD_TILT = Math.asin((11.2 * Math.sin((4.2 * Math.PI) / 180)) / (MM.dpad.span / 2));
 
 /** The transform (plan mm) that moves a key part for the current presses. */
 export function keyTransform(part: "dpad" | "a" | "b" | "select" | "start", keys: KeyState): Mat4 {

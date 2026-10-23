@@ -16,7 +16,8 @@ export const MM = {
   brand: { x: 38, y: 9.45, cap: 1.9 },
   wordmark: { x0: 6.4, y: 70.6, cap: 2.1, x1: 27.2 },
   bars: { x0: 30.2, pitch: 3.42, w: 2.0, first: 1.0, n: 11, h: 2.1, rise: [0, 0, 0, 0, 0, 0, 0, 0.6, 1.5, 2.7, 4.3] as const },
-  dpad: { x: 17.9, y: 89.6, span: 22.4, arm: 7.3, top: 2.1, bevel: 0.9, ro: 1.1, ri: 0.9, well: 0.7 },
+  // (Arms shortened, owner 2026-10-22: each reaches 6.25 mm past the centre square, less than its 7.3 mm width.)
+  dpad: { x: 17.9, y: 89.6, span: 19.8, arm: 7.3, top: 2.1, bevel: 0.9, ro: 1.1, ri: 0.9, well: 0.7 },
   a: { x: 64.6, y: 86.2, r: 4.75, top: 2.4, well: 0.75 },
   b: { x: 50.4, y: 92.6, r: 4.75, top: 2.4, well: 0.75 },
   labelA: { x: 68.4, y: 94.6 },
