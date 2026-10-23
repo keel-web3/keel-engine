@@ -1,4 +1,4 @@
-import test from'node:test';import assert from'node:assert/strict';import{createCapture}from'/Users/ravonus/dev/keel-engine/packages/capture/src/capture.ts';
+import test from'node:test';import assert from'node:assert/strict';import{createCapture}from'../src/capture.ts';
 function setup(){const saved=new Map(['MediaRecorder','MediaStream','requestAnimationFrame'].map(k=>[k,(globalThis as any)[k]]));const video={kind:'video',stopped:false,stop(){this.stopped=true;}},audio={kind:'audio'};let recorded:any;
  class Stream{tracks:any[];constructor(tracks:any[]){this.tracks=tracks;}getTracks(){return this.tracks;}getVideoTracks(){return this.tracks.filter(t=>t.kind==='video');}getAudioTracks(){return this.tracks.filter(t=>t.kind==='audio');}}
  class Recorder{static isTypeSupported(t:string){return t==='video/mp4';}state='inactive';mimeType='video/mp4;codecs=avc1,mp4a.40.2';ondataavailable:any;onstop:any;onerror:any;constructor(stream:any){recorded=stream;}start(){this.state='recording';}stop(){this.state='inactive';this.ondataavailable?.({data:new Blob(['ftyp'])});this.onstop?.();}}
