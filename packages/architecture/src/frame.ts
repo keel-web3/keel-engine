@@ -5,7 +5,7 @@
 
 import { dcos, dsin } from "@keel-engine/core";
 import type { Draws, Lot, LotFront, Obb } from "@keel-engine/city";
-import type { AdSlotSpec, AnchorSpot, LightSpot, Lod, PlantKind, PlantSpot, PropSpot, Solid, WaterSpec, ParkedVehicle, ParkingBay, GarageSurface, BuildingWalk } from "./types.ts";
+import type { AdSlotSpec, AnchorSpot, LightSpot, Lod, PlantKind, PlantSpot, PropSpot, Solid, WaterSpec, ParkedVehicle, ParkingBay, GarageSurface, BuildingWalk, BuildingActivityArea } from "./types.ts";
 import type { CommonsSite } from "./zoning.ts";
 import { layerOf, slotIndex } from "./slots.ts";
 import type { AnySlot, SlotName } from "./slots.ts";
@@ -40,6 +40,9 @@ export interface Placer {
 }
 
 export interface Build extends Placer {
+  /** Versioned construction recipe; omitted is the archived heading-marker recipe. */
+  readonly activityAreasEnabled?: boolean;
+  readonly activityAreas: BuildingActivityArea[];
   readonly walks: BuildingWalk[];
   readonly surfaces: GarageSurface[];
   readonly barriers: (Obb & { yMin: number; yMax: number })[];
@@ -71,8 +74,8 @@ export interface Build extends Placer {
   readonly commons?: CommonsSite;
 }
 
-export function createBuild(init: Omit<Build, "masses" | "solids" | "top" | "lights" | "props" | "plants" | "ads" | "water" | "anchors" | "vehicles" | "parking" | "doors" | "surfaces" | "barriers" | "walks">): Build {
-  return { ...init, walks: [], surfaces: [], barriers: [], doors: [], vehicles: [], parking: [], masses: [], solids: [], top: 0, lights: [], props: [], plants: [], ads: [], water: [], anchors: [] };
+export function createBuild(init: Omit<Build, "masses" | "solids" | "top" | "lights" | "props" | "plants" | "ads" | "water" | "anchors" | "vehicles" | "parking" | "doors" | "surfaces" | "barriers" | "walks" | "activityAreas">): Build {
+  return { ...init, walks: [], activityAreas: [], surfaces: [], barriers: [], doors: [], vehicles: [], parking: [], masses: [], solids: [], top: 0, lights: [], props: [], plants: [], ads: [], water: [], anchors: [] };
 }
 
 const RANK: Readonly<Record<LotFront["cls"], number>> = { highway: 3, arterial: 2, street: 1, alley: 0, ramp: 3, freeway: 4 };

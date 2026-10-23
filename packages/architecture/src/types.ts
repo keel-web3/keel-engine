@@ -202,8 +202,17 @@ export interface BuildingWalk {
   readonly activity?: "fitness" | "play";
   readonly y?: number;
 }
+/** A cleared activity region. Heading is orientation, never a one-centimetre
+ * navigation edge. Access carries a checked centre path for a walking body. */
+export interface BuildingActivityArea {
+  readonly version: 1; readonly key: string; readonly kind: "fitness" | "play";
+  readonly center: readonly [number, number]; readonly y: number; readonly heading: number;
+  readonly radius: number; readonly bodyRadius: number;
+  readonly access: {readonly walk: string; readonly path: readonly (readonly [number, number])[]};
+}
 export interface BuildingApproach { readonly x: number; readonly z: number; readonly fx: number; readonly fz: number; readonly length: number; readonly halfWidth: number }
 export interface BuildingPlan {
+  readonly activityAreas?: readonly BuildingActivityArea[];
   readonly walks?: readonly BuildingWalk[];
   readonly approaches?: readonly BuildingApproach[];
   readonly surfaces?: readonly GarageSurface[];

@@ -81,6 +81,7 @@ export function park(b: Build, op: Extract<MassOp, { op: "park" }>): void {
     const r = b.D.u("under", k);
     addPlant(b, r < 0.2 ? "bush" : r < 0.3 ? "hedge" : r < 0.55 ? "flowers" : "grass", x, 0.08, z, 0.8 + 0.4 * b.D.u("underS", k), Math.floor(b.D.u("underSeed", k) * 1e6));
   }
+  const activities=()=>{
   // Clear lawn quadrants host a few genuine park activities, never the centre art or its paths.
   let activity = 0;
   for (let attempt = 0; attempt < 12 && activity < 2; attempt++) {
@@ -88,10 +89,15 @@ export function park(b: Build, op: Extract<MassOp, { op: "park" }>): void {
     if (Math.abs(x-s.x)<pw+2 || Math.abs(z-s.z)<pw+2 || Math.hypot(x-s.x,z-s.z)<clear+3) continue;
     if (parkActivity(b,x,z,activity)) activity++;
   }
+  };
+  if(!b.activityAreasEnabled)activities();
   // A bench facing a path, a lantern at the far end of the other.
   bench(subPlacer(b, s.x + pw + 1, s.z + s.hd * 0.5, -Math.PI / 2));
   prop(b, "bench", s.x + pw + 1, s.z + s.hd * 0.5, 1, true);
   lampAt(b, s.x - pw - 0.6, s.z - s.hd + 1.5, LANTERN);
+  if(b.activityAreasEnabled)activities();
+
+
 }
 
 export function plaza(b: Build, op: Extract<MassOp, { op: "plaza" }>): void {

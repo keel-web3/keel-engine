@@ -114,7 +114,7 @@ function envelope(a: Archetype, f: Frame): Build["site"] {
  * The plan for a lot's building. With the city's height (keel/city cityHeight) it stands on its lot's pad, a plinth
  * stepping down to the land where it falls away; without, on flat ground at 0.
  */
-export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityHeight, options: {readonly residentAccessOnly?: boolean} = {}): BuildingPlan {
+export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityHeight, options: {readonly residentAccessOnly?: boolean;readonly activityAreas?:boolean} = {}): BuildingPlan {
   const D = drawsOf(city, lot), empty = { key: lot.key, archetype: "none", condition: "pristine" as Condition, wall: "concreteLight" as SlotName, solids: [], footprint: [], height: 0 };
   if (lot.height[1] <= 0) return empty;
   const z = zoningOf(cat, city), commons = z.commons.get(lot.block), common = commons ? cat.archetypes.find((x) => x.id === cat.commons?.archetype) : undefined;
@@ -158,6 +158,7 @@ export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityH
   const hues = district?.hues.length ?? 1;
   const b = createBuild({
     ...(options.residentAccessOnly ? {emitSolids:false} : {}),
+    ...(options.activityAreas?{activityAreasEnabled:true}:{}),
     key: lot.key, D, frame: f, site, bay: within(D, "bay", facade.bay), storey, groundH: within(D, "groundH", facade.groundH),
     storeys, height: Math.max(storey, storeys * storey), wall, derelict: condition === "derelict",
     neon: NEON_SLOTS[count(D, "neon", [0, Math.min(3, hues - 1)])]!,
@@ -202,5 +203,5 @@ export function planLot(cat: Catalogue, city: CityLike, lot: Lot, height?: CityH
     const [x, , z] = toWorld(b, (x0 + x1) / 2, 0, (z0 + z1) / 2);
     footprint.push({ x, z, hw: (x1 - x0) / 2, hd: (z1 - z0) / 2, yaw: f.yaw });
   }
-  return { key: lot.key, archetype: a.id, condition, wall, solids: b.solids, walks: b.walks, surfaces: b.surfaces, barriers: b.barriers, doors: b.doors, vehicles: b.vehicles, parking: b.parking, footprint, height: b.top, ...(height ? { base, foot } : {}), ...(door ? { door } : {}), lights: b.lights, props: b.props, plants: b.plants, ads: b.ads, ...(b.water.length ? { water: b.water } : {}), ...(b.anchors.length ? { anchors: b.anchors } : {}) };
+  return { key: lot.key, archetype: a.id, condition, wall, solids: b.solids, walks: b.walks, ...(b.activityAreasEnabled?{activityAreas:b.activityAreas}:{}), surfaces: b.surfaces, barriers: b.barriers, doors: b.doors, vehicles: b.vehicles, parking: b.parking, footprint, height: b.top, ...(height ? { base, foot } : {}), ...(door ? { door } : {}), lights: b.lights, props: b.props, plants: b.plants, ads: b.ads, ...(b.water.length ? { water: b.water } : {}), ...(b.anchors.length ? { anchors: b.anchors } : {}) };
 }
