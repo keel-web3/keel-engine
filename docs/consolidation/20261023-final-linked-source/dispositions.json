@@ -1,0 +1,11 @@
+[
+  {
+    "path": "/Users/ravonus/dev/wt/relsrc/keel-engine",
+    "base": "b17c4506b387cea50336ed7b3113115585b3adcb",
+    "checkpoint": "a16e345f79f785d822fa06546f24d88f00e7ff9a",
+    "sourceFiles": [],
+    "backup": "/Users/ravonus/Documents/Codex/2026-10-22/task/backups/fresh-dirty-source/17e7783d7ad8",
+    "disposition": "Original branch already integrated. Exact dirty-source checkpoint and patch retained inactive; qualified current implementation remains selected. Generated runtime artifacts remain independently backed outside Git.",
+    "runtimeChange": false
+  }
+]
