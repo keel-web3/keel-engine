@@ -4,6 +4,7 @@ import { locate, pointAt } from "@keel-engine/road";
 import { frameOf, mainFront } from "./frame.ts";
 import { SLOT } from "./slots.ts";
 import type { BuildingPlan, BuildingApproach, GarageSurface, Solid } from "./types.ts";
+import { dhypot } from "@keel-engine/core/dmath";
 
 /** Join every garage/lot entrance to its own frontage, retaining a smooth supported apron across the sidewalk. */
 export function withApproaches(plan: BuildingPlan, city: City, lot: Lot, height?: CityHeight, options: {readonly residentAccessOnly?: boolean} = {}): BuildingPlan {
@@ -36,7 +37,7 @@ export function withApproaches(plan: BuildingPlan, city: City, lot: Lot, height?
       road = pointAt(edge.path, q.s, Math.sign(q.d || 1) * (edge.half - 0.1));
     const dx = first[0] - road.x,
       dz = first[1] - road.z,
-      length = Math.hypot(dx, dz);
+      length = dhypot(dx, dz);
     if (length < 0.1 || length > 120 || q.s < edge.half + 7 || q.s > edge.path.length - edge.half - 8) continue;
     const back = height?.roadAt(edge.id, q.s) ?? 0,
       front = first[2] ?? height?.heightAt(first[0], first[1]) ?? 0;

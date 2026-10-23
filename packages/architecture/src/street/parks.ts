@@ -13,6 +13,7 @@ import { groundCover } from "./ground-cover.ts";
 import { parkActivity } from "./park-activity.ts";
 import { art } from "./art.ts";
 import { bench, furniture, lamp, tree } from "./furniture.ts";
+import { dhypot } from "@keel-engine/core/dmath";
 
 const LANTERN: LampStyle = { kind: "lantern", height: 3.6, arm: 0, heads: 1, head: "lampWarm", reach: 10 };
 const LED_POLE: LampStyle = { kind: "arm", height: 6, arm: 0.6, heads: 1, head: "lampCool", reach: 12 };
@@ -55,7 +56,7 @@ export function park(b: Build, op: Extract<MassOp, { op: "park" }>): void {
     }
   }
 
-  groundCover(b, s, (x, z, r) => Math.abs(x - s.x) > pw + r && Math.abs(z - s.z) > pw + r && Math.hypot(x - s.x, z - s.z) > clear + pw + r);
+  groundCover(b, s, (x, z, r) => Math.abs(x - s.x) > pw + r && Math.abs(z - s.z) > pw + r && dhypot(x - s.x, z - s.z) > clear + pw + r);
   for (let k = 0; k < 12; k++) {
     const side = k % 2 ? 1 : -1, along = b.D.flat("verge", k), length = .4 + b.D.u("vergeL", k) * 1.2;
     const horizontal = k < 6, x = horizontal ? s.x + along * (s.hw - length) : s.x + side * (pw + .06), z = horizontal ? s.z + side * (pw + .06) : s.z + along * (s.hd - length);
@@ -85,7 +86,7 @@ export function park(b: Build, op: Extract<MassOp, { op: "park" }>): void {
   let activity = 0;
   for (let attempt = 0; attempt < 12 && activity < 2; attempt++) {
     const x = s.x+b.D.flat("parkActiveX",attempt)*(s.hw-3), z = s.z+b.D.flat("parkActiveZ",attempt)*(s.hd-3);
-    if (Math.abs(x-s.x)<pw+2 || Math.abs(z-s.z)<pw+2 || Math.hypot(x-s.x,z-s.z)<clear+3) continue;
+    if (Math.abs(x-s.x)<pw+2 || Math.abs(z-s.z)<pw+2 || dhypot(x-s.x,z-s.z)<clear+3) continue;
     if (parkActivity(b,x,z,activity)) activity++;
   }
   // A bench facing a path, a lantern at the far end of the other.

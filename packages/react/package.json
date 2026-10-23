@@ -32,6 +32,7 @@
     "node": ">=22.18"
   },
   "devDependencies": {
+    "@keel-engine/bake": "workspace:*",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "@types/react": "19.2.17",

@@ -43,7 +43,9 @@
   "imports": {
     "@keel-engine/codec/runtime": "keel/codec",
     "@keel-engine/codec/schemas/common": "keel/codec",
-    "@keel-engine/core": "keel/core"
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/core/color": "keel/core",
+    "@keel-engine/core/storage": "keel/core"
   },
   "manifests": {}
 }

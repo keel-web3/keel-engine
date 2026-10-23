@@ -209,10 +209,20 @@ importers:
       '@keel-engine/runtime':
         specifier: workspace:*
         version: link:../runtime
-
       mediabunny:
         specifier: 1.61.3
         version: 1.61.3
+
+  packages/chromatic:
+    devDependencies:
+      '@types/react':
+        specifier: 19.2.17
+        version: 19.2.17
+      react:
+        specifier: 19.2.8
+        version: 19.2.8
+
+  packages/chromatic-wireless: {}
 
   packages/city:
     dependencies:
@@ -313,6 +323,15 @@ importers:
       '@keel-engine/scene':
         specifier: workspace:*
         version: link:../scene
+
+  packages/handheld:
+    dependencies:
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      '@keel-engine/studio':
+        specifier: workspace:*
+        version: link:../studio
 
   packages/import:
     dependencies:
@@ -500,6 +519,9 @@ importers:
         specifier: workspace:*
         version: link:../ui
     devDependencies:
+      '@keel-engine/bake':
+        specifier: workspace:*
+        version: link:../bake
       '@types/react':
         specifier: 19.2.17
         version: 19.2.17
@@ -550,6 +572,12 @@ importers:
       '@keel-engine/core':
         specifier: workspace:*
         version: link:../core
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
+  packages/studio:
+    dependencies:
       '@keel-engine/runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -883,15 +911,6 @@ importers:
 
 packages:
 
-  mediabunny@1.61.3:
-    resolution: {integrity: sha512-kUqLKVXQVwHR62GkOJxYosAmXERJbqnXBgJDTtRlxHEYviVkMg/Evhl9XN6kedqS5LP1tV4kFKyzY/V4a4ofow==}
-
-  '@types/dom-webcodecs@0.1.13':
-    resolution: {integrity: sha512-O5hkiFIcjjszPIYyUSyvScyvrBoV3NOEEZx/pMlsu44TKzWNkLVBBxnxJz42in5n3QIolYOcBYFCPZZ0h8SkwQ==}
-
-  '@types/dom-mediacapture-transform@0.1.12':
-    resolution: {integrity: sha512-d7/QsLRwF864A5mgIM/YrfiglHoYn7zgCcAoJgW404r+2DwnNr7EBbLnCWpmOMgH8y0te73L1AV6H1bmauaWFw==}
-
   '@esbuild/aix-ppc64@0.25.12':
     resolution: {integrity: sha512-Hhmwd6CInZ3dwpuGTF8fJG6yoWmsToE+vYgD4nytZVxcu1ulHpUQRAB1UJ8+N1Am3Mz4+xOByoQoSZf4D+CpkA==}
     engines: {node: '>=18'}
@@ -1048,6 +1067,12 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@types/dom-mediacapture-transform@0.1.12':
+    resolution: {integrity: sha512-d7/QsLRwF864A5mgIM/YrfiglHoYn7zgCcAoJgW404r+2DwnNr7EBbLnCWpmOMgH8y0te73L1AV6H1bmauaWFw==}
+
+  '@types/dom-webcodecs@0.1.13':
+    resolution: {integrity: sha512-O5hkiFIcjjszPIYyUSyvScyvrBoV3NOEEZx/pMlsu44TKzWNkLVBBxnxJz42in5n3QIolYOcBYFCPZZ0h8SkwQ==}
+
   '@types/node@22.20.2':
     resolution: {integrity: sha512-xlvWf4Vs9n1PEVYwP1n4vvG07M6y8WgvJ2t0vbrWTmijsIHp1cS+uJ2kMIRdY3nHZK0nCYKrPeD171+SzF4/zw==}
 
@@ -1099,6 +1124,9 @@ packages:
   jpeg-js@0.4.4:
     resolution: {integrity: sha512-WZzeDOEtTOBK4Mdsar0IqEU5sMr3vSV2RqkAIzUEV2BHnUfKGyswWFPFwK5EeDo93K3FohSHbLAjj0s1Wzd+dg==}
 
+  mediabunny@1.61.3:
+    resolution: {integrity: sha512-kUqLKVXQVwHR62GkOJxYosAmXERJbqnXBgJDTtRlxHEYviVkMg/Evhl9XN6kedqS5LP1tV4kFKyzY/V4a4ofow==}
+
   meshoptimizer@0.25.0:
     resolution: {integrity: sha512-ewwuAo3ujPZ7T3Y2oTkEoLlXvNOqnr0cjyAxfv5djXJqwD9QlxDDO0qGtsqB4Z9QUVvhruKXg9q/xfK9I5S1xQ==}
 
@@ -1136,17 +1164,6 @@ packages:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
 snapshots:
-
-  mediabunny@1.61.3:
-    dependencies:
-      '@types/dom-mediacapture-transform': 0.1.12
-      '@types/dom-webcodecs': 0.1.13
-
-  '@types/dom-webcodecs@0.1.13': {}
-
-  '@types/dom-mediacapture-transform@0.1.12':
-    dependencies:
-      '@types/dom-webcodecs': 0.1.13
 
   '@esbuild/aix-ppc64@0.25.12':
     optional: true
@@ -1226,6 +1243,12 @@ snapshots:
   '@esbuild/win32-x64@0.25.12':
     optional: true
 
+  '@types/dom-mediacapture-transform@0.1.12':
+    dependencies:
+      '@types/dom-webcodecs': 0.1.13
+
+  '@types/dom-webcodecs@0.1.13': {}
+
   '@types/node@22.20.2':
     dependencies:
       undici-types: 6.21.0
@@ -1296,6 +1319,11 @@ snapshots:
   iobuffer@5.4.0: {}
 
   jpeg-js@0.4.4: {}
+
+  mediabunny@1.61.3:
+    dependencies:
+      '@types/dom-mediacapture-transform': 0.1.12
+      '@types/dom-webcodecs': 0.1.13
 
   meshoptimizer@0.25.0: {}
 

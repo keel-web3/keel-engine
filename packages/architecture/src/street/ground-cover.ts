@@ -1,13 +1,14 @@
 import { dcos, dsin } from "@keel-engine/core";
 import { addBox, addCapsule, addPlant } from "../frame.ts";
 import type { Build } from "../frame.ts";
+import { dhypot } from "@keel-engine/core/dmath";
 /** Seeded, bounded turf: broad tonal patches at distance, low mounds and blades up close.
  * Uses the existing district materials and plant atlas, never a texture per lot.
  * Every placement obeys the same path/water/furniture clearance as the grass. */
 export function groundCover(b: Build, s: { x: number; z: number; hw: number; hd: number }, clear: (x: number, z: number, radius: number) => boolean): void {
   const count = Math.min(24, Math.max(8, Math.round(s.hw * s.hd / 45)));
   for (let k = 0; k < count; k++) {
-    const hw = .5 + b.D.u("turfW", k) * 1.5, hd = .5 + b.D.u("turfD", k) * 2.1, r = Math.hypot(hw, hd);
+    const hw = .5 + b.D.u("turfW", k) * 1.5, hd = .5 + b.D.u("turfD", k) * 2.1, r = dhypot(hw, hd);
     if (r >= s.hw || r >= s.hd) continue;
     const x = s.x + b.D.flat("turfX", k) * (s.hw - r), z = s.z + b.D.flat("turfZ", k) * (s.hd - r);
     if (!clear(x, z, r)) continue;

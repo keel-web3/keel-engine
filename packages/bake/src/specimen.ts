@@ -8,6 +8,7 @@ import { matterFrame } from './specimen-matter.ts';
 import {specimenParts} from './primitive-patterns.ts';
 import {specimenAtDetail,emitterSlots} from './specimen-detail.ts';
 import {SPECIMEN_MOTION_FRAMES as MOTION_FRAMES,SPECIMEN_DETAIL_MAX,type SpecimenDetail,type SpecimenProgram as ObjectProgram,type SpecimenV3 as V3,type SpecimenPart as Part,type SpecimenPoseKey as PoseKey,type SpecimenEmitter as Emitter} from './specimen-types.ts';
+import { dcos, dsin } from '@keel-engine/core/dmath';
 const wrap=(n:number)=>((n%MOTION_FRAMES)+MOTION_FRAMES)%MOTION_FRAMES;
 const cached=new WeakMap<ObjectProgram,Map<string,CompiledObject>>();
 /** Each frame's mesh also carries `parts`: the specimen part index of every vertex (1000+ for dynamic matter), so a
@@ -87,7 +88,7 @@ export function compileObject(source:ObjectProgram,seed:string,detail:SpecimenDe
  // One camera for every phase and every direction. Animated geometry never auto-centres or zooms.
  const all=[...meshes.flatMap(m=>Array.from(m.positions)),...matterBounds];for(const frame of particles)for(const p of frame)for(const sign of [-1,1])all.push(p.p[0]+sign*p.size,p.p[1]+sign*p.size,p.p[2]+sign*p.size);
  const bounds=meshBounds(new Float32Array(all)),center=[(bounds[0]+bounds[3])/2,(bounds[1]+bounds[4])/2,(bounds[2]+bounds[5])/2];let radius=.05;
- for(let angle=0;angle<16;angle++){const c=Math.cos(angle*Math.PI/8),s=Math.sin(angle*Math.PI/8);for(let i=0;i<all.length;i+=3){const x=all[i]!-center[0]!,y=all[i+1]!-center[1]!,z=all[i+2]!-center[2]!;radius=Math.max(radius,Math.abs(x*c+z*s),Math.abs(y*.98-(-x*s+z*c)*.2));}}
+ for(let angle=0;angle<16;angle++){const c=dcos(angle*Math.PI/8),s=dsin(angle*Math.PI/8);for(let i=0;i<all.length;i+=3){const x=all[i]!-center[0]!,y=all[i+1]!-center[1]!,z=all[i+2]!-center[2]!;radius=Math.max(radius,Math.abs(x*c+z*s),Math.abs(y*.98-(-x*s+z*c)*.2));}}
  const compiled={meshes,particles,center,radius,skeletons,volumes};if(map.size>=4)map.delete(map.keys().next().value!);map.set(key,compiled);return compiled;
 }
 export const posedMesh=(program:ObjectProgram,seed:string,phase:number,detail:SpecimenDetail=SPECIMEN_DETAIL_MAX)=>compileObject(program,seed,detail).meshes[wrap(phase)]!;

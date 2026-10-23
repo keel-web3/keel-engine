@@ -7,6 +7,7 @@ import { createParticles,type Recipe } from '@keel-engine/particles/basic';
 import { curlNoise } from '@keel-engine/core/curl';
 import { stream,createRoll,normalizeSeed } from '@keel-engine/core/rng';
 import type {SpecimenDynamic as DynamicMatter,SpecimenV3 as V3} from './specimen-types.ts';
+import { datan2, dcos, dexp, dhypot, dsin } from '@keel-engine/core/dmath';
 export interface MatterFrame {meshes:LookMesh[];volumes:VolumeInstances;points:V3[]}
 const add=(a:readonly number[],b:readonly number[]):V3=>[a[0]!+b[0]!,a[1]!+b[1]!,a[2]!+b[2]!];
 export function matterFrame(node:DynamicMatter,seed:string,time:number,period:number):MatterFrame {
@@ -17,10 +18,10 @@ export function matterFrame(node:DynamicMatter,seed:string,time:number,period:nu
   const sample=(u:number):V3=>{const at=Math.min(path.length-1.000001,Math.max(0,u)*(path.length-1)),i=Math.floor(at),f=at-i;return path[i]!.map((v,k)=>v+(path[i+1]![k]!-v)*f) as V3;};
   const capsules:Array<{a:V3;b:V3;r:number;mat:number}>=[];
   // Continuous downhill channel with advected bulges, rather than falling water.
-  for(let i=0;i<20;i++){const u=i/20,q=(u-phase)*Math.PI*4,r=.075+.016*Math.sin(q);capsules.push({a:world(sample(u)),b:world(sample((i+1)/20)),r:r*s,mat});}
+  for(let i=0;i<20;i++){const u=i/20,q=(u-phase)*Math.PI*4,r=.075+.016*dsin(q);capsules.push({a:world(sample(u)),b:world(sample((i+1)/20)),r:r*s,mat});}
   meshes.push(lookMesh({boxes:[],capsules},{around:8,rings:2}));
   const plates:Array<{c:V3;h:V3;yaw:number;lo:number;mat:number}>=[],seams:Array<{a:V3;b:V3;r:number;mat:number}>=[];
-  for(let i=0;i<7;i++){const u=(i/7+phase)%1,fade=Math.sin(Math.PI*u),p=sample(u),next=sample(Math.min(1,u+.07)),yaw=Math.atan2(next[0]-p[0],next[2]-p[2]);
+  for(let i=0;i<7;i++){const u=(i/7+phase)%1,fade=dsin(Math.PI*u),p=sample(u),next=sample(Math.min(1,u+.07)),yaw=datan2(next[0]-p[0],next[2]-p[2]);
    if(node.flow==='molten')plates.push({c:world([p[0],p[1]+.047,p[2]]),h:[.052*s*fade,.013*s*fade,.083*s*fade],yaw,lo:0,mat:mat+1});
    seams.push({a:world([p[0]-.025,p[1]+.058,p[2]]),b:world([next[0]-.025,next[1]+.058,next[2]]),r:Math.max(.001,.012*s*fade),mat:mat+2});
   }
@@ -33,16 +34,16 @@ export function matterFrame(node:DynamicMatter,seed:string,time:number,period:nu
   for(let i=0;i<pool.positions.length;i+=3){const upper=pool.positions[i+1]!>=center[1];pool.positions[i+1]=center[1]+(pool.positions[i+1]!-center[1])*.14;if(upper){pool.normals[i]=0;pool.normals[i+1]=1;pool.normals[i+2]=0;}}
   meshes.push(pool);
   // pour: bulges travel down to the pool; jet: up from the vent, and the spray falls back from the top.
-  const up=node.flow==='jet'?-1:1,n=12;for(let i=0;i<n;i++){const u=i/n,v=(i+1)/n,y=(t:number)=>top+(.05-top)*t,bulge=(t:number)=>.075+.025*Math.sin((t*3-up*phase)*Math.PI*2)*(node.flow==='jet'?.6+.4*t:1),xs=(t:number)=>x0*(1-t);capsules.push({a:world([xs(u),y(u),z0*(1-u)]),b:world([xs(v),y(v),z0*(1-v)]),r:bulge((u+v)/2)*s,mat});}
-  if(node.flow==='jet')for(let k=0;k<8;k++){const age=((phase+k/8)%1)*period,a=k*2.4,m:number[]=[];motionAt([x0,top,z0],[Math.cos(a)*.3,.25,Math.sin(a)*.3],[0,0,0],0,0,1.6,age*.6,10,m);if(m[1]!<.05)continue;const p=world([m[0]!,m[1]!,m[2]!]),f=1-age/period;capsules.push({a:p,b:p,r:Math.max(.012,.04*f)*s,mat:mat+2});}
+  const up=node.flow==='jet'?-1:1,n=12;for(let i=0;i<n;i++){const u=i/n,v=(i+1)/n,y=(t:number)=>top+(.05-top)*t,bulge=(t:number)=>.075+.025*dsin((t*3-up*phase)*Math.PI*2)*(node.flow==='jet'?.6+.4*t:1),xs=(t:number)=>x0*(1-t);capsules.push({a:world([xs(u),y(u),z0*(1-u)]),b:world([xs(v),y(v),z0*(1-v)]),r:bulge((u+v)/2)*s,mat});}
+  if(node.flow==='jet')for(let k=0;k<8;k++){const age=((phase+k/8)%1)*period,a=k*2.4,m:number[]=[];motionAt([x0,top,z0],[dcos(a)*.3,.25,dsin(a)*.3],[0,0,0],0,0,1.6,age*.6,10,m);if(m[1]!<.05)continue;const p=world([m[0]!,m[1]!,m[2]!]),f=1-age/period;capsules.push({a:p,b:p,r:Math.max(.012,.04*f)*s,mat:mat+2});}
   for(let crown=0;crown<2;crown++){const age=((phase+crown*.5)%1)*period*.5,u=age/(period*.5);
-   for(let k=0;k<5;k++){const a=k*Math.PI*2/5+crown*.6,m:number[]=[];motionAt([0,.03,0],[Math.cos(a)*.38,.55,Math.sin(a)*.38],[0,0,0],0,0,2.2,age,10,m);if(m[1]!<.03)continue;const p=world([m[0]!,m[1]!,m[2]!]);capsules.push({a:p,b:p,r:Math.max(.012,.03*(1-u))*s,mat:mat+2});}
-   const ring=.1+u*.34;for(let k=0;k<14;k++){const a=k*Math.PI/7,b=(k+1)*Math.PI/7;capsules.push({a:world([Math.cos(a)*ring,.04,Math.sin(a)*ring]),b:world([Math.cos(b)*ring,.04,Math.sin(b)*ring]),r:.016*s*(1-u*.6),mat:mat+2});}}
+   for(let k=0;k<5;k++){const a=k*Math.PI*2/5+crown*.6,m:number[]=[];motionAt([0,.03,0],[dcos(a)*.38,.55,dsin(a)*.38],[0,0,0],0,0,2.2,age,10,m);if(m[1]!<.03)continue;const p=world([m[0]!,m[1]!,m[2]!]);capsules.push({a:p,b:p,r:Math.max(.012,.03*(1-u))*s,mat:mat+2});}
+   const ring=.1+u*.34;for(let k=0;k<14;k++){const a=k*Math.PI/7,b=(k+1)*Math.PI/7;capsules.push({a:world([dcos(a)*ring,.04,dsin(a)*ring]),b:world([dcos(b)*ring,.04,dsin(b)*ring]),r:.016*s*(1-u*.6),mat:mat+2});}}
   meshes.push(lookMesh({boxes:[],capsules},{around:8,rings:2}));points.push(world([0,top+.1,0]));
  }else if(node.kind==='liquid'&&node.flow==='wave'){
   const phase=time/period,segments:Array<{a:V3;b:V3;r:number;mat:number}>=[];
   for(let row=0;row<5;row++)for(let i=0;i<18;i++){const x=-.55+i/18*1.1,z=-.32+row*.16;
-   const height=(q:number)=>.08+.095*Math.sin((q*1.5-phase)*Math.PI*2)+.02*Math.sin(z*5+phase*Math.PI*2);
+   const height=(q:number)=>.08+.095*dsin((q*1.5-phase)*Math.PI*2)+.02*dsin(z*5+phase*Math.PI*2);
    segments.push({a:world([x,height(x),z]),b:world([x+1.1/18,height(x+1.1/18),z]),r:.082*s,mat:row===2?mat+2:mat});}
   meshes.push(lookMesh({boxes:[],capsules:segments},{around:6,rings:1}));
  }else if(node.kind==='liquid'){
@@ -51,10 +52,10 @@ export function matterFrame(node:DynamicMatter,seed:string,time:number,period:nu
   const age=((dropAge-flight+cycle)%cycle),u=age/cycle;
   // Stationary edge, a physically localized travelling ring on the upper fluid surface.
   const radius=.48*s,center=world([0,0,0]);const pool=lookMesh({boxes:[],capsules:[{a:center,b:center,r:radius,mat}]},{around:24,rings:6});
-  for(let i=0;i<pool.positions.length;i+=3){const x=pool.positions[i]!-center[0],z=pool.positions[i+2]!-center[2],r=Math.hypot(x,z)/s,upper=pool.positions[i+1]!>=center[1],front=.08+u*.48;
-   const q=(r-front)/.065,h=upper?.055*Math.exp(-q*q)*(1-u):0;
+  for(let i=0;i<pool.positions.length;i+=3){const x=pool.positions[i]!-center[0],z=pool.positions[i+2]!-center[2],r=dhypot(x,z)/s,upper=pool.positions[i+1]!>=center[1],front=.08+u*.48;
+   const q=(r-front)/.065,h=upper?.055*dexp(-q*q)*(1-u):0;
    pool.positions[i+1]=center[1]+(pool.positions[i+1]!-center[1])*.12+h*s;
-   if(upper){const dh=-q/.065*.11*Math.exp(-q*q)*(1-u),nx=r>0?-dh*x/(r*s):0,nz=r>0?-dh*z/(r*s):0,n=Math.hypot(nx,1,nz);pool.normals[i]=nx/n;pool.normals[i+1]=1/n;pool.normals[i+2]=nz/n;}
+   if(upper){const dh=-q/.065*.11*dexp(-q*q)*(1-u),nx=r>0?-dh*x/(r*s):0,nz=r>0?-dh*z/(r*s):0,n=dhypot(nx,1,nz);pool.normals[i]=nx/n;pool.normals[i+1]=1/n;pool.normals[i+2]=nz/n;}
   }
   meshes.push(pool);
   const capsules:Array<{a:V3;b:V3;r:number;mat:number}>=[];
@@ -63,11 +64,11 @@ export function matterFrame(node:DynamicMatter,seed:string,time:number,period:nu
   if(dropAge<flight){const birth=Math.min(1,dropAge/(cycle*.12)),drop=world([position[0]!,Math.max(.03,position[1]!),position[2]!]),tip=world([0,Math.max(.03,position[1]!)+(.06+dropAge/cycle*.09)*birth,0]);capsules.push({a:drop,b:tip,r:Math.max(.002,.085*birth)*s,mat});}
   // An impact crown breaks into separate droplets, each following its own ballistic arc.
   if(age<.72)for(let k=0;k<6;k++){
-   const a=k*Math.PI/3,m:number[]=[];motionAt([0,.025,0],[Math.cos(a)*.45,.65,Math.sin(a)*.45],[0,0,0],0,0,1.8,age,10,m);
-   if(m[1]!<.025)continue;const p=world([m[0]!,m[1]!,m[2]!]);capsules.push({a:age<.22?world([Math.cos(a)*.045,.02,Math.sin(a)*.045]):p,b:p,r:Math.max(.015,.035*(1-u))*s,mat:mat+2});
+   const a=k*Math.PI/3,m:number[]=[];motionAt([0,.025,0],[dcos(a)*.45,.65,dsin(a)*.45],[0,0,0],0,0,1.8,age,10,m);
+   if(m[1]!<.025)continue;const p=world([m[0]!,m[1]!,m[2]!]);capsules.push({a:age<.22?world([dcos(a)*.045,.02,dsin(a)*.045]):p,b:p,r:Math.max(.015,.035*(1-u))*s,mat:mat+2});
   }
   // White crest of the wave travels away from the impact, rather than moving the whole puddle.
-  const ring=.08+u*.48;if(u<.88)for(let k=0;k<16;k++){const a=k*Math.PI/8,b=(k+1)*Math.PI/8;capsules.push({a:world([Math.cos(a)*ring,.045,Math.sin(a)*ring]),b:world([Math.cos(b)*ring,.045,Math.sin(b)*ring]),r:.018*s*(1-u*.7),mat:mat+2});}
+  const ring=.08+u*.48;if(u<.88)for(let k=0;k<16;k++){const a=k*Math.PI/8,b=(k+1)*Math.PI/8;capsules.push({a:world([dcos(a)*ring,.045,dsin(a)*ring]),b:world([dcos(b)*ring,.045,dsin(b)*ring]),r:.018*s*(1-u*.7),mat:mat+2});}
   meshes.push(lookMesh({boxes:[],capsules},{around:8,rings:2}));
  }else{
   // Each plume is born, advected by KEEL physics, then consumed/expanded by its age.

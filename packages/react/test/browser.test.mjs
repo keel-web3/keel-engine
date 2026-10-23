@@ -21,7 +21,7 @@ import '@keel-engine/react/styles.css';
 const store=createKeelStore(Object.freeze({tick:0})),engine=createEngine();window.starts=0;
 engine.define(defineManifest({id:'test/react',version:'1.0.0',kind:'runtime',needs:[]}),()=>{window.starts++;return {store};});
 const readers=new Map();const probe={register(id,kind,read){readers.set(id,read);return ()=>readers.delete(id);}};window.probe=()=>Object.fromEntries([...readers].map(([id,read])=>[id,read()]));
-const setup=renderer=>{renderer.setPalette([[0,0,0],[64,64,64],[128,128,128],[255,255,255]],{base:[0,4]});renderer.setMaterials([{ramp:'base'}]);renderer.setWorld({boxes:[{c:[0,0,0],h:[1,1,1],mat:0}]});};
+const setup=renderer=>{renderer.setStyle({edges:'crisp'});renderer.setPalette([[0,0,0],[64,64,64],[128,128,128],[255,255,255]],{base:[0,4]});renderer.setMaterials([{ramp:'base'}]);renderer.setWorld({boxes:[{c:[0,0,0],h:[1,1,1],mat:0}]});};
 function App(){const api=useKeelModule('test/react'),state=useKeelStore(store),[scale,setScale]=useState(2);useKeelInspection(probe,'scene','state',()=>state);
 return <KeelTheme recipe={{seed:'test',culture:'clean'}}><div id='ready'>{api?'ready':'loading'}</div><div id='tick'>{state.tick}</div>
 <KeelButton id='advance' onClick={()=>api.store.setSnapshot({tick:state.tick+1})}>ADVANCE</KeelButton><KeelButton id='scale' onClick={()=>setScale(3)}>SCALE</KeelButton>

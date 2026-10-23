@@ -20,6 +20,7 @@ import { bench, lamp, tree } from "./street/furniture.ts";
 import type { LampStyle, MassOp, PropSpot, WaterSpec } from "./types.ts";
 import type { AnySlot } from "./slots.ts";
 import type { CommonsBlock, Rect } from "./zoning.ts";
+import { dhypot } from "@keel-engine/core/dmath";
 
 const LANTERN: LampStyle = { kind: "lantern", height: 3.6, arm: 0, heads: 1, head: "lampWarm", reach: 10 };
 const PATH = 0.9;
@@ -99,9 +100,9 @@ export function commons(b: Build, _op: Extract<MassOp, { op: "commons" }>): void
     const ownPath = meet(segment, own); if (!ownPath) return;
     const horizontal = segment.x1 - segment.x0 > segment.z1 - segment.z0;
     const points = horizontal ? [[ownPath.x0, (segment.z0 + segment.z1) / 2], [ownPath.x1, (segment.z0 + segment.z1) / 2]] : [[(segment.x0 + segment.x1) / 2, ownPath.z0], [(segment.x0 + segment.x1) / 2, ownPath.z1]];
-    if (Math.hypot(points[1]![0]! - points[0]![0]!, points[1]![1]! - points[0]![1]!) < 4) return;
+    if (dhypot(points[1]![0]! - points[0]![0]!, points[1]![1]! - points[0]![1]!) < 4) return;
     // Art on an inherited centre path is an obstruction, not a walking route.
-    if (c.features.some(f => points.some(q => Math.hypot(q[0]! - f.u, q[1]! - f.v) < f.r + .6) ||
+    if (c.features.some(f => points.some(q => dhypot(q[0]! - f.u, q[1]! - f.v) < f.r + .6) ||
       horizontal && Math.abs((segment.z0 + segment.z1) / 2 - f.v) < f.r + .6 && f.u > ownPath.x0 && f.u < ownPath.x1 ||
       !horizontal && Math.abs((segment.x0 + segment.x1) / 2 - f.u) < f.r + .6 && f.v > ownPath.z0 && f.v < ownPath.z1)) return;
     b.walks.push({key: `${b.key}:commons:${i}`,width: PATH * 2,clearance: 2.4,path: points.map(q => { const p = toWorld(b, fx(q[0]!), .11, fz(q[1]!)); return [p[0], p[2]] as const; })});

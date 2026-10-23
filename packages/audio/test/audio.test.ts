@@ -22,11 +22,11 @@ function finite(x: unknown, path = "plan"): void {
 const combo = (p: Plan) => [p.keys, p.lead, p.bass, p.kit].join("|");
 const WALLRUN: MoodSpec = { name: "Night Water", energy: 0.65, darkness: 0.7, weather: ["waves", "wind"] };
 
-test("manifest: keel/audio, a runtime part that needs only the codec", () => {
+test("manifest: keel/audio, a runtime part with core and codec dependencies", () => {
   assert.equal(manifest.id, "keel/audio");
   assert.equal(manifest.version, "0.1.0");
   assert.equal(manifest.kind, "runtime");
-  assert.deepEqual(manifest.needs, ["keel/codec@^0.1"]);
+  assert.deepEqual(manifest.needs, ["keel/core@^0.1", "keel/codec@^0.1"]);
   assert.equal(manifest.schema, "keel-engine-module@1");
 });
 

@@ -1,7 +1,7 @@
 "use client";
 import {useEffect,useState} from 'react';
 import {recognizeRelease,annotationForRelease,type PublishedRelease} from './releases.mjs';
-import {ActionButton} from './controls';
+import {ActionButton} from './controls.js';
 import {getBytes,saveEntry,type LibraryEntry} from './library.mjs';
 import {readCartInfo,verifiedBackup,type CartInfo} from './cbu1.mjs';
 import {planCartridgeWrite,writeVerifiedCartridge,type WriteProgress} from './write.mjs';

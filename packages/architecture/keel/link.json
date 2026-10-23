@@ -21,6 +21,8 @@
   "imports": {
     "@keel-engine/city": "keel/city",
     "@keel-engine/core": "keel/core",
+    "@keel-engine/core/dmath": "keel/core",
+    "@keel-engine/road": "keel/road",
     "@keel-engine/runtime": "keel/runtime"
   },
   "manifests": {}

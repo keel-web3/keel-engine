@@ -1,11 +1,12 @@
 import type { Projection } from './project.ts';
 import { projectedMeshError } from './mesh-lod.ts';
+import { dhypot } from '@keel-engine/core/dmath';
 
 const columnDot = (model: ArrayLike<number>, a: number, b: number): number => model[a]! * model[b]! + model[a + 1]! * model[b + 1]! + model[a + 2]! * model[b + 2]!;
 
 /** Cheap necessary footprint check for discovering runs before precision validation. */
 export function shaderLodFootprintEligible(view: Projection, lo: ArrayLike<number>, hi: ArrayLike<number>, model: ArrayLike<number>, maxPixels = 24): boolean {
-  const diameter = Math.hypot(hi[0]! - lo[0]!, hi[1]! - lo[1]!, hi[2]! - lo[2]!);
+  const diameter = dhypot(hi[0]! - lo[0]!, hi[1]! - lo[1]!, hi[2]! - lo[2]!);
   return projectedMeshError(view, lo, hi, model, diameter) <= maxPixels;
 }
 
@@ -39,7 +40,7 @@ export function shaderLodEligible(view: Projection, lo: ArrayLike<number>, hi: A
   }
   const transformError = 2 * Math.sqrt(round2 / scale2);
   // Bounding-sphere diameter gives a conservative fill-work cap, independent of the view angle.
-  const diameter = Math.hypot(hi[0]! - lo[0]!, hi[1]! - lo[1]!, hi[2]! - lo[2]!);
+  const diameter = dhypot(hi[0]! - lo[0]!, hi[1]! - lo[1]!, hi[2]! - lo[2]!);
   // Tolerance admits nearly uniform/orthogonal matrices. Reserve their Gram-matrix
   // residual too: a tiny intentional shear/scale difference must not spend the last pixel-error margin.
   const residual = (Math.abs(columnDot(model, 4, 4) - scale2) + Math.abs(columnDot(model, 8, 8) - scale2)

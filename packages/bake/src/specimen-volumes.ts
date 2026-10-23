@@ -1,12 +1,13 @@
 import { VOLUME_KIND,type VolumeInstances } from './volumes.ts';
 import { curlNoise,SCREENS } from '@keel-engine/core';
+import { dcos, dsin } from '@keel-engine/core/dmath';
 const fract=(n:number)=>n-Math.floor(n);
 // CPU lowering of KEEL bake/volumes.ts's palette volume shader.
 const hash=(x:number,y:number,z:number)=>{x=fract(x*.1031);y=fract(y*.1031);z=fract(z*.1031);const d=x*(y+33.33)+y*(z+33.33)+z*(x+33.33);return fract((x+y+2*d)*(z+d));};
 const noise=(x:number,y:number,z:number)=>{const X=Math.floor(x),Y=Math.floor(y),Z=Math.floor(z),smooth=(n:number)=>n*n*(3-2*n),fx=smooth(fract(x)),fy=smooth(fract(y)),fz=smooth(fract(z));let n=0;for(let k=0;k<2;k++)for(let j=0;j<2;j++)for(let i=0;i<2;i++)n+=hash(X+i,Y+j,Z+k)*(i?fx:1-fx)*(j?fy:1-fy)*(k?fz:1-fz);return n;};
 export function paintVolumes(frame:Uint8Array,depth:Float64Array,volumes:VolumeInstances,center:number[],zoom:number,yaw:number,pitch:number,shades?:Uint8Array,size=32):void {
  const mid=size/2,last=size-2;
- const c=Math.cos(yaw),s=Math.sin(yaw),pc=Math.cos(pitch),ps=Math.sin(pitch),right=[c,0,s],up=[s*ps,pc,-c*ps],forward=[-s*pc,ps,c*pc];
+ const c=dcos(yaw),s=dsin(yaw),pc=dcos(pitch),ps=dsin(pitch),right=[c,0,s],up=[s*ps,pc,-c*ps],forward=[-s*pc,ps,c*pc];
  const d=volumes.data;
  for(let n=0;n<volumes.count;n++){
   const o=n*10,x=d[o]!,y=d[o+1]!,z=d[o+2]!,baseRadius=d[o+3]!,fire=d[o+4]===VOLUME_KIND.fire,seed=d[o+5]!,age=d[o+6]!,r=baseRadius*(fire?1:1+age*.7),height=fire?1.9:1;

@@ -297,7 +297,7 @@ function finishMesh(B: Builder, bounds: LookMeshOptions["bounds"]): LookMesh {
 export function lookMesh(world: BakeWorld, { around = 12, rings = 3, bounds, chordError, shaderLod }: LookMeshOptions = {}): LookMesh {
   const B = new Builder();
   appendWorld(B, world, around, rings, chordError);
-  return automaticShaderDetail(world, finishMesh(B, bounds), { around, rings, ...(bounds ? { bounds } : {}), ...(chordError !== undefined ? { chordError } : {}), ...(shaderLod !== undefined ? { shaderLod } : {}) });
+  return automaticShaderDetail(world, finishMesh(B, bounds), { around, rings, ...(bounds ? { bounds } : {}), ...(chordError !== undefined && chordError !== 0 ? { chordError } : {}), ...(shaderLod !== undefined ? { shaderLod } : {}) });
 }
 
 /** Same mesh bytes, yielding between small batches of solids when workers are unavailable. */
@@ -309,7 +309,7 @@ export function* lookMeshSteps(world: BakeWorld, { around = 12, rings = 3, bound
     if (++count % 32 === 0) yield;
   }
   yield;
-  return automaticShaderDetail(world, finishMesh(B, bounds), { around, rings, ...(bounds ? { bounds } : {}), ...(chordError !== undefined ? { chordError } : {}), ...(shaderLod !== undefined ? { shaderLod } : {}) });
+  return automaticShaderDetail(world, finishMesh(B, bounds), { around, rings, ...(bounds ? { bounds } : {}), ...(chordError !== undefined && chordError !== 0 ? { chordError } : {}), ...(shaderLod !== undefined ? { shaderLod } : {}) });
 }
 
 /** A mesh's own bounds: [minX, minY, minZ, maxX, maxY, maxZ] (what to pass every mesh of one thing). */

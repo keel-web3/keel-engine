@@ -1,4 +1,5 @@
 /** Terrain-aware roadside protection. Heights and distances are metres, curve is radians/metre. */
+import { datan2, dcos, dhypot, dsin } from "@keel-engine/core/dmath";
 export type GuardMaterial = "timber" | "steel" | "concrete";
 export interface GuardSpec { readonly material: GuardMaterial; readonly height: number; readonly strength: number; readonly mass: number; readonly breaks: boolean }
 export function roadProtection(drop: number, curve: number, major = false): GuardSpec | null {
@@ -12,11 +13,11 @@ export interface RoadGuard extends GuardSpec { readonly x: number; readonly z: n
 export function roadGuards(x: ArrayLike<number>, z: ArrayLike<number>, y: ArrayLike<number>, half: number | ArrayLike<number>, ground: (x: number, z: number) => number, major = false, clear: (x: number, z: number, y: number) => boolean = () => true): RoadGuard[] {
   const out: RoadGuard[] = [];
   for (let i = 0; i + 1 < x.length; i++) {
-    const dx = x[i+1]! - x[i]!, dz = z[i+1]! - z[i]!, len = Math.hypot(dx, dz);
+    const dx = x[i+1]! - x[i]!, dz = z[i+1]! - z[i]!, len = dhypot(dx, dz);
     if (len < .01) continue;
     const a = Math.max(0, i-1), b = Math.min(x.length-1, i+2);
-    const before = Math.atan2(dx, dz), after = Math.atan2(x[b]! - x[a]!, z[b]! - z[a]!);
-    const curve = Math.atan2(Math.sin(before-after), Math.cos(before-after)) * 2 / len;
+    const before = datan2(dx, dz), after = datan2(x[b]! - x[a]!, z[b]! - z[a]!);
+    const curve = datan2(dsin(before-after), dcos(before-after)) * 2 / len;
     const hw = typeof half === "number" ? half : Math.max(half[i]!, half[i+1]!);
     const count = Math.ceil(len / 4), span = len/count, nx = dz/len, nz = -dx/len;
     for (let k = 0; k < count; k++) for (const side of [-1,1]) {

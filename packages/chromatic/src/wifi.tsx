@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
-import {ActionButton} from './controls';
+import {ActionButton} from './controls.js';
 import {probeWifi} from '../../chromatic-wireless/src/client.mjs';
 
 export function WifiSupport({token,initialIp}:{token:string;initialIp?:string}){

@@ -29,7 +29,7 @@ Browser WASM cannot open arbitrary UDP sockets; it uses the host browser's APIs.
 
 ## Build and test
 
-- `sh build.sh` — Emscripten 6.0.5, builds `dist/cwl.mjs` and `dist/cwl.wasm`.
+- `sh build.sh` — Emscripten 6.0.5, builds `wasm/cwl.mjs` and `wasm/cwl.wasm` (committed: KEEL engine archives exclude `dist/`).
 - `node --test test/peer.test.mjs test/client.test.mjs`
 - `bun test test/helper.test.mjs`
 - `bun build helper/main.mjs --compile --outfile dist/chromatic-wifi`

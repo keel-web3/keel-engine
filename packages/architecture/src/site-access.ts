@@ -5,6 +5,7 @@ import { locate, pointAt } from "@keel-engine/road";
 import { frameOf, mainFront } from "./frame.ts";
 import { SLOT, STREET_SLOT } from "./slots.ts";
 import type { BuildingPlan, PlantSpot, PropSpot, Solid } from "./types.ts";
+import { dhypot } from "@keel-engine/core/dmath";
 
 /** One site frame for entrances, frontage paving and planting; access corridors are reserved before landscaping. */
 export function withSiteAccess(plan: BuildingPlan, city: City, lot: Lot, height?: CityHeight, options: {readonly residentAccessOnly?: boolean} = {}): BuildingPlan {
@@ -23,7 +24,7 @@ export function withSiteAccess(plan: BuildingPlan, city: City, lot: Lot, height?
     const end = pointAt(edge.path, q.s, Math.sign(q.d || 1) * off),
       dx = end.x - door.x,
       dz = end.z - door.z,
-      length = Math.hypot(dx, dz);
+      length = dhypot(dx, dz);
     if (length > 0.3 && length < 60) {
       // Do not lay a connector through another wing of a concave building.
       const clear = plan.footprint.every((b) => {
@@ -99,7 +100,7 @@ export function withSiteAccess(plan: BuildingPlan, city: City, lot: Lot, height?
         dz = z - bay.z,
         bc = dcos(bay.yaw),
         bs = dsin(bay.yaw);
-      if (Math.abs(dx * bc - dz * bs) < bay.hw + r || Math.hypot(dx, dz) < 6 + r) {
+      if (Math.abs(dx * bc - dz * bs) < bay.hw + r || dhypot(dx, dz) < 6 + r) {
         if (Math.abs(dx * bc - dz * bs) < bay.hw + r && Math.abs(dx * bs + dz * bc) < bay.hd + r) return true;
       }
       for (let i = 1; i < bay.route.length; i++) {

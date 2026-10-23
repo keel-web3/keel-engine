@@ -8,6 +8,7 @@ import {SCREENS,type ScreenId} from '@keel-engine/core';
 import {compileObject,type CompiledObject} from './specimen.ts';
 import {paintVolumes} from './specimen-volumes.ts';
 import {SPECIMEN_MOTION_FRAMES as FRAMES,type SpecimenProgram as Program,type SpecimenMaterial as Material} from './specimen-types.ts';
+import { dcos, dexp, dhypot, dpow, dsin } from '@keel-engine/core/dmath';
 
 export interface SpriteCamera {pitch:number;margin:number;effects:number}
 /** Shared shelf camera: 0.34 rad pitch, one empty edge pixel, effects may shrink the body by 20%. */
@@ -20,12 +21,12 @@ export interface SpriteView {pixels:Uint8Array;shades:Uint8Array}
 export function materialLight(m:Material,u:number,v:number,normalLight:number,phase:number):number {
  let l=normalLight;const t=phase/FRAMES;
  if(m.finish==='metal')l=1.25+(l-1.4)*1.3+Math.max(0,1-Math.abs(u-.3)*12)*.5;
- if(m.finish==='glass')l=1.6+normalLight*.25+Math.max(0,1-Math.abs(((u+v*.2+.06*Math.sin(t*Math.PI*2))%1)-.38)*16)*.9;
- if(m.finish==='water')l+=Math.sin((u*2+v*3-t)*Math.PI*2)*.30;
- if(m.finish==='glow')l=normalLight+.22*Math.sin((v*2-t)*Math.PI*2);
- if(m.pattern==='grain')l-=Math.sin(v*36+Math.sin(u*12)*2)>.65?.35:0;
+ if(m.finish==='glass')l=1.6+normalLight*.25+Math.max(0,1-Math.abs(((u+v*.2+.06*dsin(t*Math.PI*2))%1)-.38)*16)*.9;
+ if(m.finish==='water')l+=dsin((u*2+v*3-t)*Math.PI*2)*.30;
+ if(m.finish==='glow')l=normalLight+.22*dsin((v*2-t)*Math.PI*2);
+ if(m.pattern==='grain')l-=dsin(v*36+dsin(u*12)*2)>.65?.35:0;
  if(m.pattern==='vein')l-=Math.abs((u*5+v*3)%1-.5)<.08?.5:0;
- if(m.pattern==='crack')l-=Math.abs((u*3+Math.sin(v*12)*.2)%1-.5)<.06?.65:0;
+ if(m.pattern==='crack')l-=Math.abs((u*3+dsin(v*12)*.2)%1-.5)<.06?.65:0;
  return Math.max(1.25,Math.min(3,l));
 }
 const FALLBACK:Material={finish:'matte',screen:'bayer4',pattern:'none'};
@@ -46,13 +47,13 @@ export const SPRITE_LOOK:SpriteLook={light:[-.5,.7,.5],ambient:.3,wrap:.22,shado
  finishes:{matte:'stipple',wood:'stipple',leaf:'stipple',vapor:'stipple',water:'lines',glass:'diagonal',metal:'bayer4',glow:'bayer4'},
  grain:.34,grainFinishes:['matte','wood','leaf'],edges:{depth:2.4,crease:.5}};
 type ShadowMap={at:(x:number,y:number,z:number)=>number;radius:number};
-const norm3=(v:readonly number[])=>{const l=Math.hypot(v[0]!,v[1]!,v[2]!)||1;return [v[0]!/l,v[1]!/l,v[2]!/l] as [number,number,number];};
+const norm3=(v:readonly number[])=>{const l=dhypot(v[0]!,v[1]!,v[2]!)||1;return [v[0]!/l,v[1]!/l,v[2]!/l] as [number,number,number];};
 /** Orthographic depth map seen from the light: for any camera-space point, how far toward the light the nearest
  * occluder sits (minus the point's own distance gives the gap; positive means shadowed). */
 function shadowMap(program:Program,mesh:CompiledObject['meshes'][number],P:Float64Array,L:[number,number,number],scale:number):ShadowMap {
  const up:[number,number,number]=Math.abs(L[1])>.95?[1,0,0]:[0,1,0],U=norm3([up[1]*L[2]-up[2]*L[1],up[2]*L[0]-up[0]*L[2],up[0]*L[1]-up[1]*L[0]]),V=[L[1]*U[2]-L[2]*U[1],L[2]*U[0]-L[0]*U[2],L[0]*U[1]-L[1]*U[0]];
  const n=P.length/3,A=new Float64Array(n),B=new Float64Array(n),D=new Float64Array(n);let a0=Infinity,a1=-Infinity,b0=Infinity,b1=-Infinity,radius=0;
- for(let i=0;i<n;i++){const x=P[i*3]!,y=P[i*3+1]!,z=P[i*3+2]!;A[i]=x*U[0]+y*U[1]+z*U[2];B[i]=x*V[0]!+y*V[1]!+z*V[2]!;D[i]=x*L[0]+y*L[1]+z*L[2];a0=Math.min(a0,A[i]!);a1=Math.max(a1,A[i]!);b0=Math.min(b0,B[i]!);b1=Math.max(b1,B[i]!);radius=Math.max(radius,Math.hypot(x,y,z));}
+ for(let i=0;i<n;i++){const x=P[i*3]!,y=P[i*3+1]!,z=P[i*3+2]!;A[i]=x*U[0]+y*U[1]+z*U[2];B[i]=x*V[0]!+y*V[1]!+z*V[2]!;D[i]=x*L[0]+y*L[1]+z*L[2];a0=Math.min(a0,A[i]!);a1=Math.max(a1,A[i]!);b0=Math.min(b0,B[i]!);b1=Math.max(b1,B[i]!);radius=Math.max(radius,dhypot(x,y,z));}
  const w=Math.min(256,Math.ceil((a1-a0)*scale)+3),h=Math.min(256,Math.ceil((b1-b0)*scale)+3),map=new Float64Array(w*h).fill(-Infinity),sx=(w-3)/Math.max(1e-6,a1-a0),sy=(h-3)/Math.max(1e-6,b1-b0);
  for(let t=0;t<mesh.indices.length;t+=3){
   const i0=mesh.indices[t]!,i1=mesh.indices[t+1]!,i2=mesh.indices[t+2]!,m=program.materials?.[Math.floor(mesh.attrs[i0*4]!/3)]??FALLBACK;if(m.finish==='vapor'||m.finish==='glow')continue;
@@ -65,7 +66,7 @@ function shadowMap(program:Program,mesh:CompiledObject['meshes'][number],P:Float
 /** Pixel classes used to frame a clip: 1 solid/liquid mesh, 2 flame volume, 3 smoke or vapour volume, 4 particle.
  * With `classes` the raster only measures coverage (no lighting or shadow map). */
 function raster(program:Program,compiled:CompiledObject,frameIndex:number,yaw:number,zoom:number,center:readonly number[],size:number,pitch:number,classes?:Uint8Array,look:SpriteLook=SPRITE_LOOK,ground?:number):{frame:Uint8Array;depth:Float64Array;shades:Uint8Array} {
- const mesh=compiled.meshes[frameIndex]!,c=Math.cos(yaw),s=Math.sin(yaw),pc=Math.cos(pitch),ps=Math.sin(pitch),mid=size/2,last=size-2;
+ const mesh=compiled.meshes[frameIndex]!,c=dcos(yaw),s=dsin(yaw),pc=dcos(pitch),ps=dsin(pitch),mid=size/2,last=size-2;
  const project=(x:number,y:number,z:number):[number,number,number]=>{const rx=x*c+z*s,rz=-x*s+z*c;return [mid+rx*zoom,mid-(y*pc-rz*ps)*zoom,y*ps+rz*pc];};
  const frame=new Uint8Array(size*size),depth=new Float64Array(size*size).fill(-Infinity),shades=new Uint8Array(size*size),nrm=new Float32Array(size*size*3),part=new Int16Array(size*size).fill(-1),slotOf=new Int16Array(size*size).fill(-1);
  // Camera-space positions and normals (x right, y up, z toward the viewer), once per vertex.
@@ -91,11 +92,11 @@ function raster(program:Program,compiled:CompiledObject,frameIndex:number,yaw:nu
    if(lit){
     // Smooth shading: the normal is interpolated across the triangle, then lit by the key light.
     const n=norm3([0,1,2].map(j=>u*N[ids[0]!*3+j]!+w*N[ids[1]!*3+j]!+k*N[ids[2]!*3+j]!));if(!glowing){nrm[at*3]=n[0];nrm[at*3+1]=n[1];nrm[at*3+2]=n[2];}
-    let diffuse=Math.max(0,(n[0]*L[0]+n[1]*L[1]+n[2]*L[2]+look.wrap)/(1+look.wrap)),spec=shiny?Math.pow(Math.max(0,n[0]*H[0]+n[1]*H[1]+n[2]*H[2]),22)*shiny:0;
+    let diffuse=Math.max(0,(n[0]*L[0]+n[1]*L[1]+n[2]*L[2]+look.wrap)/(1+look.wrap)),spec=shiny?dpow(Math.max(0,n[0]*H[0]+n[1]*H[1]+n[2]*H[2]),22)*shiny:0;
     if(sm&&material.finish!=='glow'){const px=u*P[ids[0]!*3]!+w*P[ids[1]!*3]!+k*P[ids[2]!*3]!,py=u*P[ids[0]!*3+1]!+w*P[ids[1]!*3+1]!+k*P[ids[2]!*3+1]!,pz=u*P[ids[0]!*3+2]!+w*P[ids[1]!*3+2]!+k*P[ids[2]!*3+2]!;if(sm.at(px,py,pz)>bias){diffuse*=.12;spec=0;}}
     // Emissive matter lights itself, brightest where it faces the viewer: a glowing sphere reads round.
     if(glowing){nrm[at*3]=n[0];nrm[at*3+1]=n[1];nrm[at*3+2]=n[2]-20;}
-    normalLight=glowing?1.5+1.55*Math.pow(Math.max(0,n[2]),.75):1.12+(look.ambient+(1-look.ambient)*diffuse)*1.9+spec*.9;
+    normalLight=glowing?1.5+1.55*dpow(Math.max(0,n[2]),.75):1.12+(look.ambient+(1-look.ambient)*diffuse)*1.9+spec*.9;
    }
    const light=Math.max(1.0,Math.min(3.2,materialLight(material,uv(1),uv(2),normalLight,frameIndex)+(grain?(SCREENS.stipple.at(x,y)-.5)*grain:0)+(tone===1?-.85:tone===2?.85:0))),band=Math.floor(light),fraction=light-band;
    frame[at]=Math.min(3,band+(fraction<.18?0:fraction>.84?1:fraction>.18+screen.at(x,y)*.66?1:0));
@@ -129,15 +130,15 @@ function raster(program:Program,compiled:CompiledObject,frameIndex:number,yaw:nu
  // between it and the light, it is in shade -- denser where the occluder is close (contact), hatched.
  if(sm&&ground!==undefined){const hatch=SCREENS[look.screens.shadow],g=ground-center[1]!,R=Math.max(.05,sm.radius);
   for(let y=1;y<=last;y++)for(let x=1;x<=last;x++){const at=y*size+x;if(frame[at])continue;const X=(x+.5-mid)/zoom,Y=(mid-(y+.5))/zoom,rz=(g*pc-Y)/ps;if(Math.abs(rz)>R*1.6)continue;const Z=g*ps+rz*pc,gap=sm.at(X,Y,Z);if(gap<=bias)continue;
-   const strength=Math.min(.95,.42+.5*Math.exp(-gap/(R*.3)));if(hatch.at(x,y)<strength){frame[at]=1;shades[at]=1;}}}
+   const strength=Math.min(.95,.42+.5*dexp(-gap/(R*.3)));if(hatch.at(x,y)<strength){frame[at]=1;shades[at]=1;}}}
  return {frame,depth,shades};
 }
 /** The base footprint (lowest quarter of the body over the whole clip) sets one stable shadow ellipse. */
 function contactShadow(compiled:CompiledObject,pivot:[number,number],ground:number,zoom:number,camera:SpriteCamera&{row:number},size:number){
  let top=-Infinity,reach=0,base=0;for(const m of compiled.meshes)for(let i=1;i<m.positions.length;i+=3)top=Math.max(top,m.positions[i]!);
  const cut=ground+(top-ground)*.25;
- for(const m of compiled.meshes)for(let i=0;i<m.positions.length;i+=3){const r=Math.hypot(m.positions[i]!-pivot[0],m.positions[i+2]!-pivot[1]);reach=Math.max(reach,r);if(m.positions[i+1]!<=cut)base=Math.max(base,r);}
- const rx=Math.max(3,Math.min(size/2-2,(base||reach*.6)*zoom*1.05));return {cx:size/2,cy:camera.row+.6,rx,ry:Math.max(1.6,rx*Math.sin(camera.pitch)*1.1)};
+ for(const m of compiled.meshes)for(let i=0;i<m.positions.length;i+=3){const r=dhypot(m.positions[i]!-pivot[0],m.positions[i+2]!-pivot[1]);reach=Math.max(reach,r);if(m.positions[i+1]!<=cut)base=Math.max(base,r);}
+ const rx=Math.max(3,Math.min(size/2-2,(base||reach*.6)*zoom*1.05));return {cx:size/2,cy:camera.row+.6,rx,ry:Math.max(1.6,rx*dsin(camera.pitch)*1.1)};
 }
 const framings=new WeakMap<CompiledObject,Map<string,SpriteFraming>>();
 /** Solve the clip's camera from its drawn pixels: render every view and phase once on a large canvas around the
@@ -158,17 +159,17 @@ export function spriteFraming(program:Program,compiled:CompiledObject,size=32,ca
  // so a shelf of specimens rests on one line; travelling effects keep the same anchor.
  const lift=Math.round((program.displayLift??0)*size),side=size/2-camera.margin-1,tall=size-2*camera.margin-2-lift,base=size-camera.margin-1;
  const kBody=Math.min(side/body.side,tall/(body.up+body.down)),kAll=Math.min(side/all.side,tall/(body.down+all.up));
- const k=Math.min(kBody,Math.max(kAll,kBody*(1-camera.effects)))*(program.displayScale??.93),zoom=z*k,row=base-lift-body.down*k,pc=Math.cos(camera.pitch);
+ const k=Math.min(kBody,Math.max(kAll,kBody*(1-camera.effects)))*(program.displayScale??.93),zoom=z*k,row=base-lift-body.down*k,pc=dcos(camera.pitch);
  const framing:SpriteFraming={zoom,row,lift,center:[pivot[0],ground+(row-size/2)/(pc*zoom),pivot[1]],shadow:contactShadow(compiled,pivot,ground,zoom,{...camera,row:row+lift},size),body};
  if(map.size>=8)map.delete(map.keys().next().value!);map.set(key,framing);return framing;
 }
 /** One sprite view of one motion phase, in the clip's shared camera. */
 export function specimenSprite(program:Program,seed:string,phase:number,view:number,views:number,size=32,camera:SpriteCamera=SPRITE_CAMERA,look:SpriteLook=SPRITE_LOOK):SpriteView {
  const compiled=compileObject(program,seed),framing=spriteFraming(program,compiled,size,camera),frameIndex=((phase%FRAMES)+FRAMES)%FRAMES,yaw=view*Math.PI*2/views;
- const pc=Math.cos(camera.pitch),ground=framing.center[1]-(framing.row+framing.lift-size/2)/(pc*framing.zoom);   /* a floating body's shadow stays on the ground line */
+ const pc=dcos(camera.pitch),ground=framing.center[1]-(framing.row+framing.lift-size/2)/(pc*framing.zoom);   /* a floating body's shadow stays on the ground line */
  const {frame,shades}=raster(program,compiled,frameIndex,yaw,framing.zoom,framing.center,size,camera.pitch,undefined,look,look.shadows&&look.cast?ground:undefined),sh=framing.shadow;
  // Without the shadow map, the old fixed contact ellipse grounds the turn.
- if(!look.shadows)for(let y=Math.max(1,Math.floor(sh.cy-sh.ry));y<=Math.min(size-2,Math.ceil(sh.cy+sh.ry));y++)for(let x=Math.max(1,Math.floor(sh.cx-sh.rx));x<=Math.min(size-2,Math.ceil(sh.cx+sh.rx));x++){const q=((x+.5-sh.cx)/sh.rx)**2+((y+.5-sh.cy)/sh.ry)**2,at=y*size+x;if(q<1&&!frame[at]&&SCREENS.bayer4.at(x,y)<.5*(1-q)**.8){frame[at]=1;shades[at]=1;}}
+ if(!look.shadows)for(let y=Math.max(1,Math.floor(sh.cy-sh.ry));y<=Math.min(size-2,Math.ceil(sh.cy+sh.ry));y++)for(let x=Math.max(1,Math.floor(sh.cx-sh.rx));x<=Math.min(size-2,Math.ceil(sh.cx+sh.rx));x++){const q=((x+.5-sh.cx)/sh.rx)**2+((y+.5-sh.cy)/sh.ry)**2,at=y*size+x;if(q<1&&!frame[at]&&SCREENS.bayer4.at(x,y)<.5*dpow(1-q,.8)){frame[at]=1;shades[at]=1;}}
  return {pixels:frame,shades};
 }
 /** Measured facts about a specimen's compiled sprites, for validators: how much of its turn keeps a readable
@@ -177,7 +178,7 @@ export interface SpecimenAudit {turnRatio:number;thinnestView:number;fill:{width
 export function auditSpecimen(program:Program,seed:string,size=32,camera:SpriteCamera=SPRITE_CAMERA,views=16):SpecimenAudit {
  const areas:number[]=[],phases=new Set<string>(),frames:Uint8Array[]=[];let x0=size,x1=-1,y0=size,y1=-1,moving=0,outline=0,body=0;
  for(let view=0;view<views;view++){const {pixels:p,shades:s}=specimenSprite(program,seed,0,view,views,size,camera);let a=0;for(let i=0;i<p.length;i++)if(p[i]&&!s[i])a++;areas.push(a);}
- for(let phase=0;phase<FRAMES;phase++){const {pixels,shades}=specimenSprite(program,seed,phase,1,views,size,camera);frames.push(pixels);phases.add(Buffer.from(pixels).toString('base64'));
+ for(let phase=0;phase<FRAMES;phase++){const {pixels,shades}=specimenSprite(program,seed,phase,1,views,size,camera);frames.push(pixels);phases.add(pixels.join(','));
   for(let i=0;i<pixels.length;i++){if(pixels[i]&&!shades[i]){const x=i%size,y=(i/size)|0;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;if(phase===0){body++;if(pixels[i]===1)outline++;}}if(pixels[i]!==frames[0]![i])moving++;}}
  // A loop closes when the join (last -> first) changes no more pixels than the largest ordinary step.
  const diff=(a:Uint8Array,b:Uint8Array)=>{let n=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])n++;return n;};

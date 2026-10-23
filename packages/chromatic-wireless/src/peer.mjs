@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-only
-import factory from '../dist/cwl.mjs';
+import factory from '../wasm/cwl.mjs';
 import {packetValid} from './packet.mjs';
 export {packetValid} from './packet.mjs';
 export async function createPeer({send,onMaster=()=>{},onOffer=()=>{},onDrop=()=>{},onWithdraw=()=>{},now=()=>performance.now(),session,wasmBinary}={}){

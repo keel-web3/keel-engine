@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
-import {ActionButton,ChoiceGroup} from './controls';
+import {ActionButton,ChoiceGroup} from './controls.js';
 import {CaptureSession,captureDevices,revealCaptureDevices} from './capture.mjs';
 const captureGuide='https://modretro.com/blogs/blog/how-to-record-and-stream-gameplay-on-chromatic';
 /** Shared physical capture UI, using each site's existing controls and theme. */

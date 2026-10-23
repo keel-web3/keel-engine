@@ -15,6 +15,8 @@
     "external": [
       "@keel-engine/city",
       "@keel-engine/core",
+      "@keel-engine/core/dmath",
+      "@keel-engine/road",
       "@keel-engine/runtime"
     ]
   }

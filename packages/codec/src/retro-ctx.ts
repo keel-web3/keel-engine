@@ -15,12 +15,14 @@ export const RETRO_CTX_VERSION=2;
 export const CTX_SIZE=8192;
 /** LPS probability per class: .75 down to ~1/1400 in steps of 2^(2/3). */
 export const CTX_CLASSES=16;
-export const CTX_PLPS=Array.from({length:CTX_CLASSES},(_,c)=>.75*Math.pow(2,-c*2/3));
+/** (Pinned literals of .75*2^(-2c/3): pow is not correctly rounded on every engine, and these numbers decide coded bytes.) */
+export const CTX_PLPS=[0.75,0.4724703937105774,0.29763769724403744,0.1875,0.11811759842764438,0.07440942431100935,0.046875,0.029529399606911085,0.01860235607775234,0.01171875,0.007382349901727771,0.004650589019438085,0.0029296875,0.001845587475431944,0.0011626472548595208,0.000732421875];
 /** LPS interval size per class and range bucket ((range>>13)&3, range in [0x8000,0xffff]); never multiplies. */
 export const CTX_QTAB=Uint16Array.from(CTX_PLPS.flatMap(p=>[0,1,2,3].map(b=>Math.max(1,Math.round(p*(0x8000+b*0x2000+0x1000))))));
 /** Class 1 (p = .47) codes the near-even decisions: the last of three ranks and changed shade-mask bits. */
 const EVEN=1;
-export function ctxClassOf(p:number):number {let best=0,bd=1e9;for(let c=0;c<CTX_CLASSES;c++){const d=Math.abs(Math.log(CTX_PLPS[c]!)-Math.log(Math.max(1e-5,Math.min(.75,p))));if(d<bd){bd=d;best=c;}}return best;}
+/** The class nearest p in log distance, compared as the ratio max/min (|log a - log b| = log(max/min)): division is exact everywhere, log is not. */
+export function ctxClassOf(p:number):number {const q=Math.max(1e-5,Math.min(.75,p));let best=0,bd=Infinity;for(let c=0;c<CTX_CLASSES;c++){const a=CTX_PLPS[c]!,d=a>q?a/q:q/a;if(d<bd){bd=d;best=c;}}return best;}
 /** Static model: ctx[CTX_SIZE] = v0 | v1<<2 | class<<4; d2 = class of "second guess wrong"; tile[2], row[4], mask =
  * MPS<<7 | class (tile by the tile's flag in the previous frame; row by (previous row in tile changed)*2 + last row). */
 export interface CtxModel {ctx:Uint8Array;d2:number;tile:Uint8Array;row:Uint8Array;mask:number}

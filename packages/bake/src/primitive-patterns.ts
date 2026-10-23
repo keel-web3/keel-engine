@@ -1,4 +1,5 @@
 import type {SpecimenPart,SpecimenPattern,SpecimenV3} from './specimen-types.ts';
+import { dcos, dsin } from '@keel-engine/core/dmath';
 /** Expand a shared part into an exact reflection, row or horizontal ring.
  * The original is included. Joint/material references survive; reflected moving
  * joints must be authored explicitly rather than reflecting an animated bitmap. */
@@ -8,7 +9,7 @@ export function expandPrimitivePattern(p:SpecimenPattern):SpecimenPart[]{
  if(r.kind==='mirror'&&r.axis!==0&&r.axis!==2)throw new Error('mirror axis must be x or z');
  const out:SpecimenPart[]=[];
  for(let i=0;i<count;i++){
-  const angle=r.kind==='ring'?i*Math.PI*2/count:0,c=Math.cos(angle),s=Math.sin(angle);
+  const angle=r.kind==='ring'?i*Math.PI*2/count:0,c=dcos(angle),s=dsin(angle);
   const point=(v:SpecimenV3):SpecimenV3=>{
    if(r.kind==='mirror'){const q=[...v] as SpecimenV3;if(i)q[r.axis]*=-1;return q;}
    if(r.kind==='line')return v.map((x,k)=>x+i*r.step[k]!) as SpecimenV3;

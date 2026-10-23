@@ -1,4 +1,5 @@
 import type { BakeBox, BakeCapsule } from "./bake.ts";
+import { dhypot } from "@keel-engine/core/dmath";
 export interface LodSolid { readonly lod: number; readonly layer?: number; readonly box?: BakeBox; readonly capsule?: BakeCapsule }
 export interface SolidLodTerm { readonly error: number; readonly facing?: "roof"; readonly roofY?: number }
 export interface SolidLodStep { readonly terms: SolidLodTerm[] }
@@ -15,7 +16,7 @@ export function solidLodSteps(plans: readonly { readonly solids: readonly LodSol
     const masses: { x: number; z: number; top: number; radius: number }[] = [];
     for (const s of p.solids) if (s.lod === 2 && s.box && (s.layer ?? 0) === layer) {
       const m = s.box;
-      masses.push({ x: m.c[0] ?? 0, z: m.c[2] ?? 0, top: (m.c[1] ?? 0) + (m.h[1] ?? 0), radius: Math.hypot(m.h[0] ?? 0, m.h[2] ?? 0) + 0.5 });
+      masses.push({ x: m.c[0] ?? 0, z: m.c[2] ?? 0, top: (m.c[1] ?? 0) + (m.h[1] ?? 0), radius: dhypot(m.h[0] ?? 0, m.h[2] ?? 0) + 0.5 });
     }
     for (const s of p.solids) {
       const l = s.lod;
@@ -25,7 +26,7 @@ export function solidLodSteps(plans: readonly { readonly solids: readonly LodSol
       // Street-level details cannot be roof terms; support measurements are shared by both levels.
       let under = false;
       if (y > 4) for (const m of masses) {
-        if (Math.abs(m.top - y) < 1.2 && Math.hypot((at[0] ?? 0) - m.x, (at[2] ?? 0) - m.z) <= m.radius) { under = true; break; }
+        if (Math.abs(m.top - y) < 1.2 && dhypot((at[0] ?? 0) - m.x, (at[2] ?? 0) - m.z) <= m.radius) { under = true; break; }
       }
       const size = s.box ? solidSize(s.box) : s.capsule ? solidSize(s.capsule) : 0;
       if (under && y > 4) { roof[l] = Math.max(roof[l]!, size); roofY[l] = Math.min(roofY[l]!, y); }

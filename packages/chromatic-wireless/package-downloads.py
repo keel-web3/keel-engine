@@ -8,7 +8,7 @@ out=Path(sys.argv[1]).resolve();out.mkdir(parents=True,exist_ok=True)
 subprocess.run(['codesign','--verify','--strict',str(package/'dist/chromatic-wifi')],check=True)
 subprocess.run(['spctl','--assess','--type','execute',str(package/'dist/chromatic-wifi')],check=True)
 with tarfile.open(out/'source.tar.gz','w:gz') as archive:
- for name in ['helper','src','upstream','test','macos','dist/cwl.mjs','dist/cwl.wasm','LICENSE','LICENSES','SOURCE.json','README.md','package.json','build.sh','package-downloads.py']:
+ for name in ['helper','src','upstream','test','macos','wasm/cwl.mjs','wasm/cwl.wasm','LICENSE','LICENSES','SOURCE.json','README.md','package.json','build.sh','package-downloads.py']:
   archive.add(package/name,arcname='chromatic-wireless/'+name,filter=lambda entry:None if '/__pycache__' in entry.name or entry.name.endswith('.pyc') else entry)
 with tarfile.open(out/'chromatic-wifi-macos-arm64.tar.gz','w:gz') as archive:
  archive.add(package/'dist/chromatic-wifi',arcname='chromatic-wifi')

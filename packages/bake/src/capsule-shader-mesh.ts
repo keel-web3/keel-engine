@@ -3,7 +3,7 @@
 import type { BakeWorld, BakeCapsule } from './bake.ts';
 import { lookMesh, worldsBounds, bodySpace, meshBounds } from './mesh.ts';
 import type { LookMesh, LookMeshOptions } from './mesh.ts';
-import { dcos, dhypot } from '@keel-engine/core/dmath';
+import { dcos, dhypot, dlen } from '@keel-engine/core/dmath';
 
 export interface CapsuleShaderData {
   /** Per vertex: local endpoint A and radius; zero radius means ordinary geometry. */
@@ -22,11 +22,20 @@ export function capsuleSurfaceError(radius: number, around = 12, rings = 3): num
 
 // Both the reference vertices and the analytic endpoints are uploaded as Float32.
 // Account for that rounding too, particularly for procedural recipes far from the origin.
+const EXPONENT = new DataView(new ArrayBuffer(8));
+/** floor(log2(x)) for a finite x > 0, read exactly from the float's exponent bits (no log, so no platform rounding). */
+function floorLog2(x: number): number {
+  EXPONENT.setFloat64(0, x);
+  const e = (EXPONENT.getUint16(0) >>> 4) & 0x7ff;
+  if (e !== 0) return e - 1023;
+  EXPONENT.setFloat64(0, x * 2 ** 64); // subnormal: scale into the normal range first
+  return ((EXPONENT.getUint16(0) >>> 4) & 0x7ff) - 1023 - 64;
+}
 export function capsuleReferenceError(c: BakeCapsule, around: number, rings: number): number {
-  const endpoint = (p: ArrayLike<number>) => Math.hypot(...[0,1,2].map(i => Math.fround(p[i] ?? 0) - (p[i] ?? 0)));
-  const vertexRound = Math.hypot(...[0,1,2].map(i => {
+  const endpoint = (p: ArrayLike<number>) => dlen([0,1,2].map(i => Math.fround(p[i] ?? 0) - (p[i] ?? 0)));
+  const vertexRound = dlen([0,1,2].map(i => {
     const extent = Math.max(Math.abs(c.a[i] ?? 0), Math.abs(c.b[i] ?? 0)) + c.r;
-    return extent > 0 ? Math.max(2 ** -150, 2 ** (Math.floor(Math.log2(extent)) - 24)) : 0;
+    return extent > 0 ? Math.max(2 ** -150, 2 ** (floorLog2(extent) - 24)) : 0;
   }));
   return capsuleSurfaceError(c.r, around, rings) + Math.max(endpoint(c.a), endpoint(c.b))
     + Math.abs(Math.fround(c.r) - c.r) + vertexRound;
