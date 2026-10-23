@@ -158,7 +158,7 @@ test('actual game radii and fractional offset/clip writes stay inside the exact 
 });
 
 test('orientation and motion invalid guards are atomic and replay reset is exact', () => {
-  for (const bad of [[], new Array(4), [0, 0, 0, 0], [0, 0, 0, 2], [NaN, 0, 0, 1], [0, 0, Infinity, 1]]) assert.throws(() => rollingRobotBallSprite(identity, bad as RobotShellOrientation));
+  for (const bad of [[], new Array(4), [0, 0, 0, 0], [0, 0, 0, 2], [NaN, 0, 0, 1], [0, 0, Infinity, 1]]) assert.throws(() => rollingRobotBallSprite(identity, bad as unknown as RobotShellOrientation));
   assert.throws(() => rollingRobotBallSprite(identity, rest, 4));
   assert.throws(() => rollingRobotBallSprite(identity, rest, 0, false, NaN));
   assert.throws(() => rollingRobotBallSprite(identity, rest, 0, false, 3));

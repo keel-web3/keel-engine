@@ -1,9 +1,0 @@
-{
-  "name": "@keel-engine/pinball-biomes",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "description": "Optional seeded decorative pinball scene grammars; never gameplay authority.",
-  "exports": { ".": "./src/index.ts", "./runtime": "./src/index.ts", "./module": "./src/module.ts" },
-  "dependencies": { "@keel-engine/core": "workspace:*", "@keel-engine/runtime": "workspace:*" }
-}

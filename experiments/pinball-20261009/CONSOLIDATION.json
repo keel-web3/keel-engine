@@ -1,0 +1,42 @@
+{
+  "originalTip": "2f61c818668fc2ae1d68aa2245625bbe678fe131",
+  "activeDisposition": "Inactive source experiment. Outside default pnpm workspace and engine module discovery; no runtime or game deployment activation.",
+  "reason": "Exact original replay tests3pass4fail: stale ARENA_AUTHORITY_REVISION suffix and incompatible recorded authority identities. Final current-main baseline1708pass0fail76skip. Do not alter replay acceptance or regenerate old tapes merely to green consolidation.",
+  "originalFailureLog": "tests/engine-original-pinball-replay-baseline.log",
+  "retainedPackages": [
+    "packages/pinball-arena",
+    "packages/pinball-arena-gen",
+    "packages/pinball-arena-view",
+    "packages/pinball-cabinet",
+    "packages/pinball-camera",
+    "packages/pinball-feedback",
+    "packages/pinball-graphics",
+    "packages/pinball-input",
+    "packages/pinball-map",
+    "packages/pinball-mapgen",
+    "packages/pinball-physics",
+    "packages/pinball-pixel-art",
+    "packages/pinball-pixel-view",
+    "packages/pinball-progression",
+    "packages/pinball-replay",
+    "packages/pinball-robot-art",
+    "packages/pinball-room",
+    "packages/pinball-room-art",
+    "packages/pinball-room-environment",
+    "packages/pinball-room-lighting",
+    "packages/pinball-run",
+    "packages/pinball-session",
+    "packages/pinball-view",
+    "packages/pinball-visibility",
+    "packages/pinball-world",
+    "packages/run-progression",
+    "packs/pinball-biomes",
+    "packs/pinball-robots",
+    "packs/pinball-world-art"
+  ],
+  "recovery": "Complete source remains readable here and exact original commits remain in main ancestry. Use an isolated checkout of originalTip for independent qualification. Source-preserved package dependency metadata has direct declarations repaired; no production guarantee.",
+  "acceptanceHolds": [
+    "Reconcile authoritative replay revision and recorded fixture identities without weakening stale-authority rejection",
+    "Qualify generated catalog and intended-device behavior before default activation"
+  ]
+}

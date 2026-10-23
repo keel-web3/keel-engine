@@ -1,0 +1,23 @@
+{
+  "name": "@keel-engine/pinball-arena-view",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Optional canonical KEEL live-mesh renderer for spatial pinball arenas, seeded architecture, biome materials and reactive planted foliage.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/bake": "workspace:*",
+    "@keel-engine/object": "workspace:*",
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/pinball-arena": "workspace:*",
+    "@keel-engine/pinball-feedback": "workspace:*",
+    "@keel-engine/pinball-world-art": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/pinball-arena-gen": "workspace:*",
+    "@keel-engine/codec": "workspace:*"
+  }
+}

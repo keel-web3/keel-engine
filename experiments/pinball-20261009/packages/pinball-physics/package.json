@@ -11,5 +11,8 @@
   "dependencies": {
     "@keel-engine/pinball-map": "workspace:*",
     "@keel-engine/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/pinball-world": "workspace:*"
   }
 }

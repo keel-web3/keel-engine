@@ -4,6 +4,13 @@
   "private": true,
   "type": "module",
   "description": "Optional Canvas2D pinball presentation driven by canonical table geometry and simulation frames.",
-  "exports": { ".": "./src/index.ts" },
-  "dependencies": { "@keel-engine/runtime": "workspace:*" }
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/keel": "workspace:*"
+  }
 }

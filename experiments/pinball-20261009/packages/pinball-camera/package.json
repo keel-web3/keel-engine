@@ -9,5 +9,8 @@
   "dependencies": {
     "@keel-engine/runtime": "workspace:*",
     "@keel-engine/pinball-arena": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/pinball-replay": "workspace:*"
   }
 }

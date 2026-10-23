@@ -10,5 +10,8 @@
   "dependencies": {
     "@keel-engine/runtime": "workspace:*",
     "@keel-engine/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/keel": "workspace:*"
   }
 }

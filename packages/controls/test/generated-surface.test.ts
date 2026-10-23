@@ -15,7 +15,8 @@ class Element extends Target {
   styles: Record<string,string> = {}; className = ''; textContent = '';
   style: Record<string,unknown> & {setProperty: (k: string,v: string) => void} = {setProperty: (k,v) => {this.styles[k] = v;}};
   box = {left: 10, top: 20, width: 400, height: 800};
-  constructor(readonly ownerDocument: Doc) {super();}
+  readonly ownerDocument: Doc;
+  constructor(ownerDocument: Doc) {super(); this.ownerDocument = ownerDocument;}
   append(...children: Element[]): void {for(const child of children) {child.parent = this; this.children.push(child);}}
   replaceChildren(...children: Element[]): void {for(const child of this.children) child.parent = null; this.children = []; this.append(...children);}
   remove(): void {if(this.parent) this.parent.children.splice(this.parent.children.indexOf(this),1); this.parent = null;}

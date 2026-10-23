@@ -15,5 +15,8 @@
     "@keel-engine/pinball-physics": "workspace:*",
     "@keel-engine/pinball-world": "workspace:*",
     "@keel-engine/run-progression": "workspace:*"
+  },
+  "devDependencies": {
+    "@keel-engine/keel": "workspace:*"
   }
 }
