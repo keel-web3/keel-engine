@@ -9,7 +9,10 @@ native game at `index / fps`; timestamps come from that index, never RAF or a
 recording clock. An incomplete, concurrent, or cancelled sequence cannot produce
 a successful export. Device speed changes export time, not frame count or duration.
 Use a separate deterministic scene so export does not pause collector playback.
-Yield between short rendering slices so playback and controls remain responsive.
+Use an OffscreenCanvas scene worker when the adapter supports it. Transfer one
+ImageBitmap at a time, await addFrame, then close it before requesting the next
+frame. Opaque token workers can render even when they lack VideoEncoder; the
+verified page then owns native asynchronous WebCodecs.
 
 Scaling is nearest neighbour. Defaults are H.264 High 4.2, a 20 Mbps variable
 bitrate target, 2-second keyframes and AAC-LC stereo at 320 kbps. Supply prepared
@@ -23,6 +26,12 @@ workers may lack WebCodecs. No network requests or external encoder service are
 required. The caller owns its input canvas; `finish()` returns the MP4 Blob, while
 `cancel()` releases incomplete output. A 1080p minute can occupy roughly 150 MB;
 release the download URL when the player is disposed.
+
+The MP4 writer reserves ordinary fast-start metadata from the declared packet
+counts. Seekable writes use bounded immutable Blob segments, so final assembly
+does not allocate or copy a second movie-sized ArrayBuffer. It still retains the
+finished movie for playback/download. The frame and audio counts, bitrate and
+nearest-neighbour scale remain unchanged.
 
 REDLINE integration verification covered all 3,600 frames at 60 fps, decoded native
 scene parity, audible prepared PCM, automatic export, Save MP4 and playback handoff.
