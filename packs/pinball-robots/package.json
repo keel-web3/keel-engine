@@ -1,0 +1,6 @@
+{
+  "name": "@keel-engine/pinball-robots", "version": "0.3.0", "private": true, "type": "module",
+  "description": "Original seeded rollable robot entity families with one resolved identity across portrait, folded shell and unfolded prototype.",
+  "exports": { ".": "./src/index.ts", "./module": "./src/module.ts" },
+  "dependencies": { "@keel-engine/core": "workspace:*", "@keel-engine/entity": "workspace:*", "@keel-engine/runtime": "workspace:*", "@keel-engine/object": "workspace:*", "@keel-engine/bake": "workspace:*" }
+}

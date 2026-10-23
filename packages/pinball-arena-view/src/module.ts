@@ -1,0 +1,2 @@
+import { defineManifest } from "@keel-engine/runtime";
+export const manifest = defineManifest({ id: "keel/pinball-arena-view", version: "0.1.0", kind: "runtime", needs: ["keel/runtime@^0.1", "keel/core@^0.1", "keel/bake@^0.1", "keel/object@^0.1", "keel/pinball-arena@^0.1", "keel/pinball-feedback@^0.1", "packs/pinball-world-art@^0.1"], title: "KEEL spatial pinball arena view", description: "Optional live pixel-art mesh arena renderer with actual world surfaces, layered depth, mechanism poses and reactive planted foliage." });

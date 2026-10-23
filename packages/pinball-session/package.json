@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/pinball-session",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic shared-arena mode rules, live score pressure, physical equipment pickups and healing.",
+  "exports": {".": "./src/index.ts", "./runtime": "./src/index.ts"},
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/core": "workspace:*",
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/pinball-arena": "workspace:*"
+  }
+}

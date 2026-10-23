@@ -1,0 +1,17 @@
+{
+  "schema": "playfield-framing-source-hold@1",
+  "revision": "source-playfield-framing/1",
+  "status": "SOURCE_ONLY_UNEXECUTED",
+  "files": {
+    "src/playfield-framing.ts": "acbe4c142354168f9bc76d517c20657bafa3657cfba6ab6722c9344461c1e081",
+    "test/playfield-framing.test.ts": "c49d7b645c002f2719d39bca50618f3d8d89fe6c906aa1fce5e6024fb8513cf3",
+    "PLAYFIELD-FRAMING-SOURCE.md": "73a4c4e8c7c594cdf8e834b344127bbaaba95a6a130d272e76b337fe5dd35729"
+  },
+  "integration": "Opt-in helper only; no existing camera/index/host imports changed",
+  "execution": {
+    "tests": false,
+    "typecheck": false,
+    "native": false,
+    "browser": false
+  }
+}

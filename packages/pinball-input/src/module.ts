@@ -1,0 +1,2 @@
+import {defineManifest} from '@keel-engine/runtime';
+export const manifest=defineManifest({id:'keel/pinball-input',version:'0.1.0',kind:'runtime',needs:['keel/runtime@^0.1','keel/input@^0.1','keel/pinball-arena@^0.1','keel/pinball-session@^0.1'],title:'Pinball device input',description:'Held flippers and latched keyboard, controller and touch controls, sampled as canonical arena input with separate session medicine actions.'});

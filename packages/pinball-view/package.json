@@ -1,0 +1,9 @@
+{
+  "name": "@keel-engine/pinball-view",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Optional Canvas2D pinball presentation driven by canonical table geometry and simulation frames.",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "@keel-engine/runtime": "workspace:*" }
+}

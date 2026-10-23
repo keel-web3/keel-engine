@@ -1,0 +1,21 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-pinball-room-art",
+  "version": "0.1.2",
+  "description": "Original indexed pinball assemblies, native-supported cosmetic tube sleeves, and scanline-rendered native track grating. Seeded materials, bounded drawing caches, checked camera projection, and explicit tube ball-radius envelopes. Tube painting validates atomically; grating preserves original drawing order and failure behavior. No physical housing or device acceptance.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/pinball-room-art"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/core",
+      "@keel-engine/pinball-pixel-art",
+      "@keel-engine/runtime"
+    ]
+  }
+}

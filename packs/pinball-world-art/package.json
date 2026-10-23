@@ -1,0 +1,9 @@
+{
+  "name": "@keel-engine/pinball-world-art",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Optional original spatial pinball-world constructions, canonical foliage and blended role-based materials.",
+  "exports": { ".": "./src/index.ts", "./assets": "./src/assets.ts", "./looks": "./src/looks.ts" },
+  "dependencies": { "@keel-engine/runtime": "workspace:*", "@keel-engine/core": "workspace:*", "@keel-engine/object": "workspace:*", "@keel-engine/bake": "workspace:*", "@keel-engine/foliage": "workspace:*", "@keel-engine/pinball-arena": "workspace:*" }
+}

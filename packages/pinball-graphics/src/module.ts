@@ -1,0 +1,2 @@
+import {defineManifest} from '@keel-engine/runtime';
+export const manifest=defineManifest({id:'keel/pinball-graphics',version:'0.1.0',kind:'runtime',needs:['keel/runtime@^0.1','keel/core@^0.1','keel/targets@^0.1'],title:'Pinball graphics profiles',description:'Independent art style and device-bounded geometry, lighting, shadows, pixel targets and effects. Capability plans do not certify frame rate or native console export.'});

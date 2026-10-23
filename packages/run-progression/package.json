@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/run-progression",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./runtime": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/core": "workspace:*"
+  }
+}

@@ -1,0 +1,302 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "packs/pinball-world-art",
+    "version": "0.1.0",
+    "kind": "pack",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/core@^0.1",
+      "keel/pinball-arena@^0.1",
+      "keel/object@^0.1",
+      "keel/bake@^0.1",
+      "packs/foliage@^1.0"
+    ],
+    "provides": [
+      "objects/pinball-world@0.1.0"
+    ],
+    "contents": {
+      "objects": [
+        {
+          "id": "circuit-rib",
+          "tags": [
+            "pinball-frame",
+            "cyber",
+            "cable",
+            "mechanical",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "vault-buttress",
+          "tags": [
+            "pinball-frame",
+            "gold",
+            "cryptographic",
+            "faceted",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "prism-fan",
+          "tags": [
+            "pinball-frame",
+            "vapor",
+            "prismatic",
+            "shell",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "rooted-bank",
+          "tags": [
+            "pinball-frame",
+            "nature",
+            "landform",
+            "canopy",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "cipher-chain",
+          "tags": [
+            "pinball-frame",
+            "crypto",
+            "lattice",
+            "chain",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "heat-exchanger",
+          "tags": [
+            "pinball-frame",
+            "nightshift",
+            "pipes",
+            "mechanical",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "neon-swing-lamp",
+          "tags": [
+            "pinball-frame",
+            "arcade",
+            "neon",
+            "pendant",
+            "lamp",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "oak",
+          "tags": [
+            "tree",
+            "deciduous",
+            "temperate",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "pine",
+          "tags": [
+            "tree",
+            "conifer",
+            "temperate",
+            "cold",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "birch",
+          "tags": [
+            "tree",
+            "deciduous",
+            "temperate",
+            "cold",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "palm",
+          "tags": [
+            "tree",
+            "tropical",
+            "desert",
+            "coast",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "bush",
+          "tags": [
+            "bush",
+            "shrub",
+            "temperate",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "grass",
+          "tags": [
+            "grass",
+            "ground-cover",
+            "massive",
+            "tier:background",
+            "massive"
+          ]
+        },
+        {
+          "id": "reeds",
+          "tags": [
+            "reeds",
+            "water",
+            "swamp",
+            "massive",
+            "tier:background",
+            "massive"
+          ]
+        },
+        {
+          "id": "rock",
+          "tags": [
+            "rock",
+            "boulder",
+            "stone",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "mushroom",
+          "tags": [
+            "fungal",
+            "alien",
+            "tree",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "crystal",
+          "tags": [
+            "crystal",
+            "resource",
+            "alien",
+            "glow",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "forge-furnace",
+          "tags": [
+            "industrial",
+            "furnace",
+            "landmark",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "forge-turbine",
+          "tags": [
+            "industrial",
+            "rotor",
+            "mechanism",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "forge-stack",
+          "tags": [
+            "industrial",
+            "tower",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "neon-pylon",
+          "tags": [
+            "energy",
+            "pylon",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "ruin-arch",
+          "tags": [
+            "ruins",
+            "architecture",
+            "gateway",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "ruin-column",
+          "tags": [
+            "ruins",
+            "column",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "ruin-vault",
+          "tags": [
+            "ruins",
+            "vault",
+            "landmark",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "bridge-trestle",
+          "tags": [
+            "bridge",
+            "support",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "portal-frame",
+          "tags": [
+            "portal",
+            "gateway",
+            "energy",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "root-bridge",
+          "tags": [
+            "garden",
+            "roots",
+            "bridge",
+            "tier:background"
+          ]
+        },
+        {
+          "id": "glacier-spire",
+          "tags": [
+            "glacier",
+            "crystal",
+            "landmark",
+            "tier:background"
+          ]
+        }
+      ]
+    },
+    "title": "Pinball machinery and framing art",
+    "description": "Optional original machinery, gateways and canonical foliage that frame generated pinball structures.",
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -500
+  },
+  "imports": {
+    "@keel-engine/bake": "keel/bake",
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/core/rng": "keel/core",
+    "@keel-engine/foliage": "packs/foliage",
+    "@keel-engine/object": "keel/object",
+    "@keel-engine/pinball-arena": "keel/pinball-arena",
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

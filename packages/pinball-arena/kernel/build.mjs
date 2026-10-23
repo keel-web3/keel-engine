@@ -1,0 +1,11 @@
+import {execFileSync} from 'node:child_process';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
+const dir=fileURLToPath(new URL('.',import.meta.url));
+const compiler=process.env.ARENA_CLANG??'/opt/homebrew/bin/wasm32-clang';
+const version=execFileSync(compiler,['--version'],{encoding:'utf8'}).split('\n')[0];
+execFileSync(compiler,['-std=c17','-O2','-fno-builtin','-nostdlib','-Wl,--no-entry','-Wl,--export-all','-Wl,--initial-memory=2097152','-Wl,--max-memory=2097152','-Wl,--strip-all',dir+'arena.c','-o',dir+'arena.wasm']);
+const bytes=readFileSync(dir+'arena.wasm'),digest=createHash('sha256').update(bytes).digest('hex');
+writeFileSync(dir+'../src/kernel-bytes.ts',`// Generated from the independent shared arena kernel.\nexport const ARENA_KERNEL_SHA256='${digest}';\nexport const ARENA_KERNEL_COMPILER=${JSON.stringify(version)};\nexport const ARENA_KERNEL_BYTES=new Uint8Array([${bytes.join(',')}]);\n`);
+console.log(JSON.stringify({digest,bytes:bytes.length,compiler:version}));

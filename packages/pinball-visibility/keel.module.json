@@ -1,0 +1,19 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-pinball-visibility",
+  "version": "0.1.0",
+  "description": "Opt-in depth-tested mesh pixel evidence for procedural pinball admission, using the canonical KEEL G-buffer.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/pinball-visibility"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/runtime"
+    ]
+  }
+}

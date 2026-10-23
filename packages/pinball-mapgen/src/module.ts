@@ -1,0 +1,2 @@
+import {defineManifest} from '@keel-engine/runtime';
+export const manifest=defineManifest({id:'keel/pinball-mapgen',version:'0.1.0',kind:'runtime',title:'Seeded pinball cabinets and stages',description:'Stable cabinet recipe identity and bounded order-independent stage derivation from game-authored layout families.',needs:['keel/runtime@^0.1','keel/core@^0.1','keel/codec@^0.1','keel/pinball-map@^0.1']});

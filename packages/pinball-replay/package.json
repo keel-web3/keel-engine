@@ -1,0 +1,1 @@
+{"name":"@keel-engine/pinball-replay","version":"0.1.0","private":true,"type":"module","exports":{".":"./src/index.ts"},"dependencies":{"@keel-engine/runtime":"workspace:*","@keel-engine/codec":"workspace:*","@keel-engine/pinball-arena":"workspace:*"}}

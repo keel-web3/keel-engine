@@ -1,0 +1,11 @@
+{
+  "status": "TYPE_ANNOTATIONS_ONLY_OLD_UNEXPORTED_HELPER",
+  "reason": "Canonical KEEL strict package build checks every src TypeScript file, including historical unexported V1. Existing Array.isArray narrowing loses contextual ArenaField typing. Same explicit readonly field annotation already used in active held V2.",
+  "previousSha256": "acbe4c142354168f9bc76d517c20657bafa3657cfba6ab6722c9344461c1e081",
+  "currentSha256": "a1bf2f424bcf2cef8722e581891f1a13af5ee48c2ca595e727bf331632c9c612",
+  "historicalHoldArchive": "work/design-reset/camera-framing-review/camera-module-build/checkpoints/pre-legacy-type-repair",
+  "activeV2Unchanged": "6f45184ae262d5b129f86507200a9d129a2f11ddf83f4effff3da32875f1bd6c",
+  "runtimeLogicChanged": false,
+  "exportsChanged": false,
+  "holdMeaning": "Original V1 and V2 preservedV1 identities are historical preimages now in the exact directory archive; original hold JSON bytes preserved and not rewritten."
+}

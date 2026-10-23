@@ -1,0 +1,2 @@
+import {defineManifest} from '@keel-engine/runtime';
+export const manifest=defineManifest({id:'keel/pinball-cabinet',version:'0.1.0',kind:'runtime',needs:['keel/runtime@^0.1','keel/core@^0.1','keel/codec@^0.1','keel/pinball-arena@^0.1'],title:'Classic pinball cabinets',description:'Authored shooter lanes, orbit returns, flipper catches, target banks and layered ramps using the shared pinball authority.'});

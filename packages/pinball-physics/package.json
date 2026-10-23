@@ -1,0 +1,15 @@
+{
+  "name": "@keel-engine/pinball-physics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Deterministic modular KEEL pinball-physics",
+  "exports": {
+    ".": "./src/index.ts",
+    "./runtime": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/pinball-map": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

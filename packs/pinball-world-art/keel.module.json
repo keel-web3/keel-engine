@@ -1,0 +1,25 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-packs-pinball-world-art",
+  "version": "0.1.0",
+  "description": "Optional original machinery, gateways and canonical foliage that frame generated pinball structures.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packs/pinball-world-art"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/bake",
+      "@keel-engine/core",
+      "@keel-engine/core/rng",
+      "@keel-engine/foliage",
+      "@keel-engine/object",
+      "@keel-engine/pinball-arena",
+      "@keel-engine/runtime"
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-pinball-input",
+  "version": "0.1.0",
+  "description": "Held flippers and latched keyboard, controller and touch controls, sampled as canonical arena input with separate session medicine actions.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/pinball-input"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/pinball-arena",
+      "@keel-engine/pinball-session",
+      "@keel-engine/runtime"
+    ]
+  }
+}

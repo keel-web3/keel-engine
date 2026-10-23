@@ -1,0 +1,29 @@
+{
+  "status": "SOURCE_HOLD_UNEXECUTED_BODY_HEIGHT_V1",
+  "files": [
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/src/camera.ts",
+      "sha256": "0bf7348f408bfb0b9cf0622e468edc4e82198a214ce47ecf25ea0afb7b949306"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/src/module.ts",
+      "sha256": "79a15b26467a1a1bebd2c648e39866cb3e00ab01aa3d1a5b7706160d012b3802"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/src/index.ts",
+      "sha256": "3366f73d36c983c6530d731d4224f1d0cacca9e5f155b8bee4a2d7fb407bcbca"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/package.json",
+      "sha256": "e2e9a6d88ec420749dbd41fc14825812488a97821b9983dee73e997f641d3e70"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/keel.module.json",
+      "sha256": "d6faca627baaceef77094b2e90cb10298201050cc20a1ab3417998c98f64bd65"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/README.md",
+      "sha256": "c2664334267131e035c846ae0137b102575314e4dd960227318142bdec2b4c5c"
+    }
+  ]
+}

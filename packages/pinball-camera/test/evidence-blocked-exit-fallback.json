@@ -1,0 +1,17 @@
+{
+  "tapeSha256": "4818ba7bb8ef4f24c6f491a36a6baf341f2f27c2e17463be5cb4518ed9d0af4a",
+  "world": "27e7ebe31316612815ed17c72407b44638e29f73c1228c4f012fca20fa96c828",
+  "authority": "shared-arena/2026-10-08.18",
+  "kernel": "638eaa423d7a7fe6b46eb30f03fe15b6878c55e062ef792c82627dd48cd6a109",
+  "frames": 1100,
+  "samples": 4400,
+  "retained": 1448,
+  "travel": 1444,
+  "bridges": 912,
+  "minScale": 0.6562771808437587,
+  "maxScale": 0.82,
+  "minBallPixels": 21.00086978700028,
+  "nearPairSamples": 1448,
+  "discontinuities": 0,
+  "scope": "Exact frozen authority tape replay and deterministic camera assertions; no device, art or whole-game approval"
+}

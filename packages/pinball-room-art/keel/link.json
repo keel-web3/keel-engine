@@ -1,0 +1,28 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/pinball-room-art",
+    "version": "0.1.1",
+    "kind": "runtime",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/core@^0.1",
+      "keel/pinball-arena@^0.1",
+      "keel/pinball-pixel-art@^0.1",
+      "keel/pinball-feedback@^0.1"
+    ],
+    "title": "Native indexed pinball room construction",
+    "description": "Original indexed pinball assemblies and native-supported cosmetic tube sleeves with explicit ball-radius envelopes and a flat floor chord. Seeded materials, checked camera projection, sphere-height visibility masks and atomic bounded painting. No ceiling collider, sloped-sphere contact or physical housing admission; diagnostic art remains in review.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/core": "keel/core",
+    "@keel-engine/pinball-pixel-art": "keel/pinball-pixel-art",
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

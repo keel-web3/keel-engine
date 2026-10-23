@@ -1,0 +1,2 @@
+import {defineManifest} from '@keel-engine/runtime';
+export const manifest=defineManifest({id:'keel/pinball-run',version:'0.1.0',kind:'runtime',title:'Pinball survival run',description:'Deterministic stage objectives, class abilities, health, drafts and campaign checkpoints over canonical pinball worlds.',needs:['keel/runtime@^0.1','keel/codec@^0.1','keel/pinball-map@^0.1','keel/pinball-mapgen@^0.1','keel/pinball-physics@^0.1','keel/pinball-world@^0.1','keel/run-progression@^0.1']});

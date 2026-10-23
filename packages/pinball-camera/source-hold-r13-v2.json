@@ -1,0 +1,78 @@
+{
+  "status": "CAMERA_SOURCE_HOLD_R13_V2_ATOMIC_OBSERVE_REPAIR_PENDING_REVIEW",
+  "files": [
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/README.md",
+      "sha256": "e8d2a005e9f68a988526c09f4220b941b2bceef6277e132451e45622ff8fa821"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/keel/entry.ts",
+      "sha256": "13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/keel/link.json",
+      "sha256": "dd2a227df1206050a8fa0866533ac9814305f284556edbb965818cfebe08c88f"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/keel.module.json",
+      "sha256": "f3bfc70333f97e36d2baf4bbd1339140f95c8f64ef52695a8e2d62fa8f593a24"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/package.json",
+      "sha256": "faea5e466ef40d892694c5d13f46f0e6c19c1a2690c8b8a272e679d8edc4b960"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/src/camera.ts",
+      "sha256": "59a8f676fdda030e76759054efd7e5e87aa52c6655ae8637554e4a3282f65aae"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/src/index.ts",
+      "sha256": "3366f73d36c983c6530d731d4224f1d0cacca9e5f155b8bee4a2d7fb407bcbca"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/src/module.ts",
+      "sha256": "af19f1927e0fa1535fb9d284e5baf836e893b697cc0d577e1054783e07a4b7a5"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/test/camera.test.ts",
+      "sha256": "a905aea24a498d8a7c928c84fff75c6469380b59ccfa664bb35c2af3de419f02"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/test/evidence-blocked-exit-fallback.json",
+      "sha256": "af43fd01e06f9779bb54bc0d5a6bf62092e342e5e219f4a78a3a87b513b6743d"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/test/evidence-coaster-next-left-970.json",
+      "sha256": "476bd037d92253b03b12c1712e943a715d05d2113a85db539fce554ae9220a6e"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/test/evidence-roundtrip-1072.json",
+      "sha256": "e59e9f1066a00bb0f55d5f59384d01666e9f4e59824c5a8e38a99c7beda4290a"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/test/evidence-three-strokes.json",
+      "sha256": "228288e3bf0ffd4fb582242adaf34b1f1776b5f79dfd9d1726ab106ffe6715f0"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/test/native-evidence.ts",
+      "sha256": "5a11407ee78a116785b0e0dd0e9e4bd6e0fd22b09c0daddea40244b7afaa6ca3"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/test/run-native-evidence.mjs",
+      "sha256": "8898b40ba8e1206c5ac3c525ebda883fb671183699de1ac563e660e343dc5b6c"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/test/typecheck.mjs",
+      "sha256": "e7ed5f6fdd14a4df3b6874ca71a294ce266c0ca180882f32b5f3868d48e0f156"
+    },
+    {
+      "path": "work/keel-pinball-engine/packages/pinball-camera/tsconfig.json",
+      "sha256": "24c7c6d39dedcf937fb85ae61cc19c0fcc9f00048c7e918980498e4633c70bfb"
+    },
+    {
+      "path": "work/design-reset/next-art/25/src/camera-follow.ts",
+      "sha256": "0878ee4896550c0ccb05069f35e8f03b8296cc0cec698e31eb51075a29ba147c"
+    }
+  ],
+  "scope": "Root repair after independent source/actual SDK0012 rejected-frame mutation. Stage bridge/discontinuity locally and commit after transport validation. Original source-hold and rejected SDK preserved. Fresh SDK/browser/review checks pending."
+}

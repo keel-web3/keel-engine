@@ -1,0 +1,13 @@
+{
+  "name": "@keel-engine/pinball-progression",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Canonical ordered physical objectives, contact rearm and transactional drop-bank/gate effects.",
+  "exports": { ".": "./src/index.ts", "./runtime": "./src/index.ts" },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/pinball-arena": "workspace:*"
+  }
+}

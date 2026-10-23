@@ -1,0 +1,19 @@
+{
+  "name": "@keel-engine/pinball-run",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./runtime": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/codec": "workspace:*",
+    "@keel-engine/pinball-map": "workspace:*",
+    "@keel-engine/pinball-mapgen": "workspace:*",
+    "@keel-engine/pinball-physics": "workspace:*",
+    "@keel-engine/pinball-world": "workspace:*",
+    "@keel-engine/run-progression": "workspace:*"
+  }
+}

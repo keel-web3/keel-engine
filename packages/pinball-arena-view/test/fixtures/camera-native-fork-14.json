@@ -1,0 +1,363 @@
+{
+  "scope": "Exact archived physical coordinates for pure projection regression only; not an injected gameplay pose or qualification substitute.",
+  "physicalInputSha256": "560d7c29735e9128257a83d4822085e59b95b6d2112569a0783170157a493726",
+  "physicalWorldSha256": "497b0367f82349f8b21dca345951c6eb72fa2bb08ba448f23dd1bbe20bacc3ee",
+  "unitScale": 0.025,
+  "banks": [
+    {
+      "bank": {
+        "id": "assembly.1.bank.0.catch",
+        "ownerId": 0,
+        "teamId": 0,
+        "x": 4370,
+        "y": 3000,
+        "layer": 0,
+        "elevation": 0,
+        "launchX": 4560,
+        "launchY": 2440,
+        "launchVx": 10,
+        "launchVy": 0,
+        "flipperIds": [
+          "assembly.1.bank.0.catch.left",
+          "assembly.1.bank.0.catch.right"
+        ]
+      },
+      "blades": [
+        {
+          "id": "assembly.1.bank.0.catch.left",
+          "ownerId": 0,
+          "side": "left",
+          "pivotX": 4500,
+          "pivotY": 3106.5,
+          "length": 95,
+          "radius": 8,
+          "restAngle": -121,
+          "activeAngle": -80,
+          "layer": 0,
+          "elevation": 0
+        },
+        {
+          "id": "assembly.1.bank.0.catch.right",
+          "ownerId": 0,
+          "side": "right",
+          "pivotX": 4500,
+          "pivotY": 2893.5,
+          "length": 95,
+          "radius": 8,
+          "restAngle": 121,
+          "activeAngle": 80,
+          "layer": 0,
+          "elevation": 0
+        }
+      ],
+      "drain": {
+        "id": "assembly.1.bank.0.catch.drain",
+        "kind": "drain",
+        "x": 4360,
+        "y": 3000,
+        "radius": 90,
+        "layer": 0,
+        "elevation": 0,
+        "damage": 1,
+        "cooldownTicks": 180
+      },
+      "mouths": [
+        {
+          "id": "assembly.1.upper.ground-orbit-entry",
+          "mechanismId": "assembly.1.upper.ground-orbit",
+          "role": "shot-entry",
+          "x": 4970.3623046875,
+          "y": 2688.5166015625,
+          "layer": 0,
+          "elevation": 0,
+          "tangent": {
+            "x": 0.8203641418539073,
+            "y": -0.5718414769499519
+          },
+          "clearWidth": 48,
+          "direction": "forward",
+          "surfaceIds": [
+            "assembly.1.upper.ground-orbit.bed.0"
+          ],
+          "maxBallRadius": 12,
+          "admittedSpeed": {
+            "min": 2,
+            "max": 18
+          },
+          "receiverCatchId": "assembly.1.basin.bank.0.catch",
+          "qualificationId": "assembly.1.bank.0.route.0"
+        },
+        {
+          "id": "assembly.1.upper.elevated-cross-return-entry",
+          "mechanismId": "assembly.1.upper.elevated-cross-return",
+          "role": "shot-entry",
+          "x": 4960.7783203125,
+          "y": 3079.302734375,
+          "layer": 0,
+          "elevation": 0,
+          "tangent": {
+            "x": 0.9823680968313748,
+            "y": 0.1869570066296068
+          },
+          "clearWidth": 48,
+          "direction": "forward",
+          "surfaceIds": [
+            "assembly.1.upper.elevated-cross-return.bed.0"
+          ],
+          "maxBallRadius": 12,
+          "admittedSpeed": {
+            "min": 2,
+            "max": 18
+          },
+          "receiverCatchId": "assembly.1.terrace.bank.0.catch",
+          "qualificationId": "assembly.1.bank.0.route.1"
+        }
+      ]
+    },
+    {
+      "bank": {
+        "id": "assembly.1.basin.bank.0.catch",
+        "ownerId": -1,
+        "teamId": -1,
+        "x": 4370,
+        "y": 1400,
+        "layer": 0,
+        "elevation": 0,
+        "launchX": 4580,
+        "launchY": 1400,
+        "launchVx": 10,
+        "launchVy": 0,
+        "flipperIds": [
+          "assembly.1.basin.bank.0.catch.left",
+          "assembly.1.basin.bank.0.catch.right"
+        ]
+      },
+      "blades": [
+        {
+          "id": "assembly.1.basin.bank.0.catch.left",
+          "ownerId": -1,
+          "side": "left",
+          "pivotX": 4500,
+          "pivotY": 1507.5,
+          "length": 94,
+          "radius": 8,
+          "restAngle": -121,
+          "activeAngle": -74,
+          "layer": 0,
+          "elevation": 0
+        },
+        {
+          "id": "assembly.1.basin.bank.0.catch.right",
+          "ownerId": -1,
+          "side": "right",
+          "pivotX": 4500,
+          "pivotY": 1292.5,
+          "length": 94,
+          "radius": 8,
+          "restAngle": 121,
+          "activeAngle": 74,
+          "layer": 0,
+          "elevation": 0
+        }
+      ],
+      "drain": {
+        "id": "assembly.1.basin.bank.0.catch.drain",
+        "kind": "drain",
+        "x": 4360,
+        "y": 1400,
+        "radius": 90,
+        "layer": 0,
+        "elevation": 0,
+        "damage": 1,
+        "cooldownTicks": 180
+      },
+      "mouths": [
+        {
+          "id": "assembly.1.basin.outer-transfer-entry",
+          "mechanismId": "assembly.1.basin.outer-transfer",
+          "role": "shot-entry",
+          "x": 5096.6181640625,
+          "y": 1052.5966796875,
+          "layer": 0,
+          "elevation": 0,
+          "tangent": {
+            "x": 0.8107992754648253,
+            "y": -0.5853242989195943
+          },
+          "clearWidth": 32,
+          "direction": "forward",
+          "surfaceIds": [
+            "assembly.1.basin.outer-transfer.bed.0"
+          ],
+          "maxBallRadius": 12,
+          "admittedSpeed": {
+            "min": 2,
+            "max": 18
+          },
+          "receiverCatchId": "assembly.1.terrace.bank.0.catch",
+          "qualificationId": "assembly.1.basin.outer-transfer.route"
+        },
+        {
+          "id": "assembly.1.basin.shared-return-entry",
+          "mechanismId": "assembly.1.basin.shared-return",
+          "role": "shot-entry",
+          "x": 5095.0888671875,
+          "y": 1609.71484375,
+          "layer": 0,
+          "elevation": 0,
+          "tangent": {
+            "x": 0.9244767335311954,
+            "y": 0.38123846757573004
+          },
+          "clearWidth": 32,
+          "direction": "forward",
+          "surfaceIds": [
+            "assembly.1.basin.shared-return.bed.0"
+          ],
+          "maxBallRadius": 12,
+          "admittedSpeed": {
+            "min": 2,
+            "max": 18
+          },
+          "receiverCatchId": "assembly.1.bank.0.catch",
+          "qualificationId": "assembly.1.basin.shared-return.route"
+        }
+      ]
+    },
+    {
+      "bank": {
+        "id": "assembly.1.terrace.bank.0.catch",
+        "ownerId": -1,
+        "teamId": -1,
+        "x": 4870,
+        "y": 3850,
+        "layer": 1,
+        "elevation": 115,
+        "launchX": 5080,
+        "launchY": 3850,
+        "launchVx": 10,
+        "launchVy": 0,
+        "flipperIds": [
+          "assembly.1.terrace.bank.0.catch.left",
+          "assembly.1.terrace.bank.0.catch.right"
+        ]
+      },
+      "blades": [
+        {
+          "id": "assembly.1.terrace.bank.0.catch.left",
+          "ownerId": -1,
+          "side": "left",
+          "pivotX": 5000,
+          "pivotY": 3958.5,
+          "length": 95,
+          "radius": 8,
+          "restAngle": -119,
+          "activeAngle": -76,
+          "layer": 1,
+          "elevation": 115
+        },
+        {
+          "id": "assembly.1.terrace.bank.0.catch.right",
+          "ownerId": -1,
+          "side": "right",
+          "pivotX": 5000,
+          "pivotY": 3741.5,
+          "length": 95,
+          "radius": 8,
+          "restAngle": 119,
+          "activeAngle": 76,
+          "layer": 1,
+          "elevation": 115
+        }
+      ],
+      "drain": {
+        "id": "assembly.1.terrace.bank.0.catch.drain",
+        "kind": "drain",
+        "x": 4860,
+        "y": 3850,
+        "radius": 90,
+        "layer": 1,
+        "elevation": 115,
+        "damage": 1,
+        "cooldownTicks": 180
+      },
+      "mouths": [
+        {
+          "id": "assembly.1.terrace.local-orbit-entry",
+          "mechanismId": "assembly.1.terrace.local-orbit",
+          "role": "shot-entry",
+          "x": 5461.88671875,
+          "y": 4497.91015625,
+          "layer": 1,
+          "elevation": 115,
+          "tangent": {
+            "x": 0.9591815172140116,
+            "y": 0.2827911190879706
+          },
+          "clearWidth": 32,
+          "direction": "forward",
+          "surfaceIds": [
+            "assembly.1.terrace.local-orbit.bed.0"
+          ],
+          "maxBallRadius": 12,
+          "admittedSpeed": {
+            "min": 2,
+            "max": 18
+          },
+          "receiverCatchId": "assembly.1.terrace.bank.0.catch",
+          "qualificationId": "assembly.1.terrace.local-orbit.route"
+        },
+        {
+          "id": "assembly.1.terrace.return-entry",
+          "mechanismId": "assembly.1.terrace.return",
+          "role": "shot-entry",
+          "x": 5470.193359375,
+          "y": 4010.509765625,
+          "layer": 1,
+          "elevation": 115,
+          "tangent": {
+            "x": 0.9129088529361941,
+            "y": 0.40816347978563966
+          },
+          "clearWidth": 32,
+          "direction": "forward",
+          "surfaceIds": [
+            "assembly.1.terrace.return.bed.0"
+          ],
+          "maxBallRadius": 12,
+          "admittedSpeed": {
+            "min": 2,
+            "max": 18
+          },
+          "receiverCatchId": "assembly.1.bank.0.catch",
+          "qualificationId": "assembly.1.terrace.return.route"
+        },
+        {
+          "id": "assembly.1.terrace.east-return-entry",
+          "mechanismId": "assembly.1.terrace.east-return",
+          "role": "shot-entry",
+          "x": 5601.9951171875,
+          "y": 3385.0693359375,
+          "layer": 1,
+          "elevation": 115,
+          "tangent": {
+            "x": 0.6994320941308892,
+            "y": -0.7146990595346259
+          },
+          "clearWidth": 32,
+          "direction": "forward",
+          "surfaceIds": [
+            "assembly.1.terrace.east-return.bed.0"
+          ],
+          "maxBallRadius": 12,
+          "admittedSpeed": {
+            "min": 2,
+            "max": 18
+          },
+          "receiverCatchId": "assembly.1.basin.bank.0.catch",
+          "qualificationId": "assembly.1.terrace.east-return.route"
+        }
+      ]
+    }
+  ]
+}

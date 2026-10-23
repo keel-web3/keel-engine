@@ -1,0 +1,26 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/pinball-room",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/codec@^0.1",
+      "keel/pinball-arena@^0.1"
+    ],
+    "title": "Shared pinball room protocol",
+    "description": "Bounded owner-admitted input and compact shared public frames; independent of host, rendering and cosmetics.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/codec/hash": "keel/codec",
+    "@keel-engine/pinball-arena": "keel/pinball-arena",
+    "@keel-engine/runtime": "keel/runtime"
+  },
+  "manifests": {}
+}

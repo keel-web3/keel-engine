@@ -98,7 +98,7 @@ const DPAD_ARMS: Readonly<Record<string, readonly [number, number]>> = { "↑": 
 
 type Shape = (b: Bitmap, cx: number, cy: number, r: number, c: Rgba) => void;
 /** PlayStation's face symbols as shapes. */
-const PS_SHAPES: Readonly<Record<string, Shape>> = {
+const PS_SHAPES: Readonly<Partial<Record<string, Shape>>> = {
   "✕": (b, cx, cy, r, c) => { line(b, cx - r, cy - r, cx + r, cy + r, c); line(b, cx - r, cy + r, cx + r, cy - r, c); line(b, cx - r + 1, cy - r, cx + r, cy + r - 1, c); line(b, cx - r + 1, cy + r, cx + r, cy - r + 1, c); },
   "○": (b, cx, cy, r, c) => { for (let a = 0; a < 64; a += 1) { const t = (a / 64) * Math.PI * 2; plot(b, Math.round(cx + Math.cos(t) * r), Math.round(cy + Math.sin(t) * r), c); } },
   "□": (b, cx, cy, r, c) => { line(b, cx - r, cy - r, cx + r, cy - r, c); line(b, cx - r, cy + r, cx + r, cy + r, c); line(b, cx - r, cy - r, cx - r, cy + r, c); line(b, cx + r, cy - r, cx + r, cy + r, c); },

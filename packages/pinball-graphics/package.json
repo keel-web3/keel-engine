@@ -1,0 +1,9 @@
+{
+  "name": "@keel-engine/pinball-graphics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Independent pinball art styles and bounded device graphics plans.",
+  "exports": {".": "./src/index.ts", "./runtime": "./src/index.ts"},
+  "dependencies": {"@keel-engine/runtime": "workspace:*", "@keel-engine/core": "workspace:*", "@keel-engine/targets": "workspace:*"}
+}

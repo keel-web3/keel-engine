@@ -1,0 +1,22 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-pinball-feedback",
+  "version": "0.1.0",
+  "description": "Bounded seeded mechanism poses, particles, lamp pulses and sound cues from admitted pinball state and events.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/pinball-feedback"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/audio",
+      "@keel-engine/core",
+      "@keel-engine/pinball-arena",
+      "@keel-engine/runtime"
+    ]
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "frames": 1027,
+  "framesSha256": "3a39ddbb5823fb0d7e05bf2fe22ea815649bca90d61f8f731cd0e66f608c25ac",
+  "soundsSha256": "5cad98afb7275e64217a99c9a28ebe87aec66fe4a8ab1f44f7b4fdebbaff4a46",
+  "posesSha256": "5714803375213472e4d96271f2b130bde7e645e663cc7d181fff47b56b2f2cbd",
+  "effectsSha256": "4aa88eff48e78294482b1500cf07d0e50ba6730542b9be0603d770d86a2470e2",
+  "contacts": [
+    {
+      "name": "right-spring-0",
+      "event": {
+        "id": "373:0:bumper",
+        "tick": 373,
+        "type": "bumper",
+        "ownerId": 0,
+        "arenaId": "compact22",
+        "colliderId": "compact22.spring",
+        "x": 1018.62890625,
+        "y": 1495.8759765625,
+        "elevation": 0,
+        "energy": 6.8798828125
+      },
+      "mechanism": {
+        "id": "compact22.spring",
+        "arenaId": "compact22",
+        "kind": "spring",
+        "durationTicks": 36,
+        "activationTick": 373,
+        "activationSerial": 1,
+        "intensity": 391
+      },
+      "pose": {
+        "arenaId": "compact22",
+        "x": 1002,
+        "y": 1560,
+        "layer": 0,
+        "elevation": 0,
+        "id": "compact22.spring",
+        "kind": "spring",
+        "recoil": 0.3818359375,
+        "pulse": 0.3818359375,
+        "charge": 0,
+        "transportPhase": null,
+        "transportProgress": 0
+      },
+      "pulse": {
+        "id": "compact22.spring:1",
+        "kind": "spark",
+        "arenaId": "compact22",
+        "x": 1018.62890625,
+        "y": 1495.8759765625,
+        "layer": 0,
+        "elevation": 0,
+        "alpha": 1,
+        "radius": 6.56015625,
+        "ownerId": 0
+      }
+    },
+    {
+      "name": "left-target-0",
+      "event": {
+        "id": "356:0:rail",
+        "tick": 356,
+        "type": "rail",
+        "ownerId": 0,
+        "arenaId": "compact22",
+        "colliderId": "compact22.rebound-target",
+        "x": 1249.8212890625,
+        "y": 1544.939453125,
+        "elevation": 0,
+        "energy": 16.9560546875
+      }
+    }
+  ],
+  "bounds": {
+    "particleCap": 32,
+    "pulseCap": 12,
+    "peakParticles": 16,
+    "peakPulses": 2
+  }
+}
