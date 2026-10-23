@@ -1,0 +1,23 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/handheld",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/runtime@^0.1",
+      "keel/studio@^0.1"
+    ],
+    "title": "KEEL Engine handheld",
+    "description": "A handheld console built from parts for keel/studio: shell halves with real bevels, cover glass over a pixel-exact screen, keys on pivots, a cartridge, screws and the board inside; crisp printed graphics; hit testing and key travel; grid and solo detail.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {
+    "@keel-engine/studio": "keel/studio"
+  },
+  "manifests": {}
+}

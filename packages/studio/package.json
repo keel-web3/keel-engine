@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The studio renderer: physically based product shots, live -- GGX materials, a procedural studio environment, clear plastic with Fresnel and tint, contact shadow, baked AO, MSAA, screen bloom, and models built from parts, at two quality tiers.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./module": "./src/module.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

@@ -5,10 +5,12 @@
   "type": "module",
   "description": "Optional stills, video and GIF export.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./offline": "./src/offline.ts"
   },
   "dependencies": {
     "@keel-engine/core": "workspace:*",
-    "@keel-engine/runtime": "workspace:*"
+    "@keel-engine/runtime": "workspace:*",
+    "mediabunny": "1.61.3"
   }
 }

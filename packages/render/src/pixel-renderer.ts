@@ -28,6 +28,7 @@ import {
 import { DEPTH_FS, unpackDepth } from "./indexed.ts";
 import { DEPTH_OUT_FS, DIRECT_PIXEL_FS, RASTER_FLOATS, RASTER_FS, RASTER_VS, boxTemplate, capsuleTemplate } from "./raster.ts";
 import type { DepthOut, RasterFrame, RasterMesh, RasterTemplate } from "./raster.ts";
+import { RESOLVE_FS, smoothDepthOutFs, smoothPixelFs, supersampleFor } from "./smooth.ts";
 import { program } from "./program.ts";
 import type { Program } from "./program.ts";
 import { createIndexedPass } from "./indexed-pass.ts";
@@ -102,6 +103,15 @@ export interface StyleInput {
   readonly screen?: RenderStyle["screen"] | undefined;
   readonly dither?: number | undefined;
   readonly outline?: number | boolean | undefined;
+  /**
+   * "smooth" (the default): edges drawn finer than the art pixel and blended by how much of a pixel each side covers,
+   * so a moving camera glides them instead of walking stairs along them (smooth.ts); the palette, dither and outline
+   * stay in art pixels. "crisp": every pixel exactly one palette entry, edges stepping a whole pixel -- the classic
+   * look (and what a hardware target, or a pixel-exact comparison, always gets).
+   */
+  readonly edges?: "smooth" | "crisp" | undefined;
+  /** Smooth edges' samples to an art pixel each way (1..4), or "auto" (3; fewer on a big target). */
+  readonly supersample?: number | "auto" | undefined;
 }
 
 /** A speck in the world: where, how big, how light, on which ramp, how much it glows (0..1). */
@@ -167,8 +177,11 @@ export interface PixelRenderer {
   ramp(name: string): number;
   /** Materials 0..254. */
   setMaterials(list: readonly Material[]): void;
-  /** The dither screen (0 none, 2, 4, 8, or a core screen id such as "stipple"), how far it reaches, and the outline. */
+  /** The dither screen (0 none, 2, 4, 8, or a core screen id such as "stipple"), how far it reaches, the outline, and
+   *  smooth or crisp edges. */
   setStyle(style?: StyleInput): void;
+  /** Samples to an art pixel each way the last frame drew with (1: crisp). */
+  readonly supersample: number;
   /** The world's solids: boxes and wedges turned about y (a box with `kind: "wedge"` is a wedge too), and capsules. */
   setWorld(world: RenderWorld): WorldCounts;
   /** The fx list: [{ name, on?, ...params }]. Resolved for the target now and on every setTarget. */
@@ -240,7 +253,7 @@ type WorldUniform = "uRes" | "uEye" | "uFwd" | "uRight" | "uUp" | "uTan" | "uTim
 type PointsUniform = "uEye" | "uFwd" | "uRight" | "uUp" | "uTan" | "uAspect" | "uH";
 type PixelUniform =
   | "uData" | "uData2" | "uDepth" | "uPalette" | "uRamps" | "uScreenTex" | "uScreen" | "uDither" | "uTime" | "uOutline" | "uOutlineInk" | "uFog" | "uFogLook"
-  | "uGlow" | "uGlowK" | "uVig" | "uScan" | "uCrt" | "uRim" | "uRimDir" | "uFlash" | "uFlashMats" | "uGrade" | "uCycle";
+  | "uGlow" | "uGlowK" | "uVig" | "uScan" | "uCrt" | "uRim" | "uRimDir" | "uFlash" | "uFlashMats" | "uGrade" | "uCycle" | "uSS";
 type IndexUniform = "uData" | "uData2" | "uDepth" | "uGap";
 type HeightUniform = WorldUniform | "uData" | "uDepth" | "uScale" | "uEps" | "uOrthoH";
 
@@ -391,6 +404,36 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
   }
   target(W, H);
 
+  // ---- smooth edges (smooth.ts): a second set of buffers, k times the target each way, made the first time a frame
+  // asks; pass 2 draws into a colour buffer that size and the resolve brings it down to the canvas. (The target's own
+  // buffers stay the size they are: bakes, readData and crisp frames use them, as ever.)
+  let edges: "smooth" | "crisp" = "smooth";
+  let supersample: number | "auto" = "auto";
+  let lastK = 1;
+  interface Fine { k: number; w: number; h: number; fbo: WebGLFramebuffer; data: WebGLTexture; data2: WebGLTexture; depth: WebGLTexture; colourFbo: WebGLFramebuffer; colour: WebGLTexture }
+  let fine: Fine | null = null;
+  let smoothPixelP: Program<PixelUniform> | null = null, smoothDirectP: Program<PixelUniform> | null = null, resolveP: Program<"uColour" | "uSS"> | null = null, smoothDepthOutP: Program<"uDepth" | "uMap" | "uSS"> | null = null;
+  function fineBuffers(k: number): Fine {
+    if (fine && fine.k === k && fine.w === W * k && fine.h === H * k) return fine;
+    if (fine) { for (const t of [fine.data, fine.data2, fine.depth, fine.colour]) gl.deleteTexture(t); gl.deleteFramebuffer(fine.fbo); gl.deleteFramebuffer(fine.colourFbo); }
+    const w = W * k, h = H * k;
+    const tex = (internal: number, format: number, type: number): WebGLTexture => { const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, format, type, null); nearest(); return t; };
+    const data = tex(gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE), data2 = tex(gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE), depth = tex(gl.DEPTH_COMPONENT24, gl.DEPTH_COMPONENT, gl.UNSIGNED_INT);
+    const fb = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fb);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, data, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT1, gl.TEXTURE_2D, data2, 0);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, depth, 0);
+    gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
+    const colour = tex(gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE), colourFbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, colourFbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, colour, 0);
+    fine = { k, w, h, fbo: fb, data, data2, depth, colourFbo, colour };
+    return fine;
+  }
+  // (This frame's pass-1 buffers and their size: the target's own, or the fine ones.)
+  let RW = W, RH = H, rfbo: WebGLFramebuffer | null = null;
+
   const indexed = createIndexedPass({
     gl, quad, matTex, blocks,
     get width() { return W; }, get height() { return H; },
@@ -435,11 +478,11 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
     gl.depthMask(true);
     gl.useProgram(R.prog.p);
     gl.uniform3fv(RU.uEye, eye as unknown as Float32List); gl.uniform3fv(RU.uFwd, fwd); gl.uniform3fv(RU.uRight, right); gl.uniform3fv(RU.uUp, up);
-    gl.uniform1f(RU.uTan, tanF); gl.uniform1f(RU.uAspect, W / H);
+    gl.uniform1f(RU.uTan, tanF); gl.uniform1f(RU.uAspect, RW / RH);
     gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, matTex); gl.uniform1i(RU.uMats, 1);
     gl.uniform3fv(RU.uSun, sunN);
     gl.uniform1f(RU.uWaterY, frame.waterY ?? waterY); gl.uniform1f(RU.uFogNear, fogNear); gl.uniform1f(RU.uFogFar, fogFar);
-    gl.uniform2f(RU.uRes, W, H); gl.uniform1f(RU.uTime, time);
+    gl.uniform2f(RU.uRes, RW, RH); gl.uniform1f(RU.uTime, time);
     let tris = 0, insts = 0, meshes = 0;
     for (const key of frame.meshes ?? []) {
       const m = R.meshes.get(key);
@@ -466,9 +509,9 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
     rasterStats.meshes = meshes; rasterStats.triangles = tris; rasterStats.instances = insts;
     // (Engine: a hook's own draws into the same buffers -- the GPU ground, a sky -- then this renderer's state again.)
     if (frame.draw) {
-      frame.draw({ gl, eye: [eye[0], eye[1], eye[2]], forward: fwd, right, up, tan: tanF, width: W, height: H, far: FAR, time, sun: sunN });
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-      gl.viewport(0, 0, W, H);
+      frame.draw({ gl, eye: [eye[0], eye[1], eye[2]], forward: fwd, right, up, tan: tanF, width: RW, height: RH, far: FAR, time, sun: sunN });
+      gl.bindFramebuffer(gl.FRAMEBUFFER, rfbo);
+      gl.viewport(0, 0, RW, RH);
       gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1]);
       gl.enable(gl.DEPTH_TEST);
       gl.depthFunc(gl.LESS);
@@ -482,9 +525,12 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
     gl.depthFunc(gl.ALWAYS);
     gl.depthMask(true);
     gl.colorMask(false, false, false, false);
-    gl.useProgram(R.depthOut.p);
-    gl.uniform2f(R.depthOut.loc.uMap, scale, bias);
-    pass(R.depthOut.p, null, [[depthTex, R.depthOut.loc.uDepth]]);
+    // (After a smooth frame: the fine depth, each art pixel's middle sample.)
+    const D: Program<"uDepth" | "uMap" | "uSS"> = lastK > 1 ? (smoothDepthOutP ??= program<"uDepth" | "uMap" | "uSS">(gl, FULLSCREEN_VS, smoothDepthOutFs(DEPTH_OUT_FS))) : (R.depthOut as Program<"uDepth" | "uMap" | "uSS">);
+    gl.useProgram(D.p);
+    gl.uniform2f(D.loc.uMap, scale, bias);
+    if (lastK > 1) gl.uniform1i(D.loc.uSS, lastK);
+    pass(D.p, null, [[lastK > 1 ? fine!.depth : depthTex, D.loc.uDepth]]);
     gl.colorMask(true, true, true, true);
     gl.disable(gl.DEPTH_TEST);
   }
@@ -542,8 +588,9 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
       gl.bindTexture(gl.TEXTURE_2D, matTex);
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 256, 1, gl.RGBA, gl.FLOAT, matRows);
     },
-    setStyle({ screen: s = style.screen, dither: d = style.dither, outline: o = style.outline } = {}) {
+    setStyle({ screen: s = style.screen, dither: d = style.dither, outline: o = style.outline, edges: e = edges, supersample: k = supersample } = {}) {
       style = { screen: s, dither: d, outline: o ? 1 : 0 };
+      edges = e; supersample = k;
       authoredStyle = { ...style };
       fxDirty = true;
     },
@@ -558,6 +605,7 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
     get fxResolved() { if (fxDirty) refreshFx(); return fxResolved; },
     allFx: ALL_FX,
     get gpuMs() { return gpuMs; },
+    get supersample() { return lastK; },
     render({ eye, target: look, fov = 1.2, time = 0, sun = [0.4, 0.8, 0.3], waterY = 0, fogNear = 25, fogFar = 110, particles = [], raster, depthOut }) {
       const { world, pixel, points } = colourPrograms();
       const fx = fxDirty || !fxU ? refreshFx() : fxU;
@@ -574,14 +622,18 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
       const { forward: fwd, right, up } = cameraBasis(eye, look);
       const tanF = Math.tan(fov / 2);
       const sunN = norm(sun);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
-      gl.viewport(0, 0, W, H);
+      // Smooth edges: pass 1 and 2 at k samples an art pixel each way, then the resolve (a hardware target: crisp).
+      const k = edges === "smooth" && activeProfile.kind === "native" ? supersampleFor(W, H, supersample) : 1;
+      const F = k > 1 ? fineBuffers(k) : null;
+      lastK = k; RW = F ? F.w : W; RH = F ? F.h : H; rfbo = F ? F.fbo : fbo;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, rfbo);
+      gl.viewport(0, 0, RW, RH);
       gl.enable(gl.DEPTH_TEST);
       gl.depthFunc(gl.ALWAYS);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       const U = world.loc;
       gl.useProgram(world.p);
-      gl.uniform2f(U.uRes, W, H);
+      gl.uniform2f(U.uRes, RW, RH);
       gl.uniform3fv(U.uEye, eye as unknown as Float32List); gl.uniform3fv(U.uFwd, fwd); gl.uniform3fv(U.uRight, right); gl.uniform3fv(U.uUp, up);
       gl.uniform1f(U.uTan, tanF); gl.uniform1f(U.uTime, time);
       gl.uniform1i(U.uBoxes, nBoxes); gl.uniform1i(U.uWedges, nWedges); gl.uniform1i(U.uCaps, nCaps);
@@ -608,7 +660,7 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
         gl.useProgram(points.p);
         const P = points.loc;
         gl.uniform3fv(P.uEye, eye as unknown as Float32List); gl.uniform3fv(P.uFwd, fwd); gl.uniform3fv(P.uRight, right); gl.uniform3fv(P.uUp, up);
-        gl.uniform1f(P.uTan, tanF); gl.uniform1f(P.uAspect, W / H); gl.uniform1f(P.uH, H);
+        gl.uniform1f(P.uTan, tanF); gl.uniform1f(P.uAspect, RW / RH); gl.uniform1f(P.uH, RH);
         gl.bindBuffer(gl.ARRAY_BUFFER, pbuf);
         gl.bufferData(gl.ARRAY_BUFFER, data, gl.DYNAMIC_DRAW);
         const a0 = gl.getAttribLocation(points.p, "aPos");
@@ -622,12 +674,14 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
       if (raster) drawRaster(raster, eye, fwd, right, up, tanF, sunN, waterY, fogNear, fogFar, time);
       gl.disable(gl.DEPTH_TEST);
       // Pass 2: the palette, the screen, the fx, the outline. (A frame with a raster hook: the same pass, plus DIRECT_MAT pixels.)
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-      gl.viewport(0, 0, W, H);
-      const pass2 = raster?.draw ? (directPixelP ??= program<PixelUniform>(gl, FULLSCREEN_VS, DIRECT_PIXEL_FS)) : pixel;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, F ? F.colourFbo : null);
+      gl.viewport(0, 0, RW, RH);
+      const pass2 = F
+        ? raster?.draw ? (smoothDirectP ??= program<PixelUniform>(gl, FULLSCREEN_VS, smoothPixelFs(DIRECT_PIXEL_FS))) : (smoothPixelP ??= program<PixelUniform>(gl, FULLSCREEN_VS, smoothPixelFs(PIXEL_FS)))
+        : raster?.draw ? (directPixelP ??= program<PixelUniform>(gl, FULLSCREEN_VS, DIRECT_PIXEL_FS)) : pixel;
       gl.useProgram(pass2.p);
       const X = pass2.loc;
-      const T = [[dataTex, "uData"], [data2Tex, "uData2"], [depthTex, "uDepth"], [palTex, "uPalette"], [rampTex, "uRamps"], [screenTex, "uScreenTex"]] as const;
+      const T = [[F ? F.data : dataTex, "uData"], [F ? F.data2 : data2Tex, "uData2"], [F ? F.depth : depthTex, "uDepth"], [palTex, "uPalette"], [rampTex, "uRamps"], [screenTex, "uScreenTex"]] as const;
       T.forEach(([t, name], i) => { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, t); gl.uniform1i(X[name], i); });
       const u = fx.u;
       gl.uniform1i(X.uScreen, u.uScreen); gl.uniform1f(X.uDither, u.uDither);
@@ -643,11 +697,25 @@ export function createPixelRenderer(canvas: RenderCanvas, { width = 128, height 
       gl.uniform2fv(X.uRimDir, rd as unknown as Float32List);
       gl.uniform4fv(X.uFlash, u.uFlash); gl.uniform4iv(X.uFlashMats, u.uFlashMats);
       gl.uniform2fv(X.uGrade, u.uGrade); gl.uniform1i(X.uCycle, u.uCycle);
+      if (F) gl.uniform1i(X.uSS, k);
       gl.bindBuffer(gl.ARRAY_BUFFER, quad);
       const ap = gl.getAttribLocation(pass2.p, "aPos");
       gl.enableVertexAttribArray(ap);
       gl.vertexAttribPointer(ap, 2, gl.FLOAT, false, 0, 0);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
+      if (F) {
+        // The resolve: each art pixel the mean of its k x k.
+        const rp = (resolveP ??= program<"uColour" | "uSS">(gl, FULLSCREEN_VS, RESOLVE_FS));
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, W, H);
+        gl.useProgram(rp.p);
+        gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, F.colour); gl.uniform1i(rp.loc.uColour, 0);
+        gl.uniform1i(rp.loc.uSS, k);
+        const ar = gl.getAttribLocation(rp.p, "aPos");
+        gl.enableVertexAttribArray(ar);
+        gl.vertexAttribPointer(ar, 2, gl.FLOAT, false, 0, 0);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+      }
       if (depthOut) writeDepthOut(depthOut);
       if (timing && timer) gl.endQuery(timer.TIME_ELAPSED_EXT);
     },

@@ -41,6 +41,7 @@ const frame: RenderOptions = { eye: [0, 1, 5], target: [0, 0.5, 0], fov: 0.8, ti
 function session(bake: boolean) {
   const A = standIn();
   const px = createPixelRenderer(A.canvas as unknown as RenderCanvas, { width: 48, height: 40 });
+  px.setStyle({ edges: "crisp" }); // (the proof of concept's path, call for call: smooth edges are smooth.test.ts's)
   px.setPalette([[10, 10, 10], [200, 200, 200], [90, 40, 20]], { a: [0, 2], b: [2, 1] });
   px.setMaterials([{ ramp: "a" }, { ramp: "b", light: 1.1 }]);
   px.setWorld({ capsules: [{ a: [0, 0, 0], b: [0, 1, 0], r: 0.3, mat: 1 }], boxes: [{ c: [0.5, 0.5, 0], h: [0.1, 0.2, 0.3], mat: 0 }] });

@@ -42,7 +42,7 @@ export function collectModuleOutputs(outputs,roots,workingDir) {
 }
 
 /** Content independent names + real static factories; never eval or network. */
-export async function packageModularOutputs({result,transform,compact,typescript:ts,roots,workingDir,entryIds,rootEntryIds,boundaryIds=new Map(),namespace='__KEEL_STATIC_MODULES__',modulePrefix='keel.shared',publicationGroupBy,sharedHelpers=false}) {
+export async function packageModularOutputs({result,transform,compact,typescript:ts,roots,workingDir,entryIds,rootEntryIds,boundaryIds=new Map(),namespace='__KEEL_STATIC_MODULES__',modulePrefix='keel.shared',publicationGroupBy,sharedHelpers=false,staticAsyncImports=false}) {
   if(!result.metafile||!result.outputFiles)throw Error('Module build needs metadata and bytes');
   createStaticModuleRuntime(namespace,{sharedHelpers});
   if(!/^[a-z][a-z0-9.-]*$/.test(modulePrefix))throw Error('Invalid module identity prefix');
@@ -73,7 +73,7 @@ export async function packageModularOutputs({result,transform,compact,typescript
     if(!reachable.has(key))continue;
     if(!description)throw Error('Module output metadata missing: '+file.path);
     const {id,output,sources}=description;
-    if(output.imports.some(p=>p.kind==='dynamic-import'))throw Error('Dynamic module imports are unsupported');
+    if(!staticAsyncImports&&output.imports.some(p=>p.kind==='dynamic-import'))throw Error('Dynamic module imports are unsupported');
     const aliases=new Map(output.imports.filter(p=>!p.external).map(p=>{
       const imported=resolve(workingDir,p.path),target=outToId.get(imported);
       if(!target)throw Error('Unresolved emitted module import: '+p.path);
@@ -102,6 +102,14 @@ export async function packageModularOutputs({result,transform,compact,typescript
     const dependencies=new Set(),edits=[];
     const tree=ts.createSourceFile('verified-module.js',transformed.code,ts.ScriptTarget.Latest,true,ts.ScriptKind.JS);
     const visit=node=>{
+      // Resolve only declared literal edges. Keep import()'s lazy microtask
+      // execution while using the same verified factory cache as static imports.
+      if(staticAsyncImports&&ts.isCallExpression(node)&&node.expression.kind===ts.SyntaxKind.ImportKeyword){
+        if(node.arguments.length!==1||!ts.isStringLiteral(node.arguments[0]))throw Error('Non-static async module import');
+        const literal=node.arguments[0],target=aliases.get(literal.text.replace(/^\.\//,''));
+        if(!target)throw Error('Undeclared async module import: '+literal.text);
+        dependencies.add(target);edits.push([node.getStart(tree),node.end,'Promise.resolve().then(()=>require('+JSON.stringify(target)+'))']);return;
+      }
       if(ts.isCallExpression(node)&&ts.isIdentifier(node.expression)&&node.expression.text==='require') {
         if(node.arguments.length!==1||!ts.isStringLiteral(node.arguments[0]))throw Error('Dynamic module requires are unsupported');
         const literal=node.arguments[0];

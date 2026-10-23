@@ -14,6 +14,7 @@
     "./palette": "./src/palette.ts",
     "./dither": "./src/dither.ts",
     "./quantize": "./src/quantize.ts",
+    "./depth-dither": "./src/depth-dither.ts",
     "./gif": "./src/gif.ts",
     "./curl": "./src/curl.ts",
     "./hash": "./src/hash.ts",

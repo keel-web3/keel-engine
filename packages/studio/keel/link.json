@@ -1,0 +1,20 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/studio",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [
+      "keel/runtime@^0.1"
+    ],
+    "title": "KEEL Engine studio",
+    "description": "The studio renderer: GGX materials, a procedural studio environment, clear plastic, contact shadow, baked AO, MSAA, screen bloom and models built from parts, at two quality tiers.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {},
+  "manifests": {}
+}

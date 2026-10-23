@@ -1,0 +1,19 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-handheld",
+  "version": "0.1.0",
+  "description": "A handheld console built from parts for keel/studio: shell halves with real bevels, cover glass over a pixel-exact screen, keys on pivots, a cartridge, screws and the board inside; crisp printed graphics; hit testing and key travel; grid and solo detail.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/handheld"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/studio"
+    ]
+  }
+}

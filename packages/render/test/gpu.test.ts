@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import * as SH from "../src/shaders.ts";
 import { createPixelRenderer, paletteRamps } from "../src/pixel-renderer.ts";
+import { smoothPixelFs } from "../src/smooth.ts";
 import type { RenderCanvas } from "../src/pixel-renderer.ts";
 import { ALL_FX } from "../src/fx.ts";
 import { buildPalette, createRoll, makePalette, stream } from "@keel-engine/core";
@@ -41,7 +42,8 @@ test("the fragment shaders stay inside WebGL2's baseline uniform budget (224 vec
 
 test("every uniform the renderer sets is declared by its shader", async () => {
   const ts = await readFile(new URL("../src/pixel-renderer.ts", import.meta.url), "utf8");
-  for (const [prog, src] of [["U", SH.WORLD_FS], ["X", SH.PIXEL_FS], ["P", SH.POINTS_VS]] as const) {
+  // (X: pass 2, crisp or smooth -- the smooth pass is PIXEL_FS plus its samples-to-a-pixel.)
+  for (const [prog, src] of [["U", SH.WORLD_FS], ["X", smoothPixelFs(SH.PIXEL_FS)], ["P", SH.POINTS_VS]] as const) {
     const used = new Set([...ts.matchAll(new RegExp(`\\b${prog}\\.(u\\w+)`, "g"))].map((m) => m[1] ?? ""));
     assert.ok(used.size > 0);
     for (const u of used) assert.match(src, new RegExp(`uniform [^;]*\\b${u}\\b`), `${u} declared`);

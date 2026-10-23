@@ -132,6 +132,7 @@ test("the renderer: the same GL calls, argument for argument, over random sessio
     const B = standIn({ timer });
     const ta = tPx.createPixelRenderer(A.canvas as unknown as RenderCanvas, size);
     const tb = jPx.createPixelRenderer(B.canvas as unknown as RenderCanvas, size);
+    ta.setStyle({ edges: "crisp" }); // (the engine's smooth edges are its own: the proof of concept draws crisp)
     same("renderer limits", ta.limits, tb.limits);
     const r = rand(seed * 101);
     // A session: a random run of calls, the same on both.

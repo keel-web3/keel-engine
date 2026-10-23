@@ -1,6 +1,7 @@
-// The port against its references. NOCTURNES: the TS scoreOf, fed a NOCTURNES
-// genome through moodOfNocturnes, makes NOCTURNES' plan byte for byte (JSON),
-// and the TS samples are NOCTURNES' samples number for number. The proof of
+// The port against its references. NOCTURNES: a procedural room's music is its
+// nocturne's song (nightsong.ts, fed the genome through moodOfNocturnes) and
+// the engine's nightScoreOf makes NOCTURNES' plan byte for byte (JSON); the
+// engine's renderNightSong plays it to NOCTURNES' loop bit for bit. The proof of
 // concept (src/audio/*.js): plans, moods, sample arrays, the sfx palette and
 // its synthesis, params, intensity, voicing, WAV and loop measures are the
 // JS's exactly; the player, the sfx and the sound ask Tone / Web Audio for the
@@ -13,7 +14,7 @@ import { nocturnes, poc, polyfillAudioBuffer, recorder, sameBits } from "./helpe
 import type { ToneLike } from "../src/index.ts";
 
 polyfillAudioBuffer();
-const [nMusic, nGenome, nRng, nThemes, nSamples] = await Promise.all([nocturnes("music.js"), nocturnes("genome.js"), nocturnes("rng.js"), nocturnes("themes.js"), nocturnes("samples.js")]);
+const [nMusic, nGenome, nRng, nThemes, nKit] = await Promise.all([nocturnes("music.js"), nocturnes("genome.js"), nocturnes("rng.js"), nocturnes("themes.js"), nocturnes("nightkit.js")]);
 // (The proof of concept's modules, typed as their ports: they share an API.)
 const JS = {
   score: await poc<typeof import("../src/score.ts")>("src/audio/score.js"),
@@ -28,8 +29,13 @@ const JS = {
 const counts: Record<string, number> = {};
 const count = (k: string, n = 1) => { counts[k] = (counts[k] ?? 0) + n; };
 const json = (x: unknown) => JSON.stringify(x);
-const engine = (g: TS.NocturnesGenome) => { const m = TS.moodOfNocturnes(g); return TS.scoreOf(m, m.seed); };
-const same = (k: string, g: TS.NocturnesGenome, msg: string) => { assert.equal(json(engine(g)), json(nMusic.scoreOf(g)), msg); count(k); };
+const engine = (g: TS.NocturnesGenome) => TS.nightScoreOf(g);
+const same = (k: string, g: TS.NocturnesGenome, msg: string) => {
+  const theirs = nMusic.scoreOf(g);
+  assert.equal(theirs.kind, "nightsong", `${msg}: a procedural room (not a Halloween one)`);
+  assert.equal(json(engine(g)), json(theirs), msg);
+  count(k);
+};
 // (A genome takes NOCTURNES ~20 ms to make: each token's is made once, and only ever spread over, never changed.)
 const genomes = new Map<number, TS.NocturnesGenome & Record<string, unknown>>();
 const genome = (t: number): TS.NocturnesGenome & Record<string, unknown> => { if (!genomes.has(t)) genomes.set(t, Object.freeze(nGenome.makeGenome(nRng.seedFromToken(t)))); return genomes.get(t)!; };
@@ -55,6 +61,13 @@ test("NOCTURNES plans: rooms without a theme (workstation, floor, the things on 
 
 test("NOCTURNES plans: every pin (recipe.music) the studio can set", () => {
   const C = nMusic.MUSIC_CHOICES as Record<string, string[]>;
+  // (The studio's choices are the engine's families.)
+  assert.deepEqual(C.theme, Object.keys(TS.NIGHT_FEELS));
+  assert.deepEqual(C.kit, TS.NIGHT_KITS);
+  assert.deepEqual(C.keys, TS.NIGHT_PADS);
+  assert.deepEqual(C.lead, TS.NIGHT_LEADS);
+  assert.deepEqual(C.bass, TS.NIGHT_BASSES);
+  assert.deepEqual(C.mode, Object.keys(TS.NIGHT_MODES));
   let r = 7;
   const rnd = () => { r = (Math.imul(r, 1103515245) + 12345) >>> 0; return r / 4294967296; };
   const pick = (l: readonly string[]) => l[Math.floor(rnd() * l.length)]!;
@@ -84,23 +97,22 @@ test("NOCTURNES themeForItems: the port picks NOCTURNES' theme", () => {
   }
 });
 
-test("NOCTURNES samples: the port's instruments = NOCTURNES' (every sample, every value)", () => {
-  const rate = 22050;
-  const kinds = new Set<string>();
-  for (const t of [1, 2, 3, 5, 8, 13, 21, 34, 55, 89]) {
-    const plan = nMusic.scoreOf(genome(t)) as TS.Plan;
-    kinds.add(`${plan.keys}/${plan.lead}/${plan.bass}`);
-    const a = nSamples.makeSamples(plan, rate) as TS.SampleData<{ getChannelData(c: number): Float32Array }>;
-    const b = TS.makeSampleData(plan, rate);
-    for (const part of ["keys", "lead", "bass", "drums"] as const) {
-      assert.deepEqual(Object.keys(b[part]), Object.keys(a[part]));
-      for (const [k, x] of Object.entries(a[part])) {
-        assert.ok(sameBits(x.getChannelData(0), (b[part] as Record<string, Float32Array>)[k]!), `token ${t} ${part} ${k}`);
-        count("NOCTURNES samples (arrays bit-identical)");
-      }
-    }
+test("NOCTURNES songs: the engine's renderNightSong = NOCTURNES' loop (every sample, both channels)", async () => {
+  const rate = 8000;
+  const pins = [{}, { lead: "theremin", keys: "choir" }, { kit: "house", lead: "pulse", keys: "organ" }, { lead: "kalimba", bass: "gallop", theme: "gallop" }, { lead: "celesta", kit: "march" }, {}];
+  const voices = new Set<string>();
+  for (const [i, t] of [1, 4, 33, 264, 89, 13].entries()) {
+    const g = { ...genome(t), recipe: { music: pins[i]! } };
+    const { song } = TS.nightsongOf(g);
+    for (const tr of song.tracks) voices.add(tr.voice);
+    const a = (await nKit.renderSong(song, { rate })) as TS.NightRender;
+    const b = await TS.renderNightSong(song, { rate });
+    assert.equal(b.seconds, a.seconds, `token ${t}`);
+    assert.ok(sameBits(a.left, b.left) && sameBits(a.right, b.right), `token ${t} ${json(pins[i])}`);
+    count("NOCTURNES songs (loops bit-identical)");
   }
-  assert.ok(kinds.size >= 5, "the tokens cover several instruments");
+  assert.ok(voices.size >= 15, `the songs cover the band (${[...voices].join(", ")})`);
+  assert.deepEqual([...nKit.VOICES], [...TS.NIGHT_VOICES]);
 });
 
 // ---------------------------------------------------------------- against the proof of concept

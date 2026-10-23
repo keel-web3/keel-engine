@@ -241,6 +241,71 @@ Buffer fields read: `L` (light, may exceed 1), `accent` (0 none, 1/2 an accent
 ramp; bits 2..5 a partial share), `layer` (index into `screens`; layer 0 reads
 the `outside` ramp), `halo` (wear `HALO_SCREEN`), `cyc` (colour-cycle with `t`).
 
+## depth-dither.ts (optional, `@keel-engine/core/depth-dither`)
+
+Depth-and-material dithering: rather than one screen per layer, each pixel
+uses a **role's** screen. A role is a depth band, a material family and a
+light side, plus an object or a part when an override names one. The plan
+picks every role's screen from rules, varies the pick by the scene's seed and
+then applies the overrides. Opt-in: the module isn't in `index.ts`, and a game
+that never imports it renders exactly as before.
+
+| Export | Signature | Returns |
+| --- | --- | --- |
+| `planDepthDither` | `(spec: DepthDitherSpec)` | `DepthDitherPlan`: `index(key) -> role`, `table`, `keyOf(role)`, `describe()` |
+| `createDepthQuantizer` | `({ width, height, ramps, lums, plan, halo? })` | `quantize(buf, region, out, t, role: Uint8Array, phx?, phy?) -> out` |
+| `familyOfMaterial` | `(mat, { glass?, liquid?, glow? })` | a `MaterialFamily` (an unknown material is `organic`) |
+| `solidIndex` | `(light, screen, rampLen)` | the nearest step, with no pattern |
+| `DEPTH_RULES` / `SHADE_GAMMA` / `SHADE_SCREENS` / `DEPTH_STYLES` | | the rule tables / the shade side's density / its screens under `shade: "hatch"` / one line per screen on what it is for |
+| `DEPTH_BANDS` / `MATERIAL_FAMILIES` | | `near mid far` / `glass metal wood stone cloth organic smooth glow sky fog` |
+
+**Spec.** `seed` and the optional fields:
+- `steps` per band: near 7, mid 6, far one fewer than mid, fx 4.
+- `bias` per band.
+- `variety`: 0 makes every role take its first rule; 1, the default, allows the full weighted spread.
+- `shade`, `edge`, `aerial`: set any of them to `false` to turn that rule off; `shade: "hatch"` asks for hatched shade sides.
+- `overrides`.
+
+**Rules.**
+- **Near:** the screen is chosen by material:
+  - wood takes lines or diagonals;
+  - stone takes bayer4 or bayer8, sometimes a halftone;
+  - cloth takes stipple, sometimes ign or bayer8;
+  - organic (pumpkins, wax, leather, rubber) takes bayer8 or bayer4;
+  - smooth (plastic, ceramic, porcelain) takes only bayer8 or bayer4 and never a grain (no stipple, ign or halftone), and its shade side keeps the lit side's density;
+  - metal takes ordered dither, one step more and a little more contrast;
+  - glass takes a fine ordered dither.
+- **Mid:** the same families, held back. Stone there is the wall, the room's biggest surface: ordered only, bayer4 or bayer8. In halftone a big surface read as a zigzag wallpaper, and in blue noise a near-black wall's few dots read as an even dot grid.
+- **Far:** bayer8 or stipple in flat fills (`flat` 2; the sky 1, so a moon's disc keeps its gradient; fog none: even a gentle snap posterized a foggy view into blotches): light snaps to the nearest step, so the pattern shows only in a thin band between tones and distance reads as calm, flat shapes. A light's ink (the moon, a lit window) keeps its gradient.
+- **Shade side:** its lit screen, denser (`SHADE_GAMMA` 1.15): the terminator is a change of tone, never a seam where one pattern meets another. `shade: "hatch"` gives it a directional screen of its own (`SHADE_SCREENS`: diagonal or hatch). Glow, glass, metal, smooth, sky and fog keep their lit side's screen and density.
+- **Edge:** a near thing's silhouette pixel is a solid run, with no pattern.
+
+The sky is picked first, and no other role takes a screen that `screenPair` marks as clashing with it (score 0).
+
+**Variety.** Each role draws from `mulberry32(fnv1a32(seed|band/family))`, so a
+role's pick never depends on which roles were asked for first.
+
+**Overrides** apply in this order: `all`, `bands[band]`, `families[family]`,
+`sides[side]`, `objects[key]`, `parts["key/part"]`. Each can set any of `id`,
+`steps`, `bias`, `scale`, `contrast`, `pivot`, `gamma`, `phase`, `solid` and
+`flat`. An object or a part becomes part of a role's key only when an override
+names it, so the table stays small (at most 255 roles).
+
+**Quantizer.** It works like `createQuantizer`. Each pixel reads its role's
+screen at `(x - phx, y - phy + phase) / scale`, through the role's contrast,
+gamma and flat. `phx`/`phy` are a moving part's whole-pixel shift, so its
+pattern rides with it. A halo still uses `HALO_SCREEN`. When a role has
+`contrast 1`, `gamma 1`, `flat 0` and `phase [0,0]`, the quantizer gives
+exactly the core quantizer's output; a test checks this.
+
+```ts
+import { planDepthDither, createDepthQuantizer } from "@keel-engine/core/depth-dither";
+const plan = planDepthDither({ seed: "scene-7", overrides: { families: { glass: { id: "bayer8" } }, parts: { "3/lid": { id: "checker", steps: 3 } } } });
+role[k] = plan.index({ band: "near", family: "wood", side: "shade" });
+const quantize = createDepthQuantizer({ width, height, ramps, lums, plan });
+quantize(buf, null, out, t, role);
+```
+
 ## gif.ts (optional)
 
 | Export | Signature | Returns |

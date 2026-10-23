@@ -1,0 +1,16 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-studio",
+  "version": "0.1.0",
+  "description": "The studio renderer: GGX materials, a procedural studio environment, clear plastic, contact shadow, baked AO, MSAA, screen bloom and models built from parts, at two quality tiers.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/studio"
+  },
+  "build": {
+    "format": "iife"
+  }
+}

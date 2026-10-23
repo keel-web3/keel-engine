@@ -1,5 +1,9 @@
 # `@keel-engine/capture`
 
+For asynchronous fixed-frame H.264/AAC export, import the optional
+`@keel-engine/capture/offline` subpath. See [offline MP4](OFFLINE_MP4.md).
+The regular capture module does not carry that encoder dependency in its bundle.
+
 Native Game Boy/Color and Chromatic background graphics are available through
 `exportGameBoyBackground()`, `gameBoyCSource()` and `gameBoyFiles()`. See
 [engine targets](../../docs/TARGETS.md) for conversion, native formats and the

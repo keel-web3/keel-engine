@@ -11,6 +11,8 @@ export type {
 export { intensityMix, midiHz, play, render, voice } from "./player.ts";
 export type { Band, IntensityMix, PlayOptions, RenderOptions } from "./player.ts";
 export { makeSampleData, makeSamples, toAudioBuffer } from "./samples.ts";
+// The instruments themselves (one note at a time, from a Design), for a score that renders its own arrangement.
+export { BASS as BASS_VOICES, DRUMS as DRUM_VOICES, KEYS as KEY_VOICES, bandpass, noiseOf, onePole, partials, pluck } from "./samples.ts";
 export type { DrumName, PartialSpec, SampleData, SamplePlan, Samples, Voice, Wear } from "./samples.ts";
 export { LOOP_NAMES, SFX_NAMES, STYLE_NAMES, SURFACES, bodySfx, createSfx, jitterOf, paramsFor, sfxSamples, sfxSettingsBytes, sfxSettingsOf, sfxStyle, tuningOf } from "./sfx.ts";
 export type {
@@ -23,6 +25,10 @@ export { createSound } from "./sound.ts";
 export type { Corner, QuietSfx, Sound, SoundOptions, SoundPosition } from "./sound.ts";
 export { moodOfNocturnes, themeForItems, DARK, KIT_BAND, SCHEME_MODE, WEATHER } from "./nocturnes.ts";
 export type { Item, NocturnesGenome, NocturnesMusicPins, NocturnesPlacement } from "./nocturnes.ts";
+export { NIGHT_AIRS, NIGHT_BASSES, NIGHT_FEELS, NIGHT_KITS, NIGHT_LEADS, NIGHT_LEAD_STYLES, NIGHT_MODES, NIGHT_OVERLAYS, NIGHT_PADS, nightPlanOf, nightScoreOf, nightSongOf, nightsongOf } from "./nightsong.ts";
+export type { NightChord, NightFeel, NightForm, NightGroove, NightMood, NightMotif, NightNote, NightPins, NightPlan, NightSong, NightTrack } from "./nightsong.ts";
+export { NIGHT_VOICES, renderNightSong } from "./nightkit.ts";
+export type { NightRender } from "./nightkit.ts";
 export { encodeWav, measureLoop } from "./wav.ts";
 export type { LoopMeasure } from "./wav.ts";
 export { pageKeelAudio, pageTone } from "./tone.ts";

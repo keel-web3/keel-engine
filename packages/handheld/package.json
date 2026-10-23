@@ -1,0 +1,15 @@
+{
+  "name": "@keel-engine/handheld",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A handheld console built from parts for the studio renderer: the Chromatic's shell halves, cover glass, keys on pivots, cartridge, screws and the board inside, at a grid and a solo level of detail; its printed graphics drawn crisp; hit testing and key travel.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./module": "./src/module.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/studio": "workspace:*"
+  }
+}
