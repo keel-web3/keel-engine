@@ -1,0 +1,27 @@
+{
+  "sourceFeatures": [
+    "Handheld d-pad geometry",
+    "Bounded offline capture blob target",
+    "Generated UI/control source",
+    "Opt-in activity-area generator; default legacy path retained with deterministic math"
+  ],
+  "cloudEngineWip": "e5d8db6d79bfc17680d1fab8aaef366c4214e875 integrated",
+  "gameRuntimeActivation": "None. REDLINE accepted runtime and SDKengine.lock unchanged.",
+  "pinball": "29 recovered package directories plus audio source preserved readable under experiments/pinball-20261009; original history in main; excluded from default workspace/catalog because4replay tests fail on original branch. No acceptance guard relaxed.",
+  "privateFork": "Four private source tips excluded from public ancestry, retained in private crucible-keel-engine main c708695523e0623b23cb806100695e37b807171c",
+  "fullSuite": {
+    "tests": 1802,
+    "pass": 1725,
+    "fail": 0,
+    "skip": 77,
+    "log": "tests/engine-selected-final-full-tests.log"
+  },
+  "originalMainBaseline": {
+    "tests": 1784,
+    "pass": 1708,
+    "fail": 0,
+    "skip": 76
+  },
+  "catalog": "50 current selected modules rebuilt reproducibly, vectors/source hashes indexed; not published onchain",
+  "oldStash": "September pre-consolidation snapshot retained inactive with exact gzip patch and full ancestry"
+}
