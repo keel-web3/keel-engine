@@ -8,7 +8,7 @@ import { GENERATED_CODES, generateFont } from "./genfont.ts";
 import type { FontParams } from "./genfont.ts";
 import { THEME_GENERATOR, themeOf } from "./theme.ts";
 import type { Theme, ThemePins, ThemeRecipe } from "./theme.ts";
-import { UI_FONT, UI_FONT_RECIPE, UI_SCREEN, UI_THEME } from "./schemas.ts";
+import { UI_FONT, UI_FONT_RECIPE, UI_SCREEN, UI_SCREEN_V1, UI_THEME } from "./schemas.ts";
 import type { FontRecord, ThemeRecord } from "./schemas.ts";
 import type { ScreenDoc } from "./doc.ts";
 
@@ -47,7 +47,12 @@ export function decodeFontRecipe(bytes: Uint8Array): PixelFont[] {
   return r.sizes.map((s) => generateFont(r.params as FontParams, s));
 }
 
-export const encodeScreen = (doc: ScreenDoc): Uint8Array => encode(UI_SCREEN, clean(doc) as never);
+const drivingFields = ["drivingKind", "drivingVariant", "secondaryValue", "secondaryMax", "drivingRedline"] as const;
+function needsDriving(d: ScreenDoc["root"]): boolean {
+  return d.type === "driving" || drivingFields.some((key) => d[key] !== undefined) || !!d.children?.some(needsDriving);
+}
+/** Existing screens retain their original writer bytes; driving recipes use the versioned extension. */
+export const encodeScreen = (doc: ScreenDoc): Uint8Array => encode(needsDriving(doc.root) ? UI_SCREEN : UI_SCREEN_V1, clean(doc) as never);
 export const decodeScreen = (bytes: Uint8Array): ScreenDoc => decode(UI_SCREEN, bytes) as unknown as ScreenDoc;
 
 export { GENERATED_CODES };

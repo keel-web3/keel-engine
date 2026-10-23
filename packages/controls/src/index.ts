@@ -13,7 +13,7 @@ export { PAD_AXES, PAD_BUTTONS, PAD_GLYPHS, axisValue, buttonValue, keyGlyph, pa
 export type { Anchor, ButtonControl, Rect, SliderControl, StickControl, TiltControl, TouchControl, TouchLayout, ZoneControl } from "./touch/layout.ts";
 export { DPAD_BUTTONS, RACING_BUTTONS, RACING_STICK, RACING_TILT, RACING_ZONES, TOUCH_LAYOUTS, TWIN_STICK } from "./touch/layout.ts";
 export { rollOf, sliderValue, stickValue, tiltValue } from "./touch/math.ts";
-export type { OverlayOptions, TouchOverlay } from "./touch/overlay.ts";
+export type { OverlayOptions, TouchOverlay, TouchVisualState } from "./touch/overlay.ts";
 export { createTouchOverlay, createTouchSurface } from "./touch/overlay.ts";
 export { CONTROLS_CSS, injectControlsCss } from "./touch/styles.ts";
 

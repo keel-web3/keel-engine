@@ -198,6 +198,7 @@ export function settle(b: Build, height: CityHeight): void {
   for (let k = 0; k < b.plants.length; k += 1) { const q = b.plants[k]!, [fx, fz] = toFrame(b, q.x, q.z); b.plants[k] = { ...q, y: q.y + shiftAt(fx, fz) }; }
   for (let k = 0; k < b.ads.length; k += 1) { const q = b.ads[k]!, [fx, fz] = toFrame(b, q.pos[0], q.pos[2]); b.ads[k] = { ...q, pos: [q.pos[0], q.pos[1] + shiftAt(fx, fz), q.pos[2]] }; }
   for (let k = 0; k < b.anchors.length; k += 1) { const q = b.anchors[k]!, [fx, fz] = toFrame(b, q.x, q.z); b.anchors[k] = { ...q, y: q.y + shiftAt(fx, fz) }; }
+  for (let k = 0; k < b.activityAreas.length; k += 1) { const q=b.activityAreas[k]!,[fx,fz]=toFrame(b,q.center[0],q.center[1]);b.activityAreas[k]={...q,y:q.y+shiftAt(fx,fz)}; }
 }
 
 /** A post with its foot at world height `foot` (its top kept). */

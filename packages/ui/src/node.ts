@@ -9,9 +9,15 @@ import type { FrameKind, FrameState } from "./frames.ts";
 
 export const WIDGETS = [
   "root", "canvas", "row", "col", "grid", "panel", "button", "label", "icon", "bar", "list", "tooltip", "minimap", "portrait", "tabs", "toast", "modal",
-  "slider", "toggle", "spinner", "spacer", "image",
+  "slider", "toggle", "spinner", "spacer", "image", "driving",
 ] as const;
 export type WidgetType = (typeof WIDGETS)[number];
+
+/** Canonical procedural driving controls and instruments (stored in UI_SCREEN). */
+export const DRIVING_KINDS = ["wheel", "accelerator", "brake", "handbrake", "boost", "speedometer", "tachometer", "combined", "shift-up", "shift-down"] as const;
+export type DrivingKind = (typeof DRIVING_KINDS)[number];
+export const DRIVING_VARIANTS = ["touring", "track"] as const;
+export type DrivingVariant = (typeof DRIVING_VARIANTS)[number];
 
 export const ANCHORS = ["tl", "t", "tr", "l", "c", "r", "bl", "b", "br"] as const;
 export type Anchor = (typeof ANCHORS)[number];
@@ -62,6 +68,13 @@ export interface NodeProps {
   iconSize?: number;
   value?: number;
   max?: number;
+  drivingKind?: DrivingKind;
+  drivingVariant?: DrivingVariant;
+  /** A combined instrument's RPM value and maximum; its primary value/max remain speed. */
+  secondaryValue?: number;
+  secondaryMax?: number;
+  /** RPM redline as a share of its maximum, default 0.82. */
+  drivingRedline?: number;
   segments?: number;
   /** A bar's recent loss, shown fading behind its value. */
   trail?: number;
@@ -114,6 +127,7 @@ export interface NodeProps {
 // (Props whose change only repaints the node; any other change lays the tree out again.)
 export const PAINT_ONLY: ReadonlySet<string> = new Set([
   "tone", "value", "max", "trail", "cooldown", "count", "disabled", "active", "primary", "selected", "view", "tip", "image", "mesh", "shadow", "hole", "action", "focusable", "trim", "edge", "scrim", "hp",
+  "drivingKind", "drivingVariant", "secondaryValue", "secondaryMax", "drivingRedline",
 ]);
 
 // (Props that change what a node shows and how big its content is, but not how it places its children: when

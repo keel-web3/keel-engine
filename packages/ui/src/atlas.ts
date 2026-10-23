@@ -27,12 +27,15 @@ export interface UiAtlas {
   /** The page region written since the last call (null when nothing was), for a texture upload. */
   takeDirty(): { x: number; y: number; w: number; h: number } | null;
   clear(): void;
+  /** Release an owned page and entries; shared-atlas users dispose only after its final owner. */
+  dispose?(): void;
 }
 
 interface Shelf { y: number; h: number; x: number }
 
 export function createAtlas(size = 1024): UiAtlas {
-  const page = createBitmap(size, size);
+  let page = createBitmap(size, size);
+  let disposed = false;
   const map = new Map<string, AtlasSprite>();
   let shelves: Shelf[] = [];
   let top = 0;
@@ -51,10 +54,11 @@ export function createAtlas(size = 1024): UiAtlas {
     return { x: 0, y: s.y, w, h };
   };
   const api: UiAtlas = {
-    page, stats,
+    get page() { return page; }, stats,
     get generation() { return generation; },
     has: (key) => map.has(key),
     sprite(key, make) {
+      if (disposed) throw new Error("UI atlas is disposed.");
       const hit = map.get(key);
       if (hit) { stats.hits += 1; return hit; }
       stats.misses += 1;
@@ -77,9 +81,17 @@ export function createAtlas(size = 1024): UiAtlas {
       return d;
     },
     clear() {
+      if (disposed) return;
       map.clear(); shelves = []; top = 0; page.px.fill(0);
       generation += 1; stats.clears += 1; stats.sprites = 0; stats.usedRows = 0;
       dirty = { x0: 0, y0: 0, x1: size, y1: size };
+    },
+    dispose() {
+      if (disposed) return;
+      api.clear();
+      disposed = true;
+      page = createBitmap(0, 0);
+      dirty = null;
     },
   };
   return api;

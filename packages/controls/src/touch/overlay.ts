@@ -8,6 +8,16 @@ import type { Anchor, ButtonControl, Rect, SliderControl, StickControl, TiltCont
 import { rollOf, sliderValue, stickValue, tiltValue } from "./math.ts";
 import { injectControlsCss } from "./styles.ts";
 
+/** Borrowed primitive view for a generated visual layer. No DOM or pointer owners escape. */
+export interface TouchVisualState {
+  readonly id: string;
+  readonly type: "button" | "stick" | "zone" | "slider";
+  readonly bounds: Rect;
+  readonly value: number;
+  readonly secondaryValue: number;
+  readonly pressed: boolean;
+}
+
 export interface TouchOverlay {
   readonly root: HTMLElement;
   readonly layout: TouchLayout;
@@ -21,6 +31,8 @@ export interface TouchOverlay {
   release(): void;
   /** Visible control bounds, normalized to the overlay, for a game HUD's keep-out areas. */
   bounds(): readonly Rect[];
+  /** Reused until the next call/layout change; copy primitives for historical measurements. */
+  snapshot(): readonly TouchVisualState[];
   destroy(): void;
 }
 
@@ -28,6 +40,8 @@ export interface OverlayOptions {
   /** Put the default stylesheet on the page (default true). */
   readonly css?: boolean;
   readonly className?: string;
+  /** External KEEL-generated pixels; keep only a transparent input/accessibility surface. */
+  readonly visuals?: "css" | "external";
 }
 
 const place = (el: HTMLElement, anchor: Anchor, x: number, y: number): void => {
@@ -39,15 +53,46 @@ const rect = (el: HTMLElement, r: Rect): void => {
   Object.assign(el.style, { left: `${r[0] * 100}%`, top: `${r[1] * 100}%`, width: `${r[2] * 100}%`, height: `${r[3] * 100}%` });
 };
 
+function validateExactRects(l: TouchLayout): void {
+  for (const c of l.controls) if ((c.type === "button" || c.type === "stick") && c.rect) {
+    const [x, y, w, h] = c.rect;
+    if (![x, y, w, h].every(Number.isFinite) || x < 0 || y < 0 || w <= 0 || h <= 0 || x + w > 1 + 1e-9 || y + h > 1 + 1e-9)
+      throw new RangeError("Touch control rect must fit the overlay with finite positive dimensions");
+    if (c.type === "stick" && c.region) throw new RangeError("Exact stick rect cannot also specify a floating region");
+  }
+}
+
 export function createTouchSurface(host: HTMLElement, virtual: VirtualControls, layout: TouchLayout, opts: OverlayOptions = {}): TouchOverlay {
+  validateExactRects(layout);
   const doc = host.ownerDocument;
   const root = doc.createElement("div");
   root.className = `keel-ctl${opts.className ? ` ${opts.className}` : ""}`;
+  if (opts.visuals === "external") {
+    root.dataset.visuals = "external";
+    // Opacity preserves hit testing and ARIA; the generated layer owns every visible pixel.
+    root.style.opacity = "0";
+  }
   host.append(root);
   let disposed = false, generation = 0;
   let current = layout, teardown: (() => void)[] = [], releases: (() => void)[] = [];
   // Controls sharing an id add up (two arrows, two zones): each holds its own share, and the id gets the sum.
   const shares = new Map<string, Map<object, { v: number; digital: boolean }>>();
+  type VisualRow = { id: string; type: TouchVisualState["type"]; bounds: [number, number, number, number]; value: number; secondaryValue: number; pressed: boolean };
+  const visualRows: VisualRow[] = [];
+  const visualEntries: { row: VisualRow; el: HTMLElement; x: string; y?: string }[] = [];
+  const visual = (id: string, type: TouchVisualState["type"], el: HTMLElement, y?: string): void => {
+    if (opts.visuals === "external") {
+      // Legacy CSS press motion must never shrink an exact invisible hit target.
+      el.style.setProperty("animation", "none", "important");
+      el.style.setProperty("transition", "none", "important");
+      el.style.setProperty("transform", el.style.transform || "none", "important");
+      // Transparent labels still participate in browser hit testing. Clip their
+      // overflow so a long pedal label cannot intercept a neighbouring control.
+      el.style.setProperty("overflow", "hidden", "important");
+    }
+    const row: VisualRow = { id, type, bounds: [0, 0, 0, 0], value: 0, secondaryValue: 0, pressed: false };
+    visualRows.push(row); visualEntries.push({ row, el, x: id, ...(y ? { y } : {}) });
+  };
   const write = (id: string, owner: object, v: number, digital: boolean): void => {
     let m = shares.get(id);
     if (!m) shares.set(id, (m = new Map()));
@@ -55,6 +100,11 @@ export function createTouchSurface(host: HTMLElement, virtual: VirtualControls, 
     let sum = 0, dig = digital;
     for (const s of m.values()) { sum += s.v; dig = s.digital; }
     virtual.set(id, Math.max(-1, Math.min(1, sum)), dig);
+  };
+  const readShare = (id: string | undefined): number => {
+    let sum = 0;
+    if (id) for (const share of shares.get(id)?.values() ?? []) sum += share.v;
+    return Math.max(-1, Math.min(1, sum));
   };
   interface SlideEntry { readonly el: HTMLElement; readonly id: string; readonly value: number; readonly with?: Readonly<Record<string, number>> | undefined; readonly pulse?: boolean | undefined; }
   interface SlidePointer { readonly group: string; readonly owner: object; current: SlideEntry | null; }
@@ -169,10 +219,10 @@ export function createTouchSurface(host: HTMLElement, virtual: VirtualControls, 
     el.style.setProperty("--size", String(c.size ?? 64));
     el.textContent = c.label ?? "";
     el.setAttribute("role", "button"); el.setAttribute("aria-label", c.label ?? c.id);
-    place(el, c.anchor, c.x, c.y);
+    if (c.rect) rect(el, c.rect); else place(el, c.anchor, c.x, c.y);
     let on = false;
     const down = (e: PointerEvent): void => {
-      if (c.ripple !== false) {
+      if (opts.visuals !== "external" && c.ripple !== false) {
       const b = el.getBoundingClientRect(), ripple = doc.createElement("span");
       ripple.className = "keel-ctl-ripple";
       ripple.style.setProperty("--rx", `${e.clientX - b.left}px`);
@@ -185,6 +235,7 @@ export function createTouchSurface(host: HTMLElement, virtual: VirtualControls, 
     };
     if (c.slide) slide(c, el); else track(el, down, null, () => { if (!c.toggle) writeButton({el, id: c.id, value: c.value ?? 1, with: c.with}, el, false); });
     root.append(el);
+    visual(c.id, "button", el);
   };
 
   const stick = (c: StickControl): void => {
@@ -198,7 +249,7 @@ export function createTouchSurface(host: HTMLElement, virtual: VirtualControls, 
     base.style.setProperty("--r", String(r));
     if (floating) base.dataset.floating = "";
     base.append(knob);
-    const home = (): void => place(base, c.anchor, c.at[0] - r, c.at[1] - r);
+    const home = (): void => { if (c.rect) rect(base, c.rect); else place(base, c.anchor, c.at[0] - r, c.at[1] - r); };
     home();
     // (A floating stick is caught by its region -- the thumb lands anywhere in it and the stick comes to the thumb.)
     const catcher = floating ? doc.createElement("div") : base;
@@ -206,7 +257,9 @@ export function createTouchSurface(host: HTMLElement, virtual: VirtualControls, 
     let cx = 0, cy = 0;
     const set = (e: PointerEvent): void => {
       const scale = Number(getComputedStyle(root).getPropertyValue("--keel-ctl-scale")) || 1;
-      const v = stickValue(c.x ? e.clientX - cx : 0, c.y ? e.clientY - cy : 0, r * scale, c.deadzone);
+      const b = c.rect ? base.getBoundingClientRect() : null;
+      const radius = b ? Math.min(b.width, b.height) / 2 : r * scale;
+      const v = stickValue(c.x ? e.clientX - cx : 0, c.y ? e.clientY - cy : 0, radius, c.deadzone);
       base.setAttribute("aria-valuenow", String(Math.round((c.x ? v.x : v.y) * 100)));
       base.style.setProperty("--dx", String(v.knob.x / scale));
       base.style.setProperty("--dy", String(v.knob.y / scale));
@@ -231,6 +284,7 @@ export function createTouchSurface(host: HTMLElement, virtual: VirtualControls, 
       base.setAttribute("aria-valuenow", "0");
     }, true);
     root.append(base);
+    visual(c.x ?? c.y ?? "stick", "stick", base, c.x ? c.y : undefined);
   };
 
   const zone = (c: ZoneControl): void => {
@@ -241,6 +295,7 @@ export function createTouchSurface(host: HTMLElement, virtual: VirtualControls, 
     rect(el, c.rect);
     if (c.slide) slide(c, el); else track(el, () => { virtual.press(c.id, c.value, true); write(c.id, el, c.value, true); }, null, () => write(c.id, el, 0, true));
     root.append(el);
+    visual(c.id, "zone", el);
   };
 
   const slider = (c: SliderControl): void => {
@@ -258,6 +313,7 @@ export function createTouchSurface(host: HTMLElement, virtual: VirtualControls, 
     };
     track(el, set, set, () => { if (c.spring !== false) { el.style.setProperty("--v", "0"); write(c.id, el, 0, false); } }, true);
     root.append(el);
+    visual(c.id, "slider", el);
   };
 
   // Tilt: the device's roll, from level (calibrated) -- iOS asks permission, which only a tap may request.
@@ -282,6 +338,8 @@ export function createTouchSurface(host: HTMLElement, virtual: VirtualControls, 
 
   const build = (l: TouchLayout): void => {
     if (disposed) return;
+    // Reject malformed exact geometry before releasing an otherwise valid live layout.
+    validateExactRects(l);
     generation += 1;
     for (const t of teardown) t();
     teardown = []; releases = [];
@@ -290,6 +348,7 @@ export function createTouchSurface(host: HTMLElement, virtual: VirtualControls, 
     slideGroups.clear();
     slidePointers.clear();
     slideOwners.clear();
+    visualRows.length = 0; visualEntries.length = 0;
     root.replaceChildren();
     root.dataset.layout = l.name;
     for (const c of l.controls) {
@@ -318,6 +377,20 @@ export function createTouchSurface(host: HTMLElement, virtual: VirtualControls, 
     get layout() { return current; },
     setLayout: build,
     release,
+    snapshot() {
+      if (disposed) return visualRows;
+      const b = root.getBoundingClientRect();
+      for (const { row, el, x, y } of visualEntries) {
+        const r = el.getBoundingClientRect();
+        row.bounds[0] = b.width ? (r.left - b.left) / b.width : 0;
+        row.bounds[1] = b.height ? (r.top - b.top) / b.height : 0;
+        row.bounds[2] = b.width ? r.width / b.width : 0;
+        row.bounds[3] = b.height ? r.height / b.height : 0;
+        row.value = readShare(x); row.secondaryValue = readShare(y);
+        row.pressed = el.dataset.pressed !== undefined;
+      }
+      return visualRows;
+    },
     bounds() {
       const b = root.getBoundingClientRect();
       if (!b.width || !b.height) return [];
@@ -339,6 +412,7 @@ export function createTouchSurface(host: HTMLElement, virtual: VirtualControls, 
       teardown = [];
       for (const id of shares.keys()) virtual.clear(id);
       shares.clear(); slideGroups.clear(); slidePointers.clear(); slideOwners.clear();
+      visualRows.length = 0; visualEntries.length = 0;
       root.remove();
     },
   };

@@ -22,6 +22,7 @@ import type { FontRole, UiNode } from "./node.ts";
 import { drawText, layoutText, parseRich } from "./text.ts";
 import type { TextLayout } from "./text.ts";
 import type { Theme } from "./theme.ts";
+import { paintDriving } from "./driving.ts";
 
 export interface PaintContext extends LayoutContext {
   readonly layer: Bitmap;
@@ -435,6 +436,7 @@ export function paintNode(n: UiNode, ctx: PaintContext): void {
       break;
     }
     case "bar": paintBar(n, ctx); break;
+    case "driving": paintDriving(n, ctx); break;
     case "minimap": case "portrait": case "image": paintPicture(n, ctx); break;
     case "list": paintList(n, ctx); break;
     case "tabs": paintTabs(n, ctx); break;

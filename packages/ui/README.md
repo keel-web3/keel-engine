@@ -260,13 +260,82 @@ sprites, terrain) passes its context in.
 
 A screen is data (`ScreenDoc`: `{ screen, theme?, root: NodeDoc }`). The
 JSON view is what the editor and agents author. `UI_SCREEN`
-(`keel/ui/screen@1`) is the stored form: a recursive node, every prop
+(`keel/ui/screen@2`) is the stored form: a recursive node, every prop
 optional, with ids, tones, icons, keys and actions going through shared
 string tables. A generated HUD is 1,620 bytes as codec against 4,716 as
 JSON. Props added since (`tipDock`, `trim`, `edge`, `scrim`, `reflow`,
 `iconFill`, `hp`) ride in an extension
 group of the node struct, so older records still read. Related calls: `buildNode` / `docOf`, `findDoc`, `walkDoc`, and
 `overrideDoc(doc, { "cmd.0.4": { icon: "damage" }, minimap: null })`.
+The maintained `UI_SCREEN_V1` reader/writer is still registered and included
+in the module's schema inventory. `encodeScreen` keeps the original v1 bytes
+for screens that use no driving fields; new driving recipes use v2. Existing
+widget codes keep their positions within the original 64-code capacity.
+
+## Driving controls and instruments
+
+`generateDrivingHud` builds canonical `driving` nodes, not images. The normal
+`createUi` / `load` / `render` path paints them directly into its retained layer
+using the theme palette and generated font. `UI_SCREEN` stores the theme recipe,
+variant, node rectangles, kinds, values and labels. There are no embedded copies
+of the generated artwork and no cache keyed by steering, RPM, state or viewport.
+The generator is `keel/ui/driving@1` (also the generated screen's name).
+
+```ts
+import { createAtlas, createUi, generateDrivingHud, encodeScreen, decodeScreen }
+  from "@keel/game-engine/ui";
+
+const generated = generateDrivingHud({
+  seed: "driver-42", culture: "industrial", variant: "track",
+  width: 320, height: 180,
+  pins: { tone: "dark", accentHue: 42 },
+  parts: [
+    { id: "wheel", kind: "wheel", x: 4, y: 90, w: 80, h: 80, value: 0 },
+    { id: "gas", kind: "accelerator", x: 272, y: 100, w: 36, h: 72 },
+    { id: "instruments", kind: "combined", x: 116, y: 76, w: 88, h: 88,
+      value: 123, max: 240, secondaryValue: 5200, secondaryMax: 8000 },
+  ],
+  chrome: [{ type: "button", id: "menu", icon: "menu", x: 4, y: 4, w: 24, h: 20 }],
+});
+const atlas = createAtlas(256); // One bounded page; 512 is another explicit choice.
+const ui = createUi({ theme: generated.theme, width: 320, height: 180, scale: 1, atlas });
+ui.load(decodeScreen(encodeScreen(generated.screen)));
+ui.render();
+ui.set("instruments", { value: 124, secondaryValue: 5300 });
+const dirty = ui.render(); // Only the instrument's dirty rectangle; an unchanged frame returns [].
+ui.dispose();
+atlas.dispose?.(); // This supplied atlas is caller-owned; dispose after its final user.
+```
+
+Kinds are `wheel`, `accelerator`, `brake`, `handbrake`, `boost`, `speedometer`,
+`tachometer`, `combined`, `shift-up` and `shift-down`. Touring wheels have three
+spokes and rounded grips; track wheels have a flat lower grip. Accelerator and
+foot brake have distinct slotted/striped pedal plates. Handbrake is a lever and
+`(P)` base, and shifts are bevelled paddles. Touring combined instruments have
+two round faces when each face has at least a 23-layer-pixel radius; smaller
+ones and track use concentric scales with separate speed/unit/RPM readouts.
+Sparse ticks leave space for the primary reading. A diameter of at least 48
+layer pixels is recommended for compact instruments; full scale numerals only
+appear at a radius of 40 layer pixels. Check actual intended-device legibility.
+
+Wheel `value` is signed -1..1. Pedals/boost use `value / max` (default max 1).
+Gauges use absolute `value / max` (defaults 240 for speed and 8000 for RPM).
+Combined instruments use primary value/max for speed, secondaryValue/secondaryMax
+for RPM. `drivingRedline` is a normalized RPM threshold (default 0.82), `text`
+is the unit caption and `title` the combined RPM caption; a gear readout belongs
+in an ordinary chrome label. Active, pressed, hover and disabled states remain
+live. Input stays with the normal UI action path or the game's external controls
+adapter; this generator creates no DOM controls. Parts accept ordinary node
+props except images, have unique ids and bounded whole-pixel rectangles, and
+there are at most 128. Invalid generated rectangles are rejected; malformed
+manual paint rectangles are ignored rather than starting unbounded loops.
+
+`Ui.dispose()` is terminal: it detaches callbacks/trees/caches and releases the
+layer. Stale input, setters and render calls do nothing; loading, overlay
+creation and paint-resource reads throw. Internally created atlases are released after the last registered Ui
+using that atlas disposes, including a Ui borrowing another Ui's public atlas.
+An externally supplied atlas remains caller-owned. This explicit registration
+does not count arbitrary manual references or replace calling dispose.
 
 ## Generated screens
 

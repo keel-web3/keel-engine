@@ -22,13 +22,13 @@ export interface BlockPlan {
 }
 
 /** Every lot planned, grouped by block (on the city's height, if given). */
-export function planCity(cat: Catalogue, city: City, height?: CityHeight, options: {readonly residentAccessOnly?: boolean} = {}): BlockPlan[] {
+export function planCity(cat: Catalogue, city: City, height?: CityHeight, options: {readonly residentAccessOnly?: boolean;readonly activityAreas?:boolean} = {}): BlockPlan[] {
   const steps = planCitySteps(cat, city, height, options);
   for (;;) { const next = steps.next(); if (next.done) return next.value; }
 }
 
 /** The same city plan, pausing after small batches of lots and blocks for a loading screen. */
-export function* planCitySteps(cat: Catalogue, city: City, height?: CityHeight, options: {readonly residentAccessOnly?: boolean} = {}): Generator<number, BlockPlan[], void> {
+export function* planCitySteps(cat: Catalogue, city: City, height?: CityHeight, options: {readonly residentAccessOnly?: boolean;readonly activityAreas?:boolean} = {}): Generator<number, BlockPlan[], void> {
   const byBlock = new Map<number, BuildingPlan[]>();
   const firstDistrict = new Map<number, number>();
   let made = 0;
