@@ -1,0 +1,13 @@
+{
+  "name": "@keel-engine/materials",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Generative pixel-art materials: an exact sheet distilled by a rulebook into layered exemplars (albedo, light, recipes, a dithered pixel-art finish), recombined by seed and checked by a gauntlet; or bark, leaves and snow painted procedurally.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

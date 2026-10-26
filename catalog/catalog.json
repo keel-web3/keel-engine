@@ -31,6 +31,8 @@
     "keel/decal",
     "keel/vehicle",
     "keel/driver",
+    "keel/lit",
+    "keel/flora",
     "keel/studio",
     "keel/handheld",
     "keel/import",
@@ -39,8 +41,11 @@
     "keel/terrain",
     "keel/level",
     "keel/lod",
+    "keel/materials",
     "keel/pipeline",
     "keel/targets",
+    "keel/tiles",
+    "keel/tree-mechanics",
     "keel/ui",
     "keel/view",
     "keel/worldgen",
@@ -2212,6 +2217,75 @@
       "deployed": false
     },
     {
+      "id": "keel/flora",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/lit@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-flora",
+      "license": "MIT",
+      "summary": "Foliage for keel/lit: crossed pixel-art sprite cards and 3D blades, instanced by the thousand, lit as the ground under them, bent by gusting wind and parted by pushers.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/flora"
+      },
+      "githubPath": "packages/flora/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/flora/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/flora/keel/link.json",
+          "sha256": "0x0fafc71aeb78e8922afc7d6c626df681b7020116d9dc73ef69be3583c4944838"
+        },
+        {
+          "path": "packages/flora/src/cards.ts",
+          "sha256": "0x424604125999f83122be9660cba010f1065c97215c95e85d80cceb000d73bf19"
+        },
+        {
+          "path": "packages/flora/src/field.ts",
+          "sha256": "0xec00d60967bf6f471c199ec62e07ada4cddb3cd37e3ce0ea8fc82bdcd0af1a15"
+        },
+        {
+          "path": "packages/flora/src/index.ts",
+          "sha256": "0x28937144ea701fedcf5315df128c8e8db17c29e9dcc5d20eb60330f6e7dca66c"
+        },
+        {
+          "path": "packages/flora/src/scatter.ts",
+          "sha256": "0x1bb21e05021ce8ffd89675239fc3b1947a675235f237df6d5cea051c2c719038"
+        },
+        {
+          "path": "packages/flora/src/sprites.ts",
+          "sha256": "0x58603e996b2b17582a13d243286c672c7355c5b94e2f3a7b959eadf4fc0ad606"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/lit"
+        ]
+      },
+      "output": {
+        "digest": "0x7edd1225c8f8122bf5e59f3c4fdcbcf96b6b1aca16eeb9c80da307c45021b1b1",
+        "byteLength": 16676
+      },
+      "sourceDigest": "0xf25d963279bb4cfb2793fe97a57f03b3f800763c21c9da937e4c4307ffabc372",
+      "recipeDigest": "0x33d6b048a058516f8aff784ff79e9f0a858feacc7253eadedb5fabc9ac7a86ae",
+      "receiptDigest": "0x45105448f5ef88eaf5b581fd42b604ab3669862f340fef109b05ecd25f9379ef",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": null,
+      "deployments": [],
+      "deployed": false
+    },
+    {
       "id": "keel/handheld",
       "version": "0.1.0",
       "kind": "runtime",
@@ -2604,6 +2678,491 @@
       "deployed": false
     },
     {
+      "id": "keel/lit",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-lit",
+      "license": "MIT",
+      "summary": "The full-colour lit renderer (WebGL2): meshes and instances lit by sun, moon and sky, physically based and toon surfaces, soft shadows, fog, render targets and custom shaders.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/lit"
+      },
+      "githubPath": "packages/lit/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/lit/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/lit/keel/link.json",
+          "sha256": "0x3177abf47cc90251bff5a2071dce97304218910c202836080cd3e414b8e61311"
+        },
+        {
+          "path": "packages/lit/src/constants.ts",
+          "sha256": "0xa385340d737bbc6a632f18e6487785f3508cc40b974b2559bdaff7ac4b2c6672"
+        },
+        {
+          "path": "packages/lit/src/core/Attribute.ts",
+          "sha256": "0x2f4b5a71e31d6eabaf18a5a50256cd1665fa681c46e92c6bb4be1aba230801a3"
+        },
+        {
+          "path": "packages/lit/src/core/Emitter.ts",
+          "sha256": "0x084428c1ea64c3fcc4499b2199b05d18b55c836f20f97628120e85e1dbfcc5d7"
+        },
+        {
+          "path": "packages/lit/src/core/Geometry.ts",
+          "sha256": "0xb716623d75811677cfb5902a51a15a6e504110058b8121d52cd207152adfd3ab"
+        },
+        {
+          "path": "packages/lit/src/core/Layers.ts",
+          "sha256": "0x9dad677ca5d5881a0fd1ca6fe8e62bee9f0359845be8881d8e7cc3588d97cb0b"
+        },
+        {
+          "path": "packages/lit/src/core/Node.ts",
+          "sha256": "0xedc8b7e83cb217f12cc5e7d09285db0aac3313a6f575c01f8d5a67cefc598dfe"
+        },
+        {
+          "path": "packages/lit/src/geometry/ArcCurve.ts",
+          "sha256": "0x819016ed5508da60c994aa2f38eac8c6f979579b74cfc52632a45cf61ad4970b"
+        },
+        {
+          "path": "packages/lit/src/geometry/CatmullRomCurve3.ts",
+          "sha256": "0x4f5d7d66d79767dd67b9e9d413f539801346909da8187b73e4bf444bb08fd46f"
+        },
+        {
+          "path": "packages/lit/src/geometry/CubicBezierCurve.ts",
+          "sha256": "0xc9daf6526ad81ef8d9004ecd47b85ff3e7a80c46ca0aa478b828709e9dffe430"
+        },
+        {
+          "path": "packages/lit/src/geometry/CubicBezierCurve3.ts",
+          "sha256": "0xc344bbd91d32e51985b4e7919faf64034ed155dd7df1904336fb808e31ec0492"
+        },
+        {
+          "path": "packages/lit/src/geometry/Curve.ts",
+          "sha256": "0xe738903668c663777bf86fd5042453d50b9543709ecd1696049ee90f7f8e7fe2"
+        },
+        {
+          "path": "packages/lit/src/geometry/CurvePath.ts",
+          "sha256": "0xe9cdb2ed18bb508f6fc2876a5577651733e3612fba38549d52b66553acfda1fc"
+        },
+        {
+          "path": "packages/lit/src/geometry/EllipseCurve.ts",
+          "sha256": "0x1983929e17a35d8596d25594f592bd1036b53d6888420d4116cfd0fe66f2df37"
+        },
+        {
+          "path": "packages/lit/src/geometry/Interpolations.ts",
+          "sha256": "0xea8f9f20c62a50af064aaba0dbe0afd664d9af6235d41332c663af64e0b8bc86"
+        },
+        {
+          "path": "packages/lit/src/geometry/LineCurve.ts",
+          "sha256": "0x2a5086a78aa4f3ba8471f015c8d17f905796d156bfe9f2dc8af0195e3ee1f15e"
+        },
+        {
+          "path": "packages/lit/src/geometry/LineCurve3.ts",
+          "sha256": "0x7526043ffebdfed4c49da689e362c64c5e7b8296034946f049889e39635f8223"
+        },
+        {
+          "path": "packages/lit/src/geometry/Path.ts",
+          "sha256": "0xf6dc1cc9f5335ec602ff126c72daeea4ffd0514cc9040eedaace75cf2b8b73e7"
+        },
+        {
+          "path": "packages/lit/src/geometry/QuadraticBezierCurve.ts",
+          "sha256": "0x2ade659e22d0e029b5dd25bc225bfda73d8280a7ee71ab791a5d20a33822b00d"
+        },
+        {
+          "path": "packages/lit/src/geometry/QuadraticBezierCurve3.ts",
+          "sha256": "0xd3b387b579d5a17065a94ebd24ad95ad2be07f99967bd86b3c6f84da2b9fb27b"
+        },
+        {
+          "path": "packages/lit/src/geometry/Shape.ts",
+          "sha256": "0x5fd9ac9d3768aaa9d6834a39f1e1b04713ed83c7e687751572930362343c5f00"
+        },
+        {
+          "path": "packages/lit/src/geometry/SplineCurve.ts",
+          "sha256": "0x0a2a839ed66a10895db13d6dd78c374b638675632d19ad0e4d886faf706f958b"
+        },
+        {
+          "path": "packages/lit/src/geometry/box.ts",
+          "sha256": "0x27639223f2fd4314a5409f04d99ffb5dc89169924f7570a1ab476228631b813b"
+        },
+        {
+          "path": "packages/lit/src/geometry/cylinder.ts",
+          "sha256": "0x53e5d1b9b5639d5dac9080e3d85c30c8af90ca81bef6043af73d9d5df1fe671f"
+        },
+        {
+          "path": "packages/lit/src/geometry/earcut.ts",
+          "sha256": "0xc7b5993d7cf3c44eff0405c00d3aab6d514cf7946ff682526f77f5ef43f187e3"
+        },
+        {
+          "path": "packages/lit/src/geometry/extrude.ts",
+          "sha256": "0x546e059a7371a11d31b21003d228306038c2702bd929d912700de5068a64b6f7"
+        },
+        {
+          "path": "packages/lit/src/geometry/generated.ts",
+          "sha256": "0x4808e3dc8165a470b4735179e646b41cbd8d4b9be7a4acaebed38bc4730effbd"
+        },
+        {
+          "path": "packages/lit/src/geometry/index.ts",
+          "sha256": "0x4e6dc118fa2cdd7a007a315c681014f7471dee72fc0efc6c55bcf1b2156d5a3f"
+        },
+        {
+          "path": "packages/lit/src/geometry/lathe.ts",
+          "sha256": "0x9e6a356275d26181e2cc2366c5b1bf9c206252a04c2e7d4295330d4056c43709"
+        },
+        {
+          "path": "packages/lit/src/geometry/plane.ts",
+          "sha256": "0x0b5b1956de418b2b46ce3dfa0dd9681ff11ef8e15abc9e0f0782866ae82d8136"
+        },
+        {
+          "path": "packages/lit/src/geometry/polyhedron.ts",
+          "sha256": "0x3a68d6ed5ad3af392285a799fdf3daf9a249a6352002cc1ad943a79b87e5b06b"
+        },
+        {
+          "path": "packages/lit/src/geometry/ring.ts",
+          "sha256": "0xeb70e56edc835fb5902765fbb8eff048ed185620ee264699ed9cac2eb4280f98"
+        },
+        {
+          "path": "packages/lit/src/geometry/shapeGeometry.ts",
+          "sha256": "0x904b267c4f4f3ee04410610eb3e91ed8e522b57c550ef195ec8301e217f8e1ff"
+        },
+        {
+          "path": "packages/lit/src/geometry/shapeUtils.ts",
+          "sha256": "0x809e9aac74f2740def6a640bc0483e844293a4052aadd76120bb0f1111cb57ba"
+        },
+        {
+          "path": "packages/lit/src/geometry/sphere.ts",
+          "sha256": "0xd3ca1ab02ef9ed5a616d6d321a8ced707ceb660be4df2c314753070860637bb3"
+        },
+        {
+          "path": "packages/lit/src/geometry/torus.ts",
+          "sha256": "0x1d857253e2db3bbf2dcf91de7e537fc11c31b404016267c65c228a4d1f96fb59"
+        },
+        {
+          "path": "packages/lit/src/geometry/tube.ts",
+          "sha256": "0xfc28b0ea602c390d88f0ec7873503a87e8e17916acee2a7e7837faf8aded2928"
+        },
+        {
+          "path": "packages/lit/src/gl/animation.ts",
+          "sha256": "0xd28abb84cfeb8f5902725a5d82dd8e7d50e5a99107f06b710314e7a3f8768815"
+        },
+        {
+          "path": "packages/lit/src/gl/attributes.ts",
+          "sha256": "0xa078264bf54cd063c2f93d61cecd695a8873e93ab248c480ac051be0ab873687"
+        },
+        {
+          "path": "packages/lit/src/gl/background.ts",
+          "sha256": "0x706a869424d37653a29fddba74ee3a5f20f6fd4aac9942e9c3e6fe6a7f0f35eb"
+        },
+        {
+          "path": "packages/lit/src/gl/binding-states.ts",
+          "sha256": "0xce6552d7b56612139b0b7b78744a675bc9e6839cf5cbbcdc9e2bc45808fe53d4"
+        },
+        {
+          "path": "packages/lit/src/gl/buffer-renderer.ts",
+          "sha256": "0x646d4e71872c44241da3178d8a6197a26bd423d56e1fc225201d4b1d58e35680"
+        },
+        {
+          "path": "packages/lit/src/gl/capabilities.ts",
+          "sha256": "0x1d8165e41ef0d4bc2ec585a071d9eb14ca3c1a6b4367f107cfc15363375e590c"
+        },
+        {
+          "path": "packages/lit/src/gl/clipping.ts",
+          "sha256": "0x448bf7a99ea1160f3ad09e7a64d1aaafc1fed2113a8dced2553a893abd3b1400"
+        },
+        {
+          "path": "packages/lit/src/gl/cube-maps.ts",
+          "sha256": "0x57faa7be13c6cb5344622f6b5e3652b8228c08abd79640ee1166658492c999d0"
+        },
+        {
+          "path": "packages/lit/src/gl/cube-uv-maps.ts",
+          "sha256": "0x8ed9ee35faa750d5d1fd9dc6cae10f63b0124c5567d2412a15a0a8d6f1502d4e"
+        },
+        {
+          "path": "packages/lit/src/gl/extensions.ts",
+          "sha256": "0xfafef983b8706c8c7d70b310368c451c97adcb8c68ad2979874a5148b4c99ac7"
+        },
+        {
+          "path": "packages/lit/src/gl/geometries.ts",
+          "sha256": "0xb8655bca89599ea9831ffb35df57ace828584782268a938e70bb637d49cf6542"
+        },
+        {
+          "path": "packages/lit/src/gl/indexed-buffer-renderer.ts",
+          "sha256": "0x947854ede3c75055dbebb21080c9d0b9cb3022548a1df885a99c6ed33a127cca"
+        },
+        {
+          "path": "packages/lit/src/gl/info.ts",
+          "sha256": "0x8f18d2cdfa4f6e75bfe073280614d5608d15319e52dc3ec0918605bd60cc212b"
+        },
+        {
+          "path": "packages/lit/src/gl/lights.ts",
+          "sha256": "0x9c3639bd77a32337939db2e398cbfa26158fc7aa9213cc43076c5eb4cae4d54b"
+        },
+        {
+          "path": "packages/lit/src/gl/materials.ts",
+          "sha256": "0xf4b68c88d5d7b2f90c7fa432ed34352549514368c03ac8385126925d9dbd31f4"
+        },
+        {
+          "path": "packages/lit/src/gl/objects.ts",
+          "sha256": "0xbcfa7a563bd3b5de4fe21d03c61632c4839be5408256557beeeaeb50742186a6"
+        },
+        {
+          "path": "packages/lit/src/gl/program.ts",
+          "sha256": "0x6c0d3c6536277d2401f889e1afeecf973e2818bf78d265d4d03078de4ffdd9c6"
+        },
+        {
+          "path": "packages/lit/src/gl/programs.ts",
+          "sha256": "0xf28e16192989a2d4de7d4e57941292b00e3583ef4ccc1113bc678a63bd492e07"
+        },
+        {
+          "path": "packages/lit/src/gl/properties.ts",
+          "sha256": "0xeddb1a70b9cd2ffb7c932faf77a342c844a62ab2442a8fc076506e39f5419bc5"
+        },
+        {
+          "path": "packages/lit/src/gl/render-lists.ts",
+          "sha256": "0x79acf3eb277a387613b5a62193d06a39c3486bbb372daf12f7404a2fc748e278"
+        },
+        {
+          "path": "packages/lit/src/gl/render-states.ts",
+          "sha256": "0x001f55a126c4031128da222e994c05729ec6b42c824a0d7156caf0c33b3c209d"
+        },
+        {
+          "path": "packages/lit/src/gl/renderer.ts",
+          "sha256": "0x786943b5ed57e6adeb097ad491b7747447415f297576e739835d7640b545df3e"
+        },
+        {
+          "path": "packages/lit/src/gl/shader-cache.ts",
+          "sha256": "0xc1fd3a67ddd0c2df54fa94e9579b0854c6aeb8d4f1d2bd11f0dc94330fd6772a"
+        },
+        {
+          "path": "packages/lit/src/gl/shadow-map.ts",
+          "sha256": "0x340e9b988392d55d0cf045a50ab4f792f269abf1d316bb42d60654a15871079b"
+        },
+        {
+          "path": "packages/lit/src/gl/state.ts",
+          "sha256": "0x4ac721fcf21bfb5afecc85dbb10b4267006f6c0307a2e110094b4b1a2093f992"
+        },
+        {
+          "path": "packages/lit/src/gl/textures.ts",
+          "sha256": "0x2a17ea04f2153e3839632496fc1d62bed7391ebb938667fb372ce275c63afe10"
+        },
+        {
+          "path": "packages/lit/src/gl/uniforms.ts",
+          "sha256": "0x9ad73877ba0640eb862e128436011abd0c68c4e019e4c8dfe22a8f3cd9cd48c7"
+        },
+        {
+          "path": "packages/lit/src/gl/utils.ts",
+          "sha256": "0x7f4923fb00dfccf4c85f758b1a058237729eff316f56cbd0cbd004f810a7d98c"
+        },
+        {
+          "path": "packages/lit/src/index.ts",
+          "sha256": "0x9b79394a3d7d391b7c58ba8fe6b1e046d45420317e00d13b8b32c0880948db65"
+        },
+        {
+          "path": "packages/lit/src/material/BillboardMaterial.ts",
+          "sha256": "0x8351dad997d0cfa1efc2f8e850abce7c7b2fd25de891a43ae1a8bd65412aa93f"
+        },
+        {
+          "path": "packages/lit/src/material/CustomMaterial.ts",
+          "sha256": "0x8f07a7abbf86dff4a6dd0bc4d4fdb8494076f93adff2f2e08b1eb5e1715edcfc"
+        },
+        {
+          "path": "packages/lit/src/material/DepthMaterial.ts",
+          "sha256": "0x058e87edba06ed2e4368610cd79dbf1d7714a42eef0eef02aa1f282ed81e43ff"
+        },
+        {
+          "path": "packages/lit/src/material/DistanceMaterial.ts",
+          "sha256": "0x97520638710184b021a0823196db396d2ca67d0ac93133573e5786cbfdb253f2"
+        },
+        {
+          "path": "packages/lit/src/material/FlatMaterial.ts",
+          "sha256": "0x3b8a33042c8ca3f80bf34627c290aa33aa559758b8d8d45d39ac284e04acafb4"
+        },
+        {
+          "path": "packages/lit/src/material/LitMaterial.ts",
+          "sha256": "0xeb5c7b6a109b92265298ea9c2febbdb3d72a9657960d9423b53606a0614a7930"
+        },
+        {
+          "path": "packages/lit/src/material/Material.ts",
+          "sha256": "0xa2e0e2e9153e95690856b5fd92376a743fbbd73cc0c1110413a999b20865ebab"
+        },
+        {
+          "path": "packages/lit/src/material/ToonMaterial.ts",
+          "sha256": "0xfa6a99f96c10b53019e95910679574ff4d9c3d0594d313a2804a16f70088b479"
+        },
+        {
+          "path": "packages/lit/src/math/Box3.ts",
+          "sha256": "0x60bad3b435d6b4b28f24f469cee3afe8525814163221b09d32fb4bd184810f67"
+        },
+        {
+          "path": "packages/lit/src/math/Color.ts",
+          "sha256": "0xb584e7184c2544f70511ac07d8cc77a8d45219d7a83b235a73db75e572f94dce"
+        },
+        {
+          "path": "packages/lit/src/math/ColorManagement.ts",
+          "sha256": "0x49650be816b1e6110146805aa511eb1d665951e7043c6618ce7dbb1a4133cb83"
+        },
+        {
+          "path": "packages/lit/src/math/Euler.ts",
+          "sha256": "0x5797080d1c8362eb2d76fa286333d5cd205e06f92f34f47250f39210aed249b4"
+        },
+        {
+          "path": "packages/lit/src/math/Frustum.ts",
+          "sha256": "0x4b12c2485d6b1b716adc33455a6ed9803d0131779a17ad308526e30a08165b7b"
+        },
+        {
+          "path": "packages/lit/src/math/Matrix3.ts",
+          "sha256": "0x22779c627e34ebf7cd73a7d28e84f4881a4b7297b6bf624e77ca668c1a0b7df1"
+        },
+        {
+          "path": "packages/lit/src/math/Matrix4.ts",
+          "sha256": "0x89672c67f7506f3046df3e06b1963ec723f64347c19d6fc6dfe0e7c8b2a145ef"
+        },
+        {
+          "path": "packages/lit/src/math/Plane.ts",
+          "sha256": "0x003ef5f440353e8b491c3fb5a7787e04bf6d23c6766ae41c277702ea15487003"
+        },
+        {
+          "path": "packages/lit/src/math/Quaternion.ts",
+          "sha256": "0xb494b81cb8dc4bb72c29bfaafdd4d0317e8fe6aeaee689de50d39be2c38056e4"
+        },
+        {
+          "path": "packages/lit/src/math/Ray.ts",
+          "sha256": "0x800b114727e01711aec8eef00f2833909b5ee62120b63b923517f32665a7f006"
+        },
+        {
+          "path": "packages/lit/src/math/Sphere.ts",
+          "sha256": "0xcb9b69c66190f3e0133b2bfaa82cf6fd8c8288f60830dde21e83f4469861fe2c"
+        },
+        {
+          "path": "packages/lit/src/math/Vector2.ts",
+          "sha256": "0x69ba6fa17e98b7a1578934887eb74ddad1e3eec4034edfa6bcad6fa62890de16"
+        },
+        {
+          "path": "packages/lit/src/math/Vector3.ts",
+          "sha256": "0x8ca6a13be0110ae81d762dd833c8915eb5867dc25b29473dd07a36a431355d9d"
+        },
+        {
+          "path": "packages/lit/src/math/Vector4.ts",
+          "sha256": "0x45b6d27dd46e71fc40578871b263dbb8fadc9d1ee542d25a3edc1a7bae232a33"
+        },
+        {
+          "path": "packages/lit/src/math/index.ts",
+          "sha256": "0x73dc6634ef3d66e320862c21bee30e07ce73ecddeeeaaa58eacf13b93f34660d"
+        },
+        {
+          "path": "packages/lit/src/math/mathUtils.ts",
+          "sha256": "0xbf6785622a9ef9530c90cae9ef9a1e7ad09eabfcbcbf2b2795e1e914efdc438b"
+        },
+        {
+          "path": "packages/lit/src/scene/Billboard.ts",
+          "sha256": "0x895a5867880c8da2c6442acf02606b4a021c5b5c5e821d3bd63004a930aa3681"
+        },
+        {
+          "path": "packages/lit/src/scene/Camera.ts",
+          "sha256": "0x69f517224e91d7269421b82d0cc2844da181b8cb9eb4aa6934c92b19092990a4"
+        },
+        {
+          "path": "packages/lit/src/scene/Fog.ts",
+          "sha256": "0x9b644264f8e77afa494557d3ec8eb56ddad8a480cb52acf790d0ef523358989f"
+        },
+        {
+          "path": "packages/lit/src/scene/Group.ts",
+          "sha256": "0x82f3e2dd15792ac13b893bfc1f4b81fab6b60fa84f3b9aaf16b054ed10e7c382"
+        },
+        {
+          "path": "packages/lit/src/scene/Instances.ts",
+          "sha256": "0x489ec7003479ab7740e371d54b868896d80712d0698aa205ca967d4263e1c185"
+        },
+        {
+          "path": "packages/lit/src/scene/Light.ts",
+          "sha256": "0x08540548daed0345410833d370b5abdfcd961578b0a12b3b2559189b1398e55b"
+        },
+        {
+          "path": "packages/lit/src/scene/LightShadow.ts",
+          "sha256": "0x5bf0c76ca3fa4080664ecccd563eb5fec50c4f5e525e052e7c19a457b61dc863"
+        },
+        {
+          "path": "packages/lit/src/scene/Mesh.ts",
+          "sha256": "0x96af4902673cc1de3b79fa232ee4c3af804398aad09969e9b68b047863350b13"
+        },
+        {
+          "path": "packages/lit/src/scene/OrthoCamera.ts",
+          "sha256": "0x026f022e2616d79df9191027083bab090460dcbf95ea253bb606e1ab662a71b8"
+        },
+        {
+          "path": "packages/lit/src/scene/PerspectiveCamera.ts",
+          "sha256": "0x279c7b2d8724f846e327e72bcafb019113a1a065071280bb38d5629d03c93412"
+        },
+        {
+          "path": "packages/lit/src/scene/Stage.ts",
+          "sha256": "0x46079e98047dd2b52031f890ed04f347763e4c57f293670f4cb15de01f331bf3"
+        },
+        {
+          "path": "packages/lit/src/scene/SunLight.ts",
+          "sha256": "0xdd405b7a863464487fba857a708084d9b03d53ca812df39f07e74b933d8535ac"
+        },
+        {
+          "path": "packages/lit/src/shader/chunks.ts",
+          "sha256": "0x2db525e4166d0779b92c32cb1ccb02cf7a9a193506913618d4dae83ec53ebd09"
+        },
+        {
+          "path": "packages/lit/src/shader/library.ts",
+          "sha256": "0x8ea1081217a2f1b3df9c3f3691cfe1c77640bcdee9534f92e6c9eceda2210265"
+        },
+        {
+          "path": "packages/lit/src/shader/uniforms.ts",
+          "sha256": "0xafcbde93f10a81f0b8ed841f76a5691b9fe72cbbfc1d8308b800cc27f60f3de5"
+        },
+        {
+          "path": "packages/lit/src/texture/CanvasTexture.ts",
+          "sha256": "0x3a94964d87b9ca3b0be6d04407b795728d0aa406ba06f8bac52d6abaaa1c7a6c"
+        },
+        {
+          "path": "packages/lit/src/texture/DataTexture.ts",
+          "sha256": "0xe63d2f4eccfe9cb950ca925d5db784eda9c169e1e9ce3b58f9c66ccea101d5ec"
+        },
+        {
+          "path": "packages/lit/src/texture/DepthTexture.ts",
+          "sha256": "0x966200db69a77b414c72d184a1aa105d3c3f3611440a6e794366dc3b8558ca5f"
+        },
+        {
+          "path": "packages/lit/src/texture/RenderTarget.ts",
+          "sha256": "0x7f6d534e2a193d38d9deccb7eaa3110150b2f822e36443d4bdbe2fc32861cc42"
+        },
+        {
+          "path": "packages/lit/src/texture/Source.ts",
+          "sha256": "0x1de311b68ee0bec15b966a21b587bf45b85b96aeb932cdfdfd75cf292e8aa3ef"
+        },
+        {
+          "path": "packages/lit/src/texture/Texture.ts",
+          "sha256": "0x0181ccea58ea6107966d11e7ab661a55b81930dc427a7e6fff87aa88be6927ce"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": []
+      },
+      "output": {
+        "digest": "0x0d070656a6b3d0a70391c195ba74157ba855149d2927a0f03ba562bada9b187e",
+        "byteLength": 423223
+      },
+      "sourceDigest": "0x6a31e0406a64aff51dc95a41805a140c617588855c26b1c2e4e887b0c92aa21b",
+      "recipeDigest": "0xfca51406bea0cd4f4fd69a021bb13f1c7843e088270ccdfb7bcd49d724ed27ac",
+      "receiptDigest": "0x2c4b495bb5aab3b9fd81492f249a0422564c02edf65c967a53c15e70446bdd61",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": null,
+      "deployments": [],
+      "deployed": false
+    },
+    {
       "id": "keel/lod",
       "version": "0.1.0",
       "kind": "runtime",
@@ -2668,6 +3227,83 @@
         "path": "packages/lod/test/vectors.mjs",
         "sha256": "0xe9840e4d303b8306e80dccee83394f38c7d672a6727276409afa75a3c0c2fe45"
       },
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "keel/materials",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-materials",
+      "license": "MIT",
+      "summary": "Generative pixel-art materials: an exact sheet distilled by a rulebook into layered exemplars (albedo, light, recipes, a dithered pixel-art finish), recombined by seed and checked by a gauntlet; or bark, leaves and snow painted procedurally.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/materials"
+      },
+      "githubPath": "packages/materials/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/materials/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/materials/keel/link.json",
+          "sha256": "0x5531e8e3e3f5d1c6ef928cba058512b4176a4cff3fb91bb7d09c7d5bc0292606"
+        },
+        {
+          "path": "packages/materials/src/atlas.ts",
+          "sha256": "0xccdb8dba4d0c62a39bcc4c09e5a31a7c5a13edc677852bf137e86d7da6969ee2"
+        },
+        {
+          "path": "packages/materials/src/distill.ts",
+          "sha256": "0x4c347a05f7de0d7eab55a9404ade9c1cff6cbb220c90203434967049a6c83136"
+        },
+        {
+          "path": "packages/materials/src/exemplar.ts",
+          "sha256": "0x8edb99352594736a816b098fabe5efc704af2ced44b89a2a6bc8b9bdbbcdd12c"
+        },
+        {
+          "path": "packages/materials/src/gauntlet.ts",
+          "sha256": "0x8a721f163f93ea7624fa5663cc52c378d33c5f3178e59358959a19343412c28a"
+        },
+        {
+          "path": "packages/materials/src/index.ts",
+          "sha256": "0x13960f33a20502ab0c414b5526e4bfa008ff19eb39aa09cad85d0659b410714d"
+        },
+        {
+          "path": "packages/materials/src/raster.ts",
+          "sha256": "0x561835db71bc798a21585185735faa44ebd2b81832488c743bb6a0152d2b20d5"
+        },
+        {
+          "path": "packages/materials/src/recipe.ts",
+          "sha256": "0x51af0408840a7674f06cca2a2d183950cf76602978f240eb8e3b76c28803678b"
+        },
+        {
+          "path": "packages/materials/src/rules.ts",
+          "sha256": "0x021c76548d924b509d4620c1c8043b03a074910cc005b082ef6ca91f123f9916"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": []
+      },
+      "output": {
+        "digest": "0xfbecf5306627d3b227de69a9ef4b7ba1459488192fea7e633714afd57374bfce",
+        "byteLength": 45649
+      },
+      "sourceDigest": "0x65c63baa26248329d09142534ba4e6bb97b28dceb1ae034e97e3bb7216e1519e",
+      "recipeDigest": "0x5713976e0dc4a29cfffe674fb6d2914f39655835ec6e980ac4031165db1396ff",
+      "receiptDigest": "0x5f721a57a9b4f5e861293f727a345c5ce5ec809d8f9f1eb678fd0185f827b069",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": null,
       "deployments": [],
       "deployed": false
     },
@@ -3372,8 +4008,8 @@
         "byteLength": 69558
       },
       "sourceDigest": "0x42b92150def4d24f03dba396b85cf9fb771c39a94103c3fb4af42205007f4491",
-      "recipeDigest": "0xf52529deb6116a470f10964b8c2c2903801d8853cd8230986223cf51c3c2514b",
-      "receiptDigest": "0x0aa16342e6f60f43347023479fbf4f2f8a4c13516078e8cf8e119c0de82d9e11",
+      "recipeDigest": "0x7fbd5124d9d2073f2b71a93abf7e248a652bac0e0e024093829535aabbbe1de2",
+      "receiptDigest": "0x994103d69aea808a1b1cf618abd24b6b8fdb729eeac01b85359dfc4d8ef83160",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": {
@@ -3942,6 +4578,132 @@
         "path": "packages/terrain/test/vectors.mjs",
         "sha256": "0xe04852637fb79d9f7c1782011eea874c58f61121c34467b0bf3a2f85e29bac62"
       },
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "keel/tiles",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/lit@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-tiles",
+      "license": "MIT",
+      "summary": "Tile surfaces for keel/lit: one grid, a tile system per material (organic blend, blob47, wang16, cardinal16, dual-grid), painted or imported atlases, pixel-snapped edges with rims and drop shadows.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/tiles"
+      },
+      "githubPath": "packages/tiles/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/tiles/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/tiles/keel/link.json",
+          "sha256": "0xfc2d897af01768a28f1de92804e1bdcc6298e2fe028b98311921a527b54f6353"
+        },
+        {
+          "path": "packages/tiles/src/atlas.ts",
+          "sha256": "0x61800292b67310f7f107af3500946ffed61b5c9f1813c5b2cdf49cac56f5be41"
+        },
+        {
+          "path": "packages/tiles/src/glsl.ts",
+          "sha256": "0x8488b08ce0e4cbb696021f46cd9e183e64721ce227318f2193eab6ee05bb8845"
+        },
+        {
+          "path": "packages/tiles/src/grid.ts",
+          "sha256": "0xc4d6a02973a8d3b9828f1c4deb9f53839024d7cc442616c54f372fbab3c61d8c"
+        },
+        {
+          "path": "packages/tiles/src/index.ts",
+          "sha256": "0xebeeaca2193006549133a49da8fd1639890c4f2e1ae6a1fc7014cfe1a085cdfb"
+        },
+        {
+          "path": "packages/tiles/src/surface.ts",
+          "sha256": "0x3229c6f19a9bdbd161ab5f6aef33c746ca1b053b1de9e8bce7aba1dbd081c977"
+        },
+        {
+          "path": "packages/tiles/src/systems.ts",
+          "sha256": "0x582cf20ef833e721c85151dd6484d1c041192a598e111919e2c829c11649c2d9"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/lit"
+        ]
+      },
+      "output": {
+        "digest": "0xeaa5d38a9e319b3c4ff3c37a36d0c7323426b09a60496e80f871f2923176357c",
+        "byteLength": 18840
+      },
+      "sourceDigest": "0xe2a2ef2efb57eff4651ccc8e462a50b1c8ea083b18275b08d1d5669983ec260a",
+      "recipeDigest": "0xe2c940457a5d032721e9f40d2f7f70b1b32828a6328b15949f1c19acae8d5bd3",
+      "receiptDigest": "0x26723ed3e60ea47cb21cd5dd6404ea7f18a1580c078e35d6daec723f19f11e40",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": null,
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "keel/tree-mechanics",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-tree-mechanics",
+      "license": "MIT",
+      "summary": "Tree mechanics: per-branch stiffness from the beam law, hierarchical wind sway, sag under snow and animals, storm breaks and falling limbs, and the climbable wood as capsules with what each piece can carry.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/tree-mechanics"
+      },
+      "githubPath": "packages/tree-mechanics/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/tree-mechanics/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/tree-mechanics/keel/link.json",
+          "sha256": "0x0826be9426ca272a2a67e60afbb1f9b9d21366f100f9bcaac831cd9d552e5cb6"
+        },
+        {
+          "path": "packages/tree-mechanics/src/index.ts",
+          "sha256": "0xc56a1e498b2f29df7c5f8e5dcb4d2c1c8c7c316036ffb3de38b7aa79f76109cc"
+        },
+        {
+          "path": "packages/tree-mechanics/src/mechanics.ts",
+          "sha256": "0x7d7cbd9b86c2a84b2a79b496c917531c49c92aa168859ee0aea83771debd9fbf"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": []
+      },
+      "output": {
+        "digest": "0x685260007cdfba7a51b21e2670ffd6fa55011e2209054979fbd3ebf42ba7d82d",
+        "byteLength": 14499
+      },
+      "sourceDigest": "0x80d83a1a8dc015183100224c27db913f78e066dcc2b5e746c62a22e5ef027cca",
+      "recipeDigest": "0xd8f086bf198c878e4bf1a9c2d51a47bf728100b1b4b4f6522f114cb4bd4a0a76",
+      "receiptDigest": "0xcdc71eebe5b78dbc57c585cd6808de893cbdacfd2937a3fa67e762995e82815f",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": null,
       "deployments": [],
       "deployed": false
     },

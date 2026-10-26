@@ -1,0 +1,16 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-materials",
+  "version": "0.1.0",
+  "description": "Generative pixel-art materials: an exact sheet distilled by a rulebook into layered exemplars (albedo, light, recipes, a dithered pixel-art finish), recombined by seed and checked by a gauntlet; or bark, leaves and snow painted procedurally.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/materials"
+  },
+  "build": {
+    "format": "iife"
+  }
+}

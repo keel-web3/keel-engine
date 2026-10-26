@@ -455,6 +455,12 @@ importers:
         specifier: workspace:*
         version: link:../runtime
 
+  packages/materials:
+    dependencies:
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
   packages/object:
     dependencies:
       '@keel-engine/core':

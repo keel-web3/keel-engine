@@ -44,6 +44,7 @@ engine through the same pipeline and compare the digests.
 | `packages/render` | `keel/render` | The WebGL2 pixel renderer and its FX passes |
 | `packages/lit` | `keel/lit` | The full-colour lit renderer (WebGL2): sun, moon and sky light, physically based and toon surfaces, soft shadows, fog, custom shaders |
 | `packages/tiles` | `keel/tiles` | Tile surfaces for keel/lit: a tile system per material (organic blend, blob47, wang16, cardinal16, dual-grid), painted or imported atlases |
+| `packages/materials` | `keel/materials` | Generative pixel-art materials: a rulebook distils an exact sheet into a layered exemplar (albedo, light, recipes, a dithered finish), seeds recombine it, a gauntlet checks it |
 | `packages/flora` | `keel/flora` | Foliage for keel/lit: crossed pixel-art sprite cards and 3D blades, lit as the ground, wind, pushers |
 | `packages/tree-mechanics` | `keel/tree-mechanics` | Tree mechanics: per-branch stiffness from the beam law, hierarchical wind sway, sag under snow and animals, storm breaks, climbable wood with what it carries |
 | `packages/particles` | `keel/particles` | Pooled, seeded particle emitters |
