@@ -1,0 +1,2340 @@
+{
+	"source": "three.js r180 (src/renderers/shaders)",
+	"chunks": {
+		"alphahash_fragment": "4f4bafe90a122229c2f9148c5d4e837f5bb04b180e7632aad6b1fe58b9cf7174",
+		"alphahash_pars_fragment": "415002dc325fc62bb20bebbc497a1e0474e7ddea878244721e01391c81306d5d",
+		"alphamap_fragment": "51c7969abd82d0fb849a696b7387e219a1c5b8e33817736fec0380fe32744794",
+		"alphamap_pars_fragment": "599ef841a10c77008b74b1986f43fda3141b04d4d79d7540aa91b1c17a982825",
+		"alphatest_fragment": "d8727440aa828ab97dcd5debbbc2f28ba807502c65d3917dbd1ff644c6f3144b",
+		"alphatest_pars_fragment": "22bb8b715af39d17a1e357145e34f0d4bdcc86658e2787f2d54248253c76bc60",
+		"aomap_fragment": "aac057fe9be69907d538dc407c2f0aacd313cf9cd463faaf07f2ec124edc777f",
+		"aomap_pars_fragment": "61afd176790cc20a3d0a558bae3bb0aabb3ccefe5b8854d9165fe272161f859b",
+		"batching_pars_vertex": "2e6e34e6212122cbc30773c6b2fbe54433a7e1256f15abdb9b49173fd3f8c7c1",
+		"batching_vertex": "ffc93294e5decee339ed3ee0888275222acd11c57fd97dc206c319490f2a6544",
+		"begin_vertex": "b3cb25f858d4bce5dcea04b3b23b9b6630b05dd2d4dc33afebee66aeb7511336",
+		"beginnormal_vertex": "b3fa808e1a759c1cb6977daae7e78580066bda68aedf1df2ae34dcda9565a2b6",
+		"bsdfs": "39947c4fe5875814f31e225463832bf3b4e549bf6ed202fa217872e189b05a3d",
+		"bumpmap_pars_fragment": "c3b1d022265dc899fa0a8e5a66ead114158237ecae0a139d133d5a0093c24514",
+		"clearcoat_normal_fragment_begin": "1cda2cdb90102789ae3f1274bbc62c72e8fb05750cda72b0eafe78a1f8f1322f",
+		"clearcoat_normal_fragment_maps": "2a2a901627fa4eddee56b222693fa73ab74179626ec3377e10e00e1b093480c8",
+		"clearcoat_pars_fragment": "6ed3fe522211c429fcdf27de14b14ec5c48e2a9adbe9e0df57d1f0b54b0c3267",
+		"clipping_planes_fragment": "124ad7548ae164e511b2f72bf7ee823d46740be4c7f5cb46ab845f871c6ab3ef",
+		"clipping_planes_pars_fragment": "73c4a03f54c90a755b02021c5d194e048923eb386bc530cae87c1cd008b3d6e2",
+		"clipping_planes_pars_vertex": "dada08ee25a3a47e0938ca609e63f768ff5cf50b3e36649a182b75211012a7d1",
+		"clipping_planes_vertex": "c2570ee0ad186ee2dee26b97f66cbbf29ab95d8f14bfdf3c336c9858394bb689",
+		"color_fragment": "715c6e52f511595b92b220cb2ea087d2ff9be734e12076f34a778383e06b56a0",
+		"color_pars_fragment": "edd371a44852858fa2eecc786f9c7c1f85707231d3866cb3c6321102c538fac4",
+		"color_pars_vertex": "42a19477b12ea05eb8299cbac8c58ae4146cd1c5d9a0cb22a084b233c1794bad",
+		"color_vertex": "f7a900b1604d5bbbd420637268d784ceee6bcb3a7ce6079ada6433eee9856b67",
+		"colorspace_fragment": "9f78a4355195dd13af4fa4ca369dc99c9d5af2e28af305e6a4ed37c77504b36c",
+		"common": "47529de645acfef272169305f89e4b2ccdb8d0171e40b165e2e6e3071b0b67e6",
+		"cube_uv_reflection_fragment": "5daba4d77ff362052abbff6b0fbe0e391244c68d136db81da5d5143d0829443c",
+		"defaultnormal_vertex": "0a7adcac6c536839df123acec63da63d67772256badbe9c152daefcaef8098a5",
+		"displacementmap_pars_vertex": "29e1c6faa9ff334070bf35bc6721c1fdd0b000487b7486884b0db2c8626f5c5a",
+		"displacementmap_vertex": "821994da2ad87ea90ad6756e971e8cc2c48c8b97544db75339c6e601f04fa8f3",
+		"dithering_fragment": "e956a735ba94c6d78a3a0b95f3bca3aa47e8ba78ab022b1fa31f3fa8b3ac3d1c",
+		"dithering_pars_fragment": "2a0d73ad8f9810c3aa5f80b192d5f78757fbca6820a15089f6c33fac474d735c",
+		"emissivemap_fragment": "5e032a1b81ff17b1b0d9b539edaa376063ecb9c6b6a37978982ff3ab200cab62",
+		"emissivemap_pars_fragment": "c5bf0c9ee287cc8a911d614803cce69ab5e4e0c1003a4e2165c8d03fea915f95",
+		"envmap_common_pars_fragment": "fd2aac1d7215785118e30f87edbb1aea7c8ce77c237a3b64d9b2a8d718d05693",
+		"envmap_fragment": "3f8973e0423817202c7c729c9b0f71217786a91cec13bed97522f2e214e5f48e",
+		"envmap_pars_fragment": "e1a9e36570f15127543aa3bb05cbefbfe091e96b597bab7e29c1f5d32edc58dc",
+		"envmap_pars_vertex": "969c190bff2b631874a06a576382c2afb1fa073d878cf75f45ed890250f46ea3",
+		"envmap_physical_pars_fragment": "d86d8468667813e409fcd432f0a3720d76b96ecd33a2bbac7161234b852f0d7e",
+		"envmap_vertex": "59364cb395fb988d8b8f80fb0db59991ba4a1fcb271f3f47b28057ffe8df50df",
+		"fog_fragment": "138c6bee1c871516342644368f4021f7580dde54dae16131d5694d00759a2a68",
+		"fog_pars_fragment": "3f6332fce1fae9e635c875fd0593b5bd5b5881620d69a5c2e8df10cf6212c548",
+		"fog_pars_vertex": "7fddf2a170720b5af2aebfbfaf99a08fd6d5714f608719adc4372de0c36f1851",
+		"fog_vertex": "a10ee864a1259f9b4bc8cf19b3b9732df213e35baf6297b717c8ac4f37abfdf9",
+		"gradientmap_pars_fragment": "fcbf99f2796a806f6e57bba911d3a1f5556388ad4126d7ea7f93225adb0f0448",
+		"iridescence_fragment": "51653ec16e353a0179fe1accb64621c7837e725e9c32700ec51c9c6c05773e5e",
+		"iridescence_pars_fragment": "01792831711afd7020d10ab6d6e94a1a4cb48f4507977d7ca979569b41de292e",
+		"lightmap_pars_fragment": "3e7a2656285c3e3f6402b04d8efb6a48423ee357bf6b910e7c99d6192076367b",
+		"lights_fragment_begin": "6c50d47953b46a44b2802233ccb638249d376ac3c4b655358bd24a88108dce06",
+		"lights_fragment_end": "6f08cea8df01382d14c6ee45f2e9def98a9015cd818cb3c187f545b640126904",
+		"lights_fragment_maps": "188425917046bcf0bbacab82ac2bff6cfec3cbdf5f04465ae3b8a464171b91a5",
+		"lights_pars_begin": "d77e1336715fe50e31306c19f54e402ee7d7db608568f55b5084f81c70ed511a",
+		"lights_physical_fragment": "08630d0b6574ceb48c98b06652ed841945780e1cadebf798f6f381d9f06075ad",
+		"lights_physical_pars_fragment": "e4eafe131d148d84fd43e21f5cdf216b545de1b18295b90be4dc0b2c25eec8b6",
+		"lights_toon_fragment": "b1edfee9506a600b475201480a509b3b1fb00b7733e7efd18129f45b21a150bd",
+		"lights_toon_pars_fragment": "dff3f8fc0891b430abe2c8f95bed408493f8592b02ba45e732c6503c2cf67562",
+		"logdepthbuf_fragment": "c42e1435f542bcd1dc411f4507fa92fea32a546ac038622abb29c54d6049b409",
+		"logdepthbuf_pars_fragment": "aac9d315f2c159029a3de3167f452c55e91c70a1a428b5f1094e34614f7853de",
+		"logdepthbuf_pars_vertex": "6547c079db9b17f972730da76e5a83b11edd277535cb00bd798dcf082a3ba100",
+		"logdepthbuf_vertex": "167cadd299ed3fb5aeec47b35de527df249378196835ffc8e4952b0fb7e426cf",
+		"map_fragment": "9dd445ab5ae7f782a112d12b98780a087ec9db80ad13e5d93a782a4d3889ef96",
+		"map_pars_fragment": "8592ad7d25b1e0a0b34a96a09d0986abc8c91eaec863a54462a1619bd5aa6ca1",
+		"metalnessmap_fragment": "bd79014027a50872d7c906873a806a152ebbd2412eafccf6f56b746dd091606a",
+		"metalnessmap_pars_fragment": "5a23d8f27cd0846552278dd5219b96ff41b833aa45b54210d39432f59102437f",
+		"morphcolor_vertex": "20b0db26f84867539cf863136783b444d7be5b375c3ea381747926c197fa2f23",
+		"morphinstance_vertex": "15fddc29b560767d14be9b46fa51bffee58370e29c0b53e1345d25333e71aa43",
+		"morphnormal_vertex": "62125ce685beeee84b356ecb646e12c9f10de6054a1612627323aafb3ff73e3c",
+		"morphtarget_pars_vertex": "21d3ea56b7348937160d460c4f851a5ef08e677214482116775a191426d3c7ef",
+		"morphtarget_vertex": "6d25bc70cd0d3565f18835d2cf54a8d850439db656bc9a2a8394f17d62ec589c",
+		"normal_fragment_begin": "d5dc476e4201cec30cef639178afd4147cd66773cb916fc78c32548969c6f47a",
+		"normal_fragment_maps": "d3769625427c9efa77460b16fceec0bf940d6b0d93fc064d4e617f364bac598b",
+		"normal_pars_fragment": "feef47149a8fe9ada7401bc7de0298d096297fe140e163a2a21191d7478f7ee8",
+		"normal_pars_vertex": "feef47149a8fe9ada7401bc7de0298d096297fe140e163a2a21191d7478f7ee8",
+		"normal_vertex": "63df1ca48b756aaf81eceae686f58299a22d38a7ffd550a826f8b195cd09b94b",
+		"normalmap_pars_fragment": "9d90b39964f1e5abebe27bef1136e25d4f8f09a152ad0ae72222c9171b6dd9f5",
+		"opaque_fragment": "1db6302148c5155d710b9c0cbc85c15062e8fab2cf82007e665f46fa9e8f22f4",
+		"packing": "4723fe49546ff7e35e90e418386945ba41684cac3666bb8d92c87b0cd92983e7",
+		"premultiplied_alpha_fragment": "7f29b0adf11ee3c89572567010d4c964be49e4205e1795782f85c4875b467bc4",
+		"project_vertex": "f0c9b30eaa4c30a3a4d374993a7dcad5a7736fbea32eee907a978a5d04abe02e",
+		"roughnessmap_fragment": "5ebdc21281223a1a2889a07da55c613cc1cffb211a70dc7b523a198f3c38bbd5",
+		"roughnessmap_pars_fragment": "3eb575d4352ef5d31a96a01a87741fa1bc59a20865c8d461ae8474e704e54f94",
+		"shadowmap_pars_fragment": "40c8747ae0848d568eac0b459883f7694f2445ec1b5cddfc9e6153fd85ea5378",
+		"shadowmap_pars_vertex": "6fb170ab6c88a4d0ca8922a7a8cb757ecb69bebd990c62ff1de329e76ad2385d",
+		"shadowmap_vertex": "4af0fbed880f1f7055ce4428ec1967526900b7453a425008664810b5108562ea",
+		"shadowmask_pars_fragment": "86c752ad50ba48b9a1a8a993893ae2208f64bb00c11b4a5ca763d5cb51dcb6f0",
+		"skinbase_vertex": "e78ee8009257b1504c5a97715427b17e9f229a7cc5159bc34b401d470fc21d25",
+		"skinning_pars_vertex": "7128792202ccc48b455f35fe499c86a2bba4eb1d2123b66e53dbffd3538f638b",
+		"skinning_vertex": "b5e77d73ba992e36672aa110141512c8a2ed2ac92b0f5b7045c671ec97d35722",
+		"skinnormal_vertex": "578b138c559bd5bcfd34246a679bcd3ec27f2439ba81fbb053b5149cb0d640d1",
+		"specularmap_fragment": "faad3af5a1d7eb77ad9e74b2bd1220fc0641de8974ade301f665e49297af368b",
+		"specularmap_pars_fragment": "6fbabf6aaabdd89fb40f697e32afc05a288718740fe610b0297ad83a23afd798",
+		"tonemapping_fragment": "037e78f9688f9376b4e9ef4bd446bbcbb202178374592359ede1ffd4f1a3f3db",
+		"transmission_fragment": "d98a69afef503cf585b49be7fc59276b0ca547250b1ea36599f14b86812f8ef6",
+		"transmission_pars_fragment": "60c52e25fb3c09a368e86f65bbcc326a1108cf8768ba2c055119472e0186a2f3",
+		"uv_pars_fragment": "de9732b78a968562924a82848a5e43a6d7a8250fc146ce468707031277ca039c",
+		"uv_pars_vertex": "73471faf4f7bc585acd9f1558c1c249dc0100d7d8e193be12db4b502a2d2146f",
+		"uv_vertex": "f0f388d8cdc5c6b2f362feab7704d616d4694c24e68f878bb8875aba87eeeb95",
+		"worldpos_vertex": "2a324fc1197a90ba9626cae8b94c146fa232b0c76180c9f70ebea465ff16ff2d"
+	},
+	"prefixChunks": {
+		"tonemapping_pars_fragment": "eee760c4c2231a3ef4369a6bd7a7e739c5ef1700ccdd64864d41b1f9ae0f79ab",
+		"colorspace_pars_fragment": "a71916c832ac7940c90be03b3827cf946f1fc7f99f2bd905ef3cf08ebb771055"
+	},
+	"programs": {
+		"flat": {
+			"r180": "basic",
+			"vertexShader": "64484572bb3fb09f9ce52dd3c3c2a9c2d5a6d132f9b0f4d4085c54f101ded371",
+			"fragmentShader": "77a8ac859fb8407d0408c002019a0e3972965ad18667fe17c9de2af8b5fe23f1",
+			"uniforms": [
+				{
+					"name": "diffuse",
+					"kind": "color",
+					"hex": 16777215,
+					"rgb": [
+						1,
+						1,
+						1
+					]
+				},
+				{
+					"name": "opacity",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "map",
+					"kind": "null"
+				},
+				{
+					"name": "mapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "alphaMap",
+					"kind": "null"
+				},
+				{
+					"name": "alphaMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "alphaTest",
+					"kind": "number",
+					"value": 0
+				},
+				{
+					"name": "specularMap",
+					"kind": "null"
+				},
+				{
+					"name": "specularMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "envMap",
+					"kind": "null"
+				},
+				{
+					"name": "envMapRotation",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "flipEnvMap",
+					"kind": "number",
+					"value": -1
+				},
+				{
+					"name": "reflectivity",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "ior",
+					"kind": "number",
+					"value": 1.5
+				},
+				{
+					"name": "refractionRatio",
+					"kind": "number",
+					"value": 0.98
+				},
+				{
+					"name": "aoMap",
+					"kind": "null"
+				},
+				{
+					"name": "aoMapIntensity",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "aoMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "lightMap",
+					"kind": "null"
+				},
+				{
+					"name": "lightMapIntensity",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "lightMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "fogDensity",
+					"kind": "number",
+					"value": 0.00025
+				},
+				{
+					"name": "fogNear",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "fogFar",
+					"kind": "number",
+					"value": 2000
+				},
+				{
+					"name": "fogColor",
+					"kind": "color",
+					"hex": 16777215,
+					"rgb": [
+						1,
+						1,
+						1
+					]
+				}
+			]
+		},
+		"lit": {
+			"r180": "standard",
+			"vertexShader": "b1b7b52acbbb5714f06cf25e25f373892010c6224158f24a9cfcdbe2e630ec98",
+			"fragmentShader": "2c36f743f45de6fbe92fccb1e4cb3fe2c0f1b4977b0b08f9377dc37008aa2e66",
+			"uniforms": [
+				{
+					"name": "diffuse",
+					"kind": "color",
+					"hex": 16777215,
+					"rgb": [
+						1,
+						1,
+						1
+					]
+				},
+				{
+					"name": "opacity",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "map",
+					"kind": "null"
+				},
+				{
+					"name": "mapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "alphaMap",
+					"kind": "null"
+				},
+				{
+					"name": "alphaMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "alphaTest",
+					"kind": "number",
+					"value": 0
+				},
+				{
+					"name": "envMap",
+					"kind": "null"
+				},
+				{
+					"name": "envMapRotation",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "flipEnvMap",
+					"kind": "number",
+					"value": -1
+				},
+				{
+					"name": "reflectivity",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "ior",
+					"kind": "number",
+					"value": 1.5
+				},
+				{
+					"name": "refractionRatio",
+					"kind": "number",
+					"value": 0.98
+				},
+				{
+					"name": "aoMap",
+					"kind": "null"
+				},
+				{
+					"name": "aoMapIntensity",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "aoMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "lightMap",
+					"kind": "null"
+				},
+				{
+					"name": "lightMapIntensity",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "lightMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "emissiveMap",
+					"kind": "null"
+				},
+				{
+					"name": "emissiveMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "bumpMap",
+					"kind": "null"
+				},
+				{
+					"name": "bumpMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "bumpScale",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "normalMap",
+					"kind": "null"
+				},
+				{
+					"name": "normalMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "normalScale",
+					"kind": "vec2",
+					"value": [
+						1,
+						1
+					]
+				},
+				{
+					"name": "displacementMap",
+					"kind": "null"
+				},
+				{
+					"name": "displacementMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "displacementScale",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "displacementBias",
+					"kind": "number",
+					"value": 0
+				},
+				{
+					"name": "roughnessMap",
+					"kind": "null"
+				},
+				{
+					"name": "roughnessMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "metalnessMap",
+					"kind": "null"
+				},
+				{
+					"name": "metalnessMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "fogDensity",
+					"kind": "number",
+					"value": 0.00025
+				},
+				{
+					"name": "fogNear",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "fogFar",
+					"kind": "number",
+					"value": 2000
+				},
+				{
+					"name": "fogColor",
+					"kind": "color",
+					"hex": 16777215,
+					"rgb": [
+						1,
+						1,
+						1
+					]
+				},
+				{
+					"name": "ambientLightColor",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "lightProbe",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "directionalLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"direction": {},
+						"color": {}
+					}
+				},
+				{
+					"name": "directionalLightShadows",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"shadowIntensity": 1,
+						"shadowBias": {},
+						"shadowNormalBias": {},
+						"shadowRadius": {},
+						"shadowMapSize": {}
+					}
+				},
+				{
+					"name": "directionalShadowMap",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "directionalShadowMatrix",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "spotLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"color": {},
+						"position": {},
+						"direction": {},
+						"distance": {},
+						"coneCos": {},
+						"penumbraCos": {},
+						"decay": {}
+					}
+				},
+				{
+					"name": "spotLightShadows",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"shadowIntensity": 1,
+						"shadowBias": {},
+						"shadowNormalBias": {},
+						"shadowRadius": {},
+						"shadowMapSize": {}
+					}
+				},
+				{
+					"name": "spotLightMap",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "spotShadowMap",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "spotLightMatrix",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "pointLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"color": {},
+						"position": {},
+						"decay": {},
+						"distance": {}
+					}
+				},
+				{
+					"name": "pointLightShadows",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"shadowIntensity": 1,
+						"shadowBias": {},
+						"shadowNormalBias": {},
+						"shadowRadius": {},
+						"shadowMapSize": {},
+						"shadowCameraNear": {},
+						"shadowCameraFar": {}
+					}
+				},
+				{
+					"name": "pointShadowMap",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "pointShadowMatrix",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "hemisphereLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"direction": {},
+						"skyColor": {},
+						"groundColor": {}
+					}
+				},
+				{
+					"name": "rectAreaLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"color": {},
+						"position": {},
+						"width": {},
+						"height": {}
+					}
+				},
+				{
+					"name": "ltc_1",
+					"kind": "null"
+				},
+				{
+					"name": "ltc_2",
+					"kind": "null"
+				},
+				{
+					"name": "emissive",
+					"kind": "color",
+					"hex": 0,
+					"rgb": [
+						0,
+						0,
+						0
+					]
+				},
+				{
+					"name": "roughness",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "metalness",
+					"kind": "number",
+					"value": 0
+				},
+				{
+					"name": "envMapIntensity",
+					"kind": "number",
+					"value": 1
+				}
+			]
+		},
+		"toon": {
+			"r180": "toon",
+			"vertexShader": "f66563eacd29d14a40985844493e2e7290f68b63d5ae099ca39a1afd34c868b5",
+			"fragmentShader": "dbcf19f5a8d17df1f3fc2099cb48a763f98f5d0c1365624cf01b67ac08a9cd60",
+			"uniforms": [
+				{
+					"name": "diffuse",
+					"kind": "color",
+					"hex": 16777215,
+					"rgb": [
+						1,
+						1,
+						1
+					]
+				},
+				{
+					"name": "opacity",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "map",
+					"kind": "null"
+				},
+				{
+					"name": "mapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "alphaMap",
+					"kind": "null"
+				},
+				{
+					"name": "alphaMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "alphaTest",
+					"kind": "number",
+					"value": 0
+				},
+				{
+					"name": "aoMap",
+					"kind": "null"
+				},
+				{
+					"name": "aoMapIntensity",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "aoMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "lightMap",
+					"kind": "null"
+				},
+				{
+					"name": "lightMapIntensity",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "lightMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "emissiveMap",
+					"kind": "null"
+				},
+				{
+					"name": "emissiveMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "bumpMap",
+					"kind": "null"
+				},
+				{
+					"name": "bumpMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "bumpScale",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "normalMap",
+					"kind": "null"
+				},
+				{
+					"name": "normalMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "normalScale",
+					"kind": "vec2",
+					"value": [
+						1,
+						1
+					]
+				},
+				{
+					"name": "displacementMap",
+					"kind": "null"
+				},
+				{
+					"name": "displacementMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "displacementScale",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "displacementBias",
+					"kind": "number",
+					"value": 0
+				},
+				{
+					"name": "gradientMap",
+					"kind": "null"
+				},
+				{
+					"name": "fogDensity",
+					"kind": "number",
+					"value": 0.00025
+				},
+				{
+					"name": "fogNear",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "fogFar",
+					"kind": "number",
+					"value": 2000
+				},
+				{
+					"name": "fogColor",
+					"kind": "color",
+					"hex": 16777215,
+					"rgb": [
+						1,
+						1,
+						1
+					]
+				},
+				{
+					"name": "ambientLightColor",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "lightProbe",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "directionalLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"direction": {},
+						"color": {}
+					}
+				},
+				{
+					"name": "directionalLightShadows",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"shadowIntensity": 1,
+						"shadowBias": {},
+						"shadowNormalBias": {},
+						"shadowRadius": {},
+						"shadowMapSize": {}
+					}
+				},
+				{
+					"name": "directionalShadowMap",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "directionalShadowMatrix",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "spotLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"color": {},
+						"position": {},
+						"direction": {},
+						"distance": {},
+						"coneCos": {},
+						"penumbraCos": {},
+						"decay": {}
+					}
+				},
+				{
+					"name": "spotLightShadows",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"shadowIntensity": 1,
+						"shadowBias": {},
+						"shadowNormalBias": {},
+						"shadowRadius": {},
+						"shadowMapSize": {}
+					}
+				},
+				{
+					"name": "spotLightMap",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "spotShadowMap",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "spotLightMatrix",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "pointLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"color": {},
+						"position": {},
+						"decay": {},
+						"distance": {}
+					}
+				},
+				{
+					"name": "pointLightShadows",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"shadowIntensity": 1,
+						"shadowBias": {},
+						"shadowNormalBias": {},
+						"shadowRadius": {},
+						"shadowMapSize": {},
+						"shadowCameraNear": {},
+						"shadowCameraFar": {}
+					}
+				},
+				{
+					"name": "pointShadowMap",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "pointShadowMatrix",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "hemisphereLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"direction": {},
+						"skyColor": {},
+						"groundColor": {}
+					}
+				},
+				{
+					"name": "rectAreaLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"color": {},
+						"position": {},
+						"width": {},
+						"height": {}
+					}
+				},
+				{
+					"name": "ltc_1",
+					"kind": "null"
+				},
+				{
+					"name": "ltc_2",
+					"kind": "null"
+				},
+				{
+					"name": "emissive",
+					"kind": "color",
+					"hex": 0,
+					"rgb": [
+						0,
+						0,
+						0
+					]
+				}
+			]
+		},
+		"billboard": {
+			"r180": "sprite",
+			"vertexShader": "5c584d77cd66d4145b24291f47413ebe5a3f266ee11734170888505787f950f8",
+			"fragmentShader": "723953ab8c28eaccd689df008522ea1d7bff69c8f9f339d98b553d0d04f4472a",
+			"uniforms": [
+				{
+					"name": "diffuse",
+					"kind": "color",
+					"hex": 16777215,
+					"rgb": [
+						1,
+						1,
+						1
+					]
+				},
+				{
+					"name": "opacity",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "center",
+					"kind": "vec2",
+					"value": [
+						0.5,
+						0.5
+					]
+				},
+				{
+					"name": "rotation",
+					"kind": "number",
+					"value": 0
+				},
+				{
+					"name": "map",
+					"kind": "null"
+				},
+				{
+					"name": "mapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "alphaMap",
+					"kind": "null"
+				},
+				{
+					"name": "alphaMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "alphaTest",
+					"kind": "number",
+					"value": 0
+				},
+				{
+					"name": "fogDensity",
+					"kind": "number",
+					"value": 0.00025
+				},
+				{
+					"name": "fogNear",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "fogFar",
+					"kind": "number",
+					"value": 2000
+				},
+				{
+					"name": "fogColor",
+					"kind": "color",
+					"hex": 16777215,
+					"rgb": [
+						1,
+						1,
+						1
+					]
+				}
+			]
+		},
+		"depth": {
+			"r180": "depth",
+			"vertexShader": "07d46c0a20eb828925a5247b0356b84447d0c4453329f7341ec16cfac61937f2",
+			"fragmentShader": "f354a4082f91be35196b695c377adec2225f2b1c3043a884d88013444b985a5e",
+			"uniforms": [
+				{
+					"name": "diffuse",
+					"kind": "color",
+					"hex": 16777215,
+					"rgb": [
+						1,
+						1,
+						1
+					]
+				},
+				{
+					"name": "opacity",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "map",
+					"kind": "null"
+				},
+				{
+					"name": "mapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "alphaMap",
+					"kind": "null"
+				},
+				{
+					"name": "alphaMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "alphaTest",
+					"kind": "number",
+					"value": 0
+				},
+				{
+					"name": "displacementMap",
+					"kind": "null"
+				},
+				{
+					"name": "displacementMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "displacementScale",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "displacementBias",
+					"kind": "number",
+					"value": 0
+				}
+			]
+		},
+		"distance": {
+			"r180": "distanceRGBA",
+			"vertexShader": "2963d7dd6cb36ae1c45c290cccde291fce3cfbf668abd35472338023787bc393",
+			"fragmentShader": "49959b469555077ffd79d895ef33d282c4eed21033e965a7d447e4ec3f9a3c3b",
+			"uniforms": [
+				{
+					"name": "diffuse",
+					"kind": "color",
+					"hex": 16777215,
+					"rgb": [
+						1,
+						1,
+						1
+					]
+				},
+				{
+					"name": "opacity",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "map",
+					"kind": "null"
+				},
+				{
+					"name": "mapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "alphaMap",
+					"kind": "null"
+				},
+				{
+					"name": "alphaMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "alphaTest",
+					"kind": "number",
+					"value": 0
+				},
+				{
+					"name": "displacementMap",
+					"kind": "null"
+				},
+				{
+					"name": "displacementMapTransform",
+					"kind": "mat3",
+					"value": [
+						1,
+						0,
+						0,
+						0,
+						1,
+						0,
+						0,
+						0,
+						1
+					]
+				},
+				{
+					"name": "displacementScale",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "displacementBias",
+					"kind": "number",
+					"value": 0
+				},
+				{
+					"name": "referencePosition",
+					"kind": "vec3",
+					"value": [
+						0,
+						0,
+						0
+					]
+				},
+				{
+					"name": "nearDistance",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "farDistance",
+					"kind": "number",
+					"value": 1000
+				}
+			]
+		},
+		"shadow": {
+			"r180": "shadow",
+			"vertexShader": "5a4720ec2adea4de46db0e7ca7452f0cb4ce4a008b7b6d36cfc7e86fb01bc989",
+			"fragmentShader": "4fd6cd2fc97ecfb280e6be184f04475100709701380746c9c9c88f2101f629a2",
+			"uniforms": [
+				{
+					"name": "ambientLightColor",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "lightProbe",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "directionalLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"direction": {},
+						"color": {}
+					}
+				},
+				{
+					"name": "directionalLightShadows",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"shadowIntensity": 1,
+						"shadowBias": {},
+						"shadowNormalBias": {},
+						"shadowRadius": {},
+						"shadowMapSize": {}
+					}
+				},
+				{
+					"name": "directionalShadowMap",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "directionalShadowMatrix",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "spotLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"color": {},
+						"position": {},
+						"direction": {},
+						"distance": {},
+						"coneCos": {},
+						"penumbraCos": {},
+						"decay": {}
+					}
+				},
+				{
+					"name": "spotLightShadows",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"shadowIntensity": 1,
+						"shadowBias": {},
+						"shadowNormalBias": {},
+						"shadowRadius": {},
+						"shadowMapSize": {}
+					}
+				},
+				{
+					"name": "spotLightMap",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "spotShadowMap",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "spotLightMatrix",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "pointLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"color": {},
+						"position": {},
+						"decay": {},
+						"distance": {}
+					}
+				},
+				{
+					"name": "pointLightShadows",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"shadowIntensity": 1,
+						"shadowBias": {},
+						"shadowNormalBias": {},
+						"shadowRadius": {},
+						"shadowMapSize": {},
+						"shadowCameraNear": {},
+						"shadowCameraFar": {}
+					}
+				},
+				{
+					"name": "pointShadowMap",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "pointShadowMatrix",
+					"kind": "list",
+					"value": []
+				},
+				{
+					"name": "hemisphereLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"direction": {},
+						"skyColor": {},
+						"groundColor": {}
+					}
+				},
+				{
+					"name": "rectAreaLights",
+					"kind": "list",
+					"value": [],
+					"properties": {
+						"color": {},
+						"position": {},
+						"width": {},
+						"height": {}
+					}
+				},
+				{
+					"name": "ltc_1",
+					"kind": "null"
+				},
+				{
+					"name": "ltc_2",
+					"kind": "null"
+				},
+				{
+					"name": "fogDensity",
+					"kind": "number",
+					"value": 0.00025
+				},
+				{
+					"name": "fogNear",
+					"kind": "number",
+					"value": 1
+				},
+				{
+					"name": "fogFar",
+					"kind": "number",
+					"value": 2000
+				},
+				{
+					"name": "fogColor",
+					"kind": "color",
+					"hex": 16777215,
+					"rgb": [
+						1,
+						1,
+						1
+					]
+				},
+				{
+					"name": "color",
+					"kind": "color",
+					"hex": 0,
+					"rgb": [
+						0,
+						0,
+						0
+					]
+				},
+				{
+					"name": "opacity",
+					"kind": "number",
+					"value": 1
+				}
+			]
+		}
+	},
+	"uniformGroups": {
+		"common": [
+			{
+				"name": "diffuse",
+				"kind": "color",
+				"hex": 16777215,
+				"rgb": [
+					1,
+					1,
+					1
+				]
+			},
+			{
+				"name": "opacity",
+				"kind": "number",
+				"value": 1
+			},
+			{
+				"name": "map",
+				"kind": "null"
+			},
+			{
+				"name": "mapTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			},
+			{
+				"name": "alphaMap",
+				"kind": "null"
+			},
+			{
+				"name": "alphaMapTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			},
+			{
+				"name": "alphaTest",
+				"kind": "number",
+				"value": 0
+			}
+		],
+		"specularmap": [
+			{
+				"name": "specularMap",
+				"kind": "null"
+			},
+			{
+				"name": "specularMapTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			}
+		],
+		"envmap": [
+			{
+				"name": "envMap",
+				"kind": "null"
+			},
+			{
+				"name": "envMapRotation",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			},
+			{
+				"name": "flipEnvMap",
+				"kind": "number",
+				"value": -1
+			},
+			{
+				"name": "reflectivity",
+				"kind": "number",
+				"value": 1
+			},
+			{
+				"name": "ior",
+				"kind": "number",
+				"value": 1.5
+			},
+			{
+				"name": "refractionRatio",
+				"kind": "number",
+				"value": 0.98
+			}
+		],
+		"aomap": [
+			{
+				"name": "aoMap",
+				"kind": "null"
+			},
+			{
+				"name": "aoMapIntensity",
+				"kind": "number",
+				"value": 1
+			},
+			{
+				"name": "aoMapTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			}
+		],
+		"lightmap": [
+			{
+				"name": "lightMap",
+				"kind": "null"
+			},
+			{
+				"name": "lightMapIntensity",
+				"kind": "number",
+				"value": 1
+			},
+			{
+				"name": "lightMapTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			}
+		],
+		"bumpmap": [
+			{
+				"name": "bumpMap",
+				"kind": "null"
+			},
+			{
+				"name": "bumpMapTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			},
+			{
+				"name": "bumpScale",
+				"kind": "number",
+				"value": 1
+			}
+		],
+		"normalmap": [
+			{
+				"name": "normalMap",
+				"kind": "null"
+			},
+			{
+				"name": "normalMapTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			},
+			{
+				"name": "normalScale",
+				"kind": "vec2",
+				"value": [
+					1,
+					1
+				]
+			}
+		],
+		"displacementmap": [
+			{
+				"name": "displacementMap",
+				"kind": "null"
+			},
+			{
+				"name": "displacementMapTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			},
+			{
+				"name": "displacementScale",
+				"kind": "number",
+				"value": 1
+			},
+			{
+				"name": "displacementBias",
+				"kind": "number",
+				"value": 0
+			}
+		],
+		"emissivemap": [
+			{
+				"name": "emissiveMap",
+				"kind": "null"
+			},
+			{
+				"name": "emissiveMapTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			}
+		],
+		"metalnessmap": [
+			{
+				"name": "metalnessMap",
+				"kind": "null"
+			},
+			{
+				"name": "metalnessMapTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			}
+		],
+		"roughnessmap": [
+			{
+				"name": "roughnessMap",
+				"kind": "null"
+			},
+			{
+				"name": "roughnessMapTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			}
+		],
+		"gradientmap": [
+			{
+				"name": "gradientMap",
+				"kind": "null"
+			}
+		],
+		"fog": [
+			{
+				"name": "fogDensity",
+				"kind": "number",
+				"value": 0.00025
+			},
+			{
+				"name": "fogNear",
+				"kind": "number",
+				"value": 1
+			},
+			{
+				"name": "fogFar",
+				"kind": "number",
+				"value": 2000
+			},
+			{
+				"name": "fogColor",
+				"kind": "color",
+				"hex": 16777215,
+				"rgb": [
+					1,
+					1,
+					1
+				]
+			}
+		],
+		"lights": [
+			{
+				"name": "ambientLightColor",
+				"kind": "list",
+				"value": []
+			},
+			{
+				"name": "lightProbe",
+				"kind": "list",
+				"value": []
+			},
+			{
+				"name": "directionalLights",
+				"kind": "list",
+				"value": [],
+				"properties": {
+					"direction": {},
+					"color": {}
+				}
+			},
+			{
+				"name": "directionalLightShadows",
+				"kind": "list",
+				"value": [],
+				"properties": {
+					"shadowIntensity": 1,
+					"shadowBias": {},
+					"shadowNormalBias": {},
+					"shadowRadius": {},
+					"shadowMapSize": {}
+				}
+			},
+			{
+				"name": "directionalShadowMap",
+				"kind": "list",
+				"value": []
+			},
+			{
+				"name": "directionalShadowMatrix",
+				"kind": "list",
+				"value": []
+			},
+			{
+				"name": "spotLights",
+				"kind": "list",
+				"value": [],
+				"properties": {
+					"color": {},
+					"position": {},
+					"direction": {},
+					"distance": {},
+					"coneCos": {},
+					"penumbraCos": {},
+					"decay": {}
+				}
+			},
+			{
+				"name": "spotLightShadows",
+				"kind": "list",
+				"value": [],
+				"properties": {
+					"shadowIntensity": 1,
+					"shadowBias": {},
+					"shadowNormalBias": {},
+					"shadowRadius": {},
+					"shadowMapSize": {}
+				}
+			},
+			{
+				"name": "spotLightMap",
+				"kind": "list",
+				"value": []
+			},
+			{
+				"name": "spotShadowMap",
+				"kind": "list",
+				"value": []
+			},
+			{
+				"name": "spotLightMatrix",
+				"kind": "list",
+				"value": []
+			},
+			{
+				"name": "pointLights",
+				"kind": "list",
+				"value": [],
+				"properties": {
+					"color": {},
+					"position": {},
+					"decay": {},
+					"distance": {}
+				}
+			},
+			{
+				"name": "pointLightShadows",
+				"kind": "list",
+				"value": [],
+				"properties": {
+					"shadowIntensity": 1,
+					"shadowBias": {},
+					"shadowNormalBias": {},
+					"shadowRadius": {},
+					"shadowMapSize": {},
+					"shadowCameraNear": {},
+					"shadowCameraFar": {}
+				}
+			},
+			{
+				"name": "pointShadowMap",
+				"kind": "list",
+				"value": []
+			},
+			{
+				"name": "pointShadowMatrix",
+				"kind": "list",
+				"value": []
+			},
+			{
+				"name": "hemisphereLights",
+				"kind": "list",
+				"value": [],
+				"properties": {
+					"direction": {},
+					"skyColor": {},
+					"groundColor": {}
+				}
+			},
+			{
+				"name": "rectAreaLights",
+				"kind": "list",
+				"value": [],
+				"properties": {
+					"color": {},
+					"position": {},
+					"width": {},
+					"height": {}
+				}
+			},
+			{
+				"name": "ltc_1",
+				"kind": "null"
+			},
+			{
+				"name": "ltc_2",
+				"kind": "null"
+			}
+		],
+		"points": [
+			{
+				"name": "diffuse",
+				"kind": "color",
+				"hex": 16777215,
+				"rgb": [
+					1,
+					1,
+					1
+				]
+			},
+			{
+				"name": "opacity",
+				"kind": "number",
+				"value": 1
+			},
+			{
+				"name": "size",
+				"kind": "number",
+				"value": 1
+			},
+			{
+				"name": "scale",
+				"kind": "number",
+				"value": 1
+			},
+			{
+				"name": "map",
+				"kind": "null"
+			},
+			{
+				"name": "alphaMap",
+				"kind": "null"
+			},
+			{
+				"name": "alphaMapTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			},
+			{
+				"name": "alphaTest",
+				"kind": "number",
+				"value": 0
+			},
+			{
+				"name": "uvTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			}
+		],
+		"sprite": [
+			{
+				"name": "diffuse",
+				"kind": "color",
+				"hex": 16777215,
+				"rgb": [
+					1,
+					1,
+					1
+				]
+			},
+			{
+				"name": "opacity",
+				"kind": "number",
+				"value": 1
+			},
+			{
+				"name": "center",
+				"kind": "vec2",
+				"value": [
+					0.5,
+					0.5
+				]
+			},
+			{
+				"name": "rotation",
+				"kind": "number",
+				"value": 0
+			},
+			{
+				"name": "map",
+				"kind": "null"
+			},
+			{
+				"name": "mapTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			},
+			{
+				"name": "alphaMap",
+				"kind": "null"
+			},
+			{
+				"name": "alphaMapTransform",
+				"kind": "mat3",
+				"value": [
+					1,
+					0,
+					0,
+					0,
+					1,
+					0,
+					0,
+					0,
+					1
+				]
+			},
+			{
+				"name": "alphaTest",
+				"kind": "number",
+				"value": 0
+			}
+		]
+	}
+}

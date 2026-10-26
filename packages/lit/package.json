@@ -1,0 +1,13 @@
+{
+  "name": "@keel-engine/lit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "The full-colour lit renderer (WebGL2): meshes and instances lit by sun, moon and sky, physically based and toon surfaces, soft shadows, fog, render targets and custom shaders.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*"
+  }
+}
