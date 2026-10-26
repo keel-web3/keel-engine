@@ -324,6 +324,15 @@ importers:
         specifier: workspace:*
         version: link:../scene
 
+  packages/flora:
+    dependencies:
+      '@keel-engine/lit':
+        specifier: workspace:*
+        version: link:../lit
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
   packages/handheld:
     dependencies:
       '@keel-engine/runtime':
@@ -605,6 +614,15 @@ importers:
       '@keel-engine/physics':
         specifier: workspace:*
         version: link:../physics
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
+  packages/tiles:
+    dependencies:
+      '@keel-engine/lit':
+        specifier: workspace:*
+        version: link:../lit
       '@keel-engine/runtime':
         specifier: workspace:*
         version: link:../runtime

@@ -1,0 +1,19 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-flora",
+  "version": "0.1.0",
+  "description": "Foliage for keel/lit: crossed pixel-art sprite cards and 3D blades, instanced by the thousand, lit as the ground under them, bent by gusting wind and parted by pushers.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/flora"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/lit"
+    ]
+  }
+}

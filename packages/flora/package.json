@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/flora",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Foliage for keel/lit: crossed pixel-art sprite cards and 3D blades, instanced by the thousand, lit as the ground under them, bent by gusting wind and parted by pushers.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/lit": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

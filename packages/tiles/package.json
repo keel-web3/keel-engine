@@ -1,0 +1,14 @@
+{
+  "name": "@keel-engine/tiles",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tile surfaces for keel/lit: one grid, a tile system per material (organic blend, blob47, wang16, cardinal16, dual-grid), painted or imported atlases, pixel-snapped edges with rims and drop shadows.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/lit": "workspace:*",
+    "@keel-engine/runtime": "workspace:*"
+  }
+}
