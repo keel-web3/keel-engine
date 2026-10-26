@@ -1,0 +1,16 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-tree-mechanics",
+  "version": "0.1.0",
+  "description": "Tree mechanics: per-branch stiffness from the beam law, hierarchical wind sway, sag under snow and animals, storm breaks and falling limbs, and the climbable wood as capsules with what each piece can carry.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/tree-mechanics"
+  },
+  "build": {
+    "format": "iife"
+  }
+}

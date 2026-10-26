@@ -45,6 +45,7 @@ engine through the same pipeline and compare the digests.
 | `packages/lit` | `keel/lit` | The full-colour lit renderer (WebGL2): sun, moon and sky light, physically based and toon surfaces, soft shadows, fog, custom shaders |
 | `packages/tiles` | `keel/tiles` | Tile surfaces for keel/lit: a tile system per material (organic blend, blob47, wang16, cardinal16, dual-grid), painted or imported atlases |
 | `packages/flora` | `keel/flora` | Foliage for keel/lit: crossed pixel-art sprite cards and 3D blades, lit as the ground, wind, pushers |
+| `packages/tree-mechanics` | `keel/tree-mechanics` | Tree mechanics: per-branch stiffness from the beam law, hierarchical wind sway, sag under snow and animals, storm breaks, climbable wood with what it carries |
 | `packages/particles` | `keel/particles` | Pooled, seeded particle emitters |
 | `packages/audio` | `keel/audio` | Generative music from a mood and a seed, seeded SFX, on KEEL's shared audio runtime |
 | `packages/world` | `keel/world` | The world runtime: systems on a fixed step, settings, rules, snapshots |

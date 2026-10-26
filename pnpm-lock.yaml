@@ -627,6 +627,12 @@ importers:
         specifier: workspace:*
         version: link:../runtime
 
+  packages/tree-mechanics:
+    dependencies:
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+
   packages/ui:
     dependencies:
       '@keel-engine/codec':

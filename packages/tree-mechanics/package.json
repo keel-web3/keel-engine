@@ -1,0 +1,13 @@
+{
+  "name": "@keel-engine/tree-mechanics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tree mechanics: per-branch stiffness from the beam law, hierarchical wind sway, sag under snow and animals, storm breaks and falling limbs, and the climbable wood as capsules with what each piece can carry.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/runtime": "workspace:*"
+  }
+}

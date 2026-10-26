@@ -1,0 +1,18 @@
+{
+  "schema": "keel-engine-link@1",
+  "manifest": {
+    "schema": "keel-engine-module@1",
+    "id": "keel/tree-mechanics",
+    "version": "0.1.0",
+    "kind": "runtime",
+    "needs": [],
+    "title": "KEEL Engine tree mechanics",
+    "description": "Tree mechanics: per-branch stiffness from the beam law, hierarchical wind sway, sag under snow and animals, storm breaks and falling limbs, and the climbable wood as capsules with what each piece can carry.",
+    "provides": [],
+    "compatible": [],
+    "phase": "runtime",
+    "weight": -1000
+  },
+  "imports": {},
+  "manifests": {}
+}
