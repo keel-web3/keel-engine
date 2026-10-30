@@ -22,6 +22,10 @@
     "keel/entity",
     "keel/particles",
     "keel/bake",
+    "keel/lit",
+    "keel/tiles",
+    "keel/flora",
+    "keel/biome",
     "keel/physics",
     "keel/object",
     "keel/builder",
@@ -31,8 +35,6 @@
     "keel/decal",
     "keel/vehicle",
     "keel/driver",
-    "keel/lit",
-    "keel/flora",
     "keel/studio",
     "keel/handheld",
     "keel/import",
@@ -44,7 +46,6 @@
     "keel/materials",
     "keel/pipeline",
     "keel/targets",
-    "keel/tiles",
     "keel/tree-mechanics",
     "keel/ui",
     "keel/view",
@@ -1062,6 +1063,75 @@
         "path": "packages/bake/test/vectors.mjs",
         "sha256": "0x725e5595d244bf3e94c6c3f605c4339c602ef9e0b61bca65632482a23b6d1d74"
       },
+      "deployments": [],
+      "deployed": false
+    },
+    {
+      "id": "keel/biome",
+      "version": "0.1.0",
+      "kind": "runtime",
+      "phase": "runtime",
+      "weight": -1000,
+      "needs": [
+        "keel/lit@^0.1",
+        "keel/tiles@^0.1",
+        "keel/flora@^0.1"
+      ],
+      "provides": [],
+      "compatible": [],
+      "name": "keel-engine-biome",
+      "license": "MIT",
+      "summary": "Any biome on Earth as data for keel/lit: relief, ground painted by height and slope with 3D shell layers, plants, vines, water, light and wind, all sharing one spring field.",
+      "sourceRepository": {
+        "url": "https://github.com/keel-web3/keel-engine",
+        "revision": null,
+        "path": "packages/biome"
+      },
+      "githubPath": "packages/biome/keel/entry.ts",
+      "sourceFiles": [
+        {
+          "path": "packages/biome/keel/entry.ts",
+          "sha256": "0x13b7d0aa77b287290fdbc63e6844ae7ec196969aae3569e80dd752b455ae8001"
+        },
+        {
+          "path": "packages/biome/keel/link.json",
+          "sha256": "0x3e0cc9ac22f70d8ce5c4c968ee8769e96ac8a41d2cc6ffceb7e712f7acd9a590"
+        },
+        {
+          "path": "packages/biome/src/biomes.ts",
+          "sha256": "0x73331a58343664eb416813cf2be01c35dabb48774663972b7fc1de9ec859fa8e"
+        },
+        {
+          "path": "packages/biome/src/compose.ts",
+          "sha256": "0x9acbf6ac41ccac8424bb7fac746a09772261d4cd524e97633c4a7396e459dd50"
+        },
+        {
+          "path": "packages/biome/src/index.ts",
+          "sha256": "0x5dfc8551ed1be0a526b45624fbe2a4eb2f62bc13bd2238cd8084efaf32de452b"
+        },
+        {
+          "path": "packages/biome/src/relief.ts",
+          "sha256": "0xc1e4d596ca94baba1a7fb064670a636ea9d483435224d6fcefa0cba548dab0d1"
+        }
+      ],
+      "build": {
+        "format": "iife",
+        "external": [
+          "@keel-engine/flora",
+          "@keel-engine/lit",
+          "@keel-engine/tiles"
+        ]
+      },
+      "output": {
+        "digest": "0x68b92705c5d78229efabead49f5c9778bee1e6058dfb08a68e7853255bf4a959",
+        "byteLength": 38772
+      },
+      "sourceDigest": "0x778113eda75dc9e4e37ceb54d9c8f87b2437ad424cac0789c0376756c2d8ccf0",
+      "recipeDigest": "0xc85c20dbd35dc01a54fcf8fff5b2f9bb415148e2a7985cd3f8bbf4caab2f016e",
+      "receiptDigest": "0xc947c53a7ebbc84c4a97ae0dcab1ee08424ca3ab223e89441f5b15825564609b",
+      "disposition": "reproducible-build",
+      "verified": true,
+      "vectors": null,
       "deployments": [],
       "deployed": false
     },
@@ -2251,19 +2321,43 @@
         },
         {
           "path": "packages/flora/src/field.ts",
-          "sha256": "0xec00d60967bf6f471c199ec62e07ada4cddb3cd37e3ce0ea8fc82bdcd0af1a15"
+          "sha256": "0xb3aa8131a8d109846bca37c3be98b5ccb4d927940289014eab1f29aa409250d7"
         },
         {
           "path": "packages/flora/src/index.ts",
-          "sha256": "0x28937144ea701fedcf5315df128c8e8db17c29e9dcc5d20eb60330f6e7dca66c"
+          "sha256": "0xdd530035ff4e8e6419e1286f51105c75e668af3ee7cc3565df452a97293e42a2"
+        },
+        {
+          "path": "packages/flora/src/motion.ts",
+          "sha256": "0x1daef54edfc1f878982469905c72a5f7341beadaac7267df1d49fce1885afa3f"
+        },
+        {
+          "path": "packages/flora/src/plant-field.ts",
+          "sha256": "0xe83fe604842a17c45406dc6e09dd6c093153f260a49410235f469e8a0409e85a"
+        },
+        {
+          "path": "packages/flora/src/plants.ts",
+          "sha256": "0xeaae3b01758ca541856636e5ea9331caa0be8a73c11dc92a58d64fcc2780ef8a"
         },
         {
           "path": "packages/flora/src/scatter.ts",
           "sha256": "0x1bb21e05021ce8ffd89675239fc3b1947a675235f237df6d5cea051c2c719038"
         },
         {
+          "path": "packages/flora/src/shapes.ts",
+          "sha256": "0xac9fc6bb1a122c953eee8229495d595f49f28e81d31ad9cfbfb5a48c745bf6f6"
+        },
+        {
+          "path": "packages/flora/src/shells.ts",
+          "sha256": "0x2accf77dff3589519803cec4b83e9419b025bd06bd5aff281610c87173b7feee"
+        },
+        {
           "path": "packages/flora/src/sprites.ts",
           "sha256": "0x58603e996b2b17582a13d243286c672c7355c5b94e2f3a7b959eadf4fc0ad606"
+        },
+        {
+          "path": "packages/flora/src/vines.ts",
+          "sha256": "0x4f2a62dbe7dfd9534a4ffea903918ffd5756204acf32aa82ae45c982d8807ddf"
         }
       ],
       "build": {
@@ -2273,12 +2367,12 @@
         ]
       },
       "output": {
-        "digest": "0x7edd1225c8f8122bf5e59f3c4fdcbcf96b6b1aca16eeb9c80da307c45021b1b1",
-        "byteLength": 16676
+        "digest": "0x6ce9bcf5f64728707cfcf31f44ab29fd0daf423fe85dc5a4b6737fad90f0f92f",
+        "byteLength": 61191
       },
-      "sourceDigest": "0xf25d963279bb4cfb2793fe97a57f03b3f800763c21c9da937e4c4307ffabc372",
-      "recipeDigest": "0x33d6b048a058516f8aff784ff79e9f0a858feacc7253eadedb5fabc9ac7a86ae",
-      "receiptDigest": "0x45105448f5ef88eaf5b581fd42b604ab3669862f340fef109b05ecd25f9379ef",
+      "sourceDigest": "0xbcd6066777e4741ab9252aeb9cbe5e62a65eb16477dafe104385b178ec43d986",
+      "recipeDigest": "0x88186549abe9babdf2d57611a3a28b031cbd9e675f6ee247146cc6224e29acbd",
+      "receiptDigest": "0x76c68b89116f0f3a7dc2a99d98a14cc65483ca62b7885024d390f12143139e59",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": null,
@@ -2934,7 +3028,7 @@
         },
         {
           "path": "packages/lit/src/gl/renderer.ts",
-          "sha256": "0x786943b5ed57e6adeb097ad491b7747447415f297576e739835d7640b545df3e"
+          "sha256": "0xd375deec3e7e72059c6421fe6251273767b3dec2f11b8035f020196734f8e7f4"
         },
         {
           "path": "packages/lit/src/gl/shader-cache.ts",
@@ -2950,7 +3044,7 @@
         },
         {
           "path": "packages/lit/src/gl/textures.ts",
-          "sha256": "0x2a17ea04f2153e3839632496fc1d62bed7391ebb938667fb372ce275c63afe10"
+          "sha256": "0x8209941b95e4082db0d1261a95a8869d0b3357a1c9ed6d1349761dc87693f228"
         },
         {
           "path": "packages/lit/src/gl/uniforms.ts",
@@ -3110,11 +3204,11 @@
         },
         {
           "path": "packages/lit/src/shader/chunks.ts",
-          "sha256": "0x2db525e4166d0779b92c32cb1ccb02cf7a9a193506913618d4dae83ec53ebd09"
+          "sha256": "0xd3ab9c45badd888be7a1306f29a8abd232270a9b15f265b20eef2de55910da56"
         },
         {
           "path": "packages/lit/src/shader/library.ts",
-          "sha256": "0x8ea1081217a2f1b3df9c3f3691cfe1c77640bcdee9534f92e6c9eceda2210265"
+          "sha256": "0x486e73a57d62a9ace6071756ad6f0f5cccc88f777d369c9deaa490784de04b50"
         },
         {
           "path": "packages/lit/src/shader/uniforms.ts",
@@ -3150,12 +3244,12 @@
         "external": []
       },
       "output": {
-        "digest": "0x0d070656a6b3d0a70391c195ba74157ba855149d2927a0f03ba562bada9b187e",
-        "byteLength": 423223
+        "digest": "0x0370049da9847977b225035bda3c7986082be0097d3270406da237f81cd1f735",
+        "byteLength": 423740
       },
-      "sourceDigest": "0x6a31e0406a64aff51dc95a41805a140c617588855c26b1c2e4e887b0c92aa21b",
-      "recipeDigest": "0xfca51406bea0cd4f4fd69a021bb13f1c7843e088270ccdfb7bcd49d724ed27ac",
-      "receiptDigest": "0x2c4b495bb5aab3b9fd81492f249a0422564c02edf65c967a53c15e70446bdd61",
+      "sourceDigest": "0x7ed068df30d1666970a06b0c0c7f272d9538de7c1f804f189af70263c8cbc344",
+      "recipeDigest": "0xea9200c67f45a1489d2041d2bb93b2276f34675a4b953bdfcc1f6c0d3ad44cb3",
+      "receiptDigest": "0x647147aafc0b9f95c3859d069c7a57a6d7e4cbce4582d8ed5c2a34fbbca7f6e1",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": null,
@@ -4683,11 +4777,11 @@
         },
         {
           "path": "packages/tree-mechanics/src/index.ts",
-          "sha256": "0xc56a1e498b2f29df7c5f8e5dcb4d2c1c8c7c316036ffb3de38b7aa79f76109cc"
+          "sha256": "0x90a0176acf3ec4e41273e5cf3e944ec327296c34ba215d5e5c267afe6946fbb9"
         },
         {
           "path": "packages/tree-mechanics/src/mechanics.ts",
-          "sha256": "0x7d7cbd9b86c2a84b2a79b496c917531c49c92aa168859ee0aea83771debd9fbf"
+          "sha256": "0x025bed95a47d3a68b9da0ee7d3191a3ceab40ca41fa4cb076fe4bce6580e14b7"
         }
       ],
       "build": {
@@ -4695,12 +4789,12 @@
         "external": []
       },
       "output": {
-        "digest": "0x685260007cdfba7a51b21e2670ffd6fa55011e2209054979fbd3ebf42ba7d82d",
-        "byteLength": 14499
+        "digest": "0x2b09af41d9a816d0834838815a89b9007ceb654996a18ba51826bcab40d87c0b",
+        "byteLength": 13841
       },
-      "sourceDigest": "0x80d83a1a8dc015183100224c27db913f78e066dcc2b5e746c62a22e5ef027cca",
-      "recipeDigest": "0xd8f086bf198c878e4bf1a9c2d51a47bf728100b1b4b4f6522f114cb4bd4a0a76",
-      "receiptDigest": "0xcdc71eebe5b78dbc57c585cd6808de893cbdacfd2937a3fa67e762995e82815f",
+      "sourceDigest": "0x54c32380ee40f5dcc5057ed63b83739f957da8535d46c83588411c5d551b5b60",
+      "recipeDigest": "0xe8a27c501d9e4f3650e3db4f03a596960b464089214b0ce19be4ac7a5cb62d94",
+      "receiptDigest": "0x647d06fe3c9688ea9aab80fa571d0dd4dd88a81de01d5900b928094b704e020e",
       "disposition": "reproducible-build",
       "verified": true,
       "vectors": null,
