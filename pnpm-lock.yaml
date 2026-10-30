@@ -157,6 +157,21 @@ importers:
         specifier: workspace:*
         version: link:../../packs/humans
 
+  packages/biome:
+    dependencies:
+      '@keel-engine/flora':
+        specifier: workspace:*
+        version: link:../flora
+      '@keel-engine/lit':
+        specifier: workspace:*
+        version: link:../lit
+      '@keel-engine/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      '@keel-engine/tiles':
+        specifier: workspace:*
+        version: link:../tiles
+
   packages/builder:
     dependencies:
       '@keel-engine/codec':

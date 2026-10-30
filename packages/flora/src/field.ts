@@ -10,10 +10,14 @@
 import { Color, DataTexture, Group, InstanceAttribute, Instances, LitMaterial, Matrix4, Quaternion, Vector2, Vector3, Vector4 } from "@keel-engine/lit";
 import type { ColorRepresentation, Geometry } from "@keel-engine/lit";
 import { bladeClump, crossCards } from "./cards.ts";
+import { FLORA_MOTION_HEAD } from "./motion.ts";
+import type { FloraMotion } from "./motion.ts";
 import { spriteCell } from "./sprites.ts";
 import type { FloraAtlas, FloraKind } from "./sprites.ts";
 
 export const MAX_PUSHERS = 4;
+/** Kinds that turn to real blades up close (style both); flowers and ferns stay as they are drawn. */
+const BLADE_KINDS: ReadonlySet<string> = new Set(["grass", "tall-grass", "reed"]);
 
 export interface FloraPlacement {
   readonly x: number;
@@ -44,6 +48,8 @@ export interface FloraFieldSpec {
   readonly normals?: "ground" | "volume" | "card";
   /** Where blades give way to cards (style both): distance, and the crossfade's half width. */
   readonly lod?: { readonly near: number; readonly band: number };
+  /** Past `from` the grass calms and thins, leaving only `keep` of it by `to`: each plant shrinks away rather than popping or dotting. */
+  readonly thin?: { readonly from: number; readonly to: number; readonly keep: number };
   /** The flower eye colour. */
   readonly accent?: ColorRepresentation;
   /** How dark the root is (0..1) and how high the darkening reaches (share of the plant). */
@@ -52,6 +58,8 @@ export interface FloraFieldSpec {
   readonly capacity?: number;
   readonly castShadow?: boolean;
   readonly seed?: number;
+  /** A shared spring field: the plants bend and flatten with it, and take its wind and clock. */
+  readonly motion?: FloraMotion;
 }
 
 export interface FloraField {
@@ -78,11 +86,17 @@ attribute vec3 aFloraGround;
 uniform vec4 uFloraWind;
 uniform vec4 uFloraPush[${String(MAX_PUSHERS)}];
 uniform vec4 uFloraMode;
+uniform vec4 uFloraLod;
+uniform vec3 uFloraThin;
 varying vec3 vCard;
 varying float vFloraCell;
 varying vec3 vFloraTint;
 varying vec3 vFloraBloom;
 varying float vFloraDistance;
+varying float vFloraBlade;
+#ifdef FLORA_MOTION
+${FLORA_MOTION_HEAD}
+#endif
 `;
 
 // (At beginnormal, the first of main's chunks to need it: the bend, in field space, and the normal.)
@@ -96,7 +110,13 @@ const FLORA_VERTEX_NORMAL = /* glsl */ `
   float floraT = uFloraWind.w;
   float floraGust = 0.5 + 0.5 * sin(floraT * 1.3 - floraAlong * 0.35) * sin(floraT * 0.47 - floraAlong * 0.13 + 1.7);
   floraGust *= floraGust;
-  float floraFree = aCard.z * uFloraMode.w;
+  float floraSeen = distance(cameraPosition, (modelMatrix * vec4(floraOrigin, 1.0)).xyz);
+  float floraFar = uFloraThin.y > uFloraThin.x ? smoothstep(uFloraThin.x, uFloraThin.y, floraSeen) : 0.0;
+  // Far grass barely stirs: at that size wind only shimmers.
+  float floraFree = aCard.z * uFloraMode.w * (1.0 - floraFar * 0.8);
+  float floraSize = clamp((mix(1.0, uFloraThin.z, floraFar) - aFlora.y) / 0.1 + 1.0, 0.0, 1.0);
+  if (uFloraLod.z > 0.5 && uFloraLod.z < 1.5 && (aFlora.z < 0.5 || floraSeen > uFloraLod.x + uFloraLod.y)) floraSize = 0.0;
+  if (uFloraLod.z > 1.5 && aFlora.z > 0.5 && floraSeen < uFloraLod.x - uFloraLod.y) floraSize = 0.0;
   float floraLean = uFloraWind.x * (0.3 + 0.9 * floraGust);
   float floraFlick = (0.035 + uFloraWind.x * 0.1) * sin(floraT * (2.6 + aFlora.y) + aFlora.y * 6.2832 + floraAlong * 0.8);
   vec3 floraBend = vec3(floraDir.x, 0.0, floraDir.y) * (floraLean + floraFlick);
@@ -111,10 +131,16 @@ const FLORA_VERTEX_NORMAL = /* glsl */ `
     floraBend.xz += away / max(d, 1e-3) * k * 0.9;
     floraBend.y -= k * 0.45;
   }
+#ifdef FLORA_MOTION
+  vec3 floraMoved = floraField(floraOrigin.xz);
+  floraBend.xz += floraMoved.xy * 1.1;
+  floraBend.y -= floraMoved.z * 0.55;
+#endif
   vec3 floraShift = floraInverse * (floraBend * floraFree * floraHeight);
   vec3 objectNormal = uFloraMode.x < 0.5 ? normal : uFloraMode.x < 1.5 ? floraInverse * aFloraGround : normalize(vec3(position.x, 0.35 + position.y * 0.4, position.z));
   vCard = aCard;
   vFloraCell = aFlora.x;
+  vFloraBlade = aFlora.z;
   vFloraTint = aFloraTint;
   vFloraBloom = aFloraBloom;
 #ifdef USE_TANGENT
@@ -130,7 +156,8 @@ const FLORA_VERTEX_BEGIN = /* glsl */ `
 #endif
   transformed.y *= uFloraMode.y;
   transformed += floraShift;
-  vFloraDistance = distance(cameraPosition, (modelMatrix * vec4(floraOrigin, 1.0)).xyz);`;
+  transformed *= floraSize;
+  vFloraDistance = floraSeen;`;
 
 const FLORA_FRAGMENT_HEAD = /* glsl */ `
 uniform sampler2D uFloraAtlas;
@@ -143,6 +170,7 @@ varying float vFloraCell;
 varying vec3 vFloraTint;
 varying vec3 vFloraBloom;
 varying float vFloraDistance;
+varying float vFloraBlade;
 float floraBayer(vec2 p) {
   vec2 q = mod(floor(p), 4.0);
   float m = mod(q.x + q.y * 4.0, 16.0);
@@ -151,7 +179,7 @@ float floraBayer(vec2 p) {
 `;
 
 const FLORA_FRAGMENT_MAP = /* glsl */ `
-  if (uFloraLod.z > 0.5) {
+  if (uFloraLod.z > 0.5 && vFloraBlade > 0.5) {
     float floraNear = smoothstep(uFloraLod.x + uFloraLod.y, uFloraLod.x - uFloraLod.y, vFloraDistance);
     float floraKeep = uFloraLod.z < 1.5 ? floraNear : 1.0 - floraNear;
     if (floraKeep < floraBayer(gl_FragCoord.xy)) discard;
@@ -198,7 +226,7 @@ export function createFloraField(spec: FloraFieldSpec, placements: readonly Flor
   texture.needsUpdate = true;
   const lod = spec.lod ?? { near: 6, band: 1.5 };
 
-  const wind = new Vector4(0, 1, 0, 0);
+  const wind = spec.motion?.uniforms.uFloraWind.value ?? new Vector4(0, 1, 0, 0);
   const push = Array.from({ length: MAX_PUSHERS }, () => new Vector4(0, 0, 1, 0));
   const shared = {
     uFloraWind: { value: wind },
@@ -207,6 +235,8 @@ export function createFloraField(spec: FloraFieldSpec, placements: readonly Flor
     uFloraCell: { value: new Vector4(atlas.cell[0] / atlas.width, atlas.cell[1] / atlas.height, atlas.cols, 0) },
     uFloraAccent: { value: new Color(spec.accent ?? "#f2c945") },
     uFloraRoot: { value: new Vector2(spec.root?.shade ?? 0.35, spec.root?.height ?? 0.35) },
+    uFloraThin: { value: new Vector3(spec.thin?.from ?? 0, spec.thin?.to ?? 0, spec.thin?.keep ?? 1) },
+    ...spec.motion?.uniforms,
   };
 
   const build = (geometry: Geometry, sprite: boolean, lodMode: number): Built => {
@@ -224,6 +254,7 @@ export function createFloraField(spec: FloraFieldSpec, placements: readonly Flor
     if (sprite) material.defines = { ...material.defines, FLORA_SPRITE: "" };
     if (planes === 1 && sprite) material.defines = { ...material.defines, FLORA_FACE: "" };
     if (normals !== "card") material.defines = { ...material.defines, FLORA_KEEP_NORMAL: "" };
+    if (spec.motion) material.defines = { ...material.defines, FLORA_MOTION: "" };
     material.onCompile = (shader) => {
       Object.assign(shader.uniforms, uniforms);
       shader.vertexShader = FLORA_VERTEX_HEAD + shader.vertexShader
@@ -233,7 +264,7 @@ export function createFloraField(spec: FloraFieldSpec, placements: readonly Flor
         .replace("#include <map_fragment>", FLORA_FRAGMENT_MAP)
         .replace("#include <normal_fragment_begin>", FLORA_NORMAL);
     };
-    material.customProgramCacheKey = () => `keel-flora|${sprite ? "card" : "blade"}|${String(planes)}|${normals}`;
+    material.customProgramCacheKey = () => `keel-flora|${sprite ? "card" : "blade"}|${String(planes)}|${normals}|${spec.motion ? "m" : ""}`;
     // (A look that swaps materials must keep this one: the plants live in its shader.)
     material.userData.voxelDitherKeep = true;
     const mesh = new Instances(geometry, material, capacity);
@@ -266,7 +297,7 @@ export function createFloraField(spec: FloraFieldSpec, placements: readonly Flor
         m.compose(pos, q, scl);
         part.mesh.setMatrixAt(i, m);
         const phase = ((Math.sin(p.x * 12.9898 + p.z * 78.233) * 43758.5453) % 1 + 1) % 1;
-        flora.array.set([spriteCell(atlas, p.kind, p.variant ?? 0), phase, 0, 0], i * 4);
+        flora.array.set([spriteCell(atlas, p.kind, p.variant ?? 0), phase, BLADE_KINDS.has(p.kind) ? 1 : 0, 0], i * 4);
         c.set(p.tint);
         tint.array.set([c.r, c.g, c.b], i * 3);
         c.set(p.bloom ?? p.tint);

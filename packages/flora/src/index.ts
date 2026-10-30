@@ -15,3 +15,21 @@ export type { FloraField, FloraFieldSpec, FloraPlacement, Pusher } from "./field
 
 export { hash3, pickWeighted, scatter } from "./scatter.ts";
 export type { ScatterPoint, ScatterSpec } from "./scatter.ts";
+
+export { FLORA_MOTION_HEAD, createFloraMotion } from "./motion.ts";
+export type { FloraBody, FloraImpact, FloraMotion, FloraMotionSpec } from "./motion.ts";
+
+export { LEAF_BLADE, LEAF_NEEDLE, LEAF_OVAL, LEAF_ROUND, PlantBuilder, ROLE_BLOOM, ROLE_LEAF, ROLE_OWN } from "./shapes.ts";
+export type { LeafOptions, PartStyle, V3 } from "./shapes.ts";
+
+export { PLANTS, PLANT_KINDS, definePlant, plantGeometry } from "./plants.ts";
+export type { PlantDef } from "./plants.ts";
+
+export { createPlantField } from "./plant-field.ts";
+export type { PlantField, PlantFieldSpec, PlantPlacement } from "./plant-field.ts";
+
+export { crawl, createVineField } from "./vines.ts";
+export type { CrawlOptions, Surface, VineField, VineSpec } from "./vines.ts";
+
+export { MAX_SHELL_MATERIALS, SHELL_KINDS, createGroundShells } from "./shells.ts";
+export type { GroundShells, GroundShellSpec, ShellKind, ShellLook } from "./shells.ts";

@@ -1,0 +1,21 @@
+{
+  "protocol": "keel-module-manifest@1",
+  "name": "keel-engine-biome",
+  "version": "0.1.0",
+  "description": "Any biome on Earth as data for keel/lit: relief, ground painted by height and slope with 3D shell layers, plants, vines, water, light and wind, all sharing one spring field.",
+  "entry": "keel/entry.ts",
+  "license": "MIT",
+  "sourceRepository": {
+    "url": "https://github.com/keel-web3/keel-engine",
+    "revision": "replace-with-a-commit-hash",
+    "path": "packages/biome"
+  },
+  "build": {
+    "format": "iife",
+    "external": [
+      "@keel-engine/flora",
+      "@keel-engine/lit",
+      "@keel-engine/tiles"
+    ]
+  }
+}

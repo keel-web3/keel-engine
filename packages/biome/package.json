@@ -1,0 +1,16 @@
+{
+  "name": "@keel-engine/biome",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Any biome on Earth as data for keel/lit: relief, ground painted by height and slope with 3D shell layers, plants, vines, water, light and wind, all sharing one spring field.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@keel-engine/flora": "workspace:*",
+    "@keel-engine/lit": "workspace:*",
+    "@keel-engine/runtime": "workspace:*",
+    "@keel-engine/tiles": "workspace:*"
+  }
+}
