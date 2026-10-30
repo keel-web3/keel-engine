@@ -101,7 +101,7 @@ const SOIL = shade("#3a2a20", "#4e3a2a", "#604836", "#725842"), LOAM = shade("#2
 const SAND = shade("#b89a62", "#cfb47c", "#e0c992", "#efdfb0"), RED_SAND = shade("#8e4a2a", "#a95c34", "#c07444", "#d48c58"), GREY_SAND = shade("#8a8678", "#a29e8e", "#b8b4a4", "#cecabc");
 const GRASS = shade("#3e6a2e", "#4f7f36", "#62933e", "#78a84a"), DARK_GRASS = shade("#23452a", "#2f5832", "#3c6a38", "#4c7c40"), DRY_GRASS = shade("#8a7a44", "#a08e50", "#b6a35e", "#c9b76e"), STEPPE = shade("#7c7a50", "#908c5c", "#a3a068", "#b6b276");
 const ROCK = shade("#55524e", "#6c6965", "#84807b", "#9c9892"), DARK_ROCK = shade("#2a282c", "#37353a", "#47454a", "#59565c"), RED_ROCK = shade("#6e3a26", "#8a4a2e", "#a65e3a", "#c07a50");
-const SNOW = shade("#b8c8d8", "#d2deea", "#e8f0f6", "#fbfdff"), ICE = shade("#7fb0c8", "#9cc6d8", "#bcdce8", "#dcf0f6");
+const SNOW = shade("#d6e2ec", "#e4ecf3", "#f0f5f9", "#fbfdff"), ICE = shade("#7fb0c8", "#9cc6d8", "#bcdce8", "#dcf0f6");
 const MUD = shade("#2e261c", "#3e3324", "#4e422e", "#5e5038"), PEAT = shade("#20180f", "#2c2216", "#3a2e1e", "#483a26"), SALT = shade("#c8c4b8", "#dcd8cc", "#ece8dc", "#fbf9f0");
 const MOSS = shade("#2a4a26", "#3a6030", "#4c7a38", "#609044"), LICHEN = shade("#6a7056", "#808668", "#969c78", "#b0b48c"), LITTER = shade("#4a3220", "#6a4628", "#8a5c30", "#a8743a");
 const ASH = shade("#1e1c1e", "#2a282a", "#383538", "#484448");
@@ -165,13 +165,13 @@ export const BIOMES: Record<string, BiomeSpec> = {
   },
   taiga: {
     id: "taiga", label: "Boreal taiga", climate: { temperature: -2, rain: 500 }, relief: { kind: "hills", amp: 3, scale: 26 }, wind: 0.3,
-    ground: [{ name: "needles", ramp: shade("#3a2c22", "#4e3c2c", "#5e4a36", "#705840"), pattern: "speckle", shell: { kind: "litter", scale: 14, height: 0.4, give: 0.2 } }, { name: "moss", ramp: shade("#3e5a34", "#4e6e3c", "#628044", "#76904e"), pattern: "noise", when: { patches: [6, 0.55] }, shell: { kind: "moss", scale: 6, give: 0.2 } }, { name: "snow", ramp: SNOW, pattern: "noise", when: { patches: [10, 0.18] }, shell: { kind: "mounds", scale: 1.6, height: 0.8, give: 0.6 } }],
+    ground: [{ name: "needles", ramp: shade("#3a2c22", "#4e3c2c", "#5e4a36", "#705840"), pattern: "speckle", shell: { kind: "litter", scale: 14, height: 0.4, give: 0.2 } }, { name: "moss", ramp: shade("#3e5a34", "#4e6e3c", "#628044", "#76904e"), pattern: "noise", when: { patches: [6, 0.55] }, shell: { kind: "moss", scale: 6, give: 0.2 } }, { name: "snow", ramp: SNOW, pattern: "noise", when: { patches: [10, 0.18] }, shell: { kind: "mounds", scale: 1.6, height: 0.16, give: 0.6 } }],
     plants: [{ kind: "blueberry", per100: 10, size: [0.3, 0.5], stand: 6, tints: COLD }, { kind: "fern", per100: 4, size: [0.4, 0.7], tints: COLD }, { kind: "juniper", per100: 2, size: [0.4, 0.9], tints: DEEP }, { kind: "mossy-boulder", per100: 0.8, size: [0.5, 1.1], tints: COLD }, { kind: "mossy-log", per100: 0.6, size: [0.4, 0.6] }],
     trees: [{ species: "spruce", per100: 1.1 }, { species: "pine", per100: 0.6 }, { species: "birch", per100: 0.2 }], light: light({ sun: "#fff0d4", power: 2.2, sky: "#d0dceb", fog: "#ccd8e2", haze: [16, 84] }),
   },
   tundra: {
     id: "tundra", label: "Arctic tundra", climate: { temperature: -10, rain: 220 }, relief: { kind: "hummocks", amp: 1.4, scale: 15 }, wind: 0.6, depth: 0.1,
-    ground: [{ name: "gravel", ramp: ROCK, pattern: "speckle", shell: { kind: "pebbles", scale: 8, give: 0 } }, { name: "lichen", ramp: LICHEN, pattern: "noise", when: { patches: [7, 0.62] }, shell: { kind: "moss", scale: 8, height: 0.7, give: 0.05 } }, { name: "sedge", ramp: shade("#6a6238", "#807844", "#968c50", "#aaa05c"), pattern: "tufts", when: { patches: [5, 0.28] }, shell: { kind: "fuzz", scale: 16, height: 0.75 } }, { name: "snow", ramp: SNOW, pattern: "noise", when: { patches: [8, 0.13] }, shell: { kind: "mounds", scale: 1.4, give: 0.5 } }],
+    ground: [{ name: "gravel", ramp: ROCK, pattern: "speckle", shell: { kind: "pebbles", scale: 8, give: 0 } }, { name: "lichen", ramp: LICHEN, pattern: "noise", when: { patches: [7, 0.62] }, shell: { kind: "moss", scale: 8, height: 0.7, give: 0.05 } }, { name: "sedge", ramp: shade("#6a6238", "#807844", "#968c50", "#aaa05c"), pattern: "tufts", when: { patches: [5, 0.28] }, shell: { kind: "fuzz", scale: 16, height: 0.75 } }, { name: "snow", ramp: SNOW, pattern: "noise", when: { patches: [8, 0.13] }, shell: { kind: "mounds", scale: 1.4, height: 0.16, give: 0.5 } }],
     plants: [{ kind: "dwarf-willow", per100: 7, size: [0.15, 0.3], tints: COLD, stand: 6 }, { kind: "sedge", per100: 15, size: [0.2, 0.35], tints: GOLD, on: ["sedge", "lichen"] }, { kind: "gentian", per100: 3, size: [0.1, 0.16], blooms: ["#4a5ad8"], stand: 4 }, { kind: "edelweiss", per100: 3, size: [0.08, 0.14], blooms: ["#f4f0e4"], tints: SAGE }, { kind: "boulder", per100: 1.2, size: [0.3, 1] }, { kind: "scree", per100: 0.5, size: [0.2, 0.4], wide: 1.2 }],
     light: light({ sun: "#fff4e0", power: 2.4, sky: "#d8e4f0", fog: "#dde6ee", haze: [26, 120] }),
   },
@@ -184,14 +184,14 @@ export const BIOMES: Record<string, BiomeSpec> = {
   },
   mountains: {
     id: "mountains", label: "High mountains", climate: { temperature: -4, rain: 1300 }, relief: { kind: "ridges", amp: 16, scale: 34 }, wind: 0.65, depth: 0.2,
-    ground: [{ name: "scree", ramp: ROCK, pattern: "speckle", shell: { kind: "pebbles", scale: 4, give: 0 } }, { name: "turf", ramp: DARK_GRASS, pattern: "tufts", when: { height: [-9, 3.5], slope: [0, 0.9] }, shell: { kind: "fuzz", scale: 22 } }, { name: "cliff", ramp: DARK_ROCK, pattern: "stripes", when: { slope: [1, 99] }, shell: { kind: "strata", scale: 1.6, give: 0 } }, { name: "snow", ramp: SNOW, pattern: "noise", when: { height: [6, 99], slope: [0, 1.5] }, shell: { kind: "mounds", scale: 1, give: 0.4 } }],
+    ground: [{ name: "scree", ramp: ROCK, pattern: "speckle", shell: { kind: "pebbles", scale: 4, give: 0 } }, { name: "turf", ramp: DARK_GRASS, pattern: "tufts", when: { height: [-9, 3.5], slope: [0, 0.9] }, shell: { kind: "fuzz", scale: 22 } }, { name: "cliff", ramp: DARK_ROCK, pattern: "stripes", when: { slope: [1, 99] }, shell: { kind: "strata", scale: 1.6, give: 0 } }, { name: "snow", ramp: SNOW, pattern: "noise", when: { height: [6, 99], slope: [0, 1.5] }, shell: { kind: "mounds", scale: 1, height: 0.16, give: 0.4 } }],
     plants: [{ kind: "scree", per100: 2, size: [0.3, 0.7], wide: 1.3, on: ["scree"], slope: 1.2 }, { kind: "boulder", per100: 1.2, size: [0.5, 1.8], slope: 1.2 }, { kind: "bunchgrass", per100: 12, size: [0.25, 0.5], on: ["turf"], tints: COLD }, { kind: "juniper", per100: 2.5, size: [0.3, 0.7], on: ["turf"], tints: DEEP }, { kind: "edelweiss", per100: 4, size: [0.1, 0.16], tints: SAGE, on: ["turf", "scree"] }, { kind: "gentian", per100: 5, size: [0.1, 0.16], on: ["turf"], blooms: ["#3a4ad8"], stand: 4 }],
     trees: [{ species: "pine", per100: 0.2, on: ["turf"] }], light: light({ sun: "#fff8ec", power: 3.4, sky: "#b8d4f6", fog: "#d8e6f4", haze: [40, 170] }),
   },
   glacier: {
     id: "glacier", label: "Ice sheet", climate: { temperature: -25, rain: 150 }, relief: { kind: "crags", amp: 4, scale: 22 }, wind: 0.75, depth: 0.16,
-    ground: [{ name: "ice", ramp: ICE, pattern: "noise", shell: { kind: "cracks", scale: 0.9, height: 0.5, give: 0 } }, { name: "snow", ramp: SNOW, pattern: "noise", when: { slope: [0, 0.7], patches: [10, 0.65] }, shell: { kind: "ripples", scale: 2.2, give: 0.1 } }],
-    plants: [{ kind: "ice-block", per100: 1.5, size: [0.5, 1.8], tints: ["#cfe8f2"] }], light: light({ sun: "#fff8f0", power: 3.4, sky: "#cfe2f8", earth: "#a8c0d4", fog: "#e4eef6", haze: [24, 120] }),
+    ground: [{ name: "ice", ramp: ICE, pattern: "noise", shell: { kind: "cracks", scale: 0.9, height: 0.5, give: 0 } }, { name: "snow", ramp: SNOW, pattern: "noise", when: { slope: [0, 0.7], patches: [10, 0.65] }, shell: { kind: "ripples", scale: 2.2, height: 0.08, give: 0.1 } }],
+    plants: [{ kind: "ice-block", per100: 0.6, size: [0.4, 1.3], tints: ["#a9d3e6"] }], light: light({ sun: "#fff8f0", power: 3.4, sky: "#cfe2f8", earth: "#a8c0d4", fog: "#e4eef6", haze: [24, 120] }),
   },
   prairie: {
     id: "prairie", label: "Tallgrass prairie", climate: { temperature: 11, rain: 800 }, relief: { kind: "plain", amp: 2, scale: 34 }, wind: 0.55,
