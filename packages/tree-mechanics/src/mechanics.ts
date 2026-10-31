@@ -107,6 +107,9 @@ export interface MechanicsOptions {
   readonly maxBend?: number | undefined;
   /** How much further everything bends than the sway band alone allows: 1 as it is, 2 twice the give. */
   readonly pliancy?: number | undefined;
+  /** How much harder the moving air pushes than `drag` says, on leaves and on bare wood; struck storms stay as `drag` puts them. */
+  readonly sail?: number | undefined;
+  readonly woodSail?: number | undefined;
   /** Dead wood's share of a sound limb's stiffness; rot takes more. */
   readonly limp?: number | undefined;
   /** How fast a strained limb takes a lasting set, per second: 0 springs back whole. */
@@ -299,6 +302,8 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
   const damping = options.damping ?? 0.07;
   const maxBend = options.maxBend ?? 0.6;
   const pliancy = Math.max(options.pliancy ?? 1, 1e-3);
+  const sail = options.sail ?? 1;
+  const woodSail = options.woodSail ?? 1;
   const limp = options.limp ?? 0.5;
   const creep = options.creep ?? 0;
   const snowDepth = options.snowDepth ?? 0.06;
@@ -557,8 +562,9 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
         const woodArea = 2 * radius[k]! * length[k]!;
         // Leaves fold and stream in a strong wind, so their drag grows slower than v².
         const leaves = leafArea * leafAt[k]! * foliage / (1 + v / 12);
-        wfx = pressure * woodArea * vx; wfz = pressure * woodArea * vz;
-        lfx = pressure * leaves * vx; lfz = pressure * leaves * vz;
+        const onWood = steady ? 1 : woodSail, onLeaves = steady ? 1 : sail;
+        wfx = pressure * woodArea * vx * onWood; wfz = pressure * woodArea * vz * onWood;
+        lfx = pressure * leaves * vx * onLeaves; lfz = pressure * leaves * vz * onLeaves;
       }
       let woodW = 0, leafW = 0;
       if (snow > 0) {
