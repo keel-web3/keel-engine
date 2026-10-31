@@ -118,3 +118,24 @@ test("capsules follow the moved wood, carry less further out, and paths run from
   assert.equal(path.length, 7);
   assert.deepEqual(path.at(-1)!.p, [pose.x[5]!, pose.y[5]!, pose.z[5]!]);
 });
+
+test("a struck storm breaks what a live one would, the pieces lie on the ground, and they rot when their time is up", () => {
+  const pieces = PIECES.map((p, i) => (i === 5 || i === TWIG ? { ...p, dead: 1 } : p));
+  const { shape, pose } = tree(pieces);
+  const m = createTreeMechanics(shape, { ground: 0, wood: { strength: 3e5 }, breaks: { lieFor: 100, rotFor: 50 } });
+  assert.deepEqual(m.storm(pose, { elapsed: 10, dt: 0, wind: 0.2 }), [], "a breeze breaks nothing");
+  const struck = m.storm(pose, { elapsed: 20, dt: 0, wind: 1.6, dir: 0 });
+  assert.ok(struck.length > 0 && struck.every((b) => b.at === 20 && shape.order[b.node]! > 0), "the storm took limbs, never the trunk");
+  assert.deepEqual(m.breaks, struck);
+  const first = struck[0]!.node;
+  let moved = m.update(pose, { elapsed: 1000, dt: 1 / 60, wind: 0 });
+  for (let k = first; k < shape.count; k += 1) {
+    assert.equal(moved.fall[k], 1, `${String(k)} lies on the ground, long after the storm`);
+    assert.ok(Math.min(moved.y[k]!, moved.baseY[k]!) - pose.radius[k]! > -1e-3, `${String(k)} rests on it, not in it`);
+  }
+  assert.ok(moved.rot[first]! > 0.99, "and it has rotted away");
+  const again = createTreeMechanics(shape, { ground: 0, wood: { strength: 3e5 }, breaks: { lieFor: 100, rotFor: 50 } });
+  assert.deepEqual(again.storm(pose, { elapsed: 20, dt: 0, wind: 1.6, dir: 0 }).map((b) => b.node), struck.map((b) => b.node), "it is deterministic");
+  moved = again.update(pose, { elapsed: 60, dt: 1 / 60, wind: 0 });
+  assert.equal(moved.rot[first], 0, "still lying, not yet rotting");
+});

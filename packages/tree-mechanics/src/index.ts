@@ -6,5 +6,5 @@
 
 export { createTreeMechanics, gustAt } from "./mechanics.ts";
 export type {
-  BreakCause, BreakOptions, MechanicsOptions, MovedPose, TreeBreak, TreeForces, TreeLoad, TreeMechanics, TreePose, TreeShape, WoodCapsule, WoodPoint, WoodSpec,
+  BreakCause, BreakOptions, MechanicsOptions, MovedPose, StormStrike, TreeBreak, TreeForces, TreeLoad, TreeMechanics, TreePose, TreeShape, WoodCapsule, WoodPoint, WoodSpec,
 } from "./mechanics.ts";

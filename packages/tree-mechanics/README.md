@@ -54,12 +54,26 @@ modulus, πr³/4. Strength is `wood.strength`, less for dead wood
 (`deadStrength`), rot and knots (seeded per node). When a joint's stress passes
 its strength it snaps: the piece hangs a moment by the torn wood, tumbles down
 (drifting downwind), lands on `ground` within `groundRadius`, lies `lieFor`
-seconds and rots away. The trunk and wood thicker than `protect` × the trunk
+seconds and rots away over `rotFor` seconds. The trunk and wood thicker than `protect` × the trunk
 never break; a storm takes one piece every `cooldown` seconds, at most `most`
 in all. At the default strength a gale takes dead wood while living limbs
 hold; a storm may take a living twig, and deep snow on an evergreen strips a
 few. Pass a stronger `wood` for wood that bends rather than breaks (a palm's
 fronds). `heal()` mends everything.
+
+`storm(frame, forces, { gust = 1.3, seed })` strikes the tree with a storm's
+peak all at once, for a storm it went through while nobody watched:
+`forces.wind` blows steady at `forces.elapsed` (no fronts or buffeting), each
+limb bends where the wind would hold it times `gust`, and joints past their
+strength come down there and then, without the cooldown. A gust does not catch
+every limb at its worst, so a joint only just past its strength often holds
+and one far past it nearly always goes (a chance of 1 − e^(−2(strain − 1)),
+drawn from the storm's `seed`). Its pieces lie on the ground from that moment,
+so replaying a tree's storms on one clock (seconds, say) and then updating it
+at the present leaves this year's wreckage lying and older wood rotted away.
+It returns the storm's breaks and leaves the limbs at rest. With
+`breaks: { live: false }` the live wind breaks nothing, so every break is one
+`storm()` struck.
 
 ## Climbing
 

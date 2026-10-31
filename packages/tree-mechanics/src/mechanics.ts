@@ -123,8 +123,18 @@ export interface BreakOptions {
   readonly cooldown?: number | undefined;
   /** Breaks the tree takes before it holds on to everything left. */
   readonly most?: number | undefined;
-  /** Seconds a fallen piece lies before it rots away. */
+  /** Seconds a fallen piece lies before it rots away, and how long the rotting takes. */
   readonly lieFor?: number | undefined;
+  readonly rotFor?: number | undefined;
+  /** Whether the live wind breaks wood; off when every break is struck with `storm()`. */
+  readonly live?: boolean | undefined;
+}
+
+export interface StormStrike {
+  /** The swing a gust adds to where the wind alone holds a limb (default 1.3). */
+  readonly gust?: number | undefined;
+  /** The storm's own seed, for which over-strained joints hold. */
+  readonly seed?: number | undefined;
 }
 
 export type BreakCause = "wind" | "snow" | "load";
@@ -176,6 +186,15 @@ export interface TreeMechanics {
   frequency(node: number): number;
   /** How near a node's joint is to breaking this step: stress over strength. */
   strain(node: number): number;
+  /**
+   * Strikes the tree with a storm's peak all at once: `forces.wind` blowing steady at `forces.elapsed`,
+   * the limbs bent where it would hold them times `gust` (the swing a gust adds), and all that breaks
+   * comes down there and then, as a live break does. A gust does not catch every limb at its worst, so
+   * a joint only just past its strength often holds and one far past it nearly always goes, drawn from
+   * `how.seed` (one per storm). For a storm the tree went through while nobody watched; the limbs are
+   * left at rest. Returns the storm's breaks.
+   */
+  storm<P extends TreePose>(frame: P, forces: TreeForces, how?: StormStrike): TreeBreak[];
   /** Mend every break and let the limbs settle from rest. */
   heal(): void;
 }
@@ -236,6 +255,9 @@ interface Piece {
   readonly at: number;
   /** Seconds into the fall it landed, and how far it was lifted to rest on the ground. */
   landed: number;
+  /** Seconds after the break it first touched down, and how steeply it stood then: it topples until it lies flat. */
+  touched: number;
+  flat: number;
   lift: number;
 }
 
@@ -277,6 +299,8 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
   const cooldown = breakOptions?.cooldown ?? 3;
   const most = breakOptions?.most ?? 16;
   const lieFor = breakOptions?.lieFor ?? 120;
+  const rotFor = Math.max(breakOptions?.rotFor ?? 30, 1e-6);
+  const liveBreaks = breakOptions?.live ?? true;
   const seed = options.seed ?? 1;
 
   // Leaves per node, as summed leaf size² (a bigger leaf has more area).
@@ -322,6 +346,8 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
   let lastBreak = -Infinity;
   let lastFrame: TreePose | null = null;
   let out: MovedPose<TreePose> | null = null;
+  /** A struck storm: the wind steady, no gust fronts or buffeting, and no breaks checked by the step. */
+  let steady = false;
 
   function rebuild(frame: TreePose, foliage: number): void {
     height = 1;
@@ -489,7 +515,7 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
     const speed = Math.max(0, forces.wind) * gale;
     fx.fill(0); fy.fill(0); fz.fill(0); mx.fill(0); mz.fill(0); gx.fill(0); gz.fill(0); gfy.fill(0);
     // Each limb buffets on its own (the gusts roll through the whole crown): its share of the wind along and across.
-    if (speed > 0) {
+    if (steady) { buffetAlong.fill(0); buffetAcross.fill(0); } else if (speed > 0) {
       for (let l = 0; l < L.count; l += 1) {
         const phase = L.phase[l]!;
         buffetAlong[l] = 0.16 * Math.sin(t * 1.7 + phase) + 0.1 * Math.sin(t * 3.1 + phase * 1.9) + 0.07 * Math.sin(t * 5.3 + phase * 2.7);
@@ -505,7 +531,7 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
       if (speed > 0) {
         const along = midX * dx + midZ * dz;
         const profile = profileAt[k]!;
-        const along_ = speed * profile * (0.55 + 0.9 * gustAt(t, along) + buffetAlong[l]!);
+        const along_ = speed * profile * (steady ? 1 : 0.55 + 0.9 * gustAt(t, along) + buffetAlong[l]!);
         const across = speed * profile * buffetAcross[l]!;
         const vx = along_ * dx - across * dz, vz = along_ * dz + across * dx;
         const v = Math.hypot(vx, vz);
@@ -582,10 +608,17 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
       accX[l] = (vx - ox) / dt; accZ[l] = (vz - oz) / dt;
       phiX[l] = x; phiZ[l] = z; velX[l] = vx; velZ[l] = vz;
     }
-    if (breakOptions) checkBreaks(forces, snow);
+    if (breakOptions && liveBreaks && !steady) checkBreaks(forces, snow);
   }
 
   function checkBreaks(forces: TreeForces, snow: number): void {
+    const worst = weakest();
+    if (worst < 0 || breaks.length >= most || forces.elapsed - lastBreak < cooldown) return;
+    snap(worst, forces, causeOf(worst, snow));
+  }
+
+  /** The joint most over its strength this step (strain past 1), or −1; `spared` joints are passed over. */
+  function weakest(spared?: Uint8Array): number {
     const L = limbs!;
     let worst = -1, worstRatio = 1;
     for (let k = 1; k < n; k += 1) {
@@ -598,16 +631,19 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
       const amplify = still > 1e-9 ? clamp(Math.hypot(phiX[l]!, phiZ[l]!) / still, 1, 3) : 1;
       const ratio = (Math.hypot(tx, tz) * amplify) / Math.max(strength[k]!, 1e-9);
       strainAt[k] = ratio;
-      if (ratio > worstRatio && at(shape.order, k) > 0 && radius[k]! < trunkRadius * protect) { worst = k; worstRatio = ratio; }
+      if (ratio > worstRatio && !spared?.[k] && at(shape.order, k) > 0 && radius[k]! < trunkRadius * protect) { worst = k; worstRatio = ratio; }
     }
-    if (worst < 0 || breaks.length >= most || forces.elapsed - lastBreak < cooldown) return;
+    return worst;
+  }
+
+  /** What broke a joint: its weight (snow or a load) or the wind. */
+  function causeOf(worst: number, snow: number): BreakCause {
     const tx = mx[worst]! - (by[worst]! * fz[worst]! - bz[worst]! * fy[worst]!);
     const tz = mz[worst]! - (bx[worst]! * fy[worst]! - by[worst]! * fx[worst]!);
     const gxx = gx[worst]! - (by[worst]! * 0 - bz[worst]! * gfy[worst]!);
     const gzz = gz[worst]! - (bx[worst]! * gfy[worst]! - 0);
     const gravity = Math.hypot(gxx, gzz);
-    const cause: BreakCause = gravity > Math.hypot(tx - gxx, tz - gzz) ? (snow > 0 ? "snow" : "load") : "wind";
-    snap(worst, forces, cause);
+    return gravity > Math.hypot(tx - gxx, tz - gzz) ? (snow > 0 ? "snow" : "load") : "wind";
   }
 
   function snap(node: number, forces: TreeForces, cause: BreakCause): void {
@@ -635,7 +671,7 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
     const axis: [number, number, number] = [oz / len, 0, -ox / len];
     const dir = forces.dir ?? 0;
     const blow = Math.max(0, forces.wind) * 0.7;
-    pieces.push({ root: node, nodes: Int32Array.from(nodes), rest, pivot, axis, drift: [Math.cos(dir) * blow, Math.sin(dir) * blow], at: forces.elapsed, landed: -1, lift: 0 });
+    pieces.push({ root: node, nodes: Int32Array.from(nodes), rest, pivot, axis, drift: [Math.cos(dir) * blow, Math.sin(dir) * blow], at: forces.elapsed, landed: -1, touched: -1, flat: Math.atan2(o.y[node]! - pivot[1], len), lift: 0 });
     breaks.push({ node, at: forces.elapsed, cause, radius: radius[node]!, p: pivot, pieces: nodes.length });
     lastBreak = forces.elapsed;
     // The tree is lighter now: its limbs sway at new frequencies.
@@ -684,9 +720,11 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
   function posePiece(piece: Piece, elapsed: number): void {
     const o = out!;
     const since = elapsed - piece.at;
-    const t = piece.landed >= 0 ? piece.landed : Math.max(0, since);
+    // Any piece is down within four seconds, so one first posed long after it broke lands at once.
+    const t = piece.landed >= 0 ? piece.landed : clamp(since, 0, 4);
     // A moment hanging by the torn wood, then a tumbling drop.
-    const angle = Math.min(1.45, 2.2 * t * t);
+    const turn = Math.min(Math.abs(piece.flat), 2.2 * t * t);
+    const angle = piece.flat < 0 ? -turn : turn;
     const falling = Math.max(0, t - 0.15);
     const drop = 0.5 * GRAVITY * 0.85 * falling * falling;
     let driftX = piece.drift[0] * t, driftZ = piece.drift[1] * t;
@@ -708,17 +746,21 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
       moved.set(end, i * 6); moved.set(start, i * 6 + 3);
       lowest = Math.min(lowest, end[1] - radius[piece.nodes[i]!]!, start[1] - radius[piece.nodes[i]!]!);
     }
+    // It keeps toppling on the ground until it lies along it, then comes to rest.
     let lift = 0;
     if (piece.landed < 0 && lowest < ground) {
-      piece.landed = t;
-      piece.lift += ground - lowest;
       lift = ground - lowest;
+      if (piece.touched < 0) piece.touched = since;
+      if (turn >= Math.abs(piece.flat)) { piece.landed = t; piece.lift += lift; }
     }
-    const rotting = piece.landed >= 0 ? clamp((since - piece.landed - lieFor) / 30, 0, 1) : 0;
+    // Its side twigs give under it: nothing that lay down stands back up out of the ground.
+    const pressed = piece.touched < 0 ? 0 : 0.85 * clamp((since - piece.touched) / 0.6, 0, 1);
+    const press = (y: number, r: number): number => (y > ground + r ? ground + r + (y - ground - r) * (1 - pressed) : y);
+    const rotting = piece.landed >= 0 ? clamp((since - piece.landed - lieFor) / rotFor, 0, 1) : 0;
     for (let i = 0; i < piece.nodes.length; i += 1) {
       const k = piece.nodes[i]!;
-      o.x[k] = moved[i * 6]!; o.y[k] = moved[i * 6 + 1]! + lift; o.z[k] = moved[i * 6 + 2]!;
-      o.baseX[k] = moved[i * 6 + 3]!; o.baseY[k] = moved[i * 6 + 4]! + lift; o.baseZ[k] = moved[i * 6 + 5]!;
+      o.x[k] = moved[i * 6]!; o.y[k] = press(moved[i * 6 + 1]! + lift, radius[k]!); o.z[k] = moved[i * 6 + 2]!;
+      o.baseX[k] = moved[i * 6 + 3]!; o.baseY[k] = press(moved[i * 6 + 4]! + lift, radius[k]!); o.baseZ[k] = moved[i * 6 + 5]!;
       o.fall[k] = piece.landed >= 0 ? 1 : Math.min(0.99, 0.05 + t);
       o.rot[k] = Math.max(o.rot[k]!, rotting);
     }
@@ -731,18 +773,22 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
 
   const point = (o: MovedPose<TreePose>, k: number, end: boolean): [number, number, number] => (end ? [o.x[k]!, o.y[k]!, o.z[k]!] : [o.baseX[k]!, o.baseY[k]!, o.baseZ[k]!]);
 
+  function prepare(frame: TreePose, forces: TreeForces): void {
+    const foliage = clamp(forces.foliage ?? 1, 0, 1);
+    if (frame !== lastFrame) {
+      lastFrame = frame;
+      out = fresh(frame) as unknown as MovedPose<TreePose>;
+      rebuild(frame, foliage);
+    } else {
+      out!.fall.set(frame.fall as ArrayLike<number>);
+      out!.rot.set(frame.rot as ArrayLike<number>);
+      if (Math.abs(foliage - builtFoliage) > 0.08) rebuild(frame, foliage);
+    }
+  }
+
   return {
     update<P extends TreePose>(frame: P, forces: TreeForces): MovedPose<P> {
-      const foliage = clamp(forces.foliage ?? 1, 0, 1);
-      if (frame !== lastFrame) {
-        lastFrame = frame;
-        out = fresh(frame) as unknown as MovedPose<TreePose>;
-        rebuild(frame, foliage);
-      } else {
-        out!.fall.set(frame.fall as ArrayLike<number>);
-        out!.rot.set(frame.rot as ArrayLike<number>);
-        if (Math.abs(foliage - builtFoliage) > 0.08) rebuild(frame, foliage);
-      }
+      prepare(frame, forces);
       step(forces);
       pose(frame, forces.elapsed);
       return out as unknown as MovedPose<P>;
@@ -772,6 +818,32 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
     limbOf: (node) => (limbs ? at(limbs.base, at(limbs.limb, node)) : node),
     frequency: (node) => (limbs ? at(limbs.frequency, at(limbs.limb, node)) : 0),
     strain: (node) => at(strainAt, node),
+    storm(frame, forces, how = {}) {
+      prepare(frame, forces);
+      const gust = how.gust ?? 1.3;
+      const stormSeed = (seed ^ Math.imul((how.seed ?? 0) | 0, 0x27d4eb2d)) >>> 0;
+      const struck: TreeBreak[] = [];
+      const spared = new Uint8Array(n);
+      const snow = clamp(forces.snow ?? 0, 0, 1);
+      steady = true;
+      try {
+        while (breaks.length < most) {
+          step({ ...forces, dt: 0 });
+          const L = limbs!;
+          for (let l = 0; l < L.count; l += 1) { phiX[l] = staticX[l]! * gust; phiZ[l] = staticZ[l]! * gust; }
+          const worst = weakest(spared);
+          if (worst < 0) break;
+          if (hash(stormSeed, worst) >= 1 - Math.exp(-2 * (strainAt[worst]! - 1))) { spared[worst] = 1; continue; }
+          snap(worst, forces, causeOf(worst, snow));
+          struck.push(breaks[breaks.length - 1]!);
+        }
+      } finally {
+        steady = false;
+        phiX.fill(0); phiZ.fill(0); velX.fill(0); velZ.fill(0); accX.fill(0); accZ.fill(0);
+      }
+      pose(frame, forces.elapsed);
+      return struck;
+    },
     heal() {
       cut.fill(0);
       pieces.length = 0;
