@@ -85,6 +85,22 @@ test("weight and snow sag the limb, and it springs back when the weight goes", (
   assert.ok(pose.y[5]! - y > 1e-4, "snow on the limb weighs it down");
 });
 
+test("dead wood gives more than sound wood, and what it takes it keeps", () => {
+  const sag = (dead: number): { held: number; after: number } => {
+    const { shape, pose } = tree(PIECES.map((piece, i) => (i >= 4 ? { ...piece, dead } : piece)));
+    const m = createTreeMechanics(shape, { breaks: false, creep: 0.2 });
+    let y = pose.y[5]!;
+    for (let i = 0; i < 1800; i += 1) y = m.update(pose, { elapsed: i / 60, dt: 1 / 60, wind: 0, loads: [{ node: 5, mass: 1 }] }).y[5]!;
+    const held = pose.y[5]! - y;
+    for (let i = 1800; i < 3600; i += 1) y = m.update(pose, { elapsed: i / 60, dt: 1 / 60, wind: 0 }).y[5]!;
+    return { held, after: pose.y[5]! - y };
+  };
+  const sound = sag(0), dead = sag(1);
+  assert.ok(dead.held > sound.held * 1.3, `dead wood sags further (${dead.held.toFixed(3)} vs ${sound.held.toFixed(3)})`);
+  assert.ok(dead.after > dead.held * 0.5, `and stays down once the weight goes (${dead.after.toFixed(3)} of ${dead.held.toFixed(3)})`);
+  assert.ok(sound.after < dead.after * 0.8, `where sound wood lifts back (${sound.after.toFixed(3)})`);
+});
+
 test("a storm breaks dead wood, never the trunk, and the piece comes to rest on the ground", () => {
   const pieces = PIECES.map((p, i) => (i === 5 || i === TWIG ? { ...p, dead: 1 } : p));
   const { shape, pose } = tree(pieces);

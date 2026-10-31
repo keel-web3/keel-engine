@@ -105,6 +105,12 @@ export interface MechanicsOptions {
   readonly damping?: number | undefined;
   /** The furthest a limb bends from rest, radians. */
   readonly maxBend?: number | undefined;
+  /** How much further everything bends than the sway band alone allows: 1 as it is, 2 twice the give. */
+  readonly pliancy?: number | undefined;
+  /** Dead wood's share of a sound limb's stiffness; rot takes more. */
+  readonly limp?: number | undefined;
+  /** How fast a strained limb takes a lasting set, per second: 0 springs back whole. */
+  readonly creep?: number | undefined;
   /** Fresh snow's depth at `snow` 1 (m) and density (kg/m³). */
   readonly snowDepth?: number | undefined;
   readonly snowDensity?: number | undefined;
@@ -272,6 +278,8 @@ interface Limbs {
   readonly parentLimb: Int32Array;
   readonly attach: Float32Array;
   readonly stiffness: Float64Array;
+  /** How sound each limb is: 1 whole, less as it dies and rots. */
+  readonly firm: Float64Array;
   readonly inertia: Float64Array;
   readonly damping: Float64Array;
   readonly frequency: Float32Array;
@@ -290,6 +298,9 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
   const [slowest, quickest] = options.band ?? [0.28, 3.2];
   const damping = options.damping ?? 0.07;
   const maxBend = options.maxBend ?? 0.6;
+  const pliancy = Math.max(options.pliancy ?? 1, 1e-3);
+  const limp = options.limp ?? 0.5;
+  const creep = options.creep ?? 0;
   const snowDepth = options.snowDepth ?? 0.06;
   const snowDensity = options.snowDensity ?? 160;
   const ground = options.ground ?? 0;
@@ -328,6 +339,8 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
   let builtFoliage = -1;
 
   // Motion state per limb, kept across rebuilds by the limb's base node.
+  /** The bend each limb has taken for good, which it now springs about. */
+  let setX: Float64Array = new Float64Array(0), setZ: Float64Array = new Float64Array(0);
   let phiX: Float64Array = new Float64Array(0), phiZ: Float64Array = new Float64Array(0), velX: Float64Array = new Float64Array(0), velZ: Float64Array = new Float64Array(0), accX: Float64Array = new Float64Array(0), accZ: Float64Array = new Float64Array(0);
   let staticX: Float64Array = new Float64Array(0), staticZ: Float64Array = new Float64Array(0);
 
@@ -388,6 +401,7 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
     };
     phiX = keep(phiX, new Float64Array(next.count)); phiZ = keep(phiZ, new Float64Array(next.count));
     velX = keep(velX, new Float64Array(next.count)); velZ = keep(velZ, new Float64Array(next.count));
+    setX = keep(setX, new Float64Array(next.count)); setZ = keep(setZ, new Float64Array(next.count));
     accX = new Float64Array(next.count); accZ = new Float64Array(next.count);
     staticX = new Float64Array(next.count); staticZ = new Float64Array(next.count);
     buffetAlong = new Float64Array(next.count); buffetAcross = new Float64Array(next.count);
@@ -466,10 +480,12 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
     const base = Int32Array.from(bases);
     const parentLimb = new Int32Array(count).fill(-1);
     const attach = new Float32Array(count);
-    const stiffness = new Float64Array(count), damp = new Float64Array(count), frequency = new Float32Array(count);
+    const stiffness = new Float64Array(count), damp = new Float64Array(count), frequency = new Float32Array(count), firm = new Float64Array(count);
     const leafy = new Float64Array(count), woody = new Float64Array(count);
+    const sound = new Float64Array(count);
     for (let k = 0; k < n; k += 1) {
       if (!alive[k]) continue;
+      sound[limb[k]!] = sound[limb[k]!]! + share[k]! * (1 - (1 - limp) * clamp(at(frame.dead, k), 0, 1)) * (1 - 0.6 * clamp(at(frame.rot, k), 0, 1));
       leafy[limb[k]!] = leafy[limb[k]!]! + leafMass * leafAt[k]! * foliage;
       woody[limb[k]!] = woody[limb[k]!]! + mass[k]!;
     }
@@ -482,14 +498,16 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
       const physical = Math.sqrt(kPhys[l]! / j) / TAU;
       const f = clamp(Math.sqrt(Math.max(physical, 1e-6)) * 0.55, slowest, quickest);
       frequency[l] = f;
-      stiffness[l] = j * (TAU * f) ** 2;
+      // Dead and rotten wood gives under what sound wood shrugs off.
+      stiffness[l] = (j * (TAU * f) ** 2 * clamp(sound[l]!, 0.05, 1)) / pliancy;
+      firm[l] = clamp(sound[l]!, 0, 1);
       inertia[l] = j;
       // Leaves catch the air: a leafy limb settles sooner than bare wood.
       const zeta = damping + 0.12 * (leafy[l]! / Math.max(woody[l]!, 1e-9)) ** 0.5;
       damp[l] = 2 * clamp(zeta, 0.03, 0.6) * Math.sqrt(stiffness[l]! * j);
     }
     const phase = Float32Array.from(base, (b) => hash(seed, b) * TAU);
-    return { count, limb, share, upto, base, parentLimb, attach, stiffness, inertia, damping: damp, frequency, phase };
+    return { count, limb, share, upto, base, parentLimb, attach, stiffness, inertia, damping: damp, frequency, phase, firm };
   }
 
   /** What each node's end can bear: the weakest joint between it and the ground, at its lever. */
@@ -588,7 +606,8 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
     const h = dt / substeps;
     for (let l = 0; l < L.count; l += 1) {
       const K = L.stiffness[l]!, J = L.inertia[l]!, C = L.damping[l]!;
-      staticX[l] = qx[l]! / K; staticZ[l] = qz[l]! / K;
+      const restX = setX[l]!, restZ = setZ[l]!;
+      staticX[l] = qx[l]! / K + restX; staticZ[l] = qz[l]! / K + restZ;
       if (h <= 0) continue;
       // A limb rides its parent: when the parent swings, the limb's own inertia holds it back, so it whips after.
       const parent = L.parentLimb[l]!;
@@ -599,14 +618,20 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
       for (let i = 0; i < substeps; i += 1) {
         // Implicit Euler: stable for the stiffest twig at any frame rate.
         const denom = 1 + (h * C) / J + (h * h * K) / J;
-        vx = (vx + (h * (qx[l]! - lag * px - K * x)) / J) / denom;
-        vz = (vz + (h * (qz[l]! - lag * pz - K * z)) / J) / denom;
+        vx = (vx + (h * (qx[l]! - lag * px - K * (x - restX))) / J) / denom;
+        vz = (vz + (h * (qz[l]! - lag * pz - K * (z - restZ))) / J) / denom;
         x += h * vx; z += h * vz;
       }
       const bend = Math.hypot(x, z);
       if (bend > maxBend) { x *= maxBend / bend; z *= maxBend / bend; vx *= 0.5; vz *= 0.5; }
       accX[l] = (vx - ox) / dt; accZ[l] = (vz - oz) / dt;
       phiX[l] = x; phiZ[l] = z; velX[l] = vx; velZ[l] = vz;
+      // Held bent, wood takes a set; sound wood slowly lifts back, dead wood stays down.
+      const taken = Math.min(1, creep * dt), lifted = Math.min(1, creep * 0.25 * L.firm[l]! ** 4 * dt);
+      const bentX = setX[l]! + (x - restX) * taken, bentZ = setZ[l]! + (z - restZ) * taken;
+      const worn = Math.hypot(bentX, bentZ), most = maxBend * 0.35;
+      const held = (1 - lifted) * (worn > most ? most / worn : 1);
+      setX[l] = bentX * held; setZ[l] = bentZ * held;
     }
     if (breakOptions && liveBreaks && !steady) checkBreaks(forces, snow);
   }
@@ -850,6 +875,7 @@ export function createTreeMechanics(shape: TreeShape, options: MechanicsOptions 
       breaks.length = 0;
       lastBreak = -Infinity;
       phiX.fill(0); phiZ.fill(0); velX.fill(0); velZ.fill(0);
+      setX.fill(0); setZ.fill(0);
       if (lastFrame) { out = fresh(lastFrame) as unknown as MovedPose<TreePose>; rebuild(lastFrame, builtFoliage); }
     },
   };
